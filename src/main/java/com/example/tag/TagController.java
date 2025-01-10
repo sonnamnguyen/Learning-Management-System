@@ -24,6 +24,13 @@ public class TagController {
     @Autowired
     private TopicService topicService;
 
+    // Thêm model attribute chung cho tất cả các phương thức
+    @ModelAttribute
+    public void addCommonAttributes(Model model) {
+        model.addAttribute("title", "Tags");
+        model.addAttribute("links", "/style.css");
+    }
+
     // Get paginated list of tags
     @GetMapping()
     public String getTags(Model model,
@@ -42,7 +49,10 @@ public class TagController {
 
         model.addAttribute("tagsPage", tagsPage);
         model.addAttribute("searchQuery", searchQuery); // Pass search query back to the view
-        return "tag/list";  // your view template for displaying tags
+        // add attribute for layout
+        model.addAttribute("content","tag/list");
+
+        return "layout";
     }
 
     // Show create form
@@ -50,7 +60,8 @@ public class TagController {
     public String showCreateForm(Model model) {
         model.addAttribute("tag", new Tag());
         model.addAttribute("topics", topicService.getAllTopics()); // Fetch all topics
-        return "tag/create";
+        model.addAttribute("content", "tag/create");
+        return "layout";
     }
 
     // Create new tag
@@ -78,7 +89,8 @@ public class TagController {
 
         model.addAttribute("tag", tag); // Add Tag object
         model.addAttribute("topics", topicService.getAllTopics()); // Add available topics for dropdown
-        return "tag/edit";
+        model.addAttribute("content", "tag/edit");
+        return "layout";
     }
 
     // Update existing tag

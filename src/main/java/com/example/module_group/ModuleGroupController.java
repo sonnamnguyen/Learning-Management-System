@@ -17,8 +17,15 @@ public class ModuleGroupController {
     @Autowired
     private ModuleGroupService moduleGroupService;
 
+    // Thêm model attribute chung cho tất cả các phương thức
+    @ModelAttribute
+    public void addCommonAttributes(Model model) {
+        model.addAttribute("title", "Module Group");
+        model.addAttribute("links", "/style.css");
+    }
+
     @GetMapping()
-    public String getAssessmentType(Model model,
+    public String getAllModuleGroups(Model model,
                                     @RequestParam(defaultValue = "0") int page,
                                     @RequestParam(defaultValue = "10") int size,
                                     @RequestParam(value = "searchQuery", required = false) String searchQuery) {
@@ -34,20 +41,19 @@ public class ModuleGroupController {
 
         model.addAttribute("moduleGroupPage", moduleGroupPage);
         model.addAttribute("searchQuery", searchQuery); // Pass search query back to the view
-        return "module_group/list";  // your view template for displaying assessmentTypes
+
+        // add attribute for layout
+        model.addAttribute("content","module_group/list");
+        return "layout";
     }
 
-//    @GetMapping
-//    public String getAllModuleGroups(Model model) {
-//        List<ModuleGroup> moduleGroups = moduleGroupService.getAllModuleGroups();
-//        model.addAttribute("moduleGroups", moduleGroups);
-//        return "module_group/list";
-//    }
 
     @GetMapping("/create")
     public String showCreateForm(Model model) {
         model.addAttribute("moduleGroup", new ModuleGroup());
-        return "module_group/create"; // Ensure this is the correct view name
+
+        model.addAttribute("content", "module_group/create");
+        return "layout";
     }
 
     @PostMapping("/create")
@@ -60,16 +66,13 @@ public class ModuleGroupController {
         return "redirect:/module-groups"; // Ensure this is the correct view name
     }
 
-    //    @GetMapping("/edit/{id}")
-//    public String showEditForm(@PathVariable Long id, Model model) {
-//        moduleGroupService.getModuleGroupById(Math.toIntExact(id)).ifPresent(moduleGroup -> model.addAttribute("moduleGroup", moduleGroup));
-//        return "module_group/edit";
-//    }
-// Show edit form for a specific assessment_type
+	// Show edit form for a specific assessment_type
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable Long id, Model model) {
         model.addAttribute("moduleGroup", moduleGroupService.getModuleGroupById(id));
-        return "module_group/edit";
+
+        model.addAttribute("content", "module_group/edit");
+        return "layout";
     }
 
     // Update existing assessment_type

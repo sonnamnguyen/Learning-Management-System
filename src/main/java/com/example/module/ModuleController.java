@@ -48,9 +48,9 @@ public class ModuleController {
         model.addAttribute("totalPages", modules.getTotalPages());
         model.addAttribute("totalItems", modules.getTotalElements());
         model.addAttribute("searchQuery", searchQuery);
-        // add attribute for layout
-        model.addAttribute("content","modules/list-modules");
 
+        // add attribute for layout
+        model.addAttribute("content","modules/list");
         return "layout";
     }
 
@@ -58,6 +58,7 @@ public class ModuleController {
     public String showCreateForm(Model model) {
         model.addAttribute("module", new Module());
         model.addAttribute("moduleGroups", moduleService.getAllModuleGroups());
+
         model.addAttribute("content", "modules/create");
         return "layout";
     }
@@ -74,6 +75,7 @@ public class ModuleController {
         List<ModuleGroup> moduleGroups = moduleService.getAllModuleGroups();
         model.addAttribute("module", module);
         model.addAttribute("moduleGroups", moduleGroups);
+
         model.addAttribute("content", "modules/edit");
         return "layout";
     }
@@ -88,6 +90,20 @@ public class ModuleController {
     @GetMapping("/delete/{id}")
     public String deleteModule(@PathVariable("id") Long id) {
         moduleService.deleteModule(id);
+        return "redirect:/modules";
+    }
+
+    // print
+    @GetMapping("/print")
+    public String print(Model model){
+        List<Module> moduleList = moduleService.findAllModules();
+        model.addAttribute("moduleList", moduleList);
+        return "modules/print";
+    }
+
+    @PostMapping("/import")
+    public String importModules(@RequestParam("file") MultipartFile file) {
+        moduleService.importExcel(file);
         return "redirect:/modules";
     }
 
@@ -107,11 +123,5 @@ public class ModuleController {
         return ResponseEntity.ok()
                 .headers(headers)
                 .body(new InputStreamResource(excelFile));
-    }
-
-    @PostMapping("/import")
-    public String importModules(@RequestParam("file") MultipartFile file) {
-        moduleService.importExcel(file);
-        return "redirect:/modules";
     }
 }

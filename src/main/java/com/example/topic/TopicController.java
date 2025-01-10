@@ -20,6 +20,13 @@ public class TopicController {
     @Autowired
     private TopicService topicService;
 
+    // Thêm model attribute chung cho tất cả các phương thức
+    @ModelAttribute
+    public void addCommonAttributes(Model model) {
+        model.addAttribute("title", "Topic");
+        model.addAttribute("links", "/style.css");
+    }
+
     // Get paginated list of topics
     @GetMapping()
     public String getTopics(Model model,
@@ -38,14 +45,19 @@ public class TopicController {
 
         model.addAttribute("topicsPage", topicsPage);
         model.addAttribute("searchQuery", searchQuery); // Pass search query back to the view
-        return "topic/list";  // your view template for displaying topics
+
+        // add attribute for layout
+        model.addAttribute("content","topic/list");
+
+        return "layout";
     }
 
     // Show create form
     @GetMapping("/create")
     public String showCreateForm(Model model) {
         model.addAttribute("topic", new Topic());
-        return "topic/create";
+        model.addAttribute("content", "topic/create");
+        return "layout";
     }
 
     // Create new topic
@@ -68,7 +80,9 @@ public class TopicController {
             return "redirect:/topics"; // Redirect if topic not found
         }
         model.addAttribute("topic", topic);
-        return "topic/edit";
+
+        model.addAttribute("content", "topic/edit");
+        return "layout";
     }
 
     // Update existing topic
