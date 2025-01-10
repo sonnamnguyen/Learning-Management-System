@@ -1,0 +1,45 @@
+<!-- base.html -->
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments :: common_header(~{::title}, ~{::link})}">
+    <title>Tags</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+
+<body>
+<!-- Wrapper for the whole page -->
+<div class="d-flex flex-column min-vh-100">
+    <!-- Sticky Header -->
+    <div th:replace="~{fragments :: header}" class="sticky-top"></div> <!-- Header always on top -->
+
+    <!--   Body Content -->
+    <div class="flex-grow-1" th:insert="tag/list_body.html :: content"></div> <!-- Page-specific content -->
+
+    <!-- Footer -->
+    <div th:replace="~{fragments :: footer}" class="mt-auto"></div> <!-- Footer stays at the bottom -->
+</div>
+
+<div th:replace="~{fragments :: scripts}" class="mt-auto"></div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const editButtons = document.querySelectorAll('a[data-bs-toggle="modal"][data-bs-target="#editModal"]');
+        editButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                const tagId = this.getAttribute('data-id');
+                const tagName = this.getAttribute('data-name');
+
+                // Set the tag ID in the hidden input field
+                document.getElementById('editTagId').value = tagId;
+                // Set the tag name in the text input field
+                document.getElementById('editTagName').value = tagName;
+
+                // Update the form action URL to include the tag ID
+                const form = document.querySelector('#editTagForm');
+                form.action = '/tags/edit/' + tagId;  // This will update the action dynamically
+            });
+        });
+    });
+</script>
+</body>
+</html>

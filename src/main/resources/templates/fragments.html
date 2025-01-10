@@ -1,0 +1,94 @@
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:fragment="common_header(title, links)">
+    <title th:text="${title}">The LMS</title>
+    <!-- Common styles and scripts -->
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<!--    <th:block th:replace="${links}"></th:block>-->
+    <link rel="stylesheet" th:href="${links}">
+    <style>
+        .scrollable-table {
+            overflow: auto;
+            max-height: 650px; /* Default for larger screens */
+        }
+
+        /* Adjust max-height for medium-sized screens */
+        @media (max-width: 1200px) {
+            .scrollable-table {
+                max-height: 500px;
+            }
+        }
+
+        /* Adjust max-height for small screens */
+        @media (max-width: 768px) {
+            .scrollable-table {
+                max-height: 400px;
+            }
+        }
+
+        /* Adjust max-height for extra small screens */
+        @media (max-width: 576px) {
+            .scrollable-table {
+                max-height: 300px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<!-- Header Fragment -->
+<div th:fragment="header">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">FSA</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                <div class="container-fluid">
+                    <div class="collapse navbar-collapse" id="navbarNav">
+                        <ul class="navbar-nav">
+                            <li class="nav-item active">
+                                <a class="nav-link" href="/">Home</a>
+                            </li>
+                            <!-- Dynamic Module Groups -->
+                            <li th:each="moduleGroup : ${moduleGroups}" class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="dropdownMenu{{moduleGroup.id}}" role="button"
+                                   data-bs-toggle="dropdown" aria-expanded="false">
+                                    <span th:text="${moduleGroup.name}"></span>
+                                </a>
+                                <ul class="dropdown-menu" th:aria-labelledby="'dropdownMenu' + ${moduleGroup.id}">
+                                    <li th:each="module : ${moduleGroup.modules}">
+                                        <a class="dropdown-item" th:href="${module.url}" th:text="${module.name}"></a>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+
+        </div>
+    </nav>
+    <!-- Spacing for fixed-top header -->
+    <div style="height: 70px;"></div>
+</div>
+
+<!-- Footer Fragment -->
+<div th:fragment="footer">
+    <footer class="bg-light text-center py-3">
+        <p>&copy; 2025 FSA - Learning Management System</p>
+    </footer>
+</div>
+
+<!-- Scripts Fragment -->
+<div th:fragment="scripts">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</div>
+</body>
+
+</html>

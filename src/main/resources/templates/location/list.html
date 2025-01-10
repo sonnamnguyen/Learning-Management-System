@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: common_header(~{::title}, ~{::link})}">
+    <title>Location List</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<!-- Wrapper for the whole page -->
+<div class="d-flex flex-column min-vh-100">
+    <!-- Sticky Header -->
+    <div th:replace="~{fragments :: header}" class="sticky-top"></div> <!-- Header always on top -->
+
+    <div class="px-5 flex-grow-1">
+        <h1 class="text-center">Locations</h1>
+        <div class="d-flex align-items-center mb-3">
+            <div class="flex-fill">
+                <!-- Search Form -->
+                <form action="/roles" method="get" class="d-flex w-50">
+                    <!-- Correctly bind the searchQuery model attribute using Thymeleaf -->
+                    <input type="text" class="form-control me-2" name="searchQuery" th:value="${searchQuery}" placeholder="Search by role name" aria-label="Search">
+                    <button class="btn btn-outline-secondary me-2" type="submit">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </form>
+            </div>
+            <div>
+                <!-- Export Button -->
+                <a href="/roles/export" class="btn btn-outline-secondary me-2">
+                    <i class="bi bi-file-earmark-excel"></i> Export
+                </a>
+
+                <!-- Import Button that triggers modal -->
+                <button class="btn btn-outline-secondary me-2" data-bs-toggle="modal" data-bs-target="#importModal">
+                    <i class="bi bi-upload"></i> Import
+                </button>
+
+                <a href="/locations/create" class="btn btn-success">
+                    <i class="bi bi-plus-circle"></i> Create New Location
+                </a>
+            </div>
+        </div>
+
+        <table class="table table-bordered">
+            <thead class="table-light">
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Address</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="location : ${locations}">
+                <td th:text="${location.id}"></td>
+                <td th:text="${location.name}"></td>
+                <td th:text="${location.address}"></td>
+                <td>
+                    <a th:href="@{'/locations/edit/' + ${location.id}}" class="btn btn-outline-secondary btn-sm" title="Edit">
+                        <i class="bi bi-pencil text-secondary"></i>
+                    </a>
+                    <a th:href="@{'/locations/delete/' + ${location.id}}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure?')" title="Delete">
+                        <i class="bi bi-trash"></i>
+                    </a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Footer -->
+    <div th:replace="~{fragments :: footer}" class="mt-auto"></div> <!-- Footer stays at the bottom -->
+</div>
+
+<div th:replace="~{fragments :: scripts}" class="mt-auto"></div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const editButtons = document.querySelectorAll('a[data-bs-toggle="modal"][data-bs-target="#editModal"]');
+        editButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                const roleId = this.getAttribute('data-id');
+                const roleName = this.getAttribute('data-name');
+
+                // Set the role ID in the hidden input field
+                document.getElementById('editRoleId').value = roleId;
+                // Set the role name in the text input field
+                document.getElementById('editRoleName').value = roleName;
+
+                // Update the form action URL to include the role ID
+                const form = document.querySelector('#editRoleForm');
+                form.action = '/roles/edit/' + roleId;  // This will update the action dynamically
+            });
+        });
+    });
+</script>
+</body>
+</html>
