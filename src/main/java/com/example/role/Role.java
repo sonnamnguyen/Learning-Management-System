@@ -1,7 +1,10 @@
 package com.example.role;
 
+import com.example.user.User;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.List;
 
 @AllArgsConstructor
 @Setter
@@ -17,6 +20,9 @@ public class Role {
 
     @Column(nullable = false, unique = true, length = 100)
     private String name;
+
+    @ManyToMany(mappedBy = "roles")
+    private List<User> users;
 
     @Override
     public String toString() {

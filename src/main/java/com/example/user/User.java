@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import java.util.Collection;
 import java.util.List;
@@ -43,6 +45,8 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private Boolean isLocked = false;
 
+
+
     // Many-to-many relationship with Role
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -58,11 +62,22 @@ public class User implements UserDetails {
     }
 
     @Override
+    public String getUsername() {
+        return username;
+    }
+
+    @Override
+    public String getPassword() {
+        return password;
+    }
+
+    @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return roles.stream()
-                .map(role -> (GrantedAuthority) () -> role.getName())
-                .toList();
+                .map(role -> (GrantedAuthority) role::getName)  // Assuming Role has a method getName() returning role name
+                .toList();  // Collect roles into a list of GrantedAuthority
     }
+
 
     @Override
     public boolean isAccountNonExpired() {
@@ -83,6 +98,7 @@ public class User implements UserDetails {
     public boolean isEnabled() {
         return UserDetails.super.isEnabled();
     }
+
 
 
     // Other UserDetails methods can be implemented here...

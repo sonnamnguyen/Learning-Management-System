@@ -1,5 +1,6 @@
 package com.example.course;
 
+import com.example.course.section.Section;
 import com.example.tag.Tag;
 import com.example.user.User;
 import jakarta.persistence.*;
@@ -57,6 +58,9 @@ public class Course {
     private int durationInWeeks; // Added field for course duration
     private String language; // Added field for course language
     private String level; // Added field for course level (e.g., Beginner, Intermediate, Advanced)
+
+    @OneToMany(mappedBy = "course")
+    List<Section> sections;
 
     public float getDiscountedPrice() {
         return price * (1 - discount / 100);

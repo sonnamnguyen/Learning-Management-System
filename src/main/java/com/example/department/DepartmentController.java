@@ -1,5 +1,6 @@
 package com.example.department;
 
+import com.example.exception.*;
 import com.example.course.CourseService;
 import com.example.location.LocationService;
 import com.example.user.UserService;
@@ -36,9 +37,9 @@ public class DepartmentController {
     // Get paginated list of departments
     @GetMapping()
     public String getDepartments(Model model,
-                             @RequestParam(defaultValue = "0") int page,
-                             @RequestParam(defaultValue = "10") int size,
-                             @RequestParam(value = "searchQuery", required = false) String searchQuery) {
+                                 @RequestParam(defaultValue = "0") int page,
+                                 @RequestParam(defaultValue = "10") int size,
+                                 @RequestParam(value = "searchQuery", required = false) String searchQuery) {
         Page<Department> departmentsPage;
 
         if (searchQuery != null && !searchQuery.isEmpty()) {
@@ -66,14 +67,14 @@ public class DepartmentController {
 
     // Create new department
     @PostMapping("/create")
-    public String createDepartment(@ModelAttribute Department department,
+    public String create(@ModelAttribute Department department,
                                    Model model,
                                    RedirectAttributes redirectAttributes) {
         try {
             departmentService.createDepartment(department);
             redirectAttributes.addFlashAttribute("success", "Department created successfully!");
             return "redirect:/departments";
-        } catch (DepartmentAlreadyExistsException e) {
+        } catch (ObjectAlreadyExistsException e) {
             // Add all necessary attributes for the form
             model.addAttribute("error", e.getMessage());
             model.addAttribute("department", department); // Keep the submitted data
@@ -102,7 +103,7 @@ public class DepartmentController {
             departmentService.updateDepartment(id, department);
             redirectAttributes.addFlashAttribute("success", "Department updated successfully!");
             return "redirect:/departments";
-        } catch (DepartmentAlreadyExistsException e) {
+        } catch (ObjectAlreadyExistsException e) {
             // Add all necessary attributes for the form
             model.addAttribute("error", e.getMessage());
             model.addAttribute("department", department); // Keep the submitted data
@@ -154,4 +155,3 @@ public class DepartmentController {
         return "redirect:/departments";  // Redirect to the departments list page after import
     }
 }
-

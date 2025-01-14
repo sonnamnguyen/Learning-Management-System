@@ -24,6 +24,13 @@ public class CourseController {
     @Autowired
     private UserService userService;
 
+    // Thêm model attribute chung cho tất cả các phương thức
+    @ModelAttribute
+    public void addCommonAttributes(Model model) {
+        model.addAttribute("title", "Course Management");
+        model.addAttribute("links", "/style.css");
+    }
+
     // Get paginated list of courses
     @GetMapping()
     public String getCourses(Model model,
@@ -66,7 +73,8 @@ public class CourseController {
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable Long id, Model model) {
         model.addAttribute("course", courseService.getCourseById(id));
-        return "course/edit";
+        model.addAttribute("content", "course/edit");
+        return "layout";
     }
 
     // Update existing course
@@ -116,6 +124,14 @@ public class CourseController {
         List<Course> courses = courseService.importExcel(file);
         courseService.saveAll(courses);  // Save the courses in the database
         return "redirect:/courses";  // Redirect to the courses list page after import
+    }
+
+    // test read course material
+    @GetMapping("/material")
+    public String showMaterials(Model model) {
+        model.addAttribute("material", "/templates/material/test.pdf");
+        model.addAttribute("content", "course/test");
+        return "layout";
     }
 }
 

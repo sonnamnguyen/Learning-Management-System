@@ -1,6 +1,7 @@
 package com.example.user;
 
 import com.example.role.RoleService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Page;
@@ -27,8 +28,8 @@ public class UserController {
     // Get paginated list of users
     @GetMapping()
     public String getUsers(Model model,
-                           @RequestParam(defaultValue = "0") int page,
-                           @RequestParam(defaultValue = "10") int size,
+                           @RequestParam(name = "page",defaultValue = "0") int page,
+                           @RequestParam(name = "size",defaultValue = "10") int size,
                            @RequestParam(value = "searchQuery", required = false) String searchQuery) {
         Page<User> usersPage;
 
@@ -66,7 +67,7 @@ public class UserController {
 
     // Show edit form for a specific user
     @GetMapping("/edit/{id}")
-    public String showEditForm(@PathVariable Long id, Model model) {
+    public String showEditForm(@PathVariable(name= "id") Long id, Model model) {
         model.addAttribute("user", userService.getUserById(id));
         model.addAttribute("allRoles", roleService.getAllRoles()); // Assuming roleService is a service to fetch all roles
         return "user/edit";
@@ -74,7 +75,7 @@ public class UserController {
 
     // Update existing user
     @PostMapping("/edit/{id}")
-    public String updateUser(@PathVariable Long id, @ModelAttribute User user, Model model) {
+    public String updateUser(@PathVariable(name ="id") Long id, @ModelAttribute User user, Model model) {
         // You can add validation here if needed
         userService.updateUser(id, user);
         return "redirect:/users";
@@ -82,7 +83,7 @@ public class UserController {
 
     // Delete a user
     @GetMapping("/delete/{id}")
-    public String deleteUser(@PathVariable Long id) {
+    public String deleteUser(@PathVariable(name ="id") Long id) {
         userService.deleteUser(id);
         return "redirect:/users";
     }
@@ -112,5 +113,6 @@ public class UserController {
         userService.saveAll(users);  // Save the users in the database
         return "redirect:/users";  // Redirect to the users list page after import
     }
+
 }
 

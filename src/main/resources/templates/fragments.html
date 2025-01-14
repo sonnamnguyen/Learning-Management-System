@@ -1,4 +1,4 @@
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml">
 
 <head th:fragment="common_header(title, links)">
     <title th:text="${title}">The LMS</title>
@@ -65,6 +65,7 @@
                                     <li th:each="module : ${moduleGroup.modules}">
                                         <a class="dropdown-item" th:href="${module.url}" th:text="${module.name}"></a>
                                     </li>
+                                    <li sec:authorize="isAuthenticated()"><a class="dropdown-item" th:href="@{/logout}">Logout</a></li>
                                 </ul>
                             </li>
                         </ul>

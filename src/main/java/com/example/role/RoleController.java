@@ -20,13 +20,6 @@ public class RoleController {
     @Autowired
     private RoleService roleService;
 
-    // Thêm model attribute chung cho tất cả các phương thức
-    @ModelAttribute
-    public void addCommonAttributes(Model model) {
-        model.addAttribute("title", "Role");
-        model.addAttribute("links", "/style.css");
-    }
-
     // Get paginated list of roles
     @GetMapping()
     public String getRoles(Model model,
@@ -45,18 +38,14 @@ public class RoleController {
 
         model.addAttribute("rolesPage", rolesPage);
         model.addAttribute("searchQuery", searchQuery); // Pass search query back to the view
-        // add attribute for layout
-        model.addAttribute("content","role/list");
-
-        return "layout";
+        return "role/list";  // your view template for displaying roles
     }
 
     // Show create form
     @GetMapping("/create")
     public String showCreateForm(Model model) {
         model.addAttribute("role", new Role());
-        model.addAttribute("content", "role/create");
-        return "layout";
+        return "role/create"; // Points to create.html
     }
 
     // Create new role
@@ -75,8 +64,7 @@ public class RoleController {
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable Integer id, Model model) {
         model.addAttribute("role", roleService.getRoleById(id));
-        model.addAttribute("content", "role/edit");
-        return "layout";
+        return "role/edit";
     }
 
     // Update existing role
@@ -84,9 +72,7 @@ public class RoleController {
     public String updateRole(@PathVariable Integer id, @ModelAttribute Role role, Model model) {
         if (roleService.isRoleNameExists(role.getName())) {
             model.addAttribute("error", "Role name already exists!");
-            model.addAttribute("content", "role/edit");
-            return "layout";
-            //return "role/edit"; // Ensure this is the correct view name
+            return "role/edit"; // Ensure this is the correct view name
         }
         roleService.updateRole(id, role.getName());
         return "redirect:/roles";
@@ -104,7 +90,6 @@ public class RoleController {
     public String printRoles(Model model) {
         List<Role> roles = roleService.getAllRoles();
         model.addAttribute("roles", roles);
-
         return "role/print";
     }
 

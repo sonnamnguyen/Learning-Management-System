@@ -1,6 +1,6 @@
 package com.example.department;
 
-import lombok.SneakyThrows;
+
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,7 +9,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
+import com.example.exception.*;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -35,21 +35,22 @@ public class DepartmentService {
     }
 
     // Method to create a new department
-    public Department createDepartment(Department department) throws DepartmentAlreadyExistsException {
+    public Department createDepartment(Department department) throws ObjectAlreadyExistsException {
         if (isDepartmentNameExists(department.getName())) {
-            throw new DepartmentAlreadyExistsException("Department with name '" + department.getName() + "' already exists");
+            throw new ObjectAlreadyExistsException("Department with name '" + department.getName() + "' already exists");
         }
         return departmentRepository.save(department);
     }
 
     // Method to update an existing department
-    public Department updateDepartment(Long id, Department department) throws DepartmentAlreadyExistsException {
+    public Department updateDepartment(Long id, Department department) throws ObjectAlreadyExistsException {
         Optional<Department> existingDepartment = departmentRepository.findById(Math.toIntExact(id));
-        if (isDepartmentNameExists(department.getName())) {
-            throw new DepartmentAlreadyExistsException("Department with name '" + department.getName() + "' already exists");
-        }
+
         if (existingDepartment.isPresent()) {
             Department updatedDepartment = existingDepartment.get();
+            if (!updatedDepartment.getName().equals(department.getName()) && isDepartmentNameExists(department.getName())) {
+                throw new ObjectAlreadyExistsException("Department with name '" + department.getName() + "' already exists");
+            }
             updatedDepartment.setName(department.getName());
             updatedDepartment.setLocation(department.getLocation());
             updatedDepartment.setUsers(department.getUsers());
@@ -147,5 +148,16 @@ public class DepartmentService {
     public void saveAll(List<Department> departments) {
         departmentRepository.saveAll(departments);  // Save all roles at once
     }
-}
 
+    //for report
+    public int getTotalCoursesInDepartment(Long departmentId) {
+        return departmentRepository.findById(departmentId)
+                .map(department -> department.getCourses().size())
+                .orElse(0);
+    }
+
+    public Optional<Department> findById(Long departmentId) {
+        return departmentRepository.findById(departmentId);
+    }
+
+}

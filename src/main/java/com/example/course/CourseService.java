@@ -1,11 +1,9 @@
 package com.example.course;
 
-import com.example.role.Role;
-import com.example.tag.Tag;
-import com.example.user.User;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -31,8 +29,9 @@ public class CourseService {
     }
 
     // Method to fetch a course by ID
+    @Cacheable(value = "products", key = "#id")
     public Course getCourseById(Long id) {
-        return courseRepository.findById(Math.toIntExact(id)).orElse(null);
+        return courseRepository.findById(id).orElse(null);
     }
 
     // Method to create a new course
@@ -42,7 +41,7 @@ public class CourseService {
 
     // Method to update an existing course
     public Course updateCourse(Long id, Course course) {
-        Optional<Course> existingCourse = courseRepository.findById(Math.toIntExact(id));
+        Optional<Course> existingCourse = courseRepository.findById(id);
         if (existingCourse.isPresent()) {
             Course updatedCourse = existingCourse.get();
             updatedCourse.setName(course.getName());
@@ -63,7 +62,7 @@ public class CourseService {
 
     // Method to delete a course by ID
     public void deleteCourse(Long id) {
-        courseRepository.deleteById(Math.toIntExact(id));
+        courseRepository.deleteById(id);
     }
 
     // Method to fetch paginated courses

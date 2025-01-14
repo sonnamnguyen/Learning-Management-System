@@ -2,6 +2,7 @@ package com.example;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cache.annotation.EnableCaching;
 
 /**
  * Hello world!
@@ -9,6 +10,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  */
 //@SpringBootApplication // This annotation is used to mark the main class of a Spring Boot application
 @SpringBootApplication()
+@EnableCaching
 public class App
 {
     public static void main( String[] args )
