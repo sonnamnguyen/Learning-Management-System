@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assessment Analysis Report</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div class="container-fluid mt-5">
+    <h1 class="text-center">Assessment Analysis Report</h1>
+
+    <h4>Assessment Name: Midterm Exam</h4>
+    <p>Date of Assessment: October 10, 2023</p>
+    <p>Number of Students: 30</p>
+    <p>Average Score/Grade: B+</p>
+    <p>Highest Score/Grade: A+ (95)</p>
+    <p>Lowest Score/Grade: C- (68)</p>
+
+    <!-- Question-wise Performance Analysis -->
+    <h4 class="mt-3">Question-wise Performance Analysis</h4>
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th scope="col">Question Number</th>
+            <th scope="col">% Correct</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>1</td>
+            <td>90%</td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td>85%</td>
+        </tr>
+        <tr>
+            <td>3</td>
+            <td>70%</td>
+        </tr>
+        <tr>
+            <td>4</td>
+            <td>60%</td>
+        </tr>
+        <tr>
+            <td>5</td>
+            <td>80%</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <!-- Bar Chart for Question-wise Performance Analysis -->
+    <h4 class="mt-3">Question-wise Performance Trend</h4>
+    <canvas id="questionPerformanceChart" style="max-width: 100%; height: auto;"></canvas>
+
+    <!-- Common Mistakes or Areas for Improvement -->
+    <h4 class="mt-3">Common Mistakes or Areas for Improvement</h4>
+    <ul>
+        <li><strong>Question 3:</strong> Many students struggled with the concept of integration by parts. Additional practice problems are recommended.</li>
+        <li><strong>Question 4:</strong> There was confusion regarding the application of trigonometric identities. Reviewing these identities in class is suggested.</li>
+    </ul>
+
+    <script>
+        // Data for the bar chart
+        const questionLabels = ['Q1', 'Q2', 'Q3', 'Q4', 'Q5'];
+        const correctPercentages = [90, 85, 70, 60, 80];
+
+        // Configuration for the bar chart
+        const config = {
+            type: 'bar',
+            data: {
+                labels: questionLabels,
+                datasets: [{
+                    label: '% Correct',
+                    data: correctPercentages,
+                    backgroundColor: [
+                        'rgba(75, 192, 192, 0.6)',
+                        'rgba(153, 102, 255, 0.6)',
+                        'rgba(255, 159, 64, 0.6)',
+                        'rgba(255, 99, 132, 0.6)',
+                        'rgba(54, 162, 235, 0.6)'
+                    ],
+                    borderColor: [
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)',
+                        'rgba(255, 159, 64, 1)',
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            stepSize: 10
+                        }
+                    }
+                }
+            }
+        };
+
+        // Render the bar chart
+        const ctx = document.getElementById('questionPerformanceChart').getContext('2d');
+        new Chart(ctx, config);
+    </script>
+</div>
+
+<!-- Bootstrap JS and dependencies (optional) -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

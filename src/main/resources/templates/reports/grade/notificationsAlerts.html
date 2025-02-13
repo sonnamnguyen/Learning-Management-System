@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications and Alerts</title>
+    <!-- Bootstrap 4 CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .notification-item {
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container mt-5">
+    <h2 class="mb-4">Notifications and Alerts</h2>
+
+    <!-- Grade Notifications -->
+    <div id="grade-notifications" class="card mb-3">
+        <div class="card-header bg-primary text-white">
+            Grade Notifications
+        </div>
+        <div class="card-body">
+            <form id="gradeNotificationForm">
+                <div class="form-group">
+                    <label for="studentName">Student Name:</label>
+                    <input type="text" class="form-control" id="studentName" required>
+                </div>
+                <div class="form-group">
+                    <label for="assignmentTitle">Assignment Title:</label>
+                    <input type="text" class="form-control" id="assignmentTitle" required>
+                </div>
+                <div class="form-group">
+                    <label for="grade">Grade:</label>
+                    <input type="text" class="form-control" id="grade" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Send Notification</button>
+            </form>
+
+            <hr>
+
+            <h5>Recent Grade Notifications:</h5>
+            <div id="gradeNotificationsList"></div>
+        </div>
+    </div>
+
+    <!-- Assessment Reminders -->
+    <div id="assessment-reminders" class="card mb-3">
+        <div class="card-header bg-primary text-white">
+            Assessment Reminders
+        </div>
+        <div class="card-body">
+            <form id="reminderForm">
+                <div class="form-group">
+                    <label for="studentNameReminder">Student Name:</label>
+                    <input type="text" class="form-control" id="studentNameReminder" required>
+                </div>
+                <div class="form-group">
+                    <label for="assessmentTitle">Assessment Title:</label>
+                    <input type="text" class="form-control" id="assessmentTitle" required>
+                </div>
+                <div class="form-group">
+                    <label for="reminderDate">Reminder Date and Time:</label>
+                    <input type="datetime-local" class="form-control" id="reminderDate" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Set Reminder</button>
+            </form>
+
+            <hr>
+
+            <h5>Upcoming Assessment Reminders:</h5>
+            <div id="reminderList"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap 4 JS and dependencies -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<!-- Custom JavaScript -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const gradeNotificationForm = document.getElementById('gradeNotificationForm');
+        const reminderForm = document.getElementById('reminderForm');
+
+        let gradeNotifications = [];
+        let reminders = [];
+
+        // Load existing notifications and reminders from local storage
+        if (localStorage.getItem('gradeNotifications')) {
+            gradeNotifications = JSON.parse(localStorage.getItem('gradeNotifications'));
+            renderGradeNotifications();
+        }
+
+        if (localStorage.getItem('reminders')) {
+            reminders = JSON.parse(localStorage.getItem('reminders'));
+            renderReminders();
+        }
+
+        // Handle Grade Notification Form Submission
+        gradeNotificationForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const studentName = document.getElementById('studentName').value.trim();
+            const assignmentTitle = document.getElementById('assignmentTitle').value.trim();
+            const grade = document.getElementById('grade').value.trim();
+
+            if (studentName && assignmentTitle && grade) {
+                const notification = { studentName, assignmentTitle, grade };
+                gradeNotifications.push(notification);
+                localStorage.setItem('gradeNotifications', JSON.stringify(gradeNotifications));
+                renderGradeNotifications();
+                gradeNotificationForm.reset();
+            }
+        });
+
+        // Handle Reminder Form Submission
+        reminderForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const studentName = document.getElementById('studentNameReminder').value.trim();
+            const assessmentTitle = document.getElementById('assessmentTitle').value.trim();
+            const reminderDate = document.getElementById('reminderDate').value;
+
+            if (studentName && assessmentTitle && reminderDate) {
+                const reminder = { studentName, assessmentTitle, reminderDate };
+                reminders.push(reminder);
+                localStorage.setItem('reminders', JSON.stringify(reminders));
+                renderReminders();
+                reminderForm.reset();
+            }
+        });
+
+        // Render Grade Notifications
+        function renderGradeNotifications() {
+            const gradeNotificationsList = document.getElementById('gradeNotificationsList');
+            gradeNotificationsList.innerHTML = '';
+
+            gradeNotifications.forEach((notification, index) => {
+                const notificationItem = document.createElement('div');
+                notificationItem.className = 'alert alert-info notification-item';
+                notificationItem.innerHTML = `
+                    <strong>Student:</strong> ${notification.studentName}<br>
+                    <strong>Assignment:</strong> ${notification.assignmentTitle}<br>
+                    <strong>Grade:</strong> ${notification.grade}
+                    <button class="btn btn-danger float-right remove-notification" data-index="${index}">Remove</button>
+                `;
+                gradeNotificationsList.appendChild(notificationItem);
+            });
+
+            // Add event listeners to remove buttons
+            const removeButtons = document.querySelectorAll('.remove-notification');
+            removeButtons.forEach(button => {
+                button.addEventListener('click', function(event) {
+                    const index = event.target.getAttribute('data-index');
+                    gradeNotifications.splice(index, 1);
+                    localStorage.setItem('gradeNotifications', JSON.stringify(gradeNotifications));
+                    renderGradeNotifications();
+                });
+            });
+        }
+
+        // Render Reminders
+        function renderReminders() {
+            const reminderList = document.getElementById('reminderList');
+            reminderList.innerHTML = '';
+
+            reminders.forEach((reminder, index) => {
+                const reminderItem = document.createElement('div');
+                reminderItem.className = 'alert alert-warning notification-item';
+                reminderItem.innerHTML = `
+                    <strong>Student:</strong> ${reminder.studentName}<br>
+                    <strong>Assessment:</strong> ${reminder.assessmentTitle}<br>
+                    <strong>Date and Time:</strong> ${new Date(reminder.reminderDate).toLocaleString()}
+                    <button class="btn btn-danger float-right remove-reminder" data-index="${index}">Remove</button>
+                `;
+                reminderList.appendChild(reminderItem);
+            });
+
+            // Add event listeners to remove buttons
+            const removeReminderButtons = document.querySelectorAll('.remove-reminder');
+            removeReminderButtons.forEach(button => {
+                button.addEventListener('click', function(event) {
+                    const index = event.target.getAttribute('data-index');
+                    reminders.splice(index, 1);
+                    localStorage.setItem('reminders', JSON.stringify(reminders));
+                    renderReminders();
+                });
+            });
+        }
+    });
+</script>
+</body>
+</html>

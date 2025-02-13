@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Attendance Report</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div class="container-fluid mt-5">
+    <h1 class="text-center">Student Attendance Report</h1>
+    <div class="row">
+        <div class="col-md-6">
+            <!-- Student Information -->
+            <h4>Student Name: John Doe</h4>
+            <p>Total Classes Held: 30</p>
+            <p>Classes Attended: 28</p>
+            <p>Absences and Excuses: 2 Absences, 1 Excuse</p>
+            <p>Attendance Percentage: 93.33%</p>
+        </div>
+        <div class="col-md-6">
+            <!-- Pie Chart for Attendance Summary -->
+            <h4 class="mt-3">Attendance Summary</h4>
+            <canvas id="attendanceChart" style="max-width: 60%; height: auto; margin: auto;"></canvas>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <!-- Detailed Absences and Excuses -->
+            <h4 class="mt-3">Detailed Absences and Excuses</h4>
+            <table class="table table-striped">
+            <thead>
+            <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Type</th>
+                <th scope="col">Reason</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>October 15, 2023</td>
+                <td>Absence</td>
+                <td>Sick</td>
+            </tr>
+            <tr>
+                <td>October 22, 2023</td>
+                <td>Absence</td>
+                <td>Family Emergency</td>
+            </tr>
+            <tr>
+                <td>October 18, 2023</td>
+                <td>Excuse</td>
+                <td>Doctor's Appointment</td>
+            </tr>
+            </tbody>
+        </table>
+        </div>
+    </div>
+</div>
+
+<!-- Script for Pie Chart -->
+<script>
+    // Data for the pie chart
+    const attendanceData = {
+        labels: ['Attended', 'Absences'],
+        datasets: [{
+            data: [28, 2],
+            backgroundColor: ['#4CAF50', '#F44336'],
+            hoverBackgroundColor: ['#45a049', '#e53935']
+        }]
+    };
+
+    // Configuration for the pie chart
+    const attendanceConfig = {
+        type: 'pie',
+        data: attendanceData,
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed !== null) {
+                                label += context.parsed + ' classes';
+                            }
+                            return label;
+                        }
+                    }
+                }
+            }
+        }
+    };
+
+    // Render the pie chart
+    const ctx = document.getElementById('attendanceChart').getContext('2d');
+    new Chart(ctx, attendanceConfig);
+</script>
+
+<!-- Bootstrap JS and dependencies (optional) -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class Performance Summary</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div class="container-fluid mt-5">
+    <h1 class="text-center">Class Performance Summary</h1>
+
+    <h4>Class Name: Math 101</h4>
+    <p>Number of Students: 30</p>
+    <p>Average Score/Grade: B+</p>
+    <p>Highest Score/Grade: A+ (95)</p>
+    <p>Lowest Score/Grade: C- (68)</p>
+
+    <!-- Distribution of Grades Table -->
+    <h4 class="mt-3">Distribution of Grades</h4>
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th scope="col">Grade</th>
+            <th scope="col">Number of Students</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>A+</td>
+            <td>5</td>
+        </tr>
+        <tr>
+            <td>A</td>
+            <td>8</td>
+        </tr>
+        <tr>
+            <td>B+</td>
+            <td>6</td>
+        </tr>
+        <tr>
+            <td>B</td>
+            <td>5</td>
+        </tr>
+        <tr>
+            <td>C+</td>
+            <td>2</td>
+        </tr>
+        <tr>
+            <td>C-</td>
+            <td>4</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <!-- Overall Class Performance Trend Chart -->
+    <h4 class="mt-3">Overall Class Performance Trend</h4>
+    <canvas id="performanceTrendChart" style="max-width: 100%; height: auto;"></canvas>
+
+    <script>
+        // Data for the chart
+        const trendLabels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+        const averageScores = [78, 82, 85, 88];
+
+        // Configuration for the line chart
+        const config = {
+            type: 'line',
+            data: {
+                labels: trendLabels,
+                datasets: [{
+                    label: 'Average Score',
+                    data: averageScores,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 2,
+                    fill: false
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        };
+
+        // Render the chart
+        window.onload = function() {
+            const ctx = document.getElementById('performanceTrendChart').getContext('2d');
+            new Chart(ctx, config);
+        };
+    </script>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</div>
+</body>
+</html>
