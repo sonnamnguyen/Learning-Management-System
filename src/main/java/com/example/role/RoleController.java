@@ -9,6 +9,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.ByteArrayInputStream;
 import java.util.List;
@@ -80,8 +81,14 @@ public class RoleController {
 
     // Delete a role
     @GetMapping("/delete/{id}")
-    public String deleteRole(@PathVariable Integer id) {
-        roleService.deleteRole(id);
+    public String deleteRole(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
+        try {
+            roleService.deleteRole(id);
+            redirectAttributes.addFlashAttribute("success", "Role deleted successfully!");
+        } catch (IllegalArgumentException e) {
+            // Handle exception
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
         return "redirect:/roles";
     }
 
@@ -114,9 +121,16 @@ public class RoleController {
 
     // Import roles from Excel
     @PostMapping("/import")
-    public String importRoles(@RequestParam("file") MultipartFile file) {
-        List<Role> roles = roleService.importExcel(file);
-        roleService.saveAll(roles);  // Save the roles in the database
+    public String importRoles(@RequestParam("file") MultipartFile file, RedirectAttributes redirectAttributes) {
+        List<Role> roles = null;
+        try {
+            roles = roleService.importExcel(file);
+            roleService.saveAll(roles);
+            redirectAttributes.addFlashAttribute("success", "Import successful!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Import failed: " + e.getMessage());
+        }
+          // Save the roles in the database
         return "redirect:/roles";  // Redirect to the roles list page after import
     }
 }

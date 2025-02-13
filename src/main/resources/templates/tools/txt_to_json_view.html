@@ -2,10 +2,10 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conversion Results</title>
+    <title>TXT to JSON Conversion Results</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
     <style>
         .list-group-item {
             display: flex;
@@ -35,27 +35,39 @@
     <!-- Header -->
     <div th:replace="~{fragments :: header}" class="sticky-top"></div>
 
-    <h1 class="text-center text-success">Conversion Results</h1>
-    <p class="text-center">Below is the content of your TXT files converted into JSON format. You can download them individually or all as a ZIP file.</p>
+    <h1 class="text-center text-success">TXT to JSON Conversion Results</h1>
+    <p class="text-center">
+        Below is the content of your TXT files converted into JSON format.
+        You can download them individually or all as a ZIP file.
+    </p>
 
-    <!-- File List -->
-    <div th:if="${txtData != null}">
-        <h4>Converted Content:</h4>
-        <ul class="list-group mb-4">
-            <li class="list-group-item" th:each="entry : ${txtData}">
-                <div>
-                    <h5 th:text="${entry.key}"></h5>
-                </div>
-                <a href="javascript:void(0);"
-                   class="btn btn-outline-primary"
-                   th:attr="data-file-name=${entry.key}, data-json=${entry.value}">Download</a>
+    <!-- Log error -->
+    <div th:if="${errorMap != null and !#lists.isEmpty(errorMap)}" class="mb-4">
+        <h4 class="text-danger">Conversion Errors:</h4>
+        <ul class="list-group">
+            <li class="list-group-item list-group-item-danger" th:each="errEntry : ${errorMap}">
+                <strong th:text="${errEntry.key}"></strong>
+                <span th:text="${errEntry.value}"></span>
             </li>
         </ul>
     </div>
 
+    <!-- File List -->
+    <!-- jsonData là Map<String, String> -->
+    <div th:if="${jsonData != null and #strings.trim(jsonData) != '{}'}">
+        <h4 class="text-success">Conversion Success:</h4>
+        <ul class="list-group mb-4" id="fileList"
+            th:data-json="${jsonData}">
+        </ul>
+    </div>
+
+    <div th:if="${jsonData == null}">
+        <p class="text-warning">No files to display.</p>
+    </div>
+
     <!-- Action Buttons -->
     <div class="d-flex justify-content-center gap-2">
-        <button class="btn btn-primary" onclick="downloadAllAsZip()">Download All as ZIP</button>
+        <button th:if="${jsonData != null and #strings.trim(jsonData) != '{}'}" class="btn btn-primary" onclick="downloadAllAsZip()">Download All as ZIP</button>
         <button class="btn btn-refresh" onclick="window.location.href='/tools/convert_txt'">Convert More</button>
     </div>
 
@@ -68,64 +80,117 @@
 
 <!-- Bootstrap 5 JS Bundle -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- JSZip (tạo file ZIP) -->
+<script src="https://cdn.jsdelivr.net/npm/jszip/dist/jszip.min.js"></script>
+
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const downloadButtons = document.querySelectorAll('.btn-outline-primary');
+        const fileList = document.getElementById('fileList');
+        const rawJsonData = fileList?.getAttribute('data-json') || "";
 
-        // Event for individual download
-        downloadButtons.forEach(button => {
-            button.addEventListener('click', function () {
-                const fileName = this.getAttribute('data-file-name');
-                const jsonData = this.getAttribute('data-json'); // JSON data as string
+        let parsedData = JSON.parse(rawJsonData)
 
-                downloadFile(fileName, jsonData);
-            });
+        Object.entries(parsedData).forEach(([fileName, base64Str]) => {
+            try {
+                const jsonText = atob(base64Str);
+                let jsonObj;
+                try {
+                    jsonObj = JSON.parse(jsonText);
+                } catch (error) {
+                    console.error("Error parsing JSON:", error);
+                    jsonObj = null;
+                }
+
+                let questionCount = 0;
+                if (jsonObj && typeof jsonObj.total_questions === 'number') questionCount = jsonObj.total_questions
+
+                // Tạo list item
+                const listItem = document.createElement('li');
+                listItem.className = 'list-group-item';
+                listItem.innerHTML = `
+                    <div>
+                        <span>${fileName}</span>
+                        <small class="text-muted">(Questions: ${questionCount})</small>
+                    </div>
+                    <button type="button"
+                            class="btn btn-outline-primary"
+                            data-file-name="${fileName}"
+                            data-base64="${base64Str}">
+                        Download
+                    </button>
+                `;
+
+                fileList.appendChild(listItem);
+            } catch (error) {
+                console.error(`Error processing file: ${fileName}`, error);
+            }
+        });
+
+        // Sự kiện click download cho từng file
+        fileList.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON' && e.target.classList.contains('btn-outline-primary')) {
+                const fileName = e.target.getAttribute('data-file-name');
+                const base64Data = e.target.getAttribute('data-base64');
+
+                downloadFile(fileName, base64Data);
+            }
         });
     });
 
-    function downloadFile(fileName, jsonData) {
-        // Create Blob with JSON data
-        const blob = new Blob([jsonData], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
+    // Hàm tải file JSON từ base64
+    function downloadFile(fileName, base64Data) {
+        try {
+            // decode Base64 -> byte array
+            const jsonBytes = atob(base64Data);
+            const blob = new Blob([jsonBytes], { type: 'application/json' });
 
-        // Create and trigger download link
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = fileName + '.json';
-        a.click();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName + ".json";
+            a.click();
+            URL.revokeObjectURL(url);
 
-        // Revoke URL after download
-        URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error(`Error downloading ${fileName}:`, err);
+        }
     }
 
-    async function downloadAllAsZip() {
-        // Collect all JSON data
+    // Hàm tải tất cả file thành ZIP
+    function downloadAllAsZip() {
+        const fileList = document.getElementById('fileList');
+        const rawJsonData = fileList?.getAttribute('data-json') || "";
+        let base64Map = {};
+
+        try {
+            base64Map = JSON.parse(rawJsonData);
+        } catch (error) {
+            console.error("Error parsing JSON for ZIP:", error);
+            return;
+        }
+
+        if (!Object.keys(base64Map).length) {
+            alert("No valid JSON files to download.");
+            return;
+        }
+
         const zip = new JSZip();
-        const listItems = document.querySelectorAll('.list-group-item');
 
-        listItems.forEach(item => {
-            const fileName = item.querySelector('h5').textContent;
-            const jsonData = item.querySelector('.btn-outline-primary').getAttribute('data-json');
+        // add each file to ZIP
+        for (const [fileName, base64Data] of Object.entries(base64Map)) {
+            const jsonBytes = atob(base64Data); // decode Base64
+            zip.file(`${fileName}.json`, jsonBytes);
+        }
 
-            // Add each JSON file to the zip archive
-            zip.file(`${fileName}.json`, jsonData);
+        // generate ZIP
+        zip.generateAsync({ type: "blob" }).then((content) => {
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(content);
+            a.download = "converted_files.zip";
+            a.click();
+            URL.revokeObjectURL(a.href);
         });
-
-        // Generate ZIP file and trigger download
-        const content = await zip.generateAsync({ type: 'blob' });
-        const zipUrl = URL.createObjectURL(content);
-
-        const a = document.createElement('a');
-        a.href = zipUrl;
-        a.download = 'all_files.zip';
-        a.click();
-
-        // Revoke URL after download
-        URL.revokeObjectURL(zipUrl);
     }
 </script>
-
-<!-- Include JSZip Library -->
-<script src="https://cdn.jsdelivr.net/npm/jszip/dist/jszip.min.js"></script>
 </body>
 </html>

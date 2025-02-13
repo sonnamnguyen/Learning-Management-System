@@ -12,6 +12,7 @@ import java.util.List;
 @NoArgsConstructor
 @Entity
 @Builder
+
 public class Role {
 
     @Id
@@ -23,6 +24,7 @@ public class Role {
 
     @ManyToMany(mappedBy = "roles")
     private List<User> users;
+
 
     @Override
     public String toString() {

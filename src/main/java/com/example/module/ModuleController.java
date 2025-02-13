@@ -32,7 +32,7 @@ public class ModuleController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('ADMIN')")
+//    @PreAuthorize("hasAuthority('ADMIN')")
     public String listModules(Model model,
                               @RequestParam(value = "searchQuery", required = false) String searchQuery,
                               @RequestParam(value = "page", defaultValue = "0") int page,
@@ -51,7 +51,7 @@ public class ModuleController {
         model.addAttribute("totalItems", modules.getTotalElements());
         model.addAttribute("searchQuery", searchQuery);
         // add attribute for layout
-        model.addAttribute("content","modules/list-modules");
+        model.addAttribute("content","modules/list");
 
         return "layout";
     }
@@ -88,11 +88,19 @@ public class ModuleController {
     }
 
     @GetMapping("/delete/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public String deleteModule(@PathVariable("id") Long id) {
         moduleService.deleteModule(id);
         return "redirect:/modules";
     }
 
+    // Print roles page
+    @GetMapping("/print")
+    public String printRoles(Model model) {
+        List<Module> modules = moduleService.findAllModules();
+        model.addAttribute("modules", modules);
+        return "modules/print";
+    }
     @GetMapping("/export")
     public ResponseEntity<InputStreamResource> exportModules() {
         // Fetch all roles (page size set to max to get all records)

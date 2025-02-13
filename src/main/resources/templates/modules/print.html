@@ -17,7 +17,7 @@
     </thead>
     <tbody>
     <!-- Loop through moduleGroups and display them -->
-    <tr th:each="module, iterStat : ${moduleList}">
+    <tr th:each="module, iterStat : ${modules}">
         <td class="text-center" th:text="${iterStat.index + 1}"></td> <!-- Start numbering from 1 -->
         <td th:text="${module.name}"></td>
     </tr>

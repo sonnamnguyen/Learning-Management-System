@@ -1,5 +1,7 @@
 package com.example.role;
 
+import com.example.user.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -24,17 +26,18 @@ import com.example.utils.Helper;
 import static com.example.utils.Helper.getCellValueAsString;
 
 @Service
+@RequiredArgsConstructor
 public class RoleService {
 
-    @Autowired
-    private RoleRepository roleRepository;
+    private final RoleRepository roleRepository;
+    private final UserRepository userRepository;
 
     public List<Role> getAllRoles() {
         return roleRepository.findAll();
     }
 
-    public Role findByName(String name) {
-        return roleRepository.findByName(name).orElse(null);
+    public Optional<Role> findByName(String name) {
+        return roleRepository.findByName(name);
     }
     public Role getRoleById(Integer id) {
         return roleRepository.findById(id).orElse(null);
@@ -56,7 +59,10 @@ public class RoleService {
         return null;
     }
 
-    public void deleteRole(Integer id) {
+    public void deleteRole(Integer id)  {
+        if(userRepository.existsByRolesContains(roleRepository.findById(id).get())) {
+            throw new IllegalArgumentException("Cannot delete this role: Role is assigned to one or more users");
+        }
         roleRepository.deleteById(id);
     }
 
@@ -73,16 +79,16 @@ public class RoleService {
         return roleRepository.findByNameContainingIgnoreCase(searchQuery, pageable);
     }
 
-    public List<Role> importExcel(MultipartFile file) {
-        try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
+    public List<Role> importExcel(MultipartFile file) throws Exception {
+        Workbook workbook = new XSSFWorkbook(file.getInputStream()) ;
             Sheet sheet = workbook.getSheetAt(0);
-            int rowCount = sheet.getPhysicalNumberOfRows();
+            int rowCount = sheet.getLastRowNum() + 1;
             List<Role> roles = new ArrayList<>();
 
             for (int i = 1; i < rowCount; i++) { // Start from 1 to skip the header row
                 Row row = sheet.getRow(i);
                 if (row != null) {
-                    Cell cell = row.getCell(0); // Assume role name is in column 0
+                    Cell cell = row.getCell(1); // Assume role name is in column 1
                     if (cell != null) {
                         String roleName = getCellValueAsString(cell).trim(); // Use helper function
 
@@ -92,15 +98,13 @@ public class RoleService {
                             role.setName(roleName); // Correctly set the role name
                             roles.add(role);
                         }
+                        else throw new IllegalArgumentException("Role " + roleName + " already exists");
                     }
                 }
             }
 
             // Save roles to the database
-            return roleRepository.saveAll(roles); // Assuming you have a roleRepository bean
-        } catch (IOException e) {
-            throw new RuntimeException("Error importing roles from Excel", e);
-        }
+            return roles; // Assuming you have a roleRepository bean
     }
 
     private boolean roleExists(String roleName) {

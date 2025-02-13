@@ -1,17 +1,18 @@
 package com.example.user;
 
 import com.example.role.Role;
+import com.example.role.RoleRepository;
+import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,14 +20,14 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
-public class UserService implements UserDetailsService {
+@RequiredArgsConstructor
+public class UserService {
 
-    @Autowired
-    private UserRepository userRepository;
-
+    private final PasswordEncoder passwordEncoder;
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     // Method to fetch all users
     public List<User> getAllUsers() {
         return userRepository.findAll();
@@ -38,30 +39,38 @@ public class UserService implements UserDetailsService {
     }
 
     // Method to create a new user
-    public void createUser(User user) {
+    public void createUser(User user) throws Exception {
         // Ensure user has a valid username before saving
         if (user.getUsername() == null || user.getUsername().isEmpty()) {
             throw new IllegalArgumentException("Username cannot be null or empty");
+        }
+        if (userRepository.findByUsername(user.getUsername()).isPresent()) {
+            throw new IllegalArgumentException("Username already exists");
+        }
+        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+            throw new IllegalArgumentException("Email already exists");
         }
         userRepository.save(user);
     }
 
     // Method to update an existing user
-    public User updateUser(Long id, User user) {
+    public void updateUser(Long id, User user) {
         Optional<User> existingUser = userRepository.findById(id);
         if (existingUser.isPresent()) {
             User updatedUser = existingUser.get();
-            updatedUser.setUsername(user.getUsername());
-            updatedUser.setPassword(user.getPassword());
+            updatedUser.setUsername(updatedUser.getUsername());
+            // Only update password if it's not null
+            String password = user.getPassword().isEmpty() ? updatedUser.getPassword() : passwordEncoder.encode(user.getPassword());
+            updatedUser.setPassword(password);
             updatedUser.setFirstName(user.getFirstName());
             updatedUser.setLastName(user.getLastName());
             updatedUser.setEmail(user.getEmail());
             updatedUser.setIs2faEnabled(user.getIs2faEnabled());
             updatedUser.setIsLocked(user.getIsLocked());
             updatedUser.setRoles(user.getRoles());
-            return userRepository.save(updatedUser);
+            userRepository.save(updatedUser);
+
         }
-        return null;
     }
 
     // Method to delete a user by ID
@@ -82,37 +91,49 @@ public class UserService implements UserDetailsService {
     }
 
     // Method to import users from an Excel file
-    public List<User> importExcel(MultipartFile file) {
-        try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
-            Sheet sheet = workbook.getSheetAt(0);
-            int rowCount = sheet.getPhysicalNumberOfRows();
-            List<User> users = new ArrayList<>();
+    public List<User> importExcel(MultipartFile file) throws Exception {
+        Workbook workbook = new XSSFWorkbook(file.getInputStream());
+        Sheet sheet = workbook.getSheetAt(0);
+        int rowCount = sheet.getPhysicalNumberOfRows();
+        List<User> users = new ArrayList<>();
 
-            for (int i = 1; i < rowCount; i++) { // Start from 1 to skip the header row
-                Row row = sheet.getRow(i);
-                if (row != null) {
-                    // Assume user data is in columns
-                    String username = row.getCell(0).getStringCellValue().trim();
-                    String password = row.getCell(1).getStringCellValue().trim();
-                    String firstName = row.getCell(2).getStringCellValue().trim();
-                    String lastName = row.getCell(3).getStringCellValue().trim();
-                    String email = row.getCell(4).getStringCellValue().trim();
+        for (int i = 1; i < rowCount; i++) { // Start from 1 to skip the header row
+            Row row = sheet.getRow(i);
+            if (row != null) {
+                // Assume user data is in columns
+                // bỏ cột đầu (id)
+                String username = row.getCell(1).getStringCellValue().trim();
+                String firstName = row.getCell(2).getStringCellValue().trim();
+                String lastName = row.getCell(3).getStringCellValue().trim();
+                String email = row.getCell(4).getStringCellValue().trim();
 
-                    // Create a new User object and add it to the list
-                    User user = new User();
-                    user.setUsername(username);
-                    user.setPassword(password);
-                    user.setFirstName(firstName);
-                    user.setLastName(lastName);
-                    user.setEmail(email);
-                    users.add(user);
+
+                //validate
+                if (existsByEmail(email)) {
+                    throw new IllegalArgumentException("Email " + email + " already exists");
                 }
+                if (existsByUsername(username)) {
+                    throw new IllegalArgumentException("Username " + username + " already exists");
+                }
+                // Create a new User object and add it to the list
+                User user = new User();
+                user.setUsername(username);
+                user.setPassword(passwordEncoder.encode("123456"));
+                user.setFirstName(firstName);
+                user.setLastName(lastName);
+                user.setEmail(email);
+
+                if(!roleRepository.existsByName("STUDENT")) {
+                    Role role = new Role();
+                    role.setName("STUDENT");
+                    roleRepository.save(role);
+                }
+                user.setRoles(List.of(roleRepository.findByName("STUDENT").get()));
+                users.add(user);
             }
-            // Save users to the database
-            return userRepository.saveAll(users);
-        } catch (IOException e) {
-            throw new RuntimeException("Error importing users from Excel", e);
         }
+        // Save users to the database
+        return users;
     }
 
     // Method to export users to an Excel file
@@ -121,7 +142,7 @@ public class UserService implements UserDetailsService {
         Sheet sheet = workbook.createSheet("Users");
 
         // Create the header row
-        String[] headers = {"User ID", "Username", "First Name", "Last Name", "Email"};
+        String[] headers = {"User ID", "Username", "Password", "First Name", "Last Name", "Email"};
         Row headerRow = sheet.createRow(0);
         for (int i = 0; i < headers.length; i++) {
             headerRow.createCell(i).setCellValue(headers[i]);
@@ -133,9 +154,10 @@ public class UserService implements UserDetailsService {
             Row row = sheet.createRow(rowNum++);
             row.createCell(0).setCellValue(user.getId());
             row.createCell(1).setCellValue(user.getUsername());
-            row.createCell(2).setCellValue(user.getFirstName());
-            row.createCell(3).setCellValue(user.getLastName());
-            row.createCell(4).setCellValue(user.getEmail());
+            row.createCell(2).setCellValue("");
+            row.createCell(3).setCellValue(user.getFirstName());
+            row.createCell(4).setCellValue(user.getLastName());
+            row.createCell(5).setCellValue(user.getEmail());
         }
 
         // Write the workbook to a byte array output stream
@@ -152,7 +174,18 @@ public class UserService implements UserDetailsService {
 
     // Method to find a user by username
     public User findByUsername(String username) {
-        return userRepository.findByUsername(username).orElseThrow(()  -> new IllegalArgumentException("User not found"));
+        return userRepository.findByUsername(username).orElseThrow(() -> new IllegalArgumentException("User not found"));
+    }
+
+    public List<User> getAllInstructor(){
+        return userRepository.findByRoles(List.of(roleRepository.findByName("INSTRUCTOR").orElseThrow(() -> new IllegalArgumentException("Role not found"))));
+    }
+
+    //Get current user to use in many methods
+    public User getCurrentUser(){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName(); // Get the username of the logged-in user
+        return findByUsername(username);
     }
 
     //authenticate
@@ -190,16 +223,4 @@ public class UserService implements UserDetailsService {
         userRepository.saveAll(users);  // Save all users at once
     }
 
-    @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
-        List<Role> roles = user.getRoles();
-
-        Set<GrantedAuthority> grantedAuthorities = new HashSet<>();
-
-        for (Role role : roles) {
-            grantedAuthorities.add(new SimpleGrantedAuthority(role.getName()));
-        }
-        return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(), grantedAuthorities);
-    }
 }
