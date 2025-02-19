@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Individual Student Report Card</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .report-card {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .header-section {
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 1.5em;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="mt-5">
+    <div class="report-card">
+        <!-- Header Section -->
+        <div class="header-section text-center">
+            <h1>Individual Student Report Card</h1>
+            <p><strong>Student Name:</strong> John Doe</p>
+            <p><strong>Date of Birth:</strong> January 1, 2005</p>
+            <p><strong>Grade Level:</strong> 10th Grade</p>
+        </div>
+
+        <!-- Class/Subject Information -->
+        <h4 class="section-title">Class/Subject Information</h4>
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th scope="col">Subject</th>
+                <th scope="col">Teacher</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>Math 101 - Algebra</td>
+                <td>Mr. Smith</td>
+            </tr>
+            <tr>
+                <td>English Literature</td>
+                <td>Mrs. Johnson</td>
+            </tr>
+            <tr>
+                <td>Biology</td>
+                <td>Dr. Lee</td>
+            </tr>
+            </tbody>
+        </table>
+
+        <!-- Assessment Scores and Grades -->
+        <h4 class="section-title">Assessment Scores and Grades</h4>
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th scope="col">Subject</th>
+                <th scope="col">Midterm Score</th>
+                <th scope="col">Final Exam Score</th>
+                <th scope="col">Grade</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Math 101 - Algebra</td>
+                        <td>85</td>
+                        <td>92</td>
+                        <td>A</td>
+                    </tr>
+                    <tr>
+                        <td>English Literature</td>
+                        <td>78</td>
+                        <td>88</td>
+                        <td>B+</td>
+                    </tr>
+                    <tr>
+                        <td>Biology</td>
+                        <td>90</td>
+                        <td>85</td>
+                        <td>A-</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Cumulative GPA -->
+            <h4 class="section-title">Cumulative GPA</h4>
+                <p><strong>GPA:</strong> 3.75</p>
+
+                <!-- Teacher Comments -->
+                <h4 class="section-title">Teacher Comments</h4>
+                <div class="teacher-comments">
+                    <p><strong>Math 101 - Algebra (Mr. Smith):</strong></p>
+                    <p>John has shown great improvement in algebra concepts and consistently scores well on assessments.</p>
+
+                    <p><strong>English Literature (Mrs. Johnson):</strong></p>
+                    <p>John is doing well but could benefit from more engagement in class discussions.</p>
+
+                    <p><strong>Biology (Dr. Lee):</strong></p>
+                    <p>John demonstrates a strong understanding of biology topics and excels in practical labs.</p>
+                </div>
+
+                <!-- Attendance Summary -->
+                <h4 class="section-title">Attendance Summary</h4>
+                <table class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th scope="col">Subject</th>
+                        <th scope="col">Total Days</th>
+                        <th scope="col">Days Present</th>
+                        <th scope="col">Attendance Percentage</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>Math 101 - Algebra</td>
+                        <td>90</td>
+                        <td>85</td>
+                        <td>94.4%</td>
+                    </tr>
+                    <tr>
+                        <td>English Literature</td>
+                        <td>90</td>
+                        <td>87</td>
+                        <td>96.7%</td>
+                    </tr>
+                    <tr>
+                        <td>Biology</td>
+                        <td>90</td>
+                        <td>88</td>
+                        <td>97.8%</td>
+                    </tr>
+                    </tbody>
+                </table>
+
+                <!-- Behavior Report -->
+                <h4 class="section-title">Behavior Report</h4>
+                <div class="behavior-report">
+                    <p><strong>Overall Behavior:</strong></p>
+                    <p>John is a model student, displaying excellent behavior and respect for teachers and peers.</p>
+
+                    <p><strong>Disciplinary Incidents:</strong></p>
+                    <p>No disciplinary incidents reported.</p>
+                </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

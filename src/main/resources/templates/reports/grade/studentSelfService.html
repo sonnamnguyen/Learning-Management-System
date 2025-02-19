@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Self-Service</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .card-margin {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid mt-5">
+    <h1>Student Self-Service</h1>
+
+    <!-- View Grades Section -->
+    <div class="card card-margin">
+        <div class="card-header">
+            View Grades
+        </div>
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Assignment</th>
+                    <th>Grade</th>
+                    <th>Feedback</th>
+                </tr>
+                </thead>
+                <tbody id="grades-table-body">
+                <!-- Grades will be dynamically inserted here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Request Revisions Section -->
+    <div class="card card-margin">
+        <div class="card-header">
+            Request Revisions
+        </div>
+        <div class="card-body">
+            <form id="revision-form">
+                <div class="form-group">
+                    <label for="assignment-name">Assignment Name</label>
+                    <select class="form-control" id="assignment-name">
+                        <!-- Options will be dynamically inserted here -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="reason">Reason for Revision</label>
+                    <textarea class="form-control" id="reason" rows="3" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Submit Request</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal fade" id="confirmationModal" tabindex="-1" role="dialog" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmationModalLabel">Request Submitted</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    Your request for revision has been submitted successfully.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Sample data for grades and assignments
+        const gradesData = [
+            { assignment: 'Assignment 1', grade: 'A', feedback: 'Excellent work!' },
+            { assignment: 'Assignment 2', grade: 'B+', feedback: 'Good job, could improve a bit more.' },
+            { assignment: 'Midterm Exam', grade: 'A-', feedback: 'Well done!' }
+        ];
+
+        const assignmentsData = gradesData.map(item => item.assignment);
+
+        // Render Grades Table
+        function renderGradesTable(grades) {
+            const tableBody = document.getElementById('grades-table-body');
+            tableBody.innerHTML = '';
+
+            grades.forEach(grade => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${grade.assignment}</td>
+                    <td>${grade.grade}</td>
+                    <td>${grade.feedback}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Render Assignment Options
+        function renderAssignmentOptions(assignments) {
+            const assignmentSelect = document.getElementById('assignment-name');
+            assignmentSelect.innerHTML = '';
+
+            assignments.forEach(assignment => {
+                const option = document.createElement('option');
+                option.value = assignment;
+                option.textContent = assignment;
+                assignmentSelect.appendChild(option);
+            });
+        }
+
+        // Handle Revision Form Submission
+        document.getElementById('revision-form').addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const assignmentName = document.getElementById('assignment-name').value;
+            const reason = document.getElementById('reason').value;
+
+            if (assignmentName && reason) {
+                // Here you can send the request to the server
+                console.log(`Assignment: ${assignmentName}, Reason: ${reason}`);
+
+                // Show confirmation modal
+                $('#confirmationModal').modal('show');
+
+                // Clear form fields
+                document.getElementById('revision-form').reset();
+            }
+        });
+
+        // Initialize tables and options
+        renderGradesTable(gradesData);
+        renderAssignmentOptions(assignmentsData);
+    });
+</script>
+
+</body>
+</html>

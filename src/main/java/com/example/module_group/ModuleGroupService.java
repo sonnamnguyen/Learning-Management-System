@@ -1,6 +1,7 @@
 package com.example.module_group;
 
 
+import com.example.exception.ObjectAlreadyExistsException;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -35,16 +36,22 @@ public class ModuleGroupService {
         return moduleGroupRepository.findById(id).orElse(null);
     }
 
-    public ModuleGroup createModuleGroup(String ModuleGroupName) {
+    public ModuleGroup createModuleGroup(String ModuleGroupName) throws ObjectAlreadyExistsException {
+        if (isModuleGroupNameExists(ModuleGroupName)) {
+            throw new ObjectAlreadyExistsException("Module Group with name '" + ModuleGroupName + "' already exists");
+        }
         ModuleGroup ModuleGroup = new ModuleGroup();
         ModuleGroup.setName(ModuleGroupName);
         return moduleGroupRepository.save(ModuleGroup);
     }
 
-    public ModuleGroup updateModuleGroup(Long id, String ModuleGroupName) {
+    public ModuleGroup updateModuleGroup(Long id, String ModuleGroupName) throws ObjectAlreadyExistsException {
         Optional<ModuleGroup> existingModuleGroup = moduleGroupRepository.findById(id);
         if (existingModuleGroup.isPresent()) {
             ModuleGroup ModuleGroup = existingModuleGroup.get();
+            if (!ModuleGroup.getName().equals(ModuleGroupName) && isModuleGroupNameExists(ModuleGroupName)) {
+                throw new ObjectAlreadyExistsException("Module Group with name '" + ModuleGroupName + "' already exists");
+            }
             ModuleGroup.setName(ModuleGroupName);
             return moduleGroupRepository.save(ModuleGroup);
         }

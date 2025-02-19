@@ -1,0 +1,1180 @@
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LMS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        /* styles.css */
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .test-case-pass {
+            color: #28a745; /* Xanh lá */
+            font-weight: bold;
+        }
+
+        .test-case-fail {
+            color: #dc3545; /* Đỏ */
+            font-weight: bold;
+        }
+
+        .container-fluid {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .row {
+            display: flex;
+            flex-direction: row;
+            height: 100%;
+        }
+
+        #leftPanel {
+            height: 100%;
+            font-size: 0.875em;
+            background-color: #314251;
+            width: 25%;
+            min-width: 200px;
+            max-width: 450px;
+            transition: width 0.3s ease;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #centerPanel {
+            flex-grow: 1;
+            transition: width 0.3s ease;
+            width: calc(100% - 50%);
+        }
+
+        #rightPanel {
+            width: 25% !important;
+            transition: width 0.3s ease;
+            background-color: black !important;
+        }
+
+        #toggleLeftPanel {
+            margin-right: -15px;
+        }
+
+        .badge {
+            background-color: #55ac63;
+            color: white;
+            font-size: 1em;
+            width: 20%;
+        }
+
+        .col-md-6 {
+            overflow-y: auto;
+            height: 100%;
+            background-color: rgb(18, 19, 17);
+        }
+
+        #output {
+            overflow: auto;
+            font-size: 0.75em;
+        }
+
+        .modal-content {
+            background-color: #f8f9fa;
+        }
+
+        #toggleLeftPanel {
+            position: relative;
+            /* Thay đổi từ absolute sang relative */
+            padding: 8px 12px;
+            font-size: 1rem;
+            border-radius: 4px;
+            background-color: #ffffff;
+            color: #314251;
+            border: 1px solid #ddd;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        #toggleLeftPanel:hover {
+            background-color: #f8f9fa;
+        }
+
+        .resizer {
+            width: 5px;
+            height: 100%;
+            background-color: #ccc;
+            cursor: ew-resize;
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+        }
+
+        * {
+            user-select: none;
+            /* Ngăn người dùng vô tình chọn chữ khi kéo */
+        }
+
+        .resizer {
+            pointer-events: auto;
+            touch-action: none;
+            /* Tắt phản hồi mặc định của trình duyệt */
+        }
+
+        .search-container {
+            padding: 10px;
+            background-color: #1e2937;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .search-container .input-group {
+            max-width: 100%;
+
+        }
+
+        .search-container input {
+            background-color: #2d3748;
+            border: 1px solid #4a5568;
+            color: #fff;
+        }
+
+        .search-container input::placeholder {
+            color: #a0aec0;
+        }
+
+        .search-container input:focus {
+            background-color: #2d3748;
+            border-color: #63b3ed;
+            color: #fff;
+            box-shadow: none;
+        }
+
+        .search-container .btn-primary {
+            background-color: #4299e1;
+            border: none;
+            padding: 0.375rem 0.75rem;
+        }
+
+        .search-container .btn-primary:hover {
+            background-color: #3182ce;
+        }
+
+        /* Style cho tabs trong left panel */
+        #leftPanelTabs .nav-link {
+            color: #fff;
+            background-color: transparent;
+            border: none;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        #leftPanelTabs .nav-link:hover {
+            border-color: transparent;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        #leftPanelTabs .nav-link.active {
+            color: #fff;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-color: transparent;
+        }
+
+        /* Style cho tab content */
+        #leftPanelTabContent {
+            flex-grow: 1;
+            overflow-y: hidden;
+            /* Ẩn thanh cuộn */
+            overflow-x: hidden;
+        }
+
+        #searchResults {
+            height: 100%;
+            background-color: #1e2937;
+            padding: 10px;
+        }
+
+        #searchFrame {
+            min-height: 600px;
+            background-color: #fff;
+            transform: scale(0.8);
+            transform-origin: top left;
+            width: 125% !important;
+            height: 125% !important;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Đảm bảo left panel content có chiều cao đầy đủ */
+        #leftPanelContent {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            /* Đảm bảo các phần tử được phân bố đều */
+        }
+
+        /* Style cho nút toggle theme */
+        #theme-toggle-button {
+            position: relative;
+            overflow: hidden;
+            background: transparent;
+            border: 1px solid #666;
+            color: #fff;
+            transition: all 0.3s ease;
+        }
+
+        #theme-toggle-button.light-mode {
+            border-color: #333;
+            color: #978f8f;
+        }
+
+
+        #theme-toggle-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(120deg,
+            transparent,
+            rgba(255, 255, 255, 0.2),
+            transparent);
+            transition: 0.5s;
+        }
+
+        #theme-toggle-button:hover::before {
+            left: 100%;
+        }
+
+        #theme-toggle-button.light-mode::before {
+            background: linear-gradient(120deg,
+            transparent,
+            rgba(0, 0, 0, 0.1),
+            transparent);
+        }
+
+        /* Theme Styles */
+        /* body.light-theme {
+            background-color: #ffffff;
+        }
+
+        body.light-theme #leftPanel,
+        body.light-theme #rightPanel {
+            background-color: #f8f9fa !important;
+        }
+
+        body.light-theme #centerPanel {
+            background-color: #ffffff !important;
+        }
+
+        body.light-theme .nav-link {
+            color: #333 !important;
+        }
+
+        body.light-theme .nav-link.active {
+            background-color: rgba(0, 0, 0, 0.1) !important;
+        }
+
+        body.light-theme #output {
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+        body.light-theme .description,
+        body.light-theme .examples {
+            color: #333;
+        } */
+
+        /* Điều chỉnh kích thước nút */
+        .btn-lg {
+            padding: 0.4rem 0.8rem !important;
+            font-size: 0.9rem !important;
+        }
+
+        #language-select {
+            padding: 0.4rem 0.8rem !important;
+            font-size: 0.9rem !important;
+            height: auto !important;
+        }
+
+        .btn-group {
+            gap: 0.3rem;
+        }
+
+        /* Điều chỉnh icon trong nút */
+        .btn i {
+            font-size: 0.9rem;
+        }
+
+        /* Thay đổi màu sắc của dòng số */
+        .CodeMirror-linenumbers {
+            background-color: #1e1e1e;
+        }
+
+        .CodeMirror-scroll {
+            background-color: #1f1f1f;
+        }
+
+        .CodeMirror {
+            background-color: #1f1f1f;
+        }
+
+        /* Light theme */
+        body.light-theme .CodeMirror-scroll,
+        body.light-theme .CodeMirror {
+            background-color: #ffffff;
+        }
+
+        .bottom-buttons {
+            padding: 10px;
+            margin-top: auto;
+            /* Đẩy phần buttons xuống dưới cùng */
+            background-color: #314251;
+            /* Giữ màu nền giống left panel */
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            /* Thêm đường viền phía trên */
+            border-top: none !important;
+        }
+
+        .code-title {
+            font-family: 'Roboto' !important;
+        }
+
+        .description {
+            font-family: 'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace;
+            line-height: 1.6;
+            font-size: 0.9em;
+            color: #e4e4e4;
+        }
+
+        .examples {
+            font-family: 'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace;
+            line-height: 1.6;
+            font-size: 0.9em;
+            color: #e4e4e4;
+        }
+
+        .examples pre {
+            background-color: #2d3748;
+            padding: 1rem;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div class="container-fluid" style="display: flex; flex-direction: column;">
+        <div class="row mt-5" style="flex-grow: 1;">
+            <!-- <h1 class="text-center mt-2">
+                Exercises
+            </h1> -->
+            <!-- CodeMirror CSS -->
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
+            <!-- CodeMirror JS -->
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+            <!-- CodeMirror Theme -->
+            <link rel="stylesheet"
+                href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/dracula.min.css">
+
+            <!-- CodeMirror Language Modes -->
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/clike/clike.min.js"></script>
+            <!-- Java -->
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/python/python.min.js"></script>
+            <!-- Python -->
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/sql/sql.min.js"></script>
+            <!-- SQL -->
+
+            <!-- Autocomplete Addons -->
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/show-hint.min.js"></script>
+            <link rel="stylesheet"
+                href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/show-hint.min.css">
+            <script
+                src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/anyword-hint.min.js"></script>
+
+            <!-- Body -->
+            <div class="container-fluid" style="height: 85vh;">
+                <div class="row" style="height: 100%; display: flex; flex-wrap: nowrap;">
+                    <!-- Left Panel -->
+                    <div class="col-md-3 text-white d-flex flex-column position-relative" id="leftPanel"
+                        style="height:100%; font-size:0.9em; background-color:#1e2937;">
+                        <div class="resizer" id="resizer"></div>
+                        <div id="leftPanelContent">
+                            <!-- Tab Content -->
+                            <div class="tab-content" id="leftPanelTabContent">
+                                <div class="tab-pane fade show active" id="description" role="tabpanel">
+                                    <input type="hidden" id="exerciseId" th:value="${exercise.id}" />
+                                    <div class="border-bottom border-secondary" style="padding-bottom: 10px;">
+                                        <span class="badge rounded-pill"
+                                            style="background-color:#55ac63; font-size:1.1em; width:100%; margin-top: 10px;"
+                                            th:text="${exercise.level}">
+                                        </span>
+                                    </div>
+                                    <h2 class="mt-3 mb-4 code-title" th:text="${exercise.name}"></h2>
+                                    <div class="description">
+                                        <p th:text="${exercise.description}"></p>
+                                    </div>
+<!--                                    <div class="examples mt-4">-->
+<!--                                        <h5 class="mb-3">Write the queries in the following structure:</h5>-->
+<!--                                        <p>sql_1: ...</p>-->
+<!--                                    </div>-->
+                                </div>
+
+                                <!-- Search Results Tab -->
+                                <div class="tab-pane fade" id="searchResults" role="tabpanel">
+                                    <iframe id="searchFrame" style="width: 100%; height: 100%; border: none;"></iframe>
+                                </div>
+                            </div>
+
+                            <!-- Phần tìm kiếm Google -->
+                            <div class="search-container" style="border-bottom: none;">
+                                <div class="input-group">
+                                    <input type="text" id="searchInput" class="form-control form-control-sm"
+                                        placeholder="Search on Google...">
+                                    <button class="btn btn-primary" type="button" id="searchButton">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Tab Navigation -->
+                            <ul class="nav nav-tabs nav-fill" style="border-bottom: none;" id="leftPanelTabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="description-tab" data-bs-toggle="tab"
+                                        data-bs-target="#description" type="button" role="tab">
+                                        Description
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="search-tab" data-bs-toggle="tab"
+                                        data-bs-target="#searchResults" type="button" role="tab">
+                                        Search
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Center Panel -->
+                    <div class="col-md-6 p-0 bg-dark text-white d-flex flex-column" id="centerPanel"
+                        style="overflow-y:auto; flex: 1;">
+                        <form id="code-form" method="POST" action="/exercises/submit/120/0/0/"
+                            class="h-100 d-flex flex-column">
+                            <input type="hidden" name="csrfmiddlewaretoken"
+                                value="HfxjrSlfLR32bC9CQ0AeUi9pecn6YwzMjC52rgaHg3akATZaOfVTYuO7KVt7kOzh">
+                            <div class="p-3 h-100 d-flex flex-column" style="background: #1f1f1f;">
+                                <div class="btn-toolbar mb-3" role="toolbar">
+                                    <div id="language-select" th:text="${exercise.language}" class="btn-group me-auto" role="group">
+<!--                                        <select id="language-select" class="form-select form-select-lg"-->
+<!--                                            style="min-width: 8rem; background-color: #3e4451; color: whitesmoke; border-color: #181a1f;"-->
+<!--                                            name="language">-->
+<!--                                            <option value="mysql">MySQL</option>-->
+<!--                                            <option value="sql">SQL</option>-->
+<!--                                            <option value="java">Java</option>-->
+<!--                                            <option value="python">Python</option>-->
+<!--                                        </select>-->
+                                    </div>
+                                    <div class="btn-group" role="group">
+                                        <button type="button" id="theme-toggle-button" class="btn btn-lg"
+                                            style="background-color: #3e4451; color: #abb2bf; border-color: #181a1f;">
+                                            <i class="fa fa-moon"></i> Light
+                                        </button>
+                                        <button type="button" id="reset-button" class="btn btn-lg ms-2"
+                                            style="background-color: #3e4451; color: #abb2bf; border-color: #181a1f;">
+                                            <i class="fa fa-redo-alt"></i> Reset
+                                        </button>
+                                    </div>
+                                </div>
+                                <textarea id="code-editor" name="code" class="form-control h-100" style="background-color: #1f1f1f; 
+                                           color: #abb2bf;
+                                           font-family: 'Fira Code', monospace;
+                                           font-size: 14px;
+                                           line-height: 1.5;
+                                           padding: 15px;
+                                           border: 1px solid #1f1f1f;
+                                           border-radius: 4px;
+                                           resize: none;
+                                           display: none;"
+                                           th:text="${code}">
+                                </textarea>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Right Panel -->
+                    <div class="col-md-3 p-3 text-white d-flex flex-column" id="rightPanel"
+                        style="overflow-y:auto; height:100%; background-color: black !important;">
+                        <div class="btn-group mb-3" role="group">
+                            <button type="button" id="precheck-button" class="btn btn-success btn-lg">
+                                <i class="fa fa-terminal"></i> Pre-check
+                            </button>
+                            <button type="button" id="clear-button" class="btn btn-danger btn-lg mx-2">
+                                <i class="fa fa-eraser"></i> Clear
+                            </button>
+                            <button type="button" id="submit-button" class="btn btn-primary btn-lg">
+                                <i class="fa fa-play"></i> Submit
+                            </button>
+<!--                            <a href="/exercises/" class="btn btn-primary btn-lg">-->
+<!--                                <i class="fa fa-play"></i> Submit-->
+<!--                            </a>-->
+                        </div>
+                        <div id="output" class="p-3 rounded result-container h-100" style="overflow:auto; font-size:0.85em;">
+                            <!-- Output log will appear here -->
+                            <div class="result-container h-100">
+                                <h5 class="mb-3 align-items-center" th:text="${type_check}"></h5>
+
+                                <!-- Display grading results if available -->
+                                <div th:if="${passed != null}">
+                                    <p>You passed <strong th:text="${passed}">0</strong> out of <strong th:text="${total}">0</strong>
+                                        test cases.</p>
+                                    <ul class="list-unstyled">
+                                        <li th:each="testResult, iterStat : ${testResults}" class="mb-2 bg-dark p-2 rounded">
+                                            <span th:text="'Test Case ' + (${iterStat.index} + 1) + ':'"></span>
+                                            <span th:text="${testResult.isCorrect ? 'Passed' : 'Failed'}"
+                                                  th:classappend="${testResult.isCorrect} ? 'test-case-pass' : 'test-case-fail'"></span>
+<!--                                            <div th:if="${!testResult.isCorrect}" class="mt-1 ps-3">-->
+                                            <div class="mt-1 ps-3">
+                                                <strong>Input:</strong> <span th:text="${testResult.testCase.input}"></span><br>
+                                                <strong>Your Output:</strong> <span
+                                                        th:text="${testResult.userOutput}"></span><br>
+                                                <strong>Expected Output:</strong> <span
+                                                    th:text="${testResult.testCase.expectedOutput}"></span>
+                                            </div>
+                                        </li>
+                                    </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal confirm  -->
+            <div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" aria-labelledby="confirmModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="confirmModalLabel">Cofirm Submit Code</h5>
+                            <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">×</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            Are you sure you want to submit the code?
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-primary" id="confirm-submit">Submit Code</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Initialize CodeMirror -->
+            <script>
+
+            </script>
+
+
+        </div>
+    </div>
+    </div>
+
+    <!-- <button onclick="scrollToTop()" id="scrollToTopButton" title="Go to top" style="display: none;">
+        <i class="fas fa-arrow-up"></i>
+    </button> -->
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+
+    <style>
+
+    </style>
+</body>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
+            mode: "text/x-java", // Mặc định là Java
+            lineNumbers: true,
+            theme: "dracula",
+            tabSize: 4,
+            indentUnit: 4,
+            indentWithTabs: true,
+            matchBrackets: true,
+            autoCloseBrackets: true,
+            extraKeys: { "Ctrl-Space": "autocomplete" }, // Thêm phím tắt cho autocomplete
+            hintOptions: {
+                completeSingle: false, // Không tự động chọn nếu chỉ có 1 gợi ý
+                alignWithWord: true, // Căn chỉnh gợi ý với từ
+                closeOnUnfocus: true, // Đóng gợi ý khi mất focus
+            },
+        });
+
+        editor.setSize("100%", "100%");
+        const initialCode = editor.getValue(); // Lưu nội dung ban đầu
+
+        // Toggle Theme (Dark/Light)
+        const themeToggleButton = document.getElementById("theme-toggle-button");
+        if (themeToggleButton) {
+            // Khởi tạo trạng thái ban đầu
+            themeToggleButton.innerHTML = '<i class="fa fa-moon"></i> Dark';
+            themeToggleButton.classList.add("light-mode");
+
+            themeToggleButton.addEventListener("click", function (event) {
+                event.preventDefault();
+                let currentTheme = editor.getOption("theme");
+
+                if (currentTheme === "dracula") {
+                    // Chuyển sang light mode
+                    editor.setOption("theme", "default");
+                    document.body.classList.add("light-theme");
+                    this.innerHTML = '<i class="fa fa-sun"></i> Light';
+                    this.classList.remove("light-mode");
+                } else {
+                    // Chuyển sang dark mode
+                    editor.setOption("theme", "dracula");
+                    document.body.classList.remove("light-theme");
+                    this.innerHTML = '<i class="fa fa-moon"></i> Dark';
+                    this.classList.add("light-mode");
+                }
+            });
+        }
+
+        // Reset nội dung Editor
+        const resetButton = document.getElementById("reset-button");
+        if (resetButton) {
+            resetButton.addEventListener("click", function (event) {
+                event.preventDefault();
+                editor.setValue(initialCode);
+            });
+        }
+
+        // Thêm từ khóa cho các ngôn ngữ
+        const keywords = {
+            python: [
+                "def",
+                "class",
+                "for",
+                "while",
+                "if",
+                "else",
+                "elif",
+                "try",
+                "except",
+                "finally",
+                "import",
+                "from",
+                "as",
+                "return",
+                "yield",
+                "break",
+                "continue",
+                "pass",
+                "raise",
+                "True",
+                "False",
+                "None",
+                "and",
+                "or",
+                "not",
+                "is",
+                "in",
+                "lambda",
+                "with",
+                "print",
+            ],
+
+            java: [
+                "public",
+                "private",
+                "protected",
+                "class",
+                "interface",
+                "extends",
+                "implements",
+                "static",
+                "final",
+                "void",
+                "if",
+                "else",
+                "for",
+                "while",
+                "do",
+                "try",
+                "catch",
+                "finally",
+                "throw",
+                "throws",
+                "new",
+                "return",
+                "this",
+                "super",
+                "import",
+                "package",
+                "int",
+                "long",
+                "float",
+                "double",
+                "boolean",
+                "char",
+                "String",
+                "System.out.println",
+            ],
+
+            sql: [
+                "SELECT",
+                "FROM",
+                "WHERE",
+                "INSERT",
+                "UPDATE",
+                "DELETE",
+                "JOIN",
+                "LEFT JOIN",
+                "RIGHT JOIN",
+                "INNER JOIN",
+                "GROUP BY",
+                "HAVING",
+                "ORDER BY",
+                "DESC",
+                "ASC",
+                "CREATE TABLE",
+                "ALTER TABLE",
+                "DROP TABLE",
+                "PRIMARY KEY",
+                "FOREIGN KEY",
+                "AND",
+                "OR",
+                "NOT",
+                "NULL",
+                "IS NULL",
+                "IS NOT NULL",
+                "LIKE",
+                "IN",
+                "BETWEEN",
+            ],
+
+            c: [
+                "int",
+                "char",
+                "float",
+                "double",
+                "void",
+                "long",
+                "short",
+                "signed",
+                "unsigned",
+                "if",
+                "else",
+                "for",
+                "while",
+                "do",
+                "switch",
+                "case",
+                "break",
+                "continue",
+                "return",
+                "struct",
+                "union",
+                "typedef",
+                "sizeof",
+                "printf",
+                "scanf",
+                "include",
+                "define",
+                "malloc",
+                "free",
+                "NULL",
+                "const",
+                "static",
+                "extern",
+                "#include",
+                "#define",
+            ],
+        };
+
+        // Hàm gợi ý từ khóa dựa trên ngôn ngữ hiện tại
+        function getHints(cm, options) {
+            const cursor = cm.getCursor();
+            const line = cm.getLine(cursor.line);
+
+            // Tìm vị trí bắt đầu của từ hiện tại
+            let start = cursor.ch;
+            while (start && /[\w\.]/.test(line.charAt(start - 1))) --start;
+
+            // Lấy từ hiện tại đang gõ
+            const currentWord = line.slice(start, cursor.ch).toLowerCase();
+
+            // Chỉ hiện gợi ý khi có ít nhất 1 ký tự
+            if (currentWord.length === 0) {
+                return null;
+            }
+
+            // Lấy giá trị ngôn ngữ từ select box
+            const selectedLanguage = document.getElementById("language-select").value;
+            let currentLang = selectedLanguage || 'java'; // mặc định là java nếu không có giá trị
+
+            const list = keywords[currentLang] || [];
+
+            // Lọc các từ khóa phù hợp
+            const matches = list.filter((item) =>
+                item.toLowerCase().startsWith(currentWord)
+            );
+
+            // Nếu không có kết quả phù hợp, không hiện gợi ý
+            if (!matches.length) {
+                return null;
+            }
+
+            return {
+                list: matches,
+                from: CodeMirror.Pos(cursor.line, start),
+                to: CodeMirror.Pos(cursor.line, cursor.ch),
+            };
+        }
+
+        // Đăng ký hàm gợi ý
+        CodeMirror.registerHelper("hint", "anyword", getHints);
+
+        // Bật tự động gợi ý khi gõ
+        editor.on("keyup", function (cm, event) {
+            // Chỉ hiện gợi ý khi gõ chữ cái hoặc số
+            const shouldComplete =
+                !cm.state.completionActive && // Không có gợi ý đang hiển thị
+                event.keyCode != 13 && // Không phải phím Enter
+                event.keyCode != 27 && // Không phải phím Escape
+                event.keyCode != 32 && // Không phải phím Space
+                !/^[!@#$%^&*(),.?":{}|<>]$/.test(event.key) && // Không phải ký tự đặc biệt
+                event.key.length === 1; // Là ký tự đơn
+
+            if (shouldComplete) {
+                CodeMirror.commands.autocomplete(cm, null, { completeSingle: false });
+            }
+        });
+
+        // Thay đổi ngôn ngữ code
+        const languageSelect = document.getElementById("language-select");
+        if (languageSelect) {
+            languageSelect.addEventListener("change", function () {
+                let mode = "";
+                switch (this.value) {
+                    case "python":
+                        mode = "text/x-python";
+                        break;
+                    case "java":
+                        mode = "text/x-java";
+                        break;
+                    case "sql":
+                        mode = "text/x-sql";
+                        break;
+                    case "c":
+                        mode = "text/x-csrc";
+                        break;
+                    default:
+                        mode = "text/x-java";
+                }
+                editor.setOption("mode", mode);
+
+                // Cập nhật gợi ý dựa trên ngôn ngữ mới
+                CodeMirror.commands.autocomplete(editor, null, {
+                    completeSingle: false
+                });
+            });
+        }
+
+        // Submit form
+        const form = document.getElementById("code-form");
+        if (form) {
+            form.addEventListener("submit", function () {
+                editor.save(); // Đảm bảo CodeMirror lưu lại nội dung vào textarea
+            });
+        }
+
+        // Xử lý nút Pre-check
+        const preCheckButton = document.getElementById("precheck-button");
+        if (preCheckButton) {
+            preCheckButton.addEventListener("click", function () {
+                runPrecheck();
+            });
+        }
+
+        // Xử lý nút Submit
+        const submitButton = document.getElementById("submit-button");
+        if(submitButton) {
+            submitButton.addEventListener("click", function () {
+                runSubmit();
+            });
+        }
+
+        // Xử lý nút Clear output
+        const clearButton = document.getElementById("clear-button");
+        if (clearButton) {
+            clearButton.addEventListener("click", function () {
+                document.getElementById("output").innerHTML = "";
+                console.log("Output cleared.");
+            });
+        }
+
+        // // Xác nhận Submit, cái này bỏ vào sau
+        // const confirmSubmit = document.getElementById("submit-button");
+        // if (confirmSubmit) {
+        //     confirmSubmit.addEventListener("click", function (event) {
+        //         let codeContent = editor.getValue();
+        //         if (!codeContent.trim()) {
+        //             event.preventDefault();
+        //             $("#confirmModal").modal("hide");
+        //             document.getElementById(
+        //                 "output"
+        //             ).innerHTML = `<div class="alert alert-danger" role="alert">This code field is required.</div>`;
+        //         } else {
+        //             editor.save();
+        //         }
+        //     });
+        // }
+
+        // chức năng Pre-check sử dụng ajax
+        // function runPrecheck() {
+        //     const exerciseId = document.getElementById("exerciseId").value;
+        //     const code = editor.getValue();
+        //     const language = languageSelect.value;
+        //     $.ajax({
+        //         url: "/judgement/precheck-code",
+        //         type: "POST",
+        //         data:{
+        //             exerciseId: exerciseId,
+        //             code: code,
+        //             language: language
+        //         },
+        //         success: function(data){
+        //             const outputDiv = document.getElementById('output');
+        //             outputDiv.innerHTML = "";
+        //
+        //             // Chia kết quả thành từng dòng
+        //             const lines = data.split("\n");
+        //             let html = "<ul class='test-result'>";
+        //
+        //             lines.forEach(line => {
+        //                 if (line.trim() !== "") {
+        //                     let isPassed = line.includes("true") ? "passed" : "failed";
+        //                     html += `<li class="${isPassed}">${line}</li>`;
+        //                 }
+        //             });
+        //
+        //             html += "</ul>";
+        //             outputDiv.innerHTML = html;
+        //         },
+        //         error: function (){
+        //             document.getElementById('output').innerHTML = '<span>Error</span>';
+        //         }
+        //     });
+        // }
+
+        function runPrecheck() {
+            const exerciseId = document.getElementById("exerciseId").value;
+            const code = editor.getValue();
+                let form = document.createElement('form');
+                form.method = 'POST';
+                form.action = "/judgement/precheck-code";
+
+                let params = {
+                    exerciseId: exerciseId,
+                    code: code,
+                };
+
+                for (let key in params) {
+                    let input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = key;
+                    input.value = params[key];
+                    form.appendChild(input);
+                }
+                document.body.appendChild(form);
+                form.submit();
+        }
+
+        // chức năng submit sử dụng ajax
+        function runSubmit() {
+            const exerciseId = document.getElementById("exerciseId").value;
+            const code = editor.getValue();
+            const language = languageSelect.value;
+            $.ajax({
+                url: "judgment/submit-code",
+                type: "POST",
+                data:{
+                    exerciseId: exerciseId,
+                    code: code,
+                    language: language
+                },
+                success: function(data){
+                    const outputDiv = document.getElementById('output');
+                    outputDiv.innerHTML = "";
+
+                    // Chia kết quả thành từng dòng
+                    const lines = data.split("\n");
+                    let html = "<ul class='test-result'>";
+
+                    lines.forEach(line => {
+                        if (line.trim() !== "") {
+                            let isPassed = line.includes("true") ? "passed" : "failed";
+                            html += `<li class="${isPassed}">${line}</li>`;
+                        }
+                    });
+
+                    html += "</ul>";
+                    outputDiv.innerHTML = html;
+                },
+                error: function (){
+                    document.getElementById('output').innerHTML = '<span>Error</span>';
+                }
+            });
+        }
+
+        // // Chức năng Pre-check
+        // function runPrecheck() {
+        //     const code = editor.getValue();
+        //     const language = languageSelect.value;
+        //
+        //     fetch("/api/exercises/precheck/120", {
+        //         method: "POST",
+        //         headers: { "Content-Type": "application/json" },
+        //         body: JSON.stringify({ code: code, language: language }),
+        //     })
+        //         .then((response) => response.json())
+        //         .then((data) => {
+        //             let outputDiv = document.getElementById("output");
+        //             if (data.error) {
+        //                 outputDiv.innerHTML = `
+        //                 <div class="alert alert-danger">Error: Code is formatted and structured incorrectly.</div>
+        //                 <div class="alert alert-warning">Please fix the format and structure correctly...</div>`;
+        //             } else {
+        //                 outputDiv.innerHTML = `<div style="background-color: #282a36 !important;">${data.combinedMessage}</div>`;
+        //             }
+        //         })
+        //         .catch((error) => {
+        //             console.error("Error:", error);
+        //             document.getElementById("output").innerHTML =
+        //                 "<pre>Error: Error during Pre-check</pre>";
+        //         });
+        // }
+
+        // Scroll to Top Button
+        const scrollToTopButton = document.getElementById("scrollToTopButton");
+        if (scrollToTopButton) {
+            window.onscroll = function () {
+                scrollToTopButton.style.display = window.scrollY > 100 ? "flex" : "none";
+            };
+
+            scrollToTopButton.addEventListener("click", function () {
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            });
+        }
+
+        // Xử lý resize và ẩn hiện left panel
+        const leftPanel = document.getElementById("leftPanel");
+        const centerPanel = document.getElementById("centerPanel");
+        const resizer = document.getElementById("resizer");
+        const toggleBtn = document.getElementById("toggleLeftPanel");
+
+        function updateCenterPanel() {
+            if (leftPanel.style.display === "none" || leftPanel.offsetWidth === 0) {
+                centerPanel.style.width = "100%";
+            } else {
+                centerPanel.style.width = `calc(100% - ${leftPanel.offsetWidth}px)`;
+            }
+        }
+
+        if (toggleBtn) {
+            let isPanelCollapsed = false;
+            toggleBtn.addEventListener("click", function () {
+                isPanelCollapsed = !isPanelCollapsed;
+                if (isPanelCollapsed) {
+                    leftPanel.style.width = "0px";
+                    leftPanel.style.display = "none";
+                } else {
+                    leftPanel.style.width = "450px";
+                    leftPanel.style.display = "block";
+                }
+                updateCenterPanel();
+            });
+        }
+
+        if (resizer) {
+            let isResizing = false;
+            let startX = 0;
+            let startWidth = 0;
+
+            resizer.addEventListener("mousedown", function (event) {
+                isResizing = true;
+                startX = event.clientX;
+                startWidth = leftPanel.offsetWidth;
+
+                document.addEventListener("mousemove", resizePanel);
+                document.addEventListener("mouseup", stopResizing);
+            });
+
+            function resizePanel(event) {
+                if (!isResizing) return;
+                let newWidth = startWidth + (event.clientX - startX);
+
+                if (newWidth < 200) {
+                    leftPanel.style.width = "200px";
+                } else if (newWidth > 200 && newWidth <= 450) {
+                    requestAnimationFrame(() => {
+                        leftPanel.style.width = `${newWidth}px`;
+                        centerPanel.style.width = `calc(100% - ${newWidth}px)`;
+                    });
+                }
+            }
+
+            function stopResizing() {
+                isResizing = false;
+                document.removeEventListener("mousemove", resizePanel);
+                document.removeEventListener("mouseup", stopResizing);
+            }
+        }
+
+        // Cập nhật kích thước center panel ngay từ đầu
+        updateCenterPanel();
+
+        // Thêm chức năng tìm kiếm Google
+        const searchInput = document.getElementById("searchInput");
+        const searchButton = document.getElementById("searchButton");
+        const searchTab = document.getElementById("search-tab");
+        const searchFrame = document.getElementById("searchFrame");
+
+        function performSearch() {
+            const searchQuery = searchInput.value.trim();
+            if (searchQuery) {
+                // Chuyển đến tab tìm kiếm
+                searchTab.click();
+                // Load kết quả tìm kiếm trong iframe
+                searchFrame.src = `https://www.google.com/search?igu=1&q=${encodeURIComponent(
+                    searchQuery
+                )}`;
+            }
+        }
+
+        // Xử lý sự kiện click nút tìm kiếm
+        searchButton.addEventListener("click", performSearch);
+
+        // Xử lý sự kiện nhấn Enter trong ô input
+        searchInput.addEventListener("keypress", function (e) {
+            if (e.key === "Enter") {
+                performSearch();
+            }
+        });
+    });
+
+</script>
+
+</html>

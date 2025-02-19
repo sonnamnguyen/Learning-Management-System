@@ -34,6 +34,13 @@ public class DepartmentController {
     @Autowired
     private CourseService courseService;
 
+    // Thêm model attribute chung cho tất cả các phương thức
+    @ModelAttribute
+    public void addCommonAttributes(Model model) {
+        model.addAttribute("title", "Modules");
+        model.addAttribute("links", "/style.css");
+    }
+
     // Get paginated list of departments
     @GetMapping()
     public String getDepartments(Model model,
@@ -52,7 +59,10 @@ public class DepartmentController {
 
         model.addAttribute("departmentsPage", departmentsPage);
         model.addAttribute("searchQuery", searchQuery); // Pass search query back to the view
-        return "department/list";  // Your view template for displaying departments
+        // add attribute for layout
+        model.addAttribute("content","department/list");
+
+        return "layout";
     }
 
     // Show create form
@@ -62,7 +72,8 @@ public class DepartmentController {
         model.addAttribute("users", userService.getAllUsers());
         model.addAttribute("locations", locationService.findAll());
         model.addAttribute("courses", courseService.getAllCourses());
-        return "department/create"; // Points to create.html
+        model.addAttribute("content", "department/create");
+        return "layout";
     }
 
     // Create new department
@@ -81,7 +92,8 @@ public class DepartmentController {
             model.addAttribute("users", userService.getAllUsers());
             model.addAttribute("locations", locationService.findAll());
             model.addAttribute("courses", courseService.getAllCourses());
-            return "department/create";
+            model.addAttribute("content", "department/create");
+            return "layout";
         }
     }
 
@@ -92,7 +104,9 @@ public class DepartmentController {
         model.addAttribute("users", userService.getAllUsers());
         model.addAttribute("locations", locationService.findAll());
         model.addAttribute("courses", courseService.getAllCourses());
-        return "department/edit";
+
+        model.addAttribute("content", "department/edit");
+        return "layout";
     }
 
     // Update existing department
@@ -110,7 +124,9 @@ public class DepartmentController {
             model.addAttribute("users", userService.getAllUsers());
             model.addAttribute("locations", locationService.findAll());
             model.addAttribute("courses", courseService.getAllCourses());
-            return "department/edit";
+
+            model.addAttribute("content", "department/edit");
+            return "layout";
         }
     }
 

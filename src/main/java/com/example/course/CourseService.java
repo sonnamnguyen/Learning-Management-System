@@ -29,9 +29,12 @@ public class CourseService {
     }
 
     // Method to fetch a course by ID
-    @Cacheable(value = "products", key = "#id")
     public Course getCourseById(Long id) {
         return courseRepository.findById(id).orElse(null);
+    }
+
+    public Course findByName(String name) {
+        return courseRepository.findByName(name).orElse(null);
     }
 
     // Method to create a new course
@@ -47,14 +50,17 @@ public class CourseService {
             updatedCourse.setName(course.getName());
             updatedCourse.setCode(course.getCode());
             updatedCourse.setDescription(course.getDescription());
+            updatedCourse.setDurationInWeeks(course.getDurationInWeeks());
+            updatedCourse.setLanguage(course.getLanguage());
+            updatedCourse.setLevel(course.getLevel());
             updatedCourse.setPrice(course.getPrice());
             updatedCourse.setDiscount(course.getDiscount());
             updatedCourse.setPublished(course.isPublished());
-            updatedCourse.setInstructor(course.getInstructor());
-            updatedCourse.setCreator(course.getCreator());
-            updatedCourse.setPrerequisites(course.getPrerequisites());
-            updatedCourse.setTags(course.getTags());
-            updatedCourse.setImage(course.getImage());
+//            updatedCourse.setInstructor(course.getInstructor());
+//            updatedCourse.setCreator(course.getCreator());
+//            updatedCourse.setPrerequisites(course.getPrerequisites());
+//            updatedCourse.setTags(course.getTags());
+//            updatedCourse.setImage(course.getImage());
             return courseRepository.save(updatedCourse);
         }
         return null;

@@ -21,8 +21,40 @@
 </div>
 
 <div th:replace="~{fragments :: scripts}" class="mt-auto"></div>
-<script>
 
-</script>
+<!--    <script>-->
+<!--        document.getElementById("importButton").addEventListener("click", function () {-->
+<!--        const form = document.getElementById("importForm");-->
+<!--        const formData = new FormData(form);-->
+
+<!--        const alertBox = document.getElementById("import-alert");-->
+<!--        alertBox.style.display = "none"; // Hide any previous alerts-->
+
+<!--        fetch("/users/import", {-->
+<!--        method: "POST",-->
+<!--        body: formData,-->
+<!--    })-->
+<!--        .then(response => {-->
+<!--        if (!response.ok) {-->
+<!--        throw response; // For non-200 responses, throw to catch block-->
+<!--    }-->
+<!--        return response.text();-->
+<!--    })-->
+<!--        .then(message => {-->
+<!--        alertBox.className = "alert alert-success";-->
+<!--        alertBox.innerText = message;-->
+<!--        alertBox.style.display = "block";-->
+<!--        form.reset(); // Reset the form after a successful import-->
+<!--    })-->
+<!--        .catch(async (error) => {-->
+<!--        const errorMessage = await error.text();-->
+<!--        alertBox.className = "alert alert-danger";-->
+<!--        alertBox.innerText = errorMessage;-->
+<!--        alertBox.style.display = "block";-->
+<!--    });-->
+<!--    });-->
+<!--</script>-->
+
+
 </body>
 </html>

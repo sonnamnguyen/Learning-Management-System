@@ -1,5 +1,6 @@
 package com.example.user;
 
+import com.example.role.Role;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,6 +13,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // Find all users with pagination
     Page<User> findAll(Pageable pageable);
 
+
     // Find users by username (case insensitive search)
     Optional<User> findByUsername(String username);
     // Find users by email (case insensitive search)
@@ -19,6 +21,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // Find users by their username
     Page<User> findByUsernameContainingIgnoreCase(String lastName, Pageable pageable);
+
+    boolean existsByRolesContains(Role role);
 
     // Find users by their last name
     Page<User> findByLastNameContainingIgnoreCase(String lastName, Pageable pageable);
@@ -32,4 +36,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // Find users by two-factor authentication enabled status
     Page<User> findByIs2faEnabled(Boolean is2faEnabled, Pageable pageable);
 
+    // find all user by role
+    List<User> findByRoles(List<Role> roles);
+
+    boolean existsByUsername(String username);
 }

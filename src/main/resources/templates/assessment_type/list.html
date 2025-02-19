@@ -1,15 +1,5 @@
-<!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments :: common_header(~{::title}, ~{::link})}">
-    <title>Location List</title>
-    <link rel="stylesheet" href="/styles.css">
-</head>
-<body>
 <!-- Wrapper for the whole page -->
 <div class="d-flex flex-column min-vh-100">
-    <!-- Sticky Header -->
-    <div th:replace="~{fragments :: header}" class="sticky-top"></div> <!-- Header always on top -->
-
     <div class="px-5 flex-grow-1">
         <h1 class="text-center">AssessmentType</h1>
         <div class="d-flex align-items-center mb-3">
@@ -17,7 +7,7 @@
                 <!-- Search Form -->
                 <form action="/ass-types" method="get" class="d-flex w-50">
                     <!-- Correctly bind the searchQuery model attribute using Thymeleaf -->
-                    <input type="text" class="form-control me-2" name="searchQuery" th:value="${searchQuery}" placeholder="Search by role name" aria-label="Search">
+                    <input type="text" class="form-control me-2" name="searchQuery" th:value="${searchQuery}" placeholder="Search by assessmentType name" aria-label="Search">
                     <button class="btn btn-outline-secondary me-2" type="submit">
                         <i class="bi bi-search"></i>
                     </button>
@@ -35,11 +25,11 @@
                 </button>
 
                 <a href="/ass-types/print" class="btn btn-outline-secondary me-2" target="_blank">
-                    <i class="bi bi-printer"></i> Print Roles
+                    <i class="bi bi-printer"></i> Print
                 </a>
 
-                <a href="/ass-types/create" class="btn btn-success">
-                    <i class="bi bi-plus-circle"></i> Create new Assessment
+                <a href="/ass-types/create" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Create
                 </a>
             </div>
         </div>
@@ -70,7 +60,7 @@
             </tbody>
         </table>
         <!-- Pagination controls -->
-        <div class="d-flex justify-content-center">
+        <div class="d-flex justify-content-end">
             <ul class="pagination">
                 <!-- Show "No Data" when there are no elements -->
                 <li class="page-item disabled" th:if="${AssessmentTypePage.totalElements == 0}">
@@ -109,25 +99,22 @@
             </ul>
         </div>
     </div>
-
-
-
     <!-- Modal for Import -->
     <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="importModalLabel">Import Roles from Excel</h5>
+                    <h5 class="modal-title" id="importModalLabel">Import AssessmentTypes from Excel</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <!-- Information about the template -->
                     <div class="mb-3">
                         <p>Download the Excel template before uploading your file:</p>
-                        <a href="/templates/roles.xlsx" class="btn btn-link" download>Download Role Template</a>
+                        <a href="/templates/assessmentTypes.xlsx" class="btn btn-link" download>Download AssessmentType Template</a>
                     </div>
                     <!-- Import form -->
-                    <form method="post" enctype="multipart/form-data" action="/roles/import">
+                    <form method="post" enctype="multipart/form-data" action="/ass-types/import">
                         <div class="mb-3">
                             <label for="file" class="form-label">Choose Excel File</label>
                             <input type="file" name="file" id="file" class="form-control" required>
@@ -138,31 +125,4 @@
             </div>
         </div>
     </div>
-
-    <!-- Footer -->
-    <div th:replace="~{fragments :: footer}" class="mt-auto"></div> <!-- Footer stays at the bottom -->
 </div>
-
-<div th:replace="~{fragments :: scripts}" class="mt-auto"></div>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const editButtons = document.querySelectorAll('a[data-bs-toggle="modal"][data-bs-target="#editModal"]');
-        editButtons.forEach(button => {
-            button.addEventListener('click', function () {
-                const roleId = this.getAttribute('data-id');
-                const roleName = this.getAttribute('data-name');
-
-                // Set the role ID in the hidden input field
-                document.getElementById('editRoleId').value = roleId;
-                // Set the role name in the text input field
-                document.getElementById('editRoleName').value = roleName;
-
-                // Update the form action URL to include the role ID
-                const form = document.querySelector('#editRoleForm');
-                form.action = '/roles/edit/' + roleId;  // This will update the action dynamically
-            });
-        });
-    });
-</script>
-</body>
-</html>

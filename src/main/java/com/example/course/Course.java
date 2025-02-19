@@ -1,8 +1,10 @@
 package com.example.course;
 
 import com.example.course.section.Section;
-import com.example.tag.Tag;
+
+import com.example.course.tag.Tag;
 import com.example.user.User;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,16 +27,19 @@ public class Course {
     private String description;  // Rich text field equivalent in Spring Boot
 
     @ManyToOne
+    @JsonBackReference
     @JoinColumn(name = "creator_id", nullable = true)
     private User creator;
 
     @ManyToOne
+    @JsonBackReference
     @JoinColumn(name = "instructor_id", nullable = true)
     private User instructor;
 
     private boolean published;
 
     @ManyToMany
+    @JsonBackReference
     @JoinTable(
             name = "course_prerequisites",
             joinColumns = @JoinColumn(name = "course_id"),
@@ -43,6 +48,7 @@ public class Course {
     private List<Course> prerequisites;
 
     @ManyToMany
+    @JsonBackReference
     @JoinTable(
             name = "course_tags",
             joinColumns = @JoinColumn(name = "course_id"),
@@ -60,6 +66,7 @@ public class Course {
     private String level; // Added field for course level (e.g., Beginner, Intermediate, Advanced)
 
     @OneToMany(mappedBy = "course")
+            @JsonBackReference
     List<Section> sections;
 
     public float getDiscountedPrice() {
