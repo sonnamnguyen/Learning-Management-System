@@ -29,7 +29,7 @@ public class CodeJudgementController {
     }
 
     // Nhận request chạy code, sau đó chuyển tiếp đến controller xử lý code tương ứng với ngôn ngữ
-    @PostMapping("/run-code")
+    @PostMapping("/precheck-code")
     public String runCode(@RequestParam("exerciseId") Long exerciseId,
                           @RequestParam("code") String code,
                           Model model) {
@@ -45,9 +45,8 @@ public class CodeJudgementController {
             return "judgement/code_space";
         }
 
-        // Xây dựng đường dẫn chuyển tiếp dựa trên ngôn ngữ (ví dụ: "java" -> "/judgement/java_judge/run-code")
-        String targetPath = "/judgement/" + exercise.getLanguage().getLanguage().toLowerCase() + "/run-code";
-
+        // Xây dựng đường dẫn chuyển tiếp dựa trên ngôn ngữ (ví dụ: "java" -> "/judgement/java_judge/precheck-code")
+        String targetPath = "/judgement/" + exercise.getLanguage().getLanguage().toLowerCase() + "/precheck-code";
         return "forward:" + targetPath;
     }
 

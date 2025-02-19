@@ -25,9 +25,8 @@ public class JavaJudgementController {
     private final ExerciseService exerciseService;
     private final CodeExecutionService codeExecutionService;
     // Nhận request chạy code (đã được forward từ CodeJudgementController)
-    @PostMapping("/run-code")
+    @PostMapping("/precheck-code")
     public String runCode(@RequestParam("exerciseId") Long exerciseId,
-                          @RequestParam("language") String language,
                           @RequestParam("code") String code,
                           Model model) {
         // Lấy bài tập và test cases
@@ -42,7 +41,7 @@ public class JavaJudgementController {
             return "judgement/code_space";
         }
         try{
-            ExecutionResponse response = codeExecutionService.executeCodeOptimized(code,testCases);
+            ExecutionResponse response = codeExecutionService.executeCodeOptimized(code,testCases,new JavaJudgementService());
             // Đưa kết quả vào model để hiển thị trong view
             model.addAttribute("exercise", exercise);
             model.addAttribute("code", code);
@@ -52,29 +51,17 @@ public class JavaJudgementController {
             model.addAttribute("output", response.getPassed() + "/" + response.getTotal() + " test cases passed.");
 
             return "judgement/code_space";
+//            StringBuilder sb = new StringBuilder();
+//            sb.append("You passed ").append(response.getPassed()).append(" of ").append(response.getTotal()).append(" test cases.");
+//            return sb.toString();
         }
         catch (Exception e){
             model.addAttribute("output", e.getMessage());
             model.addAttribute("exercise", exercise);
             model.addAttribute("code", code);
-            model.addAttribute("language", language);
+            model.addAttribute("language", exercise.getLanguage().getLanguage());
             return "judgement/code_space";
         }
-
-
-        //        int passed = 0;
-//
-//        // Với mỗi test case, thực thi code bằng service chuyên cho Java
-//        for (TestCase testCase : testCases) {
-//            String userOutput = javaJudgementService.executeCode(code, testCase.getInput());
-//            boolean isCorrect = userOutput.trim().equals(testCase.getExpectedOutput().trim());
-//            if (isCorrect) {
-//                passed++;
-//            }
-//            testResults.add(new TestCaseResult(testCase, userOutput, isCorrect));
-//        }
-
-
     }
 
     @PostMapping("/run-custom-code")
@@ -87,7 +74,7 @@ public class JavaJudgementController {
                 .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));
 
         // Thực thi mã nguồn với custom input
-        String userOutput = codeExecutionService.runWithCusTomInput(code, customInput);
+        String userOutput = codeExecutionService.runWithCusTomInput(code, customInput,new JavaJudgementService());
 
 
         // Đưa kết quả vào model để hiển thị

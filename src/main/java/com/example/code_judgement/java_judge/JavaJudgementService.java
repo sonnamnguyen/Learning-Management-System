@@ -1,111 +1,24 @@
 package com.example.code_judgement.java_judge;
 
 import com.example.code_judgement.CompilationResult;
-import org.springframework.beans.factory.annotation.Value;
+import com.example.code_judgement.languageFactory.ExecutionBasedLanguage;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.security.SecureRandom;
 import java.util.concurrent.*;
-import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service
-public class JavaJudgementService {
+public class JavaJudgementService implements ExecutionBasedLanguage {
 
     // Directory to store dynamically created source and class files
-    @Value("${BASE_DIR}")
-    private String BASE_DIR;
-    /**
-     * Execute the user's Java code with the provided input and return the output.
-     *
-     * @param userCode The Java code submitted by the user.
-     * @param input    The input provided to the program.
-     * @return The output of the program or an error message if something went wrong.
-     */
-//    public String executeCode(String userCode, String input) {
-//        // Ensure the BASE_DIR exists
-//        File directory = new File(BASE_DIR);
-//        if (!directory.exists()) {
-//            directory.mkdirs();
-//        }
-//
-//        // Extract the public class name from the user's code
-//        String originalClassName = extractClassName(userCode);
-//        if (originalClassName == null) {
-//            return "Error: No public class found in Java code!";
-//        }
-//
-//        // Generate a unique class name to avoid conflicts (e.g., MyClass_A1B2C3D4E5F6G7H8)
-//        String randomId = generateRandomString(16);
-//        String randomClassName = originalClassName + "_" + randomId;
-//        String fileName = BASE_DIR + randomClassName + ".java";
-//        File sourceFile = new File(fileName);
-//        File classFile = new File(BASE_DIR + randomClassName + ".class");
-//
-//        try {
-//            // Replace the original class name with the unique class name in the user's code
-//            userCode = userCode.replaceFirst("public class\\s+" + originalClassName,
-//                    "public class " + randomClassName);
-//
-//            // Write the user's code to the source file
-//            try (FileWriter writer = new FileWriter(sourceFile)) {
-//                writer.write(userCode);
-//            }
-//
-//            // Compile the Java code using javac
-//            ProcessBuilder compileBuilder = new ProcessBuilder("javac", fileName);
-//            compileBuilder.redirectErrorStream(true);
-//            Process compileProcess = compileBuilder.start();
-//
-//            // Read the compilation output (for debugging if needed)
-//            String compileOutput = readProcessOutput(compileProcess.getInputStream());
-//            compileProcess.waitFor();
-//
-//            if (!classFile.exists()) {
-//                return "Compilation failed! Check your Java code.\n" + compileOutput;
-//            }
-//
-//            // Run the compiled Java program
-//            ProcessBuilder runBuilder = new ProcessBuilder("java", "-cp", BASE_DIR, randomClassName);
-//            runBuilder.redirectErrorStream(true);
-//            Process runProcess = runBuilder.start();
-//
-//            // If input is provided, pass it to the program
-//            if (input != null) {
-//                try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(runProcess.getOutputStream()))) {
-//                    writer.write(input);
-//                    writer.flush();
-//                }
-//            }
-//
-//            // Capture the program's output
-//            String programOutput;
-//            boolean runFinished = runProcess.waitFor(2, TimeUnit.SECONDS);
-//            if (runFinished) {
-//                programOutput = readProcessOutput(runProcess.getInputStream());
-//            } else {
-//                runProcess.destroyForcibly();
-//                return "Error: TLE";
-//            }
-//
-//            return programOutput;
-//
-//        } catch (Exception e) {
-//            return "Error executing code: " + e.getMessage();
-//        } finally {
-//            // Cleanup: delete the source and class files
-//            try {
-//                Files.deleteIfExists(sourceFile.toPath());
-//                Files.deleteIfExists(classFile.toPath());
-//            } catch (IOException ignored) {
-//            }
-//        }
-//    }
+    private final String BASE_DIR = "src/main/java/com/example/code_judgement/java_judge/java/";
 
 
+    @Override
     public CompilationResult compileCode(String userCode) {
         // Ensure the BASE_DIR exists
         File directory = new File(BASE_DIR);
@@ -115,16 +28,14 @@ public class JavaJudgementService {
         // Extract the public class name from the user's code
         String originalClassName = extractClassName(userCode);
         if (originalClassName == null) {
-            return new CompilationResult(false, "Error: No public class found in Java code!", "Null", "Null");
+            return new CompilationResult(false, "Error: No public class found in Java code!", null, null, null );
         }
-
         // Generate a unique class name to avoid conflicts (e.g., MyClass_A1B2C3D4E5F6G7H8)
         String randomId = generateRandomString(16);
         String randomClassName = originalClassName + "_" + randomId;
         String fileName = BASE_DIR + randomClassName + ".java";
         File sourceFile = new File(fileName);
         File classFile = new File(BASE_DIR + randomClassName + ".class");
-
         try {
             // Replace the original class name with the unique class name in the user's code
             userCode = userCode.replaceFirst("public class\\s+" + originalClassName,
@@ -146,12 +57,12 @@ public class JavaJudgementService {
 
             // Kiểm tra file .class đã được tạo (biên dịch thành công hay thất bại)
             if (classFile.exists()) {
-                return new CompilationResult(true, originalClassName, randomClassName); // Thành công
+                return new CompilationResult(true, null , originalClassName, classFile,".java" ); // Thành công
             } else {
-                return new CompilationResult(false, compileOutput, originalClassName, randomClassName); // Thất bại (kèm thông báo lỗi)
+                return new CompilationResult(false, compileOutput, originalClassName, null, null ); // Thất bại (kèm thông báo lỗi)
             }
         } catch (Exception e) {
-            return new CompilationResult(false, "Exception occurred: " + e.getMessage(), originalClassName, randomClassName);
+            return new CompilationResult(false, "Exception occurred: " + e.getMessage(), originalClassName, null, null );
         } finally {
             // Xóa file mã nguồn sau khi biên dịch xong để đảm bảo không rác thải
             try {
@@ -161,48 +72,15 @@ public class JavaJudgementService {
         }
     }
 
-    /**
-     * Chạy chương trình với `className` đã biên dịch và trả về đầu ra.
-     *
-     * @param className Tên lớp đã biên dịch.
-     * @param input     Đầu vào cho chương trình.
-     * @return Đầu ra (output) hoặc thông báo lỗi.
-     */
-//    public String runCode(String className, String input) {
-//        try {
-//            // Tạo ProcessBuilder để gọi chương trình Java đã biên dịch
-//            ProcessBuilder runBuilder = new ProcessBuilder("java", "-cp", BASE_DIR, className);
-//            runBuilder.redirectErrorStream(true); // Kết hợp stdin và stderr
-//            Process runProcess = runBuilder.start();
-//
-//            // Gửi input vào chương trình (nếu cần)
-//            if (input != null && !input.isEmpty()) {
-//                try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(runProcess.getOutputStream()))) {
-//                    writer.write(input);
-//                    writer.flush();
-//                }
-//            }
-//
-//            // Đọc output từ chương trình
-//            String programOutput = readProcessOutput(runProcess.getInputStream());
-//            boolean isFinished = runProcess.waitFor(2, TimeUnit.SECONDS); // Timeout 2 giây (nếu cần thì tăng thêm)
-//
-//            if (isFinished) {
-//                return programOutput.trim(); // Trả về output nếu chương trình chạy xong
-//            } else {
-//                runProcess.destroyForcibly(); // Hủy tiến trình nếu bị Timeout
-//                return "Error: Time Limit Exceeded.";
-//            }
-//        } catch (Exception e) {
-//            return "Error: " + e.getMessage();
-//        }
-//    }
+    @Override
+    public String runCode(File classFile, String input) {
 
-    public String runCode(String className, String input) {
-        ProcessBuilder runBuilder = new ProcessBuilder("java", "-cp", BASE_DIR, className);
-        runBuilder.redirectErrorStream(true); // Kết hợp stdout và stderr
         Process runProcess = null;
         try {
+            String className = classFile.getName();
+            className = className.substring(0, className.lastIndexOf('.'));
+            ProcessBuilder runBuilder = new ProcessBuilder("java", "-cp", BASE_DIR, className);
+            runBuilder.redirectErrorStream(true); // Kết hợp stdout và stderr
             runProcess = runBuilder.start();
 
             // Gửi input vào chương trình (nếu cần)
@@ -241,7 +119,8 @@ public class JavaJudgementService {
             }
             Thread.currentThread().interrupt();
             return "Error: Execution was interrupted.";
-        } finally {
+        }
+        finally {
             if (runProcess != null && runProcess.isAlive()) {
                 runProcess.destroyForcibly();
             }

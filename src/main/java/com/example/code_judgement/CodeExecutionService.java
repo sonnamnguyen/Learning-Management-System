@@ -1,6 +1,8 @@
 package com.example.code_judgement;
 
+
 import com.example.code_judgement.java_judge.JavaJudgementService;
+import com.example.code_judgement.languageFactory.ExecutionBasedLanguage;
 import com.example.exercise.Exercise;
 import com.example.exercise.ExerciseRepository;
 import com.example.exercise.ExerciseService;
@@ -15,6 +17,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -24,8 +27,10 @@ import java.util.concurrent.Future;
 
 @Service
 public class CodeExecutionService {
-    @Value("${BASE_DIR}")
-    private String BASE_DIR;
+
+//    @Autowired
+//    private CSharpJudgementService cSharpJudgementService;
+
     @Autowired
     private JavaJudgementService javaJudgementService;
 
@@ -35,22 +40,50 @@ public class CodeExecutionService {
     @Autowired
     private ExerciseRepository exerciseRepository;
 
-    public String runWithCusTomInput(String code, String input) {
-        CompilationResult compilationResult = javaJudgementService.compileCode(code);
+    public String runWithCusTomInput(String code, String input, ExecutionBasedLanguage executionBasedLanguage) {
+//        ExecutionBasedLanguage executionBasedLanguage = initialLanguage(language);
+        CompilationResult compilationResult = executionBasedLanguage.compileCode(code);
         if (!compilationResult.isSuccess()) {
             throw new RuntimeException(compilationResult.getErrorMessage());
         }
-        String userOutput = javaJudgementService.runCode(compilationResult.getRandomClassName(), input);
-        try {
-            Files.deleteIfExists(Path.of(BASE_DIR + compilationResult.getRandomClassName()+".java"));
-        } catch (IOException ignored) {
+        String userOutput = executionBasedLanguage.runCode(compilationResult.getRandomFileName(), input);
+        if(!compilationResult.getExtensionFileName().equalsIgnoreCase(".cs")){
+            try {
+                Path filePath = Path.of(compilationResult.getRandomFileName().getAbsolutePath());
+                if (Files.exists(filePath)) {
+                    System.out.println("File exists, attempting to delete...");
+                    Files.delete(filePath);
+                } else {
+                    System.out.println("File does not exist!");
+                }
+
+            } catch (IOException ignored) {
+            }
+        }
+        else{
+            try {
+                Path executablePath = Path.of(compilationResult.getRandomFileName().getAbsolutePath());
+
+                Path projectDir = executablePath.getParent().getParent().getParent().getParent();
+
+                if (Files.exists(projectDir)) {
+                    System.out.println("Deleting project directory: " + projectDir);
+                    // Sử dụng phương thức deleteDirectoryRecursively để xóa toàn bộ thư mục
+                    deleteDirectoryRecursively(projectDir);
+                } else {
+                    System.out.println("Project directory not found: " + projectDir);
+                }
+            } catch (IOException e) {
+                System.err.println("Error deleting project: " + e.getMessage());
+            }
         }
         return userOutput;
     }
 
-    public ExecutionResponse executeCodeOptimized(String code, List<TestCase> testCases) {
+    public ExecutionResponse executeCodeOptimized(String code, List<TestCase> testCases, ExecutionBasedLanguage executionBasedLanguage) {
         // Biên dịch mã nguồn một lần
-        CompilationResult compilationResult = javaJudgementService.compileCode(code);
+//        ExecutionBasedLanguage executionBasedLanguage = initialLanguage(language);
+        CompilationResult compilationResult = executionBasedLanguage.compileCode(code);
         if (!compilationResult.isSuccess()) {
             throw new RuntimeException(compilationResult.getErrorMessage());
         }
@@ -61,7 +94,7 @@ public class CodeExecutionService {
 
         for (TestCase testCase : testCases) {
             futures.add(executor.submit(() -> {
-                String userOutput = javaJudgementService.runCode(compilationResult.getRandomClassName(), testCase.getInput());
+                String userOutput = executionBasedLanguage.runCode(compilationResult.getRandomFileName(), testCase.getInput());
                 boolean isCorrect = userOutput.trim().equals(testCase.getExpectedOutput().trim());
                 return new TestCaseResult(testCase, userOutput, isCorrect);
             }));
@@ -83,20 +116,53 @@ public class CodeExecutionService {
         }
 
         executor.shutdown();
+        if(!compilationResult.getExtensionFileName().equalsIgnoreCase(".cs")){
+            try {
+                Path filePath = Path.of(compilationResult.getRandomFileName().getAbsolutePath());
+                if (Files.exists(filePath)) {
+                    System.out.println("File exists, attempting to delete...");
+                    Files.delete(filePath);
+                } else {
+                    System.out.println("File does not exist!");
+                }
 
-        try {
-            Path filePath = Path.of(BASE_DIR + compilationResult.getRandomClassName() + ".class");
-            if (Files.exists(filePath)) {
-                System.out.println("File exists, attempting to delete...");
-                Files.delete(filePath);
-            } else {
-                System.out.println("File does not exist!");
+            } catch (IOException ignored) {
             }
-
-        } catch (IOException ignored) {
         }
+        else{
+            try {
+                Path executablePath = Path.of(compilationResult.getRandomFileName().getAbsolutePath());
+
+                Path projectDir = executablePath.getParent().getParent().getParent().getParent();
+
+                if (Files.exists(projectDir)) {
+                    System.out.println("Deleting project directory: " + projectDir);
+                    // Sử dụng phương thức deleteDirectoryRecursively để xóa toàn bộ thư mục
+                    deleteDirectoryRecursively(projectDir);
+                } else {
+                    System.out.println("Project directory not found: " + projectDir);
+                }
+            } catch (IOException e) {
+                System.err.println("Error deleting project: " + e.getMessage());
+            }
+        }
+
 
         // Tính toán kết quả tổng quát
         return new ExecutionResponse(code,passed,testCases.size(),testResults);
+    }
+    private void deleteDirectoryRecursively(Path path) throws IOException {
+        if (Files.exists(path)) {
+            Files.walk(path)
+                    .sorted(Comparator.reverseOrder()) // Sắp xếp ngược để xóa files trước, directories sau
+                    .forEach(file -> {
+                        try {
+                            Files.delete(file);
+                            System.out.println("Deleted: " + file);
+                        } catch (IOException e) {
+                            System.err.println("Failed to delete: " + file + " - " + e.getMessage());
+                        }
+                    });
+        }
     }
 }
