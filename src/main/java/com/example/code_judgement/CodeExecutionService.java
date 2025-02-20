@@ -1,6 +1,5 @@
 package com.example.code_judgement;
 
-import com.example.code_judgement.c_judge.CJudgementService;
 import com.example.code_judgement.java_judge.JavaJudgementService;
 import com.example.code_judgement.sql_judge.ExecuteUserCodeResponse;
 import com.example.code_judgement.sql_judge.SqlJudgementService;
@@ -139,66 +138,6 @@ public class CodeExecutionService {
             return sqlJudgementService.runTestCases1(scriptSetup, code, testCases, executeUserCodeResponse.getRandomTableNames());
         }
         return new ExecutionResponse(code, 0, testCases.size(), null);
-    }
-
-    // ***************************************************************************
-    // Execute C Code
-    @Value("${C_DIR}")
-    private String C_DIR;
-
-    @Autowired
-    private CJudgementService cJudgementService;
-
-    public ExecutionResponse executeCodeCOptimized (String code, List<TestCase> testCases ) {
-        CompilationResult compilationResult = javaJudgementService.compileCode(code);
-        if (!compilationResult.isSuccess()) {
-            throw new RuntimeException(compilationResult.getErrorMessage());
-        }
-
-        // Sử dụng ExecutorService để chạy các test case song song
-        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-        List<Future<TestCaseResult>> futures = new ArrayList<>();
-
-        for (TestCase testCase : testCases) {
-            futures.add(executor.submit(() -> {
-                String userOutput = javaJudgementService.runCode(compilationResult.getRandomClassName(), testCase.getInput());
-                boolean isCorrect = userOutput.trim().equals(testCase.getExpectedOutput().trim());
-                return new TestCaseResult(testCase, userOutput, isCorrect);
-            }));
-        }
-
-        // Thu thập kết quả
-        List<TestCaseResult> testResults = new ArrayList<>();
-        int passed = 0;
-        for (Future<TestCaseResult> future : futures) {
-            try {
-                TestCaseResult result = future.get();
-                if (result.isCorrect()) {
-                    passed++;
-                }
-                testResults.add(result);
-            } catch (Exception e) {
-                testResults.add(new TestCaseResult(null, "Error: " + e.getMessage(), false));
-            }
-        }
-
-        executor.shutdown();
-
-        try {
-            Path filePath = Path.of(BASE_DIR + compilationResult.getRandomClassName() + ".class");
-            if (Files.exists(filePath)) {
-                System.out.println("File exists, attempting to delete...");
-                Files.delete(filePath);
-            } else {
-                System.out.println("File does not exist!");
-            }
-
-        } catch (IOException ignored) {
-        }
-
-        // Tính toán kết quả tổng quát
-        return new ExecutionResponse(code,passed,testCases.size(),testResults);
-//        return new ExecutionResponse(code, 0, 0, null);
     }
 
 }
