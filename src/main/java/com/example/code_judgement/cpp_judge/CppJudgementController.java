@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.List;
 
 @Controller
-@RequestMapping("/judgement/cpp")
+@RequestMapping("/judgement/c++")
 @RequiredArgsConstructor
 public class CppJudgementController {
     private final CppJudgementService cppJudgementService;

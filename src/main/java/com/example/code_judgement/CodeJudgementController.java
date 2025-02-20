@@ -46,7 +46,7 @@ public class CodeJudgementController {
         }
 
         // Xây dựng đường dẫn chuyển tiếp dựa trên ngôn ngữ (ví dụ: "java" -> "/judgement/java_judge/precheck-code")
-        String targetPath = "/judgement/" + exercise.getLanguage().getLanguage().toLowerCase() + "/precheck-code";
+        String targetPath = "/judgement/" + (exercise.getLanguage().getLanguage().equalsIgnoreCase("c#")?"csharp":exercise.getLanguage().getLanguage().toLowerCase()) + "/precheck-code";
         return "forward:" + targetPath;
     }
 
