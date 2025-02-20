@@ -11,6 +11,8 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Exercise {
 
     public enum Level { EASY, MEDIUM, HARD }
@@ -36,26 +38,6 @@ public class Exercise {
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TestCase> testCases = new ArrayList<>();
-
-    // exercise for Java, C, Python
-//    public Exercise(String name, String description, ProgrammingLanguage language, String setup, Level level) {
-//        this.name = name;
-//        this.description = description;
-//        this.language = language;
-//        this.setup = setup;
-//        this.level = level;
-//    }
-//
-//    @Column(name = "init_data", columnDefinition = "TEXT", nullable = true)
-//    private String initData;
-//
-//    @Column(name = "quantity_question", nullable = true)
-//    private Integer quantityQuestion;
-//
-//    public Exercise(String name, String description, ProgrammingLanguage language, Level level, String initData, Integer quantityQuestion) {
-//
-//    }
-
 
     public void setTestCases(List<TestCase> testCases) {
         if (testCases == null) return;

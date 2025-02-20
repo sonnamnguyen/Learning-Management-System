@@ -7,7 +7,6 @@ import com.example.user.UserRepository;
 import com.example.user.UserService;
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,10 +18,6 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.List;
 
 @Configuration
@@ -86,24 +81,6 @@ public class SecurityConfig {
                         .is2faEnabled(false)
                         .build();
                 userService.createUser(user);
-            }
-
-            // create new "user_environment" schema for user
-                // config postgres
-            String url = "jdbc:postgresql://localhost:15432/lmsdb";
-            String user = "lms";
-            String password = "postgres";
-
-            // SQL statement to create a schema
-            String createSchemaSQL = "CREATE SCHEMA IF NOT EXISTS user_environment";
-
-            try (Connection conn = DriverManager.getConnection(url, user, password);
-                 Statement stmt = conn.createStatement()) {
-
-                // Execute the statement
-                stmt.executeUpdate(createSchemaSQL);
-            } catch (SQLException e) {
-                e.printStackTrace();
             }
         };
     }

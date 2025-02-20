@@ -23,15 +23,13 @@ public class CodeJudgementController {
         Exercise exercise = exerciseService.getExerciseById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));
         model.addAttribute("exercise", exercise);
-        if(!exercise.getLanguage().getLanguage().equals("SQL")){
-            model.addAttribute("code", exercise.getSetup());
-        }
+        model.addAttribute("code", exercise.getSetup() );
         model.addAttribute("output", "");
         return "judgement/code_space";
     }
 
     // Nhận request chạy code, sau đó chuyển tiếp đến controller xử lý code tương ứng với ngôn ngữ
-    @PostMapping("/run-code")
+    @PostMapping("/precheck-code")
     public String runCode(@RequestParam("exerciseId") Long exerciseId,
                           @RequestParam("code") String code,
                           Model model) {
@@ -47,9 +45,8 @@ public class CodeJudgementController {
             return "judgement/code_space";
         }
 
-        // Xây dựng đường dẫn chuyển tiếp dựa trên ngôn ngữ (ví dụ: "java" -> "/judgement/java_judge/run-code")
-        String targetPath = "/judgement/" + exercise.getLanguage().getLanguage().toLowerCase() + "/run-code";
-
+        // Xây dựng đường dẫn chuyển tiếp dựa trên ngôn ngữ (ví dụ: "java" -> "/judgement/java_judge/precheck-code")
+        String targetPath = "/judgement/" + (exercise.getLanguage().getLanguage().equalsIgnoreCase("c#")?"csharp":exercise.getLanguage().getLanguage().toLowerCase()) + "/precheck-code";
         return "forward:" + targetPath;
     }
 
@@ -80,39 +77,10 @@ public class CodeJudgementController {
         return "forward:" + targetPath;
     }
 
-    // pre-check code
-    @PostMapping("/precheck-code")
-    public String precheckCode(@RequestParam("exerciseId") Long exerciseId,
-                               @RequestParam("code") String code,
-                               Model model){
-        Exercise exercise = exerciseService.getExerciseById(exerciseId)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));
-        List<TestCase> testCases = exercise.getTestCases();
-
-        if (testCases == null || testCases.isEmpty()) {
-            model.addAttribute("output", "No test cases defined for this exercise.");
-            model.addAttribute("exercise", exercise);
-            model.addAttribute("code", code);
-            return "judgement/code_space";
-        }
-        String targetPath = "/judgement/" + exercise.getLanguage().getLanguage().toLowerCase() + "/precheck-code";
-        System.out.println(targetPath);
-        return "forward:" + targetPath;
-    }
-
-    @PostMapping("/run_test_case")
-    public String runTestCase(@RequestParam("exerciseId") Long exerciseId,
-                              @RequestParam("code") String code,
-                              Model model){
-        model.addAttribute("exerciseId", exerciseId);
-        model.addAttribute("code", code);
-        return "judgement/run_test_case";
-    }
-
     @PostMapping("/submit_exercise")
     public String submitExercise(@RequestParam("exerciseId") Long exerciseId,
-                               @RequestParam("code") String code,
-                               Model model){
+                                 @RequestParam("code") String code,
+                                 Model model){
         Exercise exercise = exerciseService.getExerciseById(exerciseId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));
         List<TestCase> testCases = exercise.getTestCases();

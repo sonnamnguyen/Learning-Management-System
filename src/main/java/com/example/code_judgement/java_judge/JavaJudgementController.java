@@ -25,84 +25,10 @@ public class JavaJudgementController {
     private final ExerciseService exerciseService;
     private final CodeExecutionService codeExecutionService;
     // Nhận request chạy code (đã được forward từ CodeJudgementController)
-//    @PostMapping("/run-code")
-//    public String runCode(@RequestParam("exerciseId") Long exerciseId,
-//                          @RequestParam("language") String language,
-//                          @RequestParam("code") String code,
-//                          Model model) {
-//        // Lấy bài tập và test cases
-//        Exercise exercise = exerciseService.getExerciseById(exerciseId)
-//                .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));
-//        List<TestCase> testCases = exercise.getTestCases();
-//
-//        if (testCases == null || testCases.isEmpty()) {
-//            model.addAttribute("output", "No test cases defined for this exercise.");
-//            model.addAttribute("exercise", exercise);
-//            model.addAttribute("code", code);
-//            return "judgement/code_space";
-//        }
-//        try{
-//            ExecutionResponse response = codeExecutionService.executeCodeOptimized(code,testCases);
-//            // Đưa kết quả vào model để hiển thị trong view
-//            model.addAttribute("exercise", exercise);
-//            model.addAttribute("code", code);
-//            model.addAttribute("passed", response.getPassed());
-//            model.addAttribute("total", response.getTotal());
-//            model.addAttribute("testResults", response.getTestCasesResults());
-//            model.addAttribute("output", response.getPassed() + "/" + response.getTotal() + " test cases passed.");
-//
-//            return "judgement/code_space";
-//        }
-//        catch (Exception e){
-//            model.addAttribute("output", e.getMessage());
-//            model.addAttribute("exercise", exercise);
-//            model.addAttribute("code", code);
-//            model.addAttribute("language", language);
-//            return "judgement/code_space";
-//        }
-//
-//
-        //        int passed = 0;
-//
-//        // Với mỗi test case, thực thi code bằng service chuyên cho Java
-//        for (TestCase testCase : testCases) {
-//            String userOutput = javaJudgementService.executeCode(code, testCase.getInput());
-//            boolean isCorrect = userOutput.trim().equals(testCase.getExpectedOutput().trim());
-//            if (isCorrect) {
-//                passed++;
-//            }
-//            testResults.add(new TestCaseResult(testCase, userOutput, isCorrect));
-//        }
-//
-//
-//    }
-
-    @PostMapping("/run-custom-code")
-    public String runCustomCode(@RequestParam("exerciseId") Long exerciseId,
-                                @RequestParam("code") String code,
-                                @RequestParam("customInput") String customInput,
-                                Model model) {
-        // Lấy bài tập
-        Exercise exercise = exerciseService.getExerciseById(exerciseId)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));
-
-        // Thực thi mã nguồn với custom input
-        String userOutput = codeExecutionService.runWithCusTomInput(code, customInput);
-
-
-        // Đưa kết quả vào model để hiển thị
-        model.addAttribute("exercise", exercise);
-        model.addAttribute("code", code);
-        model.addAttribute("customOutput", userOutput);
-        model.addAttribute("output", "");
-
-        return "judgement/code_space";
-    }
-
     @PostMapping("/precheck-code")
-    public String precheckCode(@RequestParam("exerciseId") Long exerciseId,
-                               @RequestParam("code") String code,
-                               Model model) {
+    public String runCode(@RequestParam("exerciseId") Long exerciseId,
+                          @RequestParam("code") String code,
+                          Model model) {
         // Lấy bài tập và test cases
         Exercise exercise = exerciseService.getExerciseById(exerciseId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));
@@ -114,10 +40,9 @@ public class JavaJudgementController {
             model.addAttribute("code", code);
             return "judgement/code_space";
         }
-        try {
-            ExecutionResponse response = codeExecutionService.executeCodeOptimized(code, testCases);
+        try{
+            ExecutionResponse response = codeExecutionService.executeCodeOptimized(code,testCases,new JavaJudgementService());
             // Đưa kết quả vào model để hiển thị trong view
-            model.addAttribute("type_check", "<<<RUNNING TEST CASES>>>");
             model.addAttribute("exercise", exercise);
             model.addAttribute("code", code);
             model.addAttribute("passed", response.getPassed());
@@ -126,12 +51,38 @@ public class JavaJudgementController {
             model.addAttribute("output", response.getPassed() + "/" + response.getTotal() + " test cases passed.");
 
             return "judgement/code_space";
-        } catch (Exception e) {
+//            StringBuilder sb = new StringBuilder();
+//            sb.append("You passed ").append(response.getPassed()).append(" of ").append(response.getTotal()).append(" test cases.");
+//            return sb.toString();
+        }
+        catch (Exception e){
             model.addAttribute("output", e.getMessage());
             model.addAttribute("exercise", exercise);
             model.addAttribute("code", code);
             model.addAttribute("language", exercise.getLanguage().getLanguage());
             return "judgement/code_space";
         }
+    }
+
+    @PostMapping("/run-custom-code")
+    public String runCustomCode(@RequestParam("exerciseId") Long exerciseId,
+                                @RequestParam("code") String code,
+                                @RequestParam("customInput") String customInput,
+                                Model model) {
+        // Lấy bài tập
+        Exercise exercise = exerciseService.getExerciseById(exerciseId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));
+
+        // Thực thi mã nguồn với custom input
+        String userOutput = codeExecutionService.runWithCusTomInput(code, customInput,new JavaJudgementService());
+
+
+        // Đưa kết quả vào model để hiển thị
+        model.addAttribute("exercise", exercise);
+        model.addAttribute("code", code);
+        model.addAttribute("customOutput", userOutput);
+        model.addAttribute("output", "");
+
+        return "judgement/code_space";
     }
 }
