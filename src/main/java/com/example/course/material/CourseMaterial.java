@@ -1,15 +1,18 @@
 package com.example.course.material;
 
 import com.example.course.section.Section;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+
+import java.util.List;
 
 @Entity
 @NoArgsConstructor
 @Getter
 @Setter
+@Builder
+@AllArgsConstructor
 public class CourseMaterial {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,14 +22,22 @@ public class CourseMaterial {
         ASSIGNMENTS, LABS, LECTURES, REFERENCES, ASSESSMENTS
     }
 
+    public enum CourseMaterialType {
+        DOCUMENT, TEXT, VIDEO, AUDIO
+    }
+
     @ManyToOne
     @JoinColumn(name = "section_id", nullable = true)
+    @JsonBackReference
     private Section section;
 
-    private int materialId;  // Assuming it's a unique identifier for the material
+    private String materialId;  // Assuming it's a unique identifier for the material
 
     @Enumerated(EnumType.STRING)
     private MaterialType materialType;
+
+    private String materialName;
+    private String materialUrl;
 
     private int orderNum;
 
@@ -35,6 +46,13 @@ public class CourseMaterial {
     private Float expectDuration;
 
     private int wordCount;
+
+    @Enumerated(EnumType.STRING)
+    private CourseMaterialType courseMaterialType;
+
+    // content of ckeditor
+    @Column(columnDefinition = "TEXT")
+    private String content;
 
     @Override
     public String toString() {

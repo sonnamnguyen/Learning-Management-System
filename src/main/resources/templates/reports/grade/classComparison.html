@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class Comparison Report</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .report-card {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+        .section-header {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-12">
+            <h2 class="text-center mb-4">Class Comparison Report</h2>
+
+
+            <!-- Class Names/Sections -->
+            <div class="report-card section-header">
+                <h3>Class Names/Sections</h3>
+                <ul>
+                    <li>Class A</li>
+                    <li>Class B</li>
+                    <li>Class C</li>
+                </ul>
+            </div>
+
+            <!-- Average Scores/Grades -->
+            <div class="report-card section-header">
+                <h3>Average Scores/Grades</h3>
+                <table class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th>Class</th>
+                        <th>Average Score</th>
+                        <th>Average Grade</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>Class A</td>
+                        <td>85.2</td>
+                        <td>B+</td>
+                    </tr>
+                    <tr>
+                        <td>Class B</td>
+                        <td>90.4</td>
+                        <td>A-</td>
+                    </tr>
+                    <tr>
+                        <td>Class C</td>
+                        <td>78.6</td>
+                        <td>C+</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Highest and Lowest Scores/Grades -->
+            <div class="report-card section-header">
+                <h3>Highest and Lowest Scores/Grades</h3>
+                <table class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th>Class</th>
+                        <th>Highest Score</th>
+                        <th>Highest Grade</th>
+                        <th>Lowest Score</th>
+                        <th>Lowest Grade</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>Class A</td>
+                        <td>95.6</td>
+                        <td>A-</td>
+                        <td>72.4</td>
+                        <td>D+</td>
+                    </tr>
+                    <tr>
+                        <td>Class B</td>
+                        <td>98.1</td>
+                        <td>A+</td>
+                        <td>83.5</td>
+                        <td>B-</td>
+                    </tr>
+                    <tr>
+                        <td>Class C</td>
+                        <td>87.2</td>
+                        <td>B+</td>
+                        <td>69.0</td>
+                        <td>D-</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Grade Distribution for Each Class -->
+            <div class="report-card section-header">
+                <h3>Grade Distribution for Each Class</h3>
+                <p><strong>Class A:</strong></p>
+                <ul>
+                    <li>A+: 5 students</li>
+                    <li>A: 10 students</li>
+                    <li>B+: 8 students</li>
+                    <li>B: 6 students</li>
+                    <li>C: 3 students</li>
+                    <li>D+: 2 students</li>
+                </ul>
+                <p><strong>Class B:</strong></p>
+                <ul>
+                    <li>A+: 12 students</li>
+                    <li>A: 8 students</li>
+                    <li>B+: 5 students</li>
+                    <li>B: 4 students</li>
+                    <li>C: 3 students</li>
+                    <li>D+: 1 student</li>
+                </ul>
+                <p><strong>Class C:</strong></p>
+                <ul>
+                    <li>A+: 2 students</li>
+                    <li>A: 4 students</li>
+                    <li>B+: 7 students</li>
+                    <li>B: 6 students</li>
+                    <li>C: 5 students</li>
+                    <li>D+: 3 students</li>
+                </ul>
+            </div>
+
+            <!-- Visual Representation (Bar Chart) -->
+            <div class="report-card section-header">
+                <h3>Visual Representation (Bar Chart)</h3>
+                <canvas id="classComparisonChart" width="100%" height="140"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('classComparisonChart').getContext('2d');
+    const classComparisonChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Class A', 'Class B', 'Class C'],
+            datasets: [
+                {
+                    label: 'Average Scores',
+                    data: [85.2, 90.4, 78.6],
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Average Scores'
+                    }
+                }
+            }
+        }
+    });
+</script>
+
+</body>
+</html>

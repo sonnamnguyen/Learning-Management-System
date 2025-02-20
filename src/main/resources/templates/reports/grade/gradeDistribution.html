@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grade Distribution Report</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div class=" mt-5">
+    <h1 class="text-center">Grade Distribution Report</h1>
+
+    <!-- Class Name/Subject -->
+    <h4>Class Name/Subject: Math 101 - Algebra</h4>
+
+    <!-- Grade Distribution Table -->
+    <h4 class="mt-3">Grade Distribution</h4>
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th scope="col">Grade</th>
+            <th scope="col">Number of Students</th>
+            <th scope="col">Percentage</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>A</td>
+            <td>12</td>
+            <td>40.00%</td>
+        </tr>
+        <tr>
+            <td>B</td>
+            <td>9</td>
+            <td>30.00%</td>
+        </tr>
+        <tr>
+            <td>C</td>
+            <td>6</td>
+            <td>20.00%</td>
+        </tr>
+        <tr>
+            <td>D</td>
+            <td>2</td>
+            <td>6.67%</td>
+        </tr>
+        <tr>
+            <td>F</td>
+            <td>1</td>
+            <td>3.33%</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <!-- Bar Chart for Grade Distribution -->
+    <h4 class="mt-3">Visual Representation</h4>
+    <canvas id="gradeDistributionChart" style="max-width: 80%; height: auto; margin: auto;"></canvas>
+</div>
+
+<!-- Script for Bar Chart -->
+<script>
+    // Data for the bar chart
+    const gradeData = {
+        labels: ['A', 'B', 'C', 'D', 'F'],
+        datasets: [{
+            label: 'Number of Students',
+            data: [12, 9, 6, 2, 1],
+            backgroundColor: ['#4CAF50', '#2196F3', '#FFEB3B', '#FF9800', '#F44336'],
+            hoverBackgroundColor: ['#45a049', '#1e88e5', '#fdd835', '#fb8c00', '#e53935']
+        }]
+    };
+
+    // Configuration for the bar chart
+    const gradeConfig = {
+        type: 'bar',
+        data: gradeData,
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed !== null) {
+                                label += context.parsed + ' students';
+                            }
+                            return label;
+                        }
+                    }
+                },
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    };
+
+    // Render the bar chart
+    const ctx = document.getElementById('gradeDistributionChart').getContext('2d');
+    new Chart(ctx, gradeConfig);
+</script>
+
+<!-- Bootstrap JS and dependencies -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

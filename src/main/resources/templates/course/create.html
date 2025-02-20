@@ -102,23 +102,14 @@
                     </div>
 
                     <!-- Course Creator Field (Dropdown) -->
-                    <div class="mb-3">
-                        <label for="courseCreator" class="form-label">Course Creator</label>
-                        <select id="courseCreator" th:field="*{creator}" class="form-select" required>
-                            <option value="" selected>Select Creator</option>
-                            <option th:each="user : ${users}" th:value="${user.id}" th:text="${user.username}"></option>
-                        </select>
-                        <div class="invalid-feedback">
-                            Course creator is required.
-                        </div>
-                    </div>
+                    <input type="hidden" th:value="${currentUser.id}" th:field="*{creator}">
 
                     <!-- Course Instructor Field (Dropdown) -->
                     <div class="mb-3">
                         <label for="courseInstructor" class="form-label">Course Instructor</label>
                         <select id="courseInstructor" th:field="*{instructor}" class="form-select" required>
                             <option value="" selected>Select Instructor</option>
-                            <option th:each="user : ${users}" th:value="${user.id}" th:text="${user.username}"></option>
+                            <option th:each="user : ${instructors}" th:value="${user.id}" th:text="${user.username}"></option>
                         </select>
                         <div class="invalid-feedback">
                             Course instructor is required.

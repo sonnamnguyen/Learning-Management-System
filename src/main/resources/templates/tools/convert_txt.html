@@ -81,6 +81,7 @@
     fileCountInput.value = '';
     textAreasContainer.innerHTML = '';
     submitButton.classList.add('d-none');
+    contentForm.reset();
   };
 
   // Xử lý khi nhấn nút Generate Fields
@@ -94,6 +95,7 @@
 
     // Reset toàn bộ dữ liệu khi Generate Fields
     textAreasContainer.innerHTML = '';
+    contentForm.reset();
 
     // Tạo mới các textarea
     for (let i = 1; i <= fileCount; i++) {
@@ -114,31 +116,12 @@
 
   // Xử lý khi submit form
   contentForm.addEventListener('submit', (e) => {
-    const textareas = document.querySelectorAll('textarea');
+    const textareas = textAreasContainer.querySelectorAll('textarea');
     let hasContent = false;
 
     textareas.forEach(textarea => {
       if (textarea.value.trim() === '') {
-        textarea.removeAttribute('name'); // Loại bỏ name của textarea trống
-      } else {
-        hasContent = true; // Xác nhận có ít nhất một textarea có nội dung
-      }
-    });
-
-    if (!hasContent) {
-      e.preventDefault(); // Ngăn form được gửi nếu không có dữ liệu
-      alert('Please fill in at least one file content before submitting.');
-    }
-  });
-
-  // Handle form submission
-  contentForm.addEventListener('submit', (e) => {
-    const textareas = document.querySelectorAll('textarea');
-    let hasContent = false;
-
-    textareas.forEach(textarea => {
-      if (textarea.value.trim() === '') {
-        textarea.removeAttribute('name'); // Remove empty fields
+        textarea.removeAttribute('name');
       } else {
         hasContent = true;
       }

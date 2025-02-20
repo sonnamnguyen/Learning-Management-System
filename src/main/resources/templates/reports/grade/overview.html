@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grades Overview</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .container {
+            margin-top: 30px;
+        }
+        .card-margin {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="mt-5">
+    <h1>Grades Overview</h1>
+
+    <!-- Cards for each student -->
+    <div id="studentsContainer" class="row">
+        <!-- Sample data -->
+        <div class="col-md-4 card-margin">
+            <div class="card">
+                <div class="card-header">
+                    Student: John Doe
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">Course: Math - Grade: A</li>
+                    <li class="list-group-item">Course: Science - Grade: B+</li>
+                    <li class="list-group-item">Course: History - Grade: A-</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="col-md-4 card-margin">
+            <div class="card">
+                <div class="card-header">
+                    Student: Jane Smith
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">Course: Math - Grade: B</li>
+                    <li class="list-group-item">Course: Science - Grade: A</li>
+                    <li class="list-group-item">Course: History - Grade: B+</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="col-md-4 card-margin">
+            <div class="card">
+                <div class="card-header">
+                    Student: Alice Johnson
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">Course: Math - Grade: A-</li>
+                    <li class="list-group-item">Course: Science - Grade: B</li>
+                    <li class="list-group-item">Course: History - Grade: A</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap and jQuery JS -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<!-- Custom JS -->
+<script>
+    // Sample data
+    const studentsData = [
+        {
+            name: "John Doe",
+            grades: [
+                { course: "Math", grade: "A" },
+                { course: "Science", grade: "B+" },
+                { course: "History", grade: "A-" }
+            ]
+        },
+        {
+            name: "Jane Smith",
+            grades: [
+                { course: "Math", grade: "B" },
+                { course: "Science", grade: "A" },
+                { course: "History", grade: "B+" }
+            ]
+        },
+        {
+            name: "Alice Johnson",
+            grades: [
+                { course: "Math", grade: "A-" },
+                { course: "Science", grade: "B" },
+                { course: "History", grade: "A" }
+            ]
+        }
+    ];
+
+    // Function to render students data into cards
+    function renderStudentsData(students) {
+        const container = document.getElementById('studentsContainer');
+        container.innerHTML = ''; // Clear existing content
+
+        students.forEach(student => {
+            const cardDiv = document.createElement('div');
+            cardDiv.className = 'col-md-4 card-margin';
+
+            const cardElement = document.createElement('div');
+            cardElement.className = 'card';
+
+            const cardHeader = document.createElement('div');
+            cardHeader.className = 'card-header';
+            cardHeader.textContent = `Student: ${student.name}`;
+
+            const listGroup = document.createElement('ul');
+            listGroup.className = 'list-group list-group-flush';
+
+            student.grades.forEach(grade => {
+                const listItem = document.createElement('li');
+                listItem.className = 'list-group-item';
+                listItem.textContent = `Course: ${grade.course} - Grade: ${grade.grade}`;
+                listGroup.appendChild(listItem);
+            });
+
+            cardElement.appendChild(cardHeader);
+            cardElement.appendChild(listGroup);
+            cardDiv.appendChild(cardElement);
+
+            container.appendChild(cardDiv);
+        });
+    }
+
+    // Render sample data on page load
+    window.onload = function() {
+        renderStudentsData(studentsData);
+    };
+</script>
+</body>
+</html>

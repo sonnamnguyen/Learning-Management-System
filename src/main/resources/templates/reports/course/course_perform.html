@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subject-wise Performance Report</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .report-card {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class=" mt-5">
+    <h1>Subject-wise Performance Report</h1>
+
+    <!-- Subject Name -->
+    <div class="report-card">
+        <div class="section-title">Subject Name</div>
+        <p><strong>Mathematics</strong></p>
+    </div>
+
+    <!-- Average Score/Grade -->
+    <div class="report-card">
+        <div class="section-title">Average Score/Grade</div>
+        <table class="table table-striped">
+            <tr>
+                <th>Average Score</th>
+                <td>85.2</td>
+            </tr>
+            <tr>
+                <th>Average Grade</th>
+                <td>B+</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Highest and Lowest Scores/Grades -->
+    <div class="report-card">
+        <div class="section-title">Highest and Lowest Scores/Grades</div>
+        <table class="table table-striped">
+            <tr>
+                <th>Highest Score</th>
+                <td>98.5</td>
+            </tr>
+            <tr>
+                <th>Highest Grade</th>
+                <td>A+</td>
+            </tr>
+            <tr>
+                <th>Lowest Score</th>
+                <td>62.0</td>
+            </tr>
+            <tr>
+                <th>Lowest Grade</th>
+                <td>D-</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Grade Distribution -->
+    <div class="report-card">
+        <div class="section-title">Grade Distribution</div>
+        <ul>
+            <li><strong>A+</strong>: 5 students</li>
+            <li><strong>A</strong>: 10 students</li>
+            <li><strong>B+</strong>: 8 students</li>
+            <li><strong>B</strong>: 6 students</li>
+            <li><strong>C</strong>: 3 students</li>
+            <li><strong>D+</strong>: 2 students</li>
+            <li><strong>D-</strong>: 1 student</li>
+        </ul>
+    </div>
+
+    <!-- Common Areas for Improvement -->
+    <div class="report-card">
+        <div class="section-title">Common Areas for Improvement</div>
+        <p>Based on the performance data, the following areas are identified as needing improvement:</p>
+        <ul>
+            <li><strong>Algebra**: Many students struggle with solving complex equations and inequalities.</li>
+            <li><strong>Geometry**: There is a need for better understanding of geometric proofs and constructions.</li>
+            <li><strong>Calculus**: Students have difficulty grasping concepts related to derivatives and integrals.</li>
+        </ul>
+    </div>
+
+    <!-- Visual Representation (Bar Chart) -->
+    <div class="report-card">
+        <div class="section-title">Visual Representation (Bar Chart)</div>
+        <canvas id="gradeDistributionChart" width="100%" height="40"></canvas>
+    </div>
+</div>
+
+<script>
+    const ctx = document.getElementById('gradeDistributionChart').getContext('2d');
+    const gradeDistributionChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['A+', 'A', 'B+', 'B', 'C', 'D+', 'D-'],
+            datasets: [
+                {
+                    label: 'Number of Students',
+                    data: [5, 10, 8, 6, 3, 2, 1],
+                    backgroundColor: [
+                        'rgba(75, 192, 192, 0.2)',
+                        'rgba(153, 102, 255, 0.2)',
+                        'rgba(255, 159, 64, 0.2)',
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(201, 203, 207, 0.2)',
+                        'rgba(255, 206, 86, 0.2)'
+                    ],
+                    borderColor: [
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)',
+                        'rgba(255, 159, 64, 1)',
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(201, 203, 207, 1)',
+                        'rgba(255, 206, 86, 1)'
+                    ],
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
+
+</body>
+</html>

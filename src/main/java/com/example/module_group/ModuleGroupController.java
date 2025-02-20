@@ -1,13 +1,17 @@
 package com.example.module_group;
 
-import com.example.module_group.ModuleGroup;
-import com.example.module_group.ModuleGroup;
+import com.example.exception.ObjectAlreadyExistsException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
 import java.util.List;
 
 @Controller
@@ -44,6 +48,7 @@ public class ModuleGroupController {
 
         // add attribute for layout
         model.addAttribute("content","module_group/list");
+        addCommonAttributes(model);
         return "layout";
     }
 
@@ -53,17 +58,21 @@ public class ModuleGroupController {
         model.addAttribute("moduleGroup", new ModuleGroup());
 
         model.addAttribute("content", "module_group/create");
+        addCommonAttributes(model);
         return "layout";
     }
 
     @PostMapping("/create")
     public String createModuleGroup(@ModelAttribute ModuleGroup moduleGroup, Model model) {
-        if (moduleGroupService.isModuleGroupNameExists(moduleGroup.getName())) {
-            model.addAttribute("error", "ModuleGroup name already exists!");
-            return "module_group/create"; // Ensure this is the correct view name
+        try {
+            moduleGroupService.createModuleGroup(moduleGroup.getName());
+            return "redirect:/module-groups"; // Ensure this is the correct view name
+        } catch (ObjectAlreadyExistsException e) {
+            model.addAttribute("error", e.getMessage());
+            model.addAttribute("content", "module_group/create");
+            addCommonAttributes(model);
+            return "layout";
         }
-        moduleGroupService.createModuleGroup(moduleGroup.getName());
-        return "redirect:/module-groups"; // Ensure this is the correct view name
     }
 
 	// Show edit form for a specific assessment_type
@@ -72,24 +81,54 @@ public class ModuleGroupController {
         model.addAttribute("moduleGroup", moduleGroupService.getModuleGroupById(id));
 
         model.addAttribute("content", "module_group/edit");
+        addCommonAttributes(model);
         return "layout";
     }
 
     // Update existing assessment_type
     @PostMapping("/edit/{id}")
     public String updateModuleGroup(@PathVariable Long id, @ModelAttribute ModuleGroup moduleGroup, Model model) {
-        if (moduleGroupService.isModuleGroupNameExists(moduleGroup.getName())) {
-            model.addAttribute("error", "ModuleGroup name already exists!");
-            return "module_group/edit"; // Ensure this is the correct view name
+        try {
+            moduleGroupService.updateModuleGroup(id, moduleGroup.getName());
+            return "redirect:/module-groups";
+        } catch (ObjectAlreadyExistsException e) {
+            model.addAttribute("error", "Module Group name already exists!");
+            model.addAttribute("content", "module_group/edit");
+            addCommonAttributes(model);
+            return "layout";
         }
-        moduleGroupService.updateModuleGroup(id, moduleGroup.getName());
-        return "redirect:/module-groups";
     }
 
     @GetMapping("/delete/{id}")
     public String deleteModuleGroup(@PathVariable Long id) {
         moduleGroupService.deleteModuleGroup((long) Math.toIntExact(id));
         return "redirect:/module-groups";
+    }
+
+    // Export moduleGroups to Excel
+    @GetMapping("/export")
+    public ResponseEntity<InputStreamResource> exportModuleGroups() {
+        // Fetch all moduleGroups (page size set to max to get all records)
+        List<ModuleGroup> moduleGroups = moduleGroupService.getAllModuleGroups();
+
+        // Convert moduleGroups to Excel (assumes you have a service for that)
+        ByteArrayInputStream excelFile = moduleGroupService.exportModuleGroupsToExcel(moduleGroups);
+
+        // Create headers for the response (Content-Disposition to trigger file download)
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Disposition", "attachment; filename=moduleGroups.xlsx");
+        // Return the file in the response
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(new InputStreamResource(excelFile));
+    }
+
+    // Import module-groups from Excel
+    @PostMapping("/import")
+    public String importModuleGroups(@RequestParam("file") MultipartFile file) {
+        List<ModuleGroup> moduleGroups = moduleGroupService.importExcel(file);
+        moduleGroupService.saveAll(moduleGroups);  // Save the moduleGroups in the database
+        return "redirect:/module-groups";  // Redirect to the moduleGroups list page after import
     }
 
     // print module-group

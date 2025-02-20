@@ -7,10 +7,15 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.ByteArrayInputStream;
 import java.util.List;
@@ -60,7 +65,14 @@ public class UserController {
             return "user/create"; // Redirect to create form with error
         }
 
-        userService.createUser(user);
+        try {
+            userService.createUser(user);
+        }
+        catch (Exception e) {
+            model.addAttribute("error",  e.getMessage());
+            model.addAttribute("allRoles", roleService.getAllRoles());
+            return "user/create"; // Redirect to create form with error
+        }
         model.addAttribute("success", "User created successfully!");
         return "redirect:/users"; // Redirect to users list
     }
@@ -75,9 +87,18 @@ public class UserController {
 
     // Update existing user
     @PostMapping("/edit/{id}")
-    public String updateUser(@PathVariable(name ="id") Long id, @ModelAttribute User user, Model model) {
+    public String updateUser(@PathVariable(name ="id") Long id, @ModelAttribute User user, Model model, Authentication
+                             authentication) {
         // You can add validation here if needed
         userService.updateUser(id, user);
+        Authentication newAuth = new UsernamePasswordAuthenticationToken(
+                authentication.getPrincipal(),
+                authentication.getCredentials(),
+                AuthorityUtils.createAuthorityList(String.valueOf(user.getRoles()))
+        );
+
+        // Cập nhật SecurityContext
+        SecurityContextHolder.getContext().setAuthentication(newAuth);
         return "redirect:/users";
     }
 
@@ -108,11 +129,32 @@ public class UserController {
 
     // Import users from Excel
     @PostMapping("/import")
-    public String importUsers(@RequestParam("file") MultipartFile file) {
-        List<User> users = userService.importExcel(file);
-        userService.saveAll(users);  // Save the users in the database
-        return "redirect:/users";  // Redirect to the users list page after import
+    public String importUsers(@RequestParam("file") MultipartFile file, Model model, RedirectAttributes redirectAttributes) {
+        try {
+            List<User> users = userService.importExcel(file);
+            userService.saveAll(users);  // Save the users in the database
+            redirectAttributes.addFlashAttribute("success", "Users imported successfully!");
+
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Import failed: " + e.getMessage());
+//            model.addAttribute("showImportModal", true); // Đánh dấu để mở modal
+//            return "users/list"; // Trả về trang hiện tại
+        }
+        // Redirect to the users list page after import
+
+        return "redirect:/users";
     }
+
+//    @PostMapping("/import")
+//    public ResponseEntity<String> importUsers(@RequestParam("file") MultipartFile file) {
+//        try {
+//            List<User> users = userService.importExcel(file);
+//            userService.saveAll(users); // Save users in the database
+//            return ResponseEntity.ok("Users imported successfully!");
+//        } catch (Exception e) {
+//            return ResponseEntity.badRequest().body("Error importing users: " + e.getMessage());
+//        }
+//    }
 
 }
 

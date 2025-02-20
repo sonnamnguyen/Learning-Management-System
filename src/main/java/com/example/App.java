@@ -10,7 +10,6 @@ import org.springframework.cache.annotation.EnableCaching;
  */
 //@SpringBootApplication // This annotation is used to mark the main class of a Spring Boot application
 @SpringBootApplication()
-@EnableCaching
 public class App
 {
     public static void main( String[] args )

@@ -1,6 +1,12 @@
 package com.example.course;
 
+import com.example.course.material.CourseMaterialDTO;
+import com.example.course.material.CourseMaterialService;
+import com.example.course.section.Section;
+import com.example.course.section.SectionService;
 import com.example.user.UserService;
+import org.checkerframework.checker.units.qual.A;
+import org.springdoc.core.service.SecurityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Page;
@@ -12,7 +18,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/courses")
@@ -22,7 +31,13 @@ public class CourseController {
     private CourseService courseService;
 
     @Autowired
+    private SectionService sectionService;
+
+    @Autowired
     private UserService userService;
+
+    @Autowired
+    private CourseMaterialService courseMaterialService;
 
     // Thêm model attribute chung cho tất cả các phương thức
     @ModelAttribute
@@ -56,7 +71,9 @@ public class CourseController {
     @GetMapping("/create")
     public String showCreateForm(Model model) {
         model.addAttribute("course", new Course());
-        model.addAttribute("users", userService.getAllUsers()); // Pass list of users
+        model.addAttribute("instructors", userService.getAllInstructor()); // Pass list of instructor
+        model.addAttribute("currentUser", userService.getCurrentUser());
+        model.addAttribute("courseMaterial", courseMaterialService.findAll());
         return "course/create"; // Points to create.html
     }
 
@@ -72,18 +89,40 @@ public class CourseController {
     // Show edit form for a specific course
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable Long id, Model model) {
-        model.addAttribute("course", courseService.getCourseById(id));
-        model.addAttribute("content", "course/edit");
-        return "layout";
+        Course course = courseService.getCourseById(id);
+        model.addAttribute("course", course);
+        model.addAttribute("sections", sectionService.getAllSections());
+
+        List<Section> sectionList = sectionService.getSectionsByCourse(id);
+        List<Map<String, Object>> response = new ArrayList<>();
+        for (Section section : sectionList) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("sectionId", section.getId());
+            map.put("sectionName", section.getName());
+            map.put("courseMaterials", section.getCourseMaterials().stream().map(CourseMaterialDTO::toDTO).toList());
+            response.add(map);
+        }
+        model.addAttribute("response", response);
+        //model.addAttribute("material", "http://localhost/material/DATH.pdf");
+        //model.addAttribute("content", "course/edit");
+        return "course/edit";
     }
 
     // Update existing course
     @PostMapping("/edit/{id}")
-    public String updateCourse(@PathVariable Long id, @ModelAttribute Course course, Model model) {
-        // You can add validation here if needed
-        courseService.updateCourse(id, course);
-        return "redirect:/courses";
+    @ResponseBody
+    public ResponseEntity<?> updateCourse(
+            @PathVariable Long id,
+            @ModelAttribute Course course
+    ) {
+       try {
+           // Xử lý logic cập nhật
+           return ResponseEntity.ok(courseService.updateCourse(id, course));
+       }catch (Exception e) {
+           return ResponseEntity.badRequest().body(e.getMessage());
+       }
     }
+
 
     // Delete a course
     @GetMapping("/delete/{id}")
@@ -126,12 +165,15 @@ public class CourseController {
         return "redirect:/courses";  // Redirect to the courses list page after import
     }
 
-    // test read course material
     @GetMapping("/material")
     public String showMaterials(Model model) {
-        model.addAttribute("material", "/templates/material/test.pdf");
-        model.addAttribute("content", "course/test");
+        //model.addAttribute("material", "/templates/material/Introduction.to.Java.Programming.9th.Edition-(Full-Edition).pdf");
+        model.addAttribute("material", "http://localhost/material/Software%20Engineering%2C%2010th%20Edition%20%28%20PDFDrive%20%29.pdf");
+
+        model.addAttribute("content", "course/material");
         return "layout";
     }
+
+
 }
 

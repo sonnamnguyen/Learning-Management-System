@@ -2,30 +2,21 @@ package com.example.auth;
 
 import com.example.email.EmailService;
 import com.example.otp.OtpService;
-import com.example.role.Role;
 import com.example.role.RoleService;
 import com.example.user.User;
 import com.example.user.UserLoginDTO;
 import com.example.user.UserService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 import java.util.stream.Collectors;
 
 @RequestMapping("")
@@ -78,12 +69,10 @@ public class AuthController {
             return "register";
         }
         // Tạo mã OTP ngẫu nhiên
-        String otp = otpService.generateOtp(user.getEmail());
+        otpService.generateOtp(user.getEmail(), user);
 
-        // Gửi OTP qua email
-        emailService.sendEmail(user.getEmail(), "Your OTP Code", "Your OTP is: " + otp);
-
-
+//        // Gửi OTP qua email
+//        emailService.sendEmail(user.getEmail(), "Your OTP Code", "Your OTP is: " + otp);
         redirectAttributes.addFlashAttribute("user", user);
         return "redirect:/otp";
     }
