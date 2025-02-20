@@ -3,6 +3,8 @@ package com.example.code_judgement;
 
 import com.example.code_judgement.java_judge.JavaJudgementService;
 import com.example.code_judgement.languageFactory.ExecutionBasedLanguage;
+import com.example.code_judgement.sql_judge.ExecuteUserCodeResponse;
+import com.example.code_judgement.sql_judge.SqlJudgementService;
 import com.example.exercise.Exercise;
 import com.example.exercise.ExerciseRepository;
 import com.example.exercise.ExerciseService;
@@ -164,5 +166,42 @@ public class CodeExecutionService {
                         }
                     });
         }
+    }
+
+    // ***************************************************************************
+    // Execute SQL-MySQL Code
+    @Autowired
+    private SqlJudgementService sqlJudgementService;
+
+    public ExecutionResponse executeSQLCodeType2(String code, List<TestCase> testCases) {
+        ExecuteUserCodeResponse executeUserCodeResponse = sqlJudgementService.hashAndRunSQL(code);
+        if(executeUserCodeResponse.isSuccess()){
+            List<TestCaseResult> testResults = new ArrayList<>();
+            int passed = 0;
+            for(TestCase testCase : testCases){
+                String result = sqlJudgementService.runTestCases(testCase, executeUserCodeResponse.getRandomId());
+                if(result.equals(testCase.getExpectedOutput())){
+                    testResults.add(new TestCaseResult(testCase, result, true));
+                    passed++;
+                } else{
+                    testResults.add(new TestCaseResult(testCase, result, false));
+                }
+            }
+            // delete users' table
+            try{
+                sqlJudgementService.deleteUserTable(executeUserCodeResponse.getRandomTableNames());
+            } catch (Exception e){
+            }
+            return new ExecutionResponse(code, passed, testCases.size(), testResults);
+        }
+        return new ExecutionResponse(code, 0, testCases.size(), null);
+    }
+
+    public ExecutionResponse executeSQLCodeType1(String scriptSetup, String code, List<TestCase> testCases) {
+        ExecuteUserCodeResponse executeUserCodeResponse = sqlJudgementService.hashAndRunSQL(scriptSetup);
+        if(executeUserCodeResponse.isSuccess()){
+            return sqlJudgementService.runTestCases1(scriptSetup, code, testCases, executeUserCodeResponse.getRandomTableNames());
+        }
+        return new ExecutionResponse(code, 0, testCases.size(), null);
     }
 }

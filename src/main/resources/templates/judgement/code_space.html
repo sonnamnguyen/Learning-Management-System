@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LMS</title>
+    <title>Trang chủ</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -11,16 +11,8 @@
         /* styles.css */
         body {
             font-family: Arial, sans-serif;
-        }
-
-        .test-case-pass {
-            color: #28a745; /* Xanh lá */
-            font-weight: bold;
-        }
-
-        .test-case-fail {
-            color: #dc3545; /* Đỏ */
-            font-weight: bold;
+            background-color: #1e1e1e;
+            color: #e4e4e4;
         }
 
         .container-fluid {
@@ -37,7 +29,6 @@
         #leftPanel {
             height: 100%;
             font-size: 0.875em;
-            background-color: #314251;
             width: 25%;
             min-width: 200px;
             max-width: 450px;
@@ -51,12 +42,15 @@
             flex-grow: 1;
             transition: width 0.3s ease;
             width: calc(100% - 50%);
+            background-color: #1f1f1f;
+            overflow: hidden !important;
         }
 
         #rightPanel {
             width: 25% !important;
             transition: width 0.3s ease;
-            background-color: black !important;
+            background-color: #282a36 !important;
+            color: #e4e4e4;
         }
 
         #toggleLeftPanel {
@@ -77,8 +71,10 @@
         }
 
         #output {
-            overflow: auto;
+            overflow: hidden;
             font-size: 0.75em;
+            background-color: #282a36;
+            color: #e4e4e4;
         }
 
         .modal-content {
@@ -127,7 +123,6 @@
 
         .search-container {
             padding: 10px;
-            background-color: #1e2937;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             position: sticky;
             top: 0;
@@ -136,7 +131,6 @@
 
         .search-container .input-group {
             max-width: 100%;
-
         }
 
         .search-container input {
@@ -197,7 +191,6 @@
         #searchResults {
             height: 100%;
             background-color: #1e2937;
-            padding: 10px;
         }
 
         #searchFrame {
@@ -224,18 +217,23 @@
         #theme-toggle-button {
             position: relative;
             overflow: hidden;
-            background: transparent;
-            border: 1px solid #666;
-            color: #fff;
+            background: #3e4451;
+            border: 1px solid #181a1f;
+            color: #abb2bf;
             transition: all 0.3s ease;
         }
 
         #theme-toggle-button.light-mode {
-            border-color: #333;
-            color: #978f8f;
+            background: #f8f9fa;
+            border-color: #dee2e6;
+            color: #333;
         }
 
+        #theme-toggle-button:hover {
+            opacity: 0.9;
+        }
 
+        /* Hiệu ứng ripple cho nút theme */
         #theme-toggle-button::before {
             content: '';
             position: absolute;
@@ -243,55 +241,13 @@
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(120deg,
-            transparent,
-            rgba(255, 255, 255, 0.2),
-            transparent);
+            background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.2), transparent);
             transition: 0.5s;
         }
 
         #theme-toggle-button:hover::before {
             left: 100%;
         }
-
-        #theme-toggle-button.light-mode::before {
-            background: linear-gradient(120deg,
-            transparent,
-            rgba(0, 0, 0, 0.1),
-            transparent);
-        }
-
-        /* Theme Styles */
-        /* body.light-theme {
-            background-color: #ffffff;
-        }
-
-        body.light-theme #leftPanel,
-        body.light-theme #rightPanel {
-            background-color: #f8f9fa !important;
-        }
-
-        body.light-theme #centerPanel {
-            background-color: #ffffff !important;
-        }
-
-        body.light-theme .nav-link {
-            color: #333 !important;
-        }
-
-        body.light-theme .nav-link.active {
-            background-color: rgba(0, 0, 0, 0.1) !important;
-        }
-
-        body.light-theme #output {
-            background-color: #f8f9fa;
-            color: #333;
-        }
-
-        body.light-theme .description,
-        body.light-theme .examples {
-            color: #333;
-        } */
 
         /* Điều chỉnh kích thước nút */
         .btn-lg {
@@ -316,7 +272,137 @@
 
         /* Thay đổi màu sắc của dòng số */
         .CodeMirror-linenumbers {
-            background-color: #1e1e1e;
+            background-color: #1f1f1f !important;
+        }
+
+        .CodeMirror-scroll {
+            background-color: #1f1f1f;
+        }
+
+        .CodeMirror {
+            background-color: #1f1f1f;
+        }
+
+        /* Light theme */
+        body.light-theme {
+            background-color: #ffffff;
+            color: #333333;
+        }
+
+        body.light-theme #leftPanel {
+            background-color: #e8e6e6;
+            color: #333;
+            border-right: 2px solid #1e1e1e;
+            border-bottom: 1px solid #1e1e1e;
+            border-top: 1px solid #1e1e1e;
+        }
+
+        body.light-theme #centerPanel {
+            background-color: #ffffff;
+            border-bottom: 1px solid #1e1e1e;
+            border-top: 1px solid #1e1e1e;
+        }
+
+        body.light-theme #rightPanel {
+            background-color: #f8f9fa !important;
+            color: #333;
+            border-left: 1px solid #1e1e1e;
+            border-bottom: 1px solid #1e1e1e;
+            border-top: 1px solid #1e1e1e;
+        }
+
+        body.light-theme #leftPanelTabs .nav-link {
+            color: #333 !important;
+        }
+
+        body.light-theme .CodeMirror {
+            background-color: #ffffff;
+        }
+
+        body.light-theme .CodeMirror-scroll {
+            background-color: #ffffff;
+        }
+
+        body.light-theme .CodeMirror-gutters {
+            background-color: #f8f9fa;
+        }
+
+        body.light-theme .CodeMirror-linenumber {
+            color: #ffffff;
+        }
+
+        body.light-theme #output {
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+        body.light-theme .search-container {
+            background-color: #e8e6e6;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        body.light-theme .search-container input {
+            background-color: #ffffff;
+            border: 1px solid #ced4da;
+            color: #333;
+        }
+
+        body.light-theme .nav-link {
+            color: #333 !important;
+        }
+
+        body.light-theme .nav-link.active {
+            background-color: #e9ecef !important;
+            color: #000 !important;
+        }
+
+        body.light-theme .description,
+        body.light-theme .examples {
+            color: #333;
+        }
+
+        body.light-theme #theme-toggle-button {
+            background-color: #f8f9fa;
+            border-color: #dee2e6;
+            color: #333;
+        }
+
+        body.light-theme .btn-group .btn {
+            background-color: #f8f9fa;
+            border-color: #dee2e6;
+            color: #333;
+        }
+
+        body.light-theme #language-select {
+            background-color: #f8f9fa;
+            border-color: #dee2e6;
+            color: #333;
+        }
+
+        /* Điều chỉnh kích thước nút */
+        .btn-lg {
+            padding: 0.4rem 0.8rem !important;
+            font-size: 0.9rem !important;
+        }
+
+        #language-select {
+            padding: 0.4rem 0.8rem !important;
+            font-size: 0.9rem !important;
+            height: auto !important;
+        }
+
+        .btn-group {
+            gap: 0.3rem;
+        }
+
+        /* Điều chỉnh icon trong nút */
+        .btn i {
+            font-size: 0.9rem;
+        }
+
+        /* Thay đổi màu sắc của dòng số */
+        .CodeMirror-linenumbers {
+            background-color: #ffffff !important;
         }
 
         .CodeMirror-scroll {
@@ -368,8 +454,299 @@
             border-radius: 4px;
             overflow-x: auto;
         }
-    </style>
 
+        /* Transition cho mượt mà */
+        body,
+        #leftPanel,
+        #centerPanel,
+        #rightPanel,
+        .CodeMirror,
+        #output,
+        .search-container,
+        .nav-link,
+        .btn,
+        #language-select {
+            transition: all 0.3s ease !important;
+        }
+
+        /* Dark theme (mặc định) */
+        .btn-group .btn {
+            background-color: #3e4451;
+            color: #abb2bf;
+            border-color: #181a1f;
+        }
+
+        #language-select {
+            background-color: #3e4451;
+            color: #abb2bf;
+            border-color: #181a1f;
+        }
+
+        .btn-success {
+            background-color: #98c379 !important;
+            border-color: #7cb36a !important;
+            color: #282c34 !important;
+        }
+
+        .btn-danger {
+            background-color: #e06c75 !important;
+            border-color: #be5046 !important;
+            color: #fff !important;
+        }
+
+        .btn-primary {
+            background-color: #61afef !important;
+            border-color: #4fa6ed !important;
+            color: #fff !important;
+        }
+
+        .description,
+        .examples {
+            color: #abb2bf;
+        }
+
+        .nav-link {
+            color: #abb2bf !important;
+        }
+
+        .nav-link.active {
+            background-color: #3e4451 !important;
+            color: #fff !important;
+        }
+
+        /* Light theme */
+        body.light-theme .btn-group .btn {
+            background-color: #f8f9fa;
+            color: #495057;
+            border-color: #dee2e6;
+        }
+
+        body.light-theme #language-select {
+            background-color: #f8f9fa;
+            color: #495057;
+            border-color: #dee2e6;
+        }
+
+        body.light-theme .btn-success {
+            background-color: #28a745 !important;
+            border-color: #28a745 !important;
+            color: #fff !important;
+        }
+
+        body.light-theme .btn-danger {
+            background-color: #dc3545 !important;
+            border-color: #dc3545 !important;
+            color: #fff !important;
+        }
+
+        body.light-theme .btn-primary {
+            background-color: #007bff !important;
+            border-color: #007bff !important;
+            color: #fff !important;
+        }
+
+        body.light-theme .description,
+        body.light-theme .examples {
+            color: #495057;
+        }
+
+        body.light-theme .nav-link {
+            color: #495057 !important;
+        }
+
+        body.light-theme .nav-link.active {
+            background-color: #5f8eed !important;
+            color: #212529 !important;
+        }
+
+        /* Hover effects */
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        /* Focus effects */
+        .btn:focus,
+        #language-select:focus {
+            box-shadow: 0 0 0 0.2rem rgba(97, 175, 239, 0.25);
+        }
+
+        body.light-theme .btn:focus,
+        body.light-theme #language-select:focus {
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        /* Transition cho mượt mà */
+        .btn,
+        #language-select,
+        .nav-link {
+            transition: all 0.2s ease-in-out;
+        }
+
+        /* Badge style */
+        .badge {
+            background-color: #98c379 !important;
+            color: #282c34 !important;
+        }
+
+        body.light-theme .badge {
+            background-color: #28a745 !important;
+            color: #fff !important;
+        }
+
+        /* Output text */
+        #output {
+            color: #abb2bf;
+        }
+
+        body.light-theme #output {
+            color: #495057;
+        }
+
+        /* Code title */
+        .code-title {
+            color: #abb5bf;
+            font-weight: 600;
+        }
+
+        body.light-theme .code-title {
+            color: #495057;
+        }
+
+        /* Thêm viền cho các thành phần con trong light theme */
+        body.light-theme .search-container {
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        body.light-theme #leftPanelTabs {
+            border-top: 1px solid #dee2e6;
+        }
+
+        body.light-theme .nav-tabs {
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+        }
+
+        body.light-theme .nav-link.active {
+            border-color: #dee2e6 #dee2e6 #fff;
+        }
+
+        /* Dark theme (mặc định) */
+        .middle {
+            background-color: #1f1f1f !important;
+        }
+
+        /* Light theme */
+        body.light-theme .middle {
+            background-color: #ffffff !important;
+        }
+
+        /* Dark theme (mặc định) */
+        .CodeMirror-linenumbers {
+            background-color: #1f1f1f !important;
+        }
+
+        .CodeMirror-gutter {
+            background-color: #1f1f1f !important;
+        }
+
+        .CodeMirror-linenumber {
+            color: #636d83 !important;
+        }
+
+        /* Light theme */
+        body.light-theme .CodeMirror-linenumbers {
+            background-color: #ffffff !important;
+        }
+
+        body.light-theme .CodeMirror-gutter {
+            background-color: #ffffff !important;
+        }
+
+        body.light-theme .CodeMirror-linenumber {
+            color: #181a1f !important;
+        }
+
+        #back-to-exercise-list:hover {
+            background-color: #3e4451;
+            color: #abb2bf;
+            border-color: #181a1f;
+        }
+
+        /* Badge styles cho các độ khó */
+        .difficulty-badge {
+            font-weight: 600 !important;
+            text-transform: uppercase !important;
+            color: white !important;
+        }
+
+        /* Dark theme colors */
+        .difficulty-badge:not(.light-theme) {
+            background-color: #4CAF50 !important;
+            /* Mặc định - Easy */
+        }
+
+        .difficulty-badge:not(.light-theme):has(span:contains('medium')) {
+            background-color: #FF9800 !important;
+        }
+
+        .difficulty-badge:not(.light-theme):has(span:contains('hard')) {
+            background-color: #E57373 !important;
+        }
+
+        /* Light theme colors */
+        body.light-theme .difficulty-badge {
+            background-color: #81C784 !important;
+            /* Mặc định - Easy */
+        }
+
+        body.light-theme .difficulty-badge:contains('medium') {
+            background-color: #FFB74D !important;
+        }
+
+        body.light-theme .difficulty-badge:contains('hard') {
+            background-color: #f44336 !important;
+        }
+
+        /* Đảm bảo màu chữ luôn là trắng */
+        .difficulty-badge {
+            color: white !important;
+        }
+
+        /* Thêm !important cho tất cả các thuộc tính */
+        .difficulty-badge[data-difficulty="easy"] {
+            background-color: #4CAF50 !important;
+        }
+
+        .difficulty-badge[data-difficulty="medium"] {
+            background-color: #FF9800 !important;
+        }
+
+        .difficulty-badge[data-difficulty="hard"] {
+            background-color: #E57373 !important;
+        }
+
+        body.light-theme .difficulty-badge[data-difficulty="easy"] {
+            background-color: #81C784 !important;
+        }
+
+        body.light-theme .difficulty-badge[data-difficulty="medium"] {
+            background-color: #FFB74D !important;
+        }
+
+        body.light-theme .difficulty-badge[data-difficulty="hard"] {
+            background-color: #f44336 !important;
+        }
+        .test-case-pass {
+            color: #28a745; /* Xanh lá */
+            font-weight: bold;
+        }
+
+        .test-case-fail {
+            color: #dc3545; /* Đỏ */
+            font-weight: bold;
+        }
+    </style>
 </head>
 
 <body>
@@ -385,6 +762,12 @@
             <!-- CodeMirror Theme -->
             <link rel="stylesheet"
                 href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/dracula.min.css">
+            <link rel="stylesheet"
+                href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/monokai.min.css">
+            <link rel="stylesheet"
+                href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/material.min.css">
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/nord.min.css">
+
 
             <!-- CodeMirror Language Modes -->
             <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/clike/clike.min.js"></script>
@@ -406,7 +789,7 @@
                 <div class="row" style="height: 100%; display: flex; flex-wrap: nowrap;">
                     <!-- Left Panel -->
                     <div class="col-md-3 text-white d-flex flex-column position-relative" id="leftPanel"
-                        style="height:100%; font-size:0.9em; background-color:#1e2937;">
+                        style="height:100%; font-size:0.9em;">
                         <div class="resizer" id="resizer"></div>
                         <div id="leftPanelContent">
                             <!-- Tab Content -->
@@ -414,15 +797,16 @@
                                 <div class="tab-pane fade show active" id="description" role="tabpanel">
                                     <input type="hidden" id="exerciseId" th:value="${exercise.id}" />
                                     <div class="border-bottom border-secondary" style="padding-bottom: 10px;">
-                                        <span class="badge rounded-pill"
-                                            style="background-color:#55ac63; font-size:1.1em; width:100%; margin-top: 10px;"
-                                            th:text="${exercise.level}">
+                                        <span class="badge rounded-pill difficulty-badge" data-difficulty="easy"
+                                            style="font-size:1.1em; width:100%; margin-top: 10px;"
+                                        th:text="${exercise.level}">
                                         </span>
                                     </div>
                                     <h2 class="mt-3 mb-4 code-title" th:text="${exercise.name}"></h2>
                                     <div class="description">
                                         <p th:text="${exercise.description}"></p>
                                     </div>
+                                    <!-- có thể thêm phần ví dụ cho dễ hiểu -->
 <!--                                    <div class="examples mt-4">-->
 <!--                                        <h5 class="mb-3">Write the queries in the following structure:</h5>-->
 <!--                                        <p>sql_1: ...</p>-->
@@ -447,7 +831,8 @@
                             </div>
 
                             <!-- Tab Navigation -->
-                            <ul class="nav nav-tabs nav-fill" style="border-bottom: none;" id="leftPanelTabs" role="tablist">
+                            <ul class="nav nav-tabs nav-fill" style="border-bottom: none;" id="leftPanelTabs"
+                                role="tablist">
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link active" id="description-tab" data-bs-toggle="tab"
                                         data-bs-target="#description" type="button" role="tab">
@@ -471,19 +856,22 @@
                             class="h-100 d-flex flex-column">
                             <input type="hidden" name="csrfmiddlewaretoken"
                                 value="HfxjrSlfLR32bC9CQ0AeUi9pecn6YwzMjC52rgaHg3akATZaOfVTYuO7KVt7kOzh">
-                            <div class="p-3 h-100 d-flex flex-column" style="background: #1f1f1f;">
+                            <div class=" p-3 h-100 d-flex flex-column middle" style="background: #1f1f1f;">
                                 <div class="btn-toolbar mb-3" role="toolbar">
-                                    <div id="language-select" th:text="${exercise.language}" class="btn-group me-auto" role="group">
-<!--                                        <select id="language-select" class="form-select form-select-lg"-->
-<!--                                            style="min-width: 8rem; background-color: #3e4451; color: whitesmoke; border-color: #181a1f;"-->
-<!--                                            name="language">-->
-<!--                                            <option value="mysql">MySQL</option>-->
-<!--                                            <option value="sql">SQL</option>-->
-<!--                                            <option value="java">Java</option>-->
-<!--                                            <option value="python">Python</option>-->
-<!--                                        </select>-->
+                                    <div class="btn-group me-auto" role="group">
+                                        <select id="language-select">
+                                            <option value="python" th:selected="${exercise.language == 'Python'}">Python</option>
+                                            <option value="java" th:selected="${exercise.language == 'Java'}">Java</option>
+                                            <option value="sql" th:selected="${exercise.language == 'SQL'}">SQL</option>
+                                            <option value="c" th:selected="${exercise.language == 'C'}">C</option>
+                                        </select>
                                     </div>
+                                    <button href="/exercise" id="back-to-exercise-list" class="btn btn-sm ms-2"
+                                        style="background-color: #3e4451; color: #abb2bf; border-color: #181a1f; margin-right: 10px;">
+                                        <i class="fa fa-arrow-left"></i> Back to exercise list
+                                    </button>
                                     <div class="btn-group" role="group">
+
                                         <button type="button" id="theme-toggle-button" class="btn btn-lg"
                                             style="background-color: #3e4451; color: #abb2bf; border-color: #181a1f;">
                                             <i class="fa fa-moon"></i> Light
@@ -494,25 +882,24 @@
                                         </button>
                                     </div>
                                 </div>
-                                <textarea id="code-editor" name="code" class="form-control h-100" style="background-color: #1f1f1f; 
-                                           color: #abb2bf;
-                                           font-family: 'Fira Code', monospace;
-                                           font-size: 14px;
-                                           line-height: 1.5;
-                                           padding: 15px;
-                                           border: 1px solid #1f1f1f;
-                                           border-radius: 4px;
-                                           resize: none;
-                                           display: none;"
-                                           th:text="${code}">
-                                </textarea>
+                                <textarea id="code-editor" name="code" class="form-control h-100" style="background-color: #1f1f1f;
+                                    color: #abb2bf;
+                                    font-family: 'Fira Code', monospace;
+                                    font-size: 14px;
+                                    line-height: 1.5;
+                                    padding: 15px;
+                                    border: 1px solid #1f1f1f;
+                                    border-radius: 4px;
+                                    resize: none;
+                                    display: none;"
+                                    th:text="${code}"></textarea>
                             </div>
                         </form>
                     </div>
 
                     <!-- Right Panel -->
                     <div class="col-md-3 p-3 text-white d-flex flex-column" id="rightPanel"
-                        style="overflow-y:auto; height:100%; background-color: black !important;">
+                        style="overflow-y:auto; height:100%;">
                         <div class="btn-group mb-3" role="group">
                             <button type="button" id="precheck-button" class="btn btn-success btn-lg">
                                 <i class="fa fa-terminal"></i> Pre-check
@@ -521,16 +908,16 @@
                                 <i class="fa fa-eraser"></i> Clear
                             </button>
                             <button type="button" id="submit-button" class="btn btn-primary btn-lg">
-                                <i class="fa fa-play"></i> Submit
+                                <i class="bi bi-send"></i> Submit
                             </button>
-<!--                            <a href="/exercises/" class="btn btn-primary btn-lg">-->
-<!--                                <i class="fa fa-play"></i> Submit-->
+<!--                            <a type="button" id="submit-button" class="btn btn-primary btn-lg">-->
+<!--                                <i class="bi bi-send"></i> Submit-->
 <!--                            </a>-->
                         </div>
-                        <div id="output" class="p-3 rounded result-container h-100" style="overflow:auto; font-size:0.85em;">
+                        <div id="output" class="p-3 rounded" style="overflow:auto; font-size:0.85em;">
                             <!-- Output log will appear here -->
                             <div class="result-container h-100">
-<!--                                <h5 class="mb-3 align-items-center" th:text="${type_check}"></h5>-->
+                                <h5 class="mb-3 align-items-center" th:text="${type_check}"></h5>
 
                                 <!-- Display grading results if available -->
                                 <div th:if="${passed != null}">
@@ -541,18 +928,17 @@
                                             <span th:text="'Test Case ' + (${iterStat.index} + 1) + ':'"></span>
                                             <span th:text="${testResult.isCorrect ? 'Passed' : 'Failed'}"
                                                   th:classappend="${testResult.isCorrect} ? 'test-case-pass' : 'test-case-fail'"></span>
-<!--                                            <div th:if="${!testResult.isCorrect}" class="mt-1 ps-3">-->
+                                            <!--                                            <div th:if="${!testResult.isCorrect}" class="mt-1 ps-3">-->
                                             <div class="mt-1 ps-3">
                                                 <strong>Input:</strong> <span th:text="${testResult.testCase.input}"></span><br>
                                                 <strong>Your Output:</strong> <span
-                                                        th:text="${testResult.userOutput}"></span><br>
+                                                    th:text="${testResult.userOutput}"></span><br>
                                                 <strong>Expected Output:</strong> <span
                                                     th:text="${testResult.testCase.expectedOutput}"></span>
                                             </div>
                                         </li>
                                     </ul>
-
-                            </div>
+                                </div>
                         </div>
                     </div>
                 </div>
@@ -605,576 +991,531 @@
 </body>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        var editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
-            mode: "text/x-java", // Mặc định là Java
-            lineNumbers: true,
-            theme: "dracula",
-            tabSize: 4,
-            indentUnit: 4,
-            indentWithTabs: true,
-            matchBrackets: true,
-            autoCloseBrackets: true,
-            extraKeys: { "Ctrl-Space": "autocomplete" }, // Thêm phím tắt cho autocomplete
-            hintOptions: {
-                completeSingle: false, // Không tự động chọn nếu chỉ có 1 gợi ý
-                alignWithWord: true, // Căn chỉnh gợi ý với từ
-                closeOnUnfocus: true, // Đóng gợi ý khi mất focus
-            },
-        });
+  var editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
+    mode: "text/x-java", // Mặc định là Java
+    lineNumbers: true,
+    theme: "material",
+    tabSize: 4,
+    indentUnit: 4,
+    indentWithTabs: true,
+    matchBrackets: true,
+    autoCloseBrackets: true,
+    extraKeys: { "Ctrl-Space": "autocomplete" }, // Thêm phím tắt cho autocomplete
+    hintOptions: {
+      completeSingle: false, // Không tự động chọn nếu chỉ có 1 gợi ý
+      alignWithWord: true, // Căn chỉnh gợi ý với từ
+      closeOnUnfocus: true, // Đóng gợi ý khi mất focus
+    },
+  });
 
-        editor.setSize("100%", "100%");
-        const initialCode = editor.getValue(); // Lưu nội dung ban đầu
+  editor.setSize("100%", "100%");
+  const initialCode = editor.getValue(); // Lưu nội dung ban đầu
 
-        // Toggle Theme (Dark/Light)
-        const themeToggleButton = document.getElementById("theme-toggle-button");
-        if (themeToggleButton) {
-            // Khởi tạo trạng thái ban đầu
-            themeToggleButton.innerHTML = '<i class="fa fa-moon"></i> Dark';
-            themeToggleButton.classList.add("light-mode");
+  // Toggle Theme (Dark/Light)
+  const themeToggleButton = document.getElementById("theme-toggle-button");
+  if (themeToggleButton) {
+    // Khởi tạo trạng thái ban đầu
+    themeToggleButton.innerHTML = '<i class="fa fa-moon"></i> Dark';
+    themeToggleButton.classList.add("light-mode");
 
-            themeToggleButton.addEventListener("click", function (event) {
-                event.preventDefault();
-                let currentTheme = editor.getOption("theme");
+    themeToggleButton.addEventListener("click", function (event) {
+      event.preventDefault();
+      let currentTheme = editor.getOption("theme");
 
-                if (currentTheme === "dracula") {
-                    // Chuyển sang light mode
-                    editor.setOption("theme", "default");
-                    document.body.classList.add("light-theme");
-                    this.innerHTML = '<i class="fa fa-sun"></i> Light';
-                    this.classList.remove("light-mode");
-                } else {
-                    // Chuyển sang dark mode
-                    editor.setOption("theme", "dracula");
-                    document.body.classList.remove("light-theme");
-                    this.innerHTML = '<i class="fa fa-moon"></i> Dark';
-                    this.classList.add("light-mode");
-                }
-            });
-        }
+      if (currentTheme === "dracula") {
+        // Chuyển sang light mode
+        editor.setOption("theme", "default");
+        document.body.classList.add("light-theme");
+        this.innerHTML = '<i class="fa fa-sun"></i> Light';
+        this.classList.remove("light-mode");
+      } else {
+        // Chuyển sang dark mode
+        editor.setOption("theme", "dracula");
+        document.body.classList.remove("light-theme");
+        this.innerHTML = '<i class="fa fa-moon"></i> Dark';
+        this.classList.add("light-mode");
+      }
+    });
+  }
 
-        // Reset nội dung Editor
-        const resetButton = document.getElementById("reset-button");
-        if (resetButton) {
-            resetButton.addEventListener("click", function (event) {
-                event.preventDefault();
-                editor.setValue(initialCode);
-            });
-        }
+  // Reset nội dung Editor
+  const resetButton = document.getElementById("reset-button");
+  if (resetButton) {
+    resetButton.addEventListener("click", function (event) {
+      event.preventDefault();
+      editor.setValue(initialCode);
+    });
+  }
 
-        // Thêm từ khóa cho các ngôn ngữ
-        const keywords = {
-            python: [
-                "def",
-                "class",
-                "for",
-                "while",
-                "if",
-                "else",
-                "elif",
-                "try",
-                "except",
-                "finally",
-                "import",
-                "from",
-                "as",
-                "return",
-                "yield",
-                "break",
-                "continue",
-                "pass",
-                "raise",
-                "True",
-                "False",
-                "None",
-                "and",
-                "or",
-                "not",
-                "is",
-                "in",
-                "lambda",
-                "with",
-                "print",
-            ],
+  // Thêm từ khóa cho các ngôn ngữ
+  const keywords = {
+    python: [
+      "def",
+      "class",
+      "for",
+      "while",
+      "if",
+      "else",
+      "elif",
+      "try",
+      "except",
+      "finally",
+      "import",
+      "from",
+      "as",
+      "return",
+      "yield",
+      "break",
+      "continue",
+      "pass",
+      "raise",
+      "True",
+      "False",
+      "None",
+      "and",
+      "or",
+      "not",
+      "is",
+      "in",
+      "lambda",
+      "with",
+      "print",
+    ],
 
-            java: [
-                "public",
-                "private",
-                "protected",
-                "class",
-                "interface",
-                "extends",
-                "implements",
-                "static",
-                "final",
-                "void",
-                "if",
-                "else",
-                "for",
-                "while",
-                "do",
-                "try",
-                "catch",
-                "finally",
-                "throw",
-                "throws",
-                "new",
-                "return",
-                "this",
-                "super",
-                "import",
-                "package",
-                "int",
-                "long",
-                "float",
-                "double",
-                "boolean",
-                "char",
-                "String",
-                "System.out.println",
-            ],
+    java: [
+      "public",
+      "private",
+      "protected",
+      "class",
+      "interface",
+      "extends",
+      "implements",
+      "static",
+      "final",
+      "void",
+      "if",
+      "else",
+      "for",
+      "while",
+      "do",
+      "try",
+      "catch",
+      "finally",
+      "throw",
+      "throws",
+      "new",
+      "return",
+      "this",
+      "super",
+      "import",
+      "package",
+      "int",
+      "long",
+      "float",
+      "double",
+      "boolean",
+      "char",
+      "String",
+      "System.out.println",
+    ],
 
-            sql: [
-                "SELECT",
-                "FROM",
-                "WHERE",
-                "INSERT",
-                "UPDATE",
-                "DELETE",
-                "JOIN",
-                "LEFT JOIN",
-                "RIGHT JOIN",
-                "INNER JOIN",
-                "GROUP BY",
-                "HAVING",
-                "ORDER BY",
-                "DESC",
-                "ASC",
-                "CREATE TABLE",
-                "ALTER TABLE",
-                "DROP TABLE",
-                "PRIMARY KEY",
-                "FOREIGN KEY",
-                "AND",
-                "OR",
-                "NOT",
-                "NULL",
-                "IS NULL",
-                "IS NOT NULL",
-                "LIKE",
-                "IN",
-                "BETWEEN",
-            ],
+    sql: [
+      "SELECT",
+      "FROM",
+      "WHERE",
+      "INSERT",
+      "UPDATE",
+      "DELETE",
+      "JOIN",
+      "LEFT JOIN",
+      "RIGHT JOIN",
+      "INNER JOIN",
+      "GROUP BY",
+      "HAVING",
+      "ORDER BY",
+      "DESC",
+      "ASC",
+      "CREATE TABLE",
+      "ALTER TABLE",
+      "DROP TABLE",
+      "PRIMARY KEY",
+      "FOREIGN KEY",
+      "AND",
+      "OR",
+      "NOT",
+      "NULL",
+      "IS NULL",
+      "IS NOT NULL",
+      "LIKE",
+      "IN",
+      "BETWEEN",
+    ],
 
-            c: [
-                "int",
-                "char",
-                "float",
-                "double",
-                "void",
-                "long",
-                "short",
-                "signed",
-                "unsigned",
-                "if",
-                "else",
-                "for",
-                "while",
-                "do",
-                "switch",
-                "case",
-                "break",
-                "continue",
-                "return",
-                "struct",
-                "union",
-                "typedef",
-                "sizeof",
-                "printf",
-                "scanf",
-                "include",
-                "define",
-                "malloc",
-                "free",
-                "NULL",
-                "const",
-                "static",
-                "extern",
-                "#include",
-                "#define",
-            ],
-        };
+    c: [
+      "int",
+      "char",
+      "float",
+      "double",
+      "void",
+      "long",
+      "short",
+      "signed",
+      "unsigned",
+      "if",
+      "else",
+      "for",
+      "while",
+      "do",
+      "switch",
+      "case",
+      "break",
+      "continue",
+      "return",
+      "struct",
+      "union",
+      "typedef",
+      "sizeof",
+      "printf",
+      "scanf",
+      "include",
+      "define",
+      "malloc",
+      "free",
+      "NULL",
+      "const",
+      "static",
+      "extern",
+      "#include",
+      "#define",
+    ],
+  };
 
-        // Hàm gợi ý từ khóa dựa trên ngôn ngữ hiện tại
-        function getHints(cm, options) {
-            const cursor = cm.getCursor();
-            const line = cm.getLine(cursor.line);
+  // Hàm gợi ý từ khóa dựa trên ngôn ngữ hiện tại
+  function getHints(cm, options) {
+    const cursor = cm.getCursor();
+    const line = cm.getLine(cursor.line);
 
-            // Tìm vị trí bắt đầu của từ hiện tại
-            let start = cursor.ch;
-            while (start && /[\w\.]/.test(line.charAt(start - 1))) --start;
+    // Tìm vị trí bắt đầu của từ hiện tại
+    let start = cursor.ch;
+    while (start && /[\w\.]/.test(line.charAt(start - 1))) --start;
 
-            // Lấy từ hiện tại đang gõ
-            const currentWord = line.slice(start, cursor.ch).toLowerCase();
+    // Lấy từ hiện tại đang gõ
+    const currentWord = line.slice(start, cursor.ch).toLowerCase();
 
-            // Chỉ hiện gợi ý khi có ít nhất 1 ký tự
-            if (currentWord.length === 0) {
-                return null;
-            }
+    // Chỉ hiện gợi ý khi có ít nhất 1 ký tự
+    if (currentWord.length === 0) {
+      return null;
+    }
 
-            // Lấy giá trị ngôn ngữ từ select box
-            const selectedLanguage = document.getElementById("language-select").value;
-            let currentLang = selectedLanguage || 'java'; // mặc định là java nếu không có giá trị
+    const currentMode = editor.getOption("mode");
+    let currentLang = "java"; // mặc định
 
-            const list = keywords[currentLang] || [];
+    // Xác định ngôn ngữ hiện tại
+    if (currentMode === "text/x-python") currentLang = "python";
+    else if (currentMode === "text/x-java") currentLang = "java";
+    else if (currentMode === "text/x-sql") currentLang = "sql";
+    else if (currentMode === "text/x-csrc") currentLang = "c";
 
-            // Lọc các từ khóa phù hợp
-            const matches = list.filter((item) =>
-                item.toLowerCase().startsWith(currentWord)
-            );
+    const list = keywords[currentLang] || [];
 
-            // Nếu không có kết quả phù hợp, không hiện gợi ý
-            if (!matches.length) {
-                return null;
-            }
+    // Lọc các từ khóa phù hợp
+    const matches = list.filter((item) =>
+      item.toLowerCase().startsWith(currentWord)
+    );
 
-            return {
-                list: matches,
-                from: CodeMirror.Pos(cursor.line, start),
-                to: CodeMirror.Pos(cursor.line, cursor.ch),
-            };
-        }
+    // Nếu không có kết quả phù hợp, không hiện gợi ý
+    if (!matches.length) {
+      return null;
+    }
 
-        // Đăng ký hàm gợi ý
-        CodeMirror.registerHelper("hint", "anyword", getHints);
+    return {
+      list: matches,
+      from: CodeMirror.Pos(cursor.line, start),
+      to: CodeMirror.Pos(cursor.line, cursor.ch),
+    };
+  }
 
-        // Bật tự động gợi ý khi gõ
-        editor.on("keyup", function (cm, event) {
-            // Chỉ hiện gợi ý khi gõ chữ cái hoặc số
-            const shouldComplete =
-                !cm.state.completionActive && // Không có gợi ý đang hiển thị
-                event.keyCode != 13 && // Không phải phím Enter
-                event.keyCode != 27 && // Không phải phím Escape
-                event.keyCode != 32 && // Không phải phím Space
-                !/^[!@#$%^&*(),.?":{}|<>]$/.test(event.key) && // Không phải ký tự đặc biệt
-                event.key.length === 1; // Là ký tự đơn
+  // Đăng ký hàm gợi ý
+  CodeMirror.registerHelper("hint", "anyword", getHints);
 
-            if (shouldComplete) {
-                CodeMirror.commands.autocomplete(cm, null, { completeSingle: false });
-            }
-        });
+  // Bật tự động gợi ý khi gõ
+  editor.on("keyup", function (cm, event) {
+    // Chỉ hiện gợi ý khi gõ chữ cái hoặc số
+    const shouldComplete =
+      !cm.state.completionActive && // Không có gợi ý đang hiển thị
+      event.keyCode != 13 && // Không phải phím Enter
+      event.keyCode != 27 && // Không phải phím Escape
+      event.keyCode != 32 && // Không phải phím Space
+      !/^[!@#$%^&*(),.?":{}|<>]$/.test(event.key) && // Không phải ký tự đặc biệt
+      event.key.length === 1; // Là ký tự đơn
 
-        // Thay đổi ngôn ngữ code
-        const languageSelect = document.getElementById("language-select");
-        if (languageSelect) {
-            languageSelect.addEventListener("change", function () {
-                let mode = "";
-                switch (this.value) {
-                    case "python":
-                        mode = "text/x-python";
-                        break;
-                    case "java":
-                        mode = "text/x-java";
-                        break;
-                    case "sql":
-                        mode = "text/x-sql";
-                        break;
-                    case "c":
-                        mode = "text/x-csrc";
-                        break;
-                    default:
-                        mode = "text/x-java";
-                }
-                editor.setOption("mode", mode);
+    if (shouldComplete) {
+      CodeMirror.commands.autocomplete(cm, null, { completeSingle: false });
+    }
+  });
 
-                // Cập nhật gợi ý dựa trên ngôn ngữ mới
-                CodeMirror.commands.autocomplete(editor, null, {
-                    completeSingle: false
-                });
-            });
-        }
+  // Thay đổi ngôn ngữ code
+  const languageSelect = document.getElementById("language-select");
+  if (languageSelect) {
+    languageSelect.addEventListener("change", function () {
+      let mode = "";
+      switch (this.value) {
+        case "python":
+          mode = "text/x-python";
+          break;
+        case "java":
+          mode = "text/x-java";
+          break;
+        case "sql":
+          mode = "text/x-sql";
+          break;
+        case "c":
+          mode = "text/x-csrc";
+          break;
+        default:
+          mode = "text/x-java";
+      }
+      editor.setOption("mode", mode);
+    });
+  }
 
-        // Submit form
-        const form = document.getElementById("code-form");
-        if (form) {
-            form.addEventListener("submit", function () {
-                editor.save(); // Đảm bảo CodeMirror lưu lại nội dung vào textarea
-            });
-        }
+  // Submit form
+  const form = document.getElementById("code-form");
+  if (form) {
+    form.addEventListener("submit", function () {
+      editor.save(); // Đảm bảo CodeMirror lưu lại nội dung vào textarea
+    });
+  }
 
-        // Xử lý nút Pre-check
-        const preCheckButton = document.getElementById("precheck-button");
-        if (preCheckButton) {
-            preCheckButton.addEventListener("click", function () {
-                runPrecheck();
-            });
-        }
+  // Xử lý nút Pre-check
+  const preCheckButton = document.getElementById("precheck-button");
+  if (preCheckButton) {
+    preCheckButton.addEventListener("click", function () {
+      runPrecheck();
+    });
+  }
 
-        // Xử lý nút Submit
+  // Xử lý nút Clear output
+  const clearButton = document.getElementById("clear-button");
+  if (clearButton) {
+    clearButton.addEventListener("click", function () {
+      document.getElementById("output").innerHTML = "";
+      console.log("Output cleared.");
+    });
+  }
+
+// Xử lý nút Submit exercise
         const submitButton = document.getElementById("submit-button");
-        if(submitButton) {
+        if (submitButton) {
             submitButton.addEventListener("click", function () {
-                runSubmit();
+                submitExercise();
             });
         }
 
-        // Xử lý nút Clear output
-        const clearButton = document.getElementById("clear-button");
-        if (clearButton) {
-            clearButton.addEventListener("click", function () {
-                document.getElementById("output").innerHTML = "";
-                console.log("Output cleared.");
-            });
-        }
+  // Xác nhận Submit
+  const confirmSubmit = document.getElementById("confirm-submit");
+  if (confirmSubmit) {
+    confirmSubmit.addEventListener("click", function (event) {
+      let codeContent = editor.getValue();
+      if (!codeContent.trim()) {
+        event.preventDefault();
+        $("#confirmModal").modal("hide");
+        document.getElementById(
+          "output"
+        ).innerHTML = `<div class="alert alert-danger" role="alert">This code field is required.</div>`;
+      } else {
+        editor.save();
+      }
+    });
+  }
 
-        // // Xác nhận Submit, cái này bỏ vào sau
-        // const confirmSubmit = document.getElementById("submit-button");
-        // if (confirmSubmit) {
-        //     confirmSubmit.addEventListener("click", function (event) {
-        //         let codeContent = editor.getValue();
-        //         if (!codeContent.trim()) {
-        //             event.preventDefault();
-        //             $("#confirmModal").modal("hide");
-        //             document.getElementById(
-        //                 "output"
-        //             ).innerHTML = `<div class="alert alert-danger" role="alert">This code field is required.</div>`;
-        //         } else {
-        //             editor.save();
-        //         }
-        //     });
-        // }
-
-        // chức năng Pre-check sử dụng ajax
-        // function runPrecheck() {
-        //     const exerciseId = document.getElementById("exerciseId").value;
-        //     const code = editor.getValue();
-        //     const language = languageSelect.value;
-        //     $.ajax({
-        //         url: "/judgement/precheck-code",
-        //         type: "POST",
-        //         data:{
-        //             exerciseId: exerciseId,
-        //             code: code,
-        //             language: language
-        //         },
-        //         success: function(data){
-        //             const outputDiv = document.getElementById('output');
-        //             outputDiv.innerHTML = "";
-        //
-        //             // Chia kết quả thành từng dòng
-        //             const lines = data.split("\n");
-        //             let html = "<ul class='test-result'>";
-        //
-        //             lines.forEach(line => {
-        //                 if (line.trim() !== "") {
-        //                     let isPassed = line.includes("true") ? "passed" : "failed";
-        //                     html += `<li class="${isPassed}">${line}</li>`;
-        //                 }
-        //             });
-        //
-        //             html += "</ul>";
-        //             outputDiv.innerHTML = html;
-        //         },
-        //         error: function (){
-        //             document.getElementById('output').innerHTML = '<span>Error</span>';
-        //         }
-        //     });
-        // }
-
+  // Chức năng Pre-check
+  // function runPrecheck() {
+  //   const code = editor.getValue();
+  //   const language = languageSelect.value;
+  //
+  //   fetch("/api/exercises/precheck/120", {
+  //     method: "POST",
+  //     headers: { "Content-Type": "application/json" },
+  //     body: JSON.stringify({ code: code, language: language }),
+  //   })
+  //     .then((response) => response.json())
+  //     .then((data) => {
+  //       let outputDiv = document.getElementById("output");
+  //       if (data.error) {
+  //         outputDiv.innerHTML = `
+  //                       <div class="alert alert-danger">Error: Code is formatted and structured incorrectly.</div>
+  //                       <div class="alert alert-warning">Please fix the format and structure correctly...</div>`;
+  //       } else {
+  //         outputDiv.innerHTML = `<div style="background-color: #282a36 !important;">${data.combinedMessage}</div>`;
+  //       }
+  //     })
+  //     .catch((error) => {
+  //       console.error("Error:", error);
+  //       document.getElementById("output").innerHTML =
+  //         "<pre>Error: Error during Pre-check</pre>";
+  //     });
+  // }
         function runPrecheck() {
             const exerciseId = document.getElementById("exerciseId").value;
             const code = editor.getValue();
-                let form = document.createElement('form');
-                form.method = 'POST';
-                form.action = "/judgement/precheck-code";
+            let form = document.createElement('form');
+            form.method = 'POST';
+            form.action = "/judgement/precheck-code";
 
-                let params = {
-                    exerciseId: exerciseId,
-                    code: code,
-                };
-
-                for (let key in params) {
-                    let input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = key;
-                    input.value = params[key];
-                    form.appendChild(input);
-                }
-                document.body.appendChild(form);
-                form.submit();
-        }
-
-        // chức năng submit sử dụng ajax
-        function runSubmit() {
-            const exerciseId = document.getElementById("exerciseId").value;
-            const code = editor.getValue();
-            const language = languageSelect.value;
-            $.ajax({
-                url: "judgment/submit-code",
-                type: "POST",
-                data:{
-                    exerciseId: exerciseId,
-                    code: code,
-                    language: language
-                },
-                success: function(data){
-                    const outputDiv = document.getElementById('output');
-                    outputDiv.innerHTML = "";
-
-                    // Chia kết quả thành từng dòng
-                    const lines = data.split("\n");
-                    let html = "<ul class='test-result'>";
-
-                    lines.forEach(line => {
-                        if (line.trim() !== "") {
-                            let isPassed = line.includes("true") ? "passed" : "failed";
-                            html += `<li class="${isPassed}">${line}</li>`;
-                        }
-                    });
-
-                    html += "</ul>";
-                    outputDiv.innerHTML = html;
-                },
-                error: function (){
-                    document.getElementById('output').innerHTML = '<span>Error</span>';
-                }
-            });
-        }
-
-        // // Chức năng Pre-check
-        // function runPrecheck() {
-        //     const code = editor.getValue();
-        //     const language = languageSelect.value;
-        //
-        //     fetch("/api/exercises/precheck/120", {
-        //         method: "POST",
-        //         headers: { "Content-Type": "application/json" },
-        //         body: JSON.stringify({ code: code, language: language }),
-        //     })
-        //         .then((response) => response.json())
-        //         .then((data) => {
-        //             let outputDiv = document.getElementById("output");
-        //             if (data.error) {
-        //                 outputDiv.innerHTML = `
-        //                 <div class="alert alert-danger">Error: Code is formatted and structured incorrectly.</div>
-        //                 <div class="alert alert-warning">Please fix the format and structure correctly...</div>`;
-        //             } else {
-        //                 outputDiv.innerHTML = `<div style="background-color: #282a36 !important;">${data.combinedMessage}</div>`;
-        //             }
-        //         })
-        //         .catch((error) => {
-        //             console.error("Error:", error);
-        //             document.getElementById("output").innerHTML =
-        //                 "<pre>Error: Error during Pre-check</pre>";
-        //         });
-        // }
-
-        // Scroll to Top Button
-        const scrollToTopButton = document.getElementById("scrollToTopButton");
-        if (scrollToTopButton) {
-            window.onscroll = function () {
-                scrollToTopButton.style.display = window.scrollY > 100 ? "flex" : "none";
+            let params = {
+                exerciseId: exerciseId,
+                code: code,
             };
 
-            scrollToTopButton.addEventListener("click", function () {
-                window.scrollTo({ top: 0, behavior: "smooth" });
-            });
-        }
-
-        // Xử lý resize và ẩn hiện left panel
-        const leftPanel = document.getElementById("leftPanel");
-        const centerPanel = document.getElementById("centerPanel");
-        const resizer = document.getElementById("resizer");
-        const toggleBtn = document.getElementById("toggleLeftPanel");
-
-        function updateCenterPanel() {
-            if (leftPanel.style.display === "none" || leftPanel.offsetWidth === 0) {
-                centerPanel.style.width = "100%";
-            } else {
-                centerPanel.style.width = `calc(100% - ${leftPanel.offsetWidth}px)`;
+            for (let key in params) {
+                let input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = params[key];
+                form.appendChild(input);
             }
+            document.body.appendChild(form);
+            form.submit();
         }
+  // Xử lý submit exercise
+        function submitExercise() {
+            const exerciseId = document.getElementById("exerciseId").value;
+            const code = editor.getValue();
+            let form = document.createElement('form');
+            form.method = 'POST';
+            form.action = "/judgement/run_test_case";
 
-        if (toggleBtn) {
-            let isPanelCollapsed = false;
-            toggleBtn.addEventListener("click", function () {
-                isPanelCollapsed = !isPanelCollapsed;
-                if (isPanelCollapsed) {
-                    leftPanel.style.width = "0px";
-                    leftPanel.style.display = "none";
-                } else {
-                    leftPanel.style.width = "450px";
-                    leftPanel.style.display = "block";
-                }
-                updateCenterPanel();
-            });
+            let params = {
+                exerciseId: exerciseId,
+                code: code,
+            };
+
+            for (let key in params) {
+                let input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = params[key];
+                form.appendChild(input);
+            }
+            document.body.appendChild(form);
+            form.submit();
         }
+  // Scroll to Top Button
+  const scrollToTopButton = document.getElementById("scrollToTopButton");
+  if (scrollToTopButton) {
+    window.onscroll = function () {
+      scrollToTopButton.style.display = window.scrollY > 100 ? "flex" : "none";
+    };
 
-        if (resizer) {
-            let isResizing = false;
-            let startX = 0;
-            let startWidth = 0;
-
-            resizer.addEventListener("mousedown", function (event) {
-                isResizing = true;
-                startX = event.clientX;
-                startWidth = leftPanel.offsetWidth;
-
-                document.addEventListener("mousemove", resizePanel);
-                document.addEventListener("mouseup", stopResizing);
-            });
-
-            function resizePanel(event) {
-                if (!isResizing) return;
-                let newWidth = startWidth + (event.clientX - startX);
-
-                if (newWidth < 200) {
-                    leftPanel.style.width = "200px";
-                } else if (newWidth > 200 && newWidth <= 450) {
-                    requestAnimationFrame(() => {
-                        leftPanel.style.width = `${newWidth}px`;
-                        centerPanel.style.width = `calc(100% - ${newWidth}px)`;
-                    });
-                }
-            }
-
-            function stopResizing() {
-                isResizing = false;
-                document.removeEventListener("mousemove", resizePanel);
-                document.removeEventListener("mouseup", stopResizing);
-            }
-        }
-
-        // Cập nhật kích thước center panel ngay từ đầu
-        updateCenterPanel();
-
-        // Thêm chức năng tìm kiếm Google
-        const searchInput = document.getElementById("searchInput");
-        const searchButton = document.getElementById("searchButton");
-        const searchTab = document.getElementById("search-tab");
-        const searchFrame = document.getElementById("searchFrame");
-
-        function performSearch() {
-            const searchQuery = searchInput.value.trim();
-            if (searchQuery) {
-                // Chuyển đến tab tìm kiếm
-                searchTab.click();
-                // Load kết quả tìm kiếm trong iframe
-                searchFrame.src = `https://www.google.com/search?igu=1&q=${encodeURIComponent(
-                    searchQuery
-                )}`;
-            }
-        }
-
-        // Xử lý sự kiện click nút tìm kiếm
-        searchButton.addEventListener("click", performSearch);
-
-        // Xử lý sự kiện nhấn Enter trong ô input
-        searchInput.addEventListener("keypress", function (e) {
-            if (e.key === "Enter") {
-                performSearch();
-            }
-        });
+    scrollToTopButton.addEventListener("click", function () {
+      window.scrollTo({ top: 0, behavior: "smooth" });
     });
+  }
+
+  // Xử lý resize và ẩn hiện left panel
+  const leftPanel = document.getElementById("leftPanel");
+  const centerPanel = document.getElementById("centerPanel");
+  const resizer = document.getElementById("resizer");
+  const toggleBtn = document.getElementById("toggleLeftPanel");
+
+  function updateCenterPanel() {
+    if (leftPanel.style.display === "none" || leftPanel.offsetWidth === 0) {
+      centerPanel.style.width = "100%";
+    } else {
+      centerPanel.style.width = `calc(100% - ${leftPanel.offsetWidth}px)`;
+    }
+  }
+
+  if (toggleBtn) {
+    let isPanelCollapsed = false;
+    toggleBtn.addEventListener("click", function () {
+      isPanelCollapsed = !isPanelCollapsed;
+      if (isPanelCollapsed) {
+        leftPanel.style.width = "0px";
+        leftPanel.style.display = "none";
+      } else {
+        leftPanel.style.width = "450px";
+        leftPanel.style.display = "block";
+      }
+      updateCenterPanel();
+    });
+  }
+
+  if (resizer) {
+    let isResizing = false;
+    let startX = 0;
+    let startWidth = 0;
+
+    resizer.addEventListener("mousedown", function (event) {
+      isResizing = true;
+      startX = event.clientX;
+      startWidth = leftPanel.offsetWidth;
+
+      document.addEventListener("mousemove", resizePanel);
+      document.addEventListener("mouseup", stopResizing);
+    });
+
+    function resizePanel(event) {
+      if (!isResizing) return;
+      let newWidth = startWidth + (event.clientX - startX);
+
+      if (newWidth < 200) {
+        leftPanel.style.width = "200px";
+      } else if (newWidth > 200 && newWidth <= 450) {
+        requestAnimationFrame(() => {
+          leftPanel.style.width = `${newWidth}px`;
+          centerPanel.style.width = `calc(100% - ${newWidth}px)`;
+        });
+      }
+    }
+
+    function stopResizing() {
+      isResizing = false;
+      document.removeEventListener("mousemove", resizePanel);
+      document.removeEventListener("mouseup", stopResizing);
+    }
+  }
+
+  // Cập nhật kích thước center panel ngay từ đầu
+  updateCenterPanel();
+
+  // Thêm chức năng tìm kiếm Google
+  const searchInput = document.getElementById("searchInput");
+  const searchButton = document.getElementById("searchButton");
+  const searchTab = document.getElementById("search-tab");
+  const searchFrame = document.getElementById("searchFrame");
+
+  function performSearch() {
+    const searchQuery = searchInput.value.trim();
+    if (searchQuery) {
+      // Chuyển đến tab tìm kiếm
+      searchTab.click();
+      // Load kết quả tìm kiếm trong iframe
+      searchFrame.src = `https://www.google.com/search?igu=1&q=${encodeURIComponent(
+        searchQuery
+      )}`;
+    }
+  }
+
+  // Xử lý sự kiện click nút tìm kiếm
+  searchButton.addEventListener("click", performSearch);
+
+  // Xử lý sự kiện nhấn Enter trong ô input
+  searchInput.addEventListener("keypress", function (e) {
+    if (e.key === "Enter") {
+      performSearch();
+    }
+  });
+
+  // Xử lý sự kiện thay đổi theme
+  document
+    .getElementById("theme-select")
+    .addEventListener("change", function () {
+      const selectedTheme = this.value;
+      editor.setOption("theme", selectedTheme);
+    });
+});
 
 </script>
 

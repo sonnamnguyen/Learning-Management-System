@@ -76,4 +76,23 @@ public class CodeJudgementController {
         String targetPath = "/judgement/" + exercise.getLanguage().getLanguage().toLowerCase() + "/run-custom-code";
         return "forward:" + targetPath;
     }
+
+    @PostMapping("/submit_exercise")
+    public String submitExercise(@RequestParam("exerciseId") Long exerciseId,
+                                 @RequestParam("code") String code,
+                                 Model model){
+        Exercise exercise = exerciseService.getExerciseById(exerciseId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));
+        List<TestCase> testCases = exercise.getTestCases();
+
+        if (testCases == null || testCases.isEmpty()) {
+            model.addAttribute("output", "No test cases defined for this exercise.");
+            model.addAttribute("exercise", exercise);
+            model.addAttribute("code", code);
+            return "judgement/code_space";
+        }
+        String targetPath = "/judgement/" + exercise.getLanguage().getLanguage().toLowerCase() + "/submit_exercise";
+        System.out.println(targetPath);
+        return "forward:" + targetPath;
+    }
 }
