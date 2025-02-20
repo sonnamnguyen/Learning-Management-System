@@ -105,12 +105,15 @@ public class CodeExecutionService {
         // Thu thập kết quả
         List<TestCaseResult> testResults = new ArrayList<>();
         int passed = 0;
+        int count = 0;
         for (Future<TestCaseResult> future : futures) {
             try {
                 TestCaseResult result = future.get();
                 if (result.isCorrect()) {
                     passed++;
                 }
+                count++;
+                if(count ==2) break;
                 testResults.add(result);
             } catch (Exception e) {
                 testResults.add(new TestCaseResult(null, "Error: " + e.getMessage(), false));
