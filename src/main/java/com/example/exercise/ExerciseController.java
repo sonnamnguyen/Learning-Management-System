@@ -116,6 +116,7 @@ public class ExerciseController {
                 TestCase tc = new TestCase();
                 tc.setInput(tcForm.getInput());
                 tc.setExpectedOutput(tcForm.getExpectedOutput());
+                tc.setSqlTagNumber(tcForm.getSqlTagNumber());
                 tc.setExercise(exercise);
                 testCasesFinal.add(tc);
             }

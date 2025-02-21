@@ -20,6 +20,7 @@ public class TestCase {
 
     private String expectedOutput;
 
+    private String sqlTagNumber;
 
     @ManyToOne
     @JoinColumn(name = "exercise_id" ,referencedColumnName = "id", nullable = false)
