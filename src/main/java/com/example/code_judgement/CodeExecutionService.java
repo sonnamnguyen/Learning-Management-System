@@ -3,16 +3,11 @@ package com.example.code_judgement;
 
 import com.example.code_judgement.java_judge.JavaJudgementService;
 import com.example.code_judgement.languageFactory.ExecutionBasedLanguage;
-import com.example.code_judgement.sql_judge.ExecuteUserCodeResponse;
-import com.example.code_judgement.sql_judge.SqlJudgementService;
-import com.example.exercise.Exercise;
 import com.example.exercise.ExerciseRepository;
-import com.example.exercise.ExerciseService;
 import com.example.testcase.TestCase;
 import com.example.testcase.TestCaseResult;
 import com.example.testcase.TestCaseService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -105,15 +100,12 @@ public class CodeExecutionService {
         // Thu thập kết quả
         List<TestCaseResult> testResults = new ArrayList<>();
         int passed = 0;
-        int count = 0;
         for (Future<TestCaseResult> future : futures) {
             try {
                 TestCaseResult result = future.get();
                 if (result.isCorrect()) {
                     passed++;
                 }
-                count++;
-                if(count ==2) break;
                 testResults.add(result);
             } catch (Exception e) {
                 testResults.add(new TestCaseResult(null, "Error: " + e.getMessage(), false));
@@ -171,40 +163,4 @@ public class CodeExecutionService {
         }
     }
 
-    // ***************************************************************************
-    // Execute SQL-MySQL Code
-    @Autowired
-    private SqlJudgementService sqlJudgementService;
-
-    public ExecutionResponse executeSQLCodeType2(String code, List<TestCase> testCases) {
-        ExecuteUserCodeResponse executeUserCodeResponse = sqlJudgementService.hashAndRunSQL(code);
-        if(executeUserCodeResponse.isSuccess()){
-            List<TestCaseResult> testResults = new ArrayList<>();
-            int passed = 0;
-            for(TestCase testCase : testCases){
-                String result = sqlJudgementService.runTestCases(testCase, executeUserCodeResponse.getRandomId());
-                if(result.equals(testCase.getExpectedOutput())){
-                    testResults.add(new TestCaseResult(testCase, result, true));
-                    passed++;
-                } else{
-                    testResults.add(new TestCaseResult(testCase, result, false));
-                }
-            }
-            // delete users' table
-            try{
-                sqlJudgementService.deleteUserTable(executeUserCodeResponse.getRandomTableNames());
-            } catch (Exception e){
-            }
-            return new ExecutionResponse(code, passed, testCases.size(), testResults);
-        }
-        return new ExecutionResponse(code, 0, testCases.size(), null);
-    }
-
-    public ExecutionResponse executeSQLCodeType1(String scriptSetup, String code, List<TestCase> testCases) {
-        ExecuteUserCodeResponse executeUserCodeResponse = sqlJudgementService.hashAndRunSQL(scriptSetup);
-        if(executeUserCodeResponse.isSuccess()){
-            return sqlJudgementService.runTestCases1(scriptSetup, code, testCases, executeUserCodeResponse.getRandomTableNames());
-        }
-        return new ExecutionResponse(code, 0, testCases.size(), null);
-    }
 }

@@ -188,9 +188,14 @@
             overflow-x: hidden;
         }
 
+        select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+        }
+
         #searchResults {
             height: 100%;
-            background-color: #1e2937;
         }
 
         #searchFrame {
@@ -249,20 +254,16 @@
             left: 100%;
         }
 
-        /* Điều chỉnh kích thước nút */
-        .btn-lg {
-            padding: 0.4rem 0.8rem !important;
-            font-size: 0.9rem !important;
-        }
 
         #language-select {
+            border-radius: 5px !important;
             padding: 0.4rem 0.8rem !important;
             font-size: 0.9rem !important;
             height: auto !important;
         }
 
         .btn-group {
-            gap: 0.3rem;
+            gap: 0.8rem;
         }
 
         /* Điều chỉnh icon trong nút */
@@ -369,14 +370,8 @@
 
         body.light-theme .btn-group .btn {
             background-color: #f8f9fa;
-            border-color: #dee2e6;
             color: #333;
-        }
-
-        body.light-theme #language-select {
-            background-color: #f8f9fa;
             border-color: #dee2e6;
-            color: #333;
         }
 
         /* Điều chỉnh kích thước nút */
@@ -389,10 +384,6 @@
             padding: 0.4rem 0.8rem !important;
             font-size: 0.9rem !important;
             height: auto !important;
-        }
-
-        .btn-group {
-            gap: 0.3rem;
         }
 
         /* Điều chỉnh icon trong nút */
@@ -522,9 +513,9 @@
         }
 
         body.light-theme #language-select {
-            background-color: #f8f9fa;
-            color: #495057;
-            border-color: #dee2e6;
+            background-color: #3e4451;
+            border-color: #181a1f;
+            color: #abb2bf;
         }
 
         body.light-theme .btn-success {
@@ -686,11 +677,11 @@
             /* Mặc định - Easy */
         }
 
-        .difficulty-badge:not(.light-theme):has(span:contains('medium')) {
-            background-color: #FF9800 !important;
+        .difficulty-badge:not(.light-theme):has(span:contains('MEDIUM')) {
+            background-color: #ffc107 !important;
         }
 
-        .difficulty-badge:not(.light-theme):has(span:contains('hard')) {
+        .difficulty-badge:not(.light-theme):has(span:contains('HARD')) {
             background-color: #E57373 !important;
         }
 
@@ -700,11 +691,11 @@
             /* Mặc định - Easy */
         }
 
-        body.light-theme .difficulty-badge:contains('medium') {
-            background-color: #FFB74D !important;
+        body.light-theme .difficulty-badge:contains('MEDIUM') {
+            background-color: #ffc107 !important;
         }
 
-        body.light-theme .difficulty-badge:contains('hard') {
+        body.light-theme .difficulty-badge:contains('HARD') {
             background-color: #f44336 !important;
         }
 
@@ -714,175 +705,354 @@
         }
 
         /* Thêm !important cho tất cả các thuộc tính */
-        .difficulty-badge[data-difficulty="easy"] {
+        .difficulty-badge[data-difficulty="EASY"] {
             background-color: #4CAF50 !important;
         }
 
-        .difficulty-badge[data-difficulty="medium"] {
-            background-color: #FF9800 !important;
+        .difficulty-badge[data-difficulty="MEDIUM"] {
+            background-color: #ffc107 !important;
         }
 
-        .difficulty-badge[data-difficulty="hard"] {
+        .difficulty-badge[data-difficulty="HARD"] {
             background-color: #E57373 !important;
         }
 
-        body.light-theme .difficulty-badge[data-difficulty="easy"] {
+        body.light-theme .difficulty-badge[data-difficulty="EASY"] {
             background-color: #81C784 !important;
         }
 
-        body.light-theme .difficulty-badge[data-difficulty="medium"] {
-            background-color: #FFB74D !important;
+        body.light-theme .difficulty-badge[data-difficulty="MEDIUM"] {
+            background-color: #ffc107 !important;
         }
 
-        body.light-theme .difficulty-badge[data-difficulty="hard"] {
+        body.light-theme .difficulty-badge[data-difficulty="HARD"] {
             background-color: #f44336 !important;
         }
+
         .test-case-pass {
-            color: #28a745; /* Xanh lá */
+            color: #28a745;
             font-weight: bold;
         }
 
         .test-case-fail {
-            color: #dc3545; /* Đỏ */
+            color: #dc3545;
             font-weight: bold;
+        }
+
+        #customInput {
+            background-color: #282a36;
+            color: #f8f8f2 !important;
+            border: 1px solid #44475a;
+            font-family: 'Fira Code', monospace;
+            font-size: 14px;
+        }
+
+        body.light-theme #customInput {
+            background-color: #ffffff;
+            color: #333333;
+            border: 1px solid #dee2e6;
+        }
+
+        .custom-output {
+            min-height: 100px;
+            max-height: 300px;
+            overflow-y: auto;
+            background-color: #282a36;
+            color: #f8f8f2;
+            border: 1px solid #44475a;
+            font-family: 'Fira Code', monospace;
+            font-size: 14px;
+        }
+
+        body.light-theme .custom-output {
+            background-color: #ffffff;
+            color: #333333;
+            border: 1px solid #dee2e6;
+        }
+
+        #inputContent label {
+            color: inherit;
+            font-weight: 500;
+        }
+
+        /* Dark theme placeholder */
+        #customInput::placeholder {
+            color: #a0aec0 !important;
+            opacity: 0.7;
+        }
+
+        /* Light theme placeholder */
+        body.light-theme #customInput::placeholder {
+            color: #4a5568 !important;
+            opacity: 0.7;
+        }
+
+        /* Đảm bảo màu chữ input luôn đúng */
+        #customInput {
+            color: #f8f8f2 !important;
+        }
+
+        body.light-theme #customInput {
+            color: #333333 !important;
+        }
+
+        /* Style cho tabs trong right panel - giống left panel */
+        #rightPanelTabs .nav-link {
+            color: #fff;
+            background-color: transparent;
+            border: none;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        #rightPanelTabs .nav-link:hover {
+            border-color: transparent;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        #rightPanelTabs .nav-link.active {
+            color: #fff;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-color: transparent;
+        }
+
+        /* Light theme cho right panel tabs - giống hệt left panel */
+        body.light-theme #rightPanelTabs .nav-link {
+            color: #333 !important;
+        }
+
+        body.light-theme #rightPanelTabs .nav-link:hover {
+            background-color: #e9ecef !important;
+        }
+
+        body.light-theme #rightPanelTabs .nav-link.active {
+            background-color: #5f8eed !important;
+            color: #fff !important;
+        }
+
+        /* Đảm bảo không có border dưới cho nav tabs */
+        #rightPanelTabs {
+            border-bottom: none;
+        }
+
+        #rightPanelTabs .nav-item {
+            margin-bottom: 0;
+        }
+
+        /* Đảm bảo nav tabs luôn ở dưới cùng */
+        #rightPanel {
+            display: flex;
+            flex-direction: column;
+        }
+
+        #rightPanelTabs {
+            margin-top: auto;
+            border-top: none !important;
+        }
+
+        /* Điều chỉnh khoảng cách cho tab content */
+        .tab-content {
+            flex-grow: 1;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+        }
+
+        /* Dark theme styles cho empty search state */
+        #emptySearchState {
+            border-radius: 8px;
+        }
+
+        #emptySearchState i.fa-search {
+            color: #6c757d;
+        }
+
+        #emptySearchState h4 {
+            color: #e4e4e4;
+        }
+
+        #emptySearchState p,
+        #emptySearchState small {
+            color: #abb2bf !important;
+        }
+
+        #emptySearchState i.fa-lightbulb {
+            color: #ffd700;
+        }
+
+        /* Light theme styles cho empty search state */
+        body.light-theme #emptySearchState {
+            /* background-color: #f8f9fa; */
+        }
+
+        body.light-theme #emptySearchState i.fa-search {
+            color: #495057;
+        }
+
+        body.light-theme #emptySearchState h4 {
+            color: #212529;
+        }
+
+        body.light-theme #emptySearchState p,
+        body.light-theme #emptySearchState small {
+            color: #6c757d !important;
+        }
+
+        body.light-theme #emptySearchState i.fa-lightbulb {
+            color: #ffc107;
         }
     </style>
 </head>
 
 <body>
-    <div class="container-fluid" style="display: flex; flex-direction: column;">
-        <div class="row mt-5" style="flex-grow: 1;">
-            <!-- <h1 class="text-center mt-2">
-                Exercises
-            </h1> -->
-            <!-- CodeMirror CSS -->
-            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
-            <!-- CodeMirror JS -->
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
-            <!-- CodeMirror Theme -->
-            <link rel="stylesheet"
-                href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/dracula.min.css">
-            <link rel="stylesheet"
-                href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/monokai.min.css">
-            <link rel="stylesheet"
-                href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/material.min.css">
-            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/nord.min.css">
+<div class="container-fluid" style="display: flex; flex-direction: column;">
+    <div class="row mt-5" style="flex-grow: 1;">
+        <!-- <h1 class="text-center mt-2">
+    Exercises
+</h1> -->
+        <!-- CodeMirror CSS -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
+        <!-- CodeMirror JS -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+        <!-- CodeMirror Theme -->
+        <link rel="stylesheet"
+              href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/dracula.min.css">
+        <link rel="stylesheet"
+              href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/monokai.min.css">
+        <link rel="stylesheet"
+              href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/material.min.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/nord.min.css">
 
 
-            <!-- CodeMirror Language Modes -->
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/clike/clike.min.js"></script>
-            <!-- Java -->
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/python/python.min.js"></script>
-            <!-- Python -->
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/sql/sql.min.js"></script>
-            <!-- SQL -->
+        <!-- CodeMirror Language Modes -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/clike/clike.min.js"></script>
+        <!-- Java -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/python/python.min.js"></script>
+        <!-- Python -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/sql/sql.min.js"></script>
+        <!-- SQL -->
 
-            <!-- Autocomplete Addons -->
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/show-hint.min.js"></script>
-            <link rel="stylesheet"
-                href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/show-hint.min.css">
-            <script
+        <!-- Autocomplete Addons -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/show-hint.min.js"></script>
+        <link rel="stylesheet"
+              href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/show-hint.min.css">
+        <script
                 src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/anyword-hint.min.js"></script>
 
-            <!-- Body -->
-            <div class="container-fluid" style="height: 85vh;">
-                <div class="row" style="height: 100%; display: flex; flex-wrap: nowrap;">
-                    <!-- Left Panel -->
-                    <div class="col-md-3 text-white d-flex flex-column position-relative" id="leftPanel"
-                        style="height:100%; font-size:0.9em;">
-                        <div class="resizer" id="resizer"></div>
-                        <div id="leftPanelContent">
-                            <!-- Tab Content -->
-                            <div class="tab-content" id="leftPanelTabContent">
-                                <div class="tab-pane fade show active" id="description" role="tabpanel">
-                                    <input type="hidden" id="exerciseId" th:value="${exercise.id}" />
-                                    <div class="border-bottom border-secondary" style="padding-bottom: 10px;">
-                                        <span class="badge rounded-pill difficulty-badge" data-difficulty="easy"
-                                            style="font-size:1.1em; width:100%; margin-top: 10px;"
-                                        th:text="${exercise.level}">
+        <!-- Body -->
+        <div class="container-fluid" style="height: 85vh;">
+            <div class="row" style="height: 100%; display: flex; flex-wrap: nowrap;">
+                <!-- Left Panel -->
+                <div class="col-md-3 text-white d-flex flex-column position-relative" id="leftPanel"
+                     style="height:100%; font-size:0.9em;">
+                    <div class="resizer" id="resizer"></div>
+                    <div id="leftPanelContent">
+                        <!-- Tab Content -->
+                        <div class="tab-content" id="leftPanelTabContent">
+                            <div class="tab-pane fade show active" id="description" role="tabpanel">
+                                <input type="hidden" id="exerciseId" th:value="${exercise.id}" />
+                                <div class="border-bottom border-secondary" style="padding-bottom: 10px;">
+                                        <span class="badge rounded-pill difficulty-badge"
+                                              th:attr="data-difficulty=${exercise.level}"
+                                              style="font-size:1.1em; width:100%; margin-top: 10px;"
+                                              th:text="${exercise.level}">
                                         </span>
-                                    </div>
-                                    <h2 class="mt-3 mb-4 code-title" th:text="${exercise.name}"></h2>
-                                    <div class="description">
-                                        <p th:text="${exercise.description}"></p>
-                                    </div>
-                                    <!-- có thể thêm phần ví dụ cho dễ hiểu -->
-<!--                                    <div class="examples mt-4">-->
-<!--                                        <h5 class="mb-3">Write the queries in the following structure:</h5>-->
-<!--                                        <p>sql_1: ...</p>-->
-<!--                                    </div>-->
-                                </div>
 
-                                <!-- Search Results Tab -->
-                                <div class="tab-pane fade" id="searchResults" role="tabpanel">
-                                    <iframe id="searchFrame" style="width: 100%; height: 100%; border: none;"></iframe>
                                 </div>
+                                <h2 class="mt-3 mb-4 code-title" th:text="${exercise.name}"></h2>
+                                <div class="description">
+                                    <p th:text="${exercise.description}"></p>
+                                </div>
+                                <!-- có thể thêm phần ví dụ cho dễ hiểu -->
+                                <!--                                    <div class="examples mt-4">-->
+                                <!--                                        <h5 class="mb-3">Write the queries in the following structure:</h5>-->
+                                <!--                                        <p>sql_1: ...</p>-->
+                                <!--                                    </div>-->
                             </div>
 
-                            <!-- Phần tìm kiếm Google -->
-                            <div class="search-container" style="border-bottom: none;">
-                                <div class="input-group">
-                                    <input type="text" id="searchInput" class="form-control form-control-sm"
-                                        placeholder="Search on Google...">
-                                    <button class="btn btn-primary" type="button" id="searchButton">
-                                        <i class="fas fa-search"></i>
-                                    </button>
+                            <!-- Search Results Tab -->
+                            <div class="tab-pane fade" id="searchResults" role="tabpanel">
+                                <div id="emptySearchState" class="text-center p-5">
+                                    <i class="fas fa-search mb-4" style="font-size: 3em; color: #6c757d;"></i>
+                                    <h4 class="mb-3" style="color: #6c757d;">Start searching</h4>
+                                    <p class="text-muted">
+                                        Enter a keyword into the search box above to search on Google.<br>
+                                        Search results will appear here.
+                                    </p>
+                                    <div class="mt-4">
+                                        <small class="text-muted">
+                                            <i class="fas fa-lightbulb"></i> Suggestion: You can search for
+                                            examples,
+                                            guides, or reference materials related to the exercise.
+                                        </small>
+                                    </div>
                                 </div>
+                                <iframe id="searchFrame"
+                                        style="width: 100%; height: 100%; border: none; display: none;"></iframe>
                             </div>
-
-                            <!-- Tab Navigation -->
-                            <ul class="nav nav-tabs nav-fill" style="border-bottom: none;" id="leftPanelTabs"
-                                role="tablist">
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link active" id="description-tab" data-bs-toggle="tab"
-                                        data-bs-target="#description" type="button" role="tab">
-                                        Description
-                                    </button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="search-tab" data-bs-toggle="tab"
-                                        data-bs-target="#searchResults" type="button" role="tab">
-                                        Search
-                                    </button>
-                                </li>
-                            </ul>
                         </div>
+
+                        <!-- Phần tìm kiếm Google -->
+                        <div class="search-container" style="border-bottom: none;">
+                            <div class="input-group">
+                                <input type="text" id="searchInput" class="form-control form-control-sm"
+                                       placeholder="Search on Google...">
+                                <button class="btn btn-primary" type="button" id="searchButton">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Tab Navigation -->
+                        <ul class="nav nav-tabs nav-fill" style="border-bottom: none;" id="leftPanelTabs"
+                            role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="description-tab" data-bs-toggle="tab"
+                                        data-bs-target="#description" type="button" role="tab">
+                                    Description
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="search-tab" data-bs-toggle="tab"
+                                        data-bs-target="#searchResults" type="button" role="tab">
+                                    Search
+                                </button>
+                            </li>
+                        </ul>
                     </div>
+                </div>
 
-                    <!-- Center Panel -->
-                    <div class="col-md-6 p-0 bg-dark text-white d-flex flex-column" id="centerPanel"
-                        style="overflow-y:auto; flex: 1;">
-                        <form id="code-form" method="POST" action="/exercises/submit/120/0/0/"
-                            class="h-100 d-flex flex-column">
-                            <input type="hidden" name="csrfmiddlewaretoken"
-                                value="HfxjrSlfLR32bC9CQ0AeUi9pecn6YwzMjC52rgaHg3akATZaOfVTYuO7KVt7kOzh">
-                            <div class=" p-3 h-100 d-flex flex-column middle" style="background: #1f1f1f;">
-                                <div class="btn-toolbar mb-3" role="toolbar">
-                                    <div class="btn-group me-auto" role="group">
-                                        <select id="language-select">
-                                            <option value="python" th:selected="${exercise.language == 'Python'}">Python</option>
-                                            <option value="java" th:selected="${exercise.language == 'Java'}">Java</option>
-                                            <option value="sql" th:selected="${exercise.language == 'SQL'}">SQL</option>
-                                            <option value="c" th:selected="${exercise.language == 'C'}">C</option>
-                                        </select>
-                                    </div>
-                                    <button href="/exercise" id="back-to-exercise-list" class="btn btn-sm ms-2"
-                                        style="background-color: #3e4451; color: #abb2bf; border-color: #181a1f; margin-right: 10px;">
-                                        <i class="fa fa-arrow-left"></i> Back to exercise list
-                                    </button>
-                                    <div class="btn-group" role="group">
-
-                                        <button type="button" id="theme-toggle-button" class="btn btn-lg"
-                                            style="background-color: #3e4451; color: #abb2bf; border-color: #181a1f;">
-                                            <i class="fa fa-moon"></i> Light
-                                        </button>
-                                        <button type="button" id="reset-button" class="btn btn-lg ms-2"
-                                            style="background-color: #3e4451; color: #abb2bf; border-color: #181a1f;">
-                                            <i class="fa fa-redo-alt"></i> Reset
-                                        </button>
-                                    </div>
+                <!-- Center Panel -->
+                <div class="col-md-6 p-0 bg-dark text-white d-flex flex-column" id="centerPanel"
+                     style="overflow-y:auto; flex: 1;">
+                    <form id="code-form" method="POST" action="/exercises/submit/120/0/0/"
+                          class="h-100 d-flex flex-column">
+                        <input type="hidden" name="csrfmiddlewaretoken"
+                               value="HfxjrSlfLR32bC9CQ0AeUi9pecn6YwzMjC52rgaHg3akATZaOfVTYuO7KVt7kOzh">
+                        <div class=" p-3 h-100 d-flex flex-column middle" style="background: #1f1f1f;">
+                            <div class="btn-toolbar mb-3" role="toolbar">
+                                <div class="btn-group me-auto" role="group">
+                                    <select disabled id="language-select">
+                                        <option th:value="${exercise.language}" th:text="${exercise.language}">
+                                        </option>
+                                    </select>
                                 </div>
-                                <textarea id="code-editor" name="code" class="form-control h-100" style="background-color: #1f1f1f;
+                                <a th:href="@{/exercises}" class="btn btn-sm"
+                                   style="background-color: #3e4451; color: #abb2bf; border-color: #181a1f; margin-right: 10px; padding: 8px; font-size: 0.9rem">
+                                    <i class="fa fa-arrow-left"></i> Back to exercise list
+                                </a>
+
+                                <div class="btn-group" style="gap: 0px;" role="group">
+                                    <button type="button" id="theme-toggle-button" class="btn btn-lg"
+                                            style="background-color: #3e4451; color: #abb2bf; border-color: #181a1f;">
+                                        <i class="fa fa-moon"></i> Light
+                                    </button>
+                                    <button type="button" id="reset-button" class="btn btn-lg ms-2"
+                                            style="background-color: #3e4451; color: #abb2bf; border-color: #181a1f;">
+                                        <i class="fa fa-redo-alt"></i> Reset
+                                    </button>
+                                </div>
+                            </div>
+                            <textarea id="code-editor" name="code" class="form-control h-100" style="background-color: #1f1f1f;
                                     color: #abb2bf;
                                     font-family: 'Fira Code', monospace;
                                     font-size: 14px;
@@ -891,471 +1061,494 @@
                                     border: 1px solid #1f1f1f;
                                     border-radius: 4px;
                                     resize: none;
-                                    display: none;"
-                                    th:text="${code}"></textarea>
+                                    display: none;" th:text="${code}"></textarea>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Right Panel -->
+                <div class="col-md-3 p-3 text-white d-flex flex-column" id="rightPanel"
+                     style="overflow-y:auto; height:100%; padding: 16px 16px 0 16px !important;">
+                    <!-- Tab Content -->
+                    <div class="tab-content flex-grow-1">
+                        <!-- Output Tab -->
+                        <div class="tab-pane fade show active" id="outputContent" role="tabpanel">
+                            <div class="btn-group mb-3" role="group">
+                                <button type="button" id="precheck-button" class="btn btn-success btn-lg">
+                                    <i class="fa fa-terminal"></i> Pre-check
+                                </button>
+                                <button type="button" id="clear-button" class="btn btn-danger btn-lg ">
+                                    <i class="fa fa-eraser"></i> Clear
+                                </button>
+                                <button type="button" class="btn btn-primary btn-lg" data-bs-toggle="modal"
+                                        data-bs-target="#confirmModal">
+                                    <i class="bi bi-send"></i> Submit
+                                </button>
                             </div>
-                        </form>
-                    </div>
+                            <div id="output" class="p-3 rounded" style="font-size:0.85em; flex-grow: 1;">
+                                <!-- Output content here -->
+                                <div class="result-container h-100">
+                                    <h5 class="mb-3 align-items-center" th:text="${type_check}"></h5>
 
-                    <!-- Right Panel -->
-                    <div class="col-md-3 p-3 text-white d-flex flex-column" id="rightPanel"
-                        style="overflow-y:auto; height:100%;">
-                        <div class="btn-group mb-3" role="group">
-                            <button type="button" id="precheck-button" class="btn btn-success btn-lg">
-                                <i class="fa fa-terminal"></i> Pre-check
-                            </button>
-                            <button type="button" id="clear-button" class="btn btn-danger btn-lg mx-2">
-                                <i class="fa fa-eraser"></i> Clear
-                            </button>
-                            <button type="button" id="submit-button" class="btn btn-primary btn-lg">
-                                <i class="bi bi-send"></i> Submit
-                            </button>
-<!--                            <a type="button" id="submit-button" class="btn btn-primary btn-lg">-->
-<!--                                <i class="bi bi-send"></i> Submit-->
-<!--                            </a>-->
-                        </div>
-                        <div id="output" class="p-3 rounded" style="overflow:auto; font-size:0.85em;">
-                            <!-- Output log will appear here -->
-                            <div class="result-container h-100">
-                                <h5 class="mb-3 align-items-center" th:text="${type_check}"></h5>
-
-                                <!-- Display grading results if available -->
-                                <div th:if="${passed != null}">
-                                    <p>You passed <strong th:text="${passed}">0</strong> out of <strong>2</strong>
-                                        test cases.</p>
-                                    <ul class="list-unstyled">
-                                        <li th:each="testResult, iterStat : ${testResults}" class="mb-2 bg-dark p-2 rounded">
-                                            <span th:text="'Test Case ' + (${iterStat.index} + 1) + ':'"></span>
-                                            <span th:text="${testResult.isCorrect ? 'Passed' : 'Failed'}"
-                                                  th:classappend="${testResult.isCorrect} ? 'test-case-pass' : 'test-case-fail'"></span>
-                                            <!--                                            <div th:if="${!testResult.isCorrect}" class="mt-1 ps-3">-->
-                                            <div class="mt-1 ps-3">
-                                                <strong>Input:</strong> <span th:text="${testResult.testCase.input}"></span><br>
-                                                <strong>Your Output:</strong> <span
-                                                    th:text="${testResult.userOutput}"></span><br>
-                                                <strong>Expected Output:</strong> <span
-                                                    th:text="${testResult.testCase.expectedOutput}"></span>
-                                            </div>
-                                        </li>
-                                    </ul>
+                                    <!-- Display grading results if available -->
+                                    <div th:if="${passed != null}">
+                                        <p>You passed <strong th:text="${passed}">0</strong> out of <strong th:text="${total}">0</strong>
+                                            test cases.</p>
+                                        <ul class="list-unstyled">
+                                            <li th:each="testResult, iterStat : ${testResults}" class="mb-2 bg-dark p-2 rounded">
+                                                <span th:text="'Test Case ' + (${iterStat.index} + 1) + ':'"></span>
+                                                <span th:text="${testResult.isCorrect ? 'Passed' : 'Failed'}"
+                                                      th:classappend="${testResult.isCorrect} ? 'test-case-pass' : 'test-case-fail'"></span>
+                                                <!--                                            <div th:if="${!testResult.isCorrect}" class="mt-1 ps-3">-->
+                                                <div class="mt-1 ps-3">
+                                                    <strong>Input:</strong> <span th:text="${testResult.testCase.input}"></span><br>
+                                                    <strong>Your Output:</strong> <span
+                                                        th:text="${testResult.userOutput}"></span><br>
+                                                    <strong>Expected Output:</strong> <span
+                                                        th:text="${testResult.testCase.expectedOutput}"></span>
+                                                </div>
+                                            </li>
+                                        </ul>
+                                    </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Custom Input Tab -->
+                        <div class="tab-pane fade" id="inputContent" role="tabpanel">
+                            <div class="form-group">
+                                <label for="customInput" class="mb-2">Input:</label>
+                                <textarea class="form-control mb-3" id="customInput" rows="6"
+                                          placeholder="Enter your custom input here..."></textarea>
+
+                                <label for="customOutput" class="mb-2">Output:</label>
+                                <div id="customOutput" class="custom-output p-3 rounded mb-3">
+                                    <!-- Custom output will appear here -->
+                                </div>
+
+                                <button type="button" id="runCustomInput" class="btn btn-primary">
+                                    <i class="fa fa-play"></i> Run with Custom Input
+                                </button>
+                            </div>
                         </div>
                     </div>
+
+                    <!-- Tab Navigation - Moved to bottom -->
+                    <ul class="nav nav-tabs nav-fill mt-auto" id="rightPanelTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="output-tab" data-bs-toggle="tab"
+                                    data-bs-target="#outputContent" type="button" role="tab">
+                                Output
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="input-tab" data-bs-toggle="tab"
+                                    data-bs-target="#inputContent" type="button" role="tab">
+                                Custom input
+                            </button>
+                        </li>
+                    </ul>
                 </div>
             </div>
 
             <!-- Modal confirm  -->
-            <div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" aria-labelledby="confirmModalLabel"
-                aria-hidden="true">
-                <div class="modal-dialog" role="document">
+            <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog">
                     <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="confirmModalLabel">Cofirm Submit Code</h5>
-                            <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">×</span>
-                            </button>
+                        <div class="modal-header" style="color: #1e1e1e">
+                            <h5 class="modal-title" id="confirmModalLabel">Confirm submit code</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
                         </div>
-                        <div class="modal-body">
+                        <div class="modal-body" style="color: #1e1e1e">
                             Are you sure you want to submit the code?
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="button" class="btn btn-primary" id="confirm-submit">Submit Code</button>
+                            <button type="button" style="background-color: #EE0000" class="btn btn-secondary"
+                                    data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-primary" id="confirm-submit">Submit</button>
                         </div>
                     </div>
                 </div>
             </div>
-            <!-- Initialize CodeMirror -->
-            <script>
-
-            </script>
-
-
         </div>
     </div>
-    </div>
-
-    <!-- <button onclick="scrollToTop()" id="scrollToTopButton" title="Go to top" style="display: none;">
-        <i class="fas fa-arrow-up"></i>
-    </button> -->
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
-
-    <style>
-
-    </style>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
 </body>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-  var editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
-    mode: "text/x-java", // Mặc định là Java
-    lineNumbers: true,
-    theme: "material",
-    tabSize: 4,
-    indentUnit: 4,
-    indentWithTabs: true,
-    matchBrackets: true,
-    autoCloseBrackets: true,
-    extraKeys: { "Ctrl-Space": "autocomplete" }, // Thêm phím tắt cho autocomplete
-    hintOptions: {
-      completeSingle: false, // Không tự động chọn nếu chỉ có 1 gợi ý
-      alignWithWord: true, // Căn chỉnh gợi ý với từ
-      closeOnUnfocus: true, // Đóng gợi ý khi mất focus
-    },
-  });
+        // Lấy ngôn ngữ ban đầu từ select box
+        const initialLanguage = document.getElementById("language-select").value.toLowerCase();
+        let initialMode = "text/x-java"; // mặc định
 
-  editor.setSize("100%", "100%");
-  const initialCode = editor.getValue(); // Lưu nội dung ban đầu
+        // Xác định mode dựa trên ngôn ngữ ban đầu
+        switch (initialLanguage) {
+            case "java":
+                initialMode = "text/x-java";
+                break;
+            case "sql":
+                initialMode = "text/x-sql";
+                break;
+            case "c":
+                initialMode = "text/x-csrc";
+                break;
+            case "cpp":
+                initialMode = "text/x-c++src";
+                break;
+        }
 
-  // Toggle Theme (Dark/Light)
-  const themeToggleButton = document.getElementById("theme-toggle-button");
-  if (themeToggleButton) {
-    // Khởi tạo trạng thái ban đầu
-    themeToggleButton.innerHTML = '<i class="fa fa-moon"></i> Dark';
-    themeToggleButton.classList.add("light-mode");
+        var editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
+            mode: initialMode,
+            lineNumbers: true,
+            theme: "dracula",
+            tabSize: 4,
+            indentUnit: 4,
+            indentWithTabs: true,
+            matchBrackets: true,
+            autoCloseBrackets: true,
+            extraKeys: { "Ctrl-Space": "autocomplete" },
+            hintOptions: {
+                completeSingle: false,
+                alignWithWord: true,
+                closeOnUnfocus: true,
+            },
+            currentLang: initialLanguage // Thêm ngôn ngữ hiện tại vào options
+        });
 
-    themeToggleButton.addEventListener("click", function (event) {
-      event.preventDefault();
-      let currentTheme = editor.getOption("theme");
+        editor.setSize("100%", "100%");
+        const initialCode = editor.getValue();
 
-      if (currentTheme === "dracula") {
-        // Chuyển sang light mode
-        editor.setOption("theme", "default");
-        document.body.classList.add("light-theme");
-        this.innerHTML = '<i class="fa fa-sun"></i> Light';
-        this.classList.remove("light-mode");
-      } else {
-        // Chuyển sang dark mode
-        editor.setOption("theme", "dracula");
-        document.body.classList.remove("light-theme");
-        this.innerHTML = '<i class="fa fa-moon"></i> Dark';
-        this.classList.add("light-mode");
-      }
-    });
-  }
+        // Toggle Theme (Dark/Light)
+        const themeToggleButton = document.getElementById("theme-toggle-button");
+        if (themeToggleButton) {
+            // Khởi tạo trạng thái ban đầu
+            themeToggleButton.innerHTML = '<i class="fa fa-moon"></i> Dark';
+            themeToggleButton.classList.add("light-mode");
 
-  // Reset nội dung Editor
-  const resetButton = document.getElementById("reset-button");
-  if (resetButton) {
-    resetButton.addEventListener("click", function (event) {
-      event.preventDefault();
-      editor.setValue(initialCode);
-    });
-  }
+            themeToggleButton.addEventListener("click", function (event) {
+                event.preventDefault();
+                let currentTheme = editor.getOption("theme");
 
-  // Thêm từ khóa cho các ngôn ngữ
-  const keywords = {
-    python: [
-      "def",
-      "class",
-      "for",
-      "while",
-      "if",
-      "else",
-      "elif",
-      "try",
-      "except",
-      "finally",
-      "import",
-      "from",
-      "as",
-      "return",
-      "yield",
-      "break",
-      "continue",
-      "pass",
-      "raise",
-      "True",
-      "False",
-      "None",
-      "and",
-      "or",
-      "not",
-      "is",
-      "in",
-      "lambda",
-      "with",
-      "print",
-    ],
+                if (currentTheme === "dracula") {
+                    // Chuyển sang light mode
+                    editor.setOption("theme", "default");
+                    document.body.classList.add("light-theme");
+                    this.innerHTML = '<i class="fa fa-sun"></i> Light';
+                    this.classList.remove("light-mode");
+                } else {
+                    // Chuyển sang dark mode
+                    editor.setOption("theme", "dracula");
+                    document.body.classList.remove("light-theme");
+                    this.innerHTML = '<i class="fa fa-moon"></i> Dark';
+                    this.classList.add("light-mode");
+                }
+            });
+        }
 
-    java: [
-      "public",
-      "private",
-      "protected",
-      "class",
-      "interface",
-      "extends",
-      "implements",
-      "static",
-      "final",
-      "void",
-      "if",
-      "else",
-      "for",
-      "while",
-      "do",
-      "try",
-      "catch",
-      "finally",
-      "throw",
-      "throws",
-      "new",
-      "return",
-      "this",
-      "super",
-      "import",
-      "package",
-      "int",
-      "long",
-      "float",
-      "double",
-      "boolean",
-      "char",
-      "String",
-      "System.out.println",
-    ],
+        // Reset nội dung Editor
+        const resetButton = document.getElementById("reset-button");
+        if (resetButton) {
+            resetButton.addEventListener("click", function (event) {
+                event.preventDefault();
+                editor.setValue(initialCode);
+            });
+        }
 
-    sql: [
-      "SELECT",
-      "FROM",
-      "WHERE",
-      "INSERT",
-      "UPDATE",
-      "DELETE",
-      "JOIN",
-      "LEFT JOIN",
-      "RIGHT JOIN",
-      "INNER JOIN",
-      "GROUP BY",
-      "HAVING",
-      "ORDER BY",
-      "DESC",
-      "ASC",
-      "CREATE TABLE",
-      "ALTER TABLE",
-      "DROP TABLE",
-      "PRIMARY KEY",
-      "FOREIGN KEY",
-      "AND",
-      "OR",
-      "NOT",
-      "NULL",
-      "IS NULL",
-      "IS NOT NULL",
-      "LIKE",
-      "IN",
-      "BETWEEN",
-    ],
+        // Thêm từ khóa cho các ngôn ngữ
+        const keywords = {
+            java: [
+                "public",
+                "private",
+                "protected",
+                "class",
+                "interface",
+                "extends",
+                "implements",
+                "static",
+                "final",
+                "void",
+                "if",
+                "else",
+                "for",
+                "while",
+                "do",
+                "try",
+                "catch",
+                "finally",
+                "throw",
+                "throws",
+                "new",
+                "return",
+                "this",
+                "super",
+                "import",
+                "package",
+                "int",
+                "long",
+                "float",
+                "double",
+                "boolean",
+                "char",
+                "String",
+                "System.out.println",
+            ],
 
-    c: [
-      "int",
-      "char",
-      "float",
-      "double",
-      "void",
-      "long",
-      "short",
-      "signed",
-      "unsigned",
-      "if",
-      "else",
-      "for",
-      "while",
-      "do",
-      "switch",
-      "case",
-      "break",
-      "continue",
-      "return",
-      "struct",
-      "union",
-      "typedef",
-      "sizeof",
-      "printf",
-      "scanf",
-      "include",
-      "define",
-      "malloc",
-      "free",
-      "NULL",
-      "const",
-      "static",
-      "extern",
-      "#include",
-      "#define",
-    ],
-  };
+            sql: [
+                "SELECT",
+                "FROM",
+                "WHERE",
+                "INSERT",
+                "UPDATE",
+                "DELETE",
+                "JOIN",
+                "LEFT JOIN",
+                "RIGHT JOIN",
+                "INNER JOIN",
+                "GROUP BY",
+                "HAVING",
+                "ORDER BY",
+                "DESC",
+                "ASC",
+                "CREATE TABLE",
+                "ALTER TABLE",
+                "DROP TABLE",
+                "PRIMARY KEY",
+                "FOREIGN KEY",
+                "AND",
+                "OR",
+                "NOT",
+                "NULL",
+                "IS NULL",
+                "IS NOT NULL",
+                "LIKE",
+                "IN",
+                "BETWEEN",
+            ],
 
-  // Hàm gợi ý từ khóa dựa trên ngôn ngữ hiện tại
-  function getHints(cm, options) {
-    const cursor = cm.getCursor();
-    const line = cm.getLine(cursor.line);
+            c: [
+                "int",
+                "char",
+                "float",
+                "double",
+                "void",
+                "long",
+                "short",
+                "signed",
+                "unsigned",
+                "if",
+                "else",
+                "for",
+                "while",
+                "do",
+                "switch",
+                "case",
+                "break",
+                "continue",
+                "return",
+                "struct",
+                "union",
+                "typedef",
+                "sizeof",
+                "printf",
+                "scanf",
+                "include",
+                "define",
+                "malloc",
+                "free",
+                "NULL",
+                "const",
+                "static",
+                "extern",
+                "#include",
+                "#define",
+            ],
 
-    // Tìm vị trí bắt đầu của từ hiện tại
-    let start = cursor.ch;
-    while (start && /[\w\.]/.test(line.charAt(start - 1))) --start;
+            cpp: [
+                "int", "char", "float", "double", "void", "long", "short",
+                "signed", "unsigned", "if", "else", "for", "while", "do",
+                "switch", "case", "break", "continue", "return", "struct",
+                "class", "private", "public", "protected", "template",
+                "namespace", "using", "virtual", "friend", "operator",
+                "new", "delete", "this", "try", "catch", "throw",
+                "const", "static", "inline", "sizeof", "typedef",
+                "cout", "cin", "endl", "string", "vector", "map",
+                "#include", "std::", "nullptr"
+            ]
+        };
 
-    // Lấy từ hiện tại đang gõ
-    const currentWord = line.slice(start, cursor.ch).toLowerCase();
+        // Hàm gợi ý từ khóa dựa trên ngôn ngữ hiện tại
+        function getHints(cm, options) {
+            const cursor = cm.getCursor();
+            const line = cm.getLine(cursor.line);
 
-    // Chỉ hiện gợi ý khi có ít nhất 1 ký tự
-    if (currentWord.length === 0) {
-      return null;
-    }
+            // Tìm vị trí bắt đầu của từ hiện tại
+            let start = cursor.ch;
+            while (start && /[\w\.]/.test(line.charAt(start - 1))) --start;
 
-    const currentMode = editor.getOption("mode");
-    let currentLang = "java"; // mặc định
+            // Lấy từ hiện tại đang gõ
+            const currentWord = line.slice(start, cursor.ch).toLowerCase();
 
-    // Xác định ngôn ngữ hiện tại
-    if (currentMode === "text/x-python") currentLang = "python";
-    else if (currentMode === "text/x-java") currentLang = "java";
-    else if (currentMode === "text/x-sql") currentLang = "sql";
-    else if (currentMode === "text/x-csrc") currentLang = "c";
+            // Chỉ hiện gợi ý khi có ít nhất 1 ký tự
+            if (currentWord.length === 0) {
+                return null;
+            }
 
-    const list = keywords[currentLang] || [];
+            const currentMode = editor.getOption("mode");
+            let currentLang = editor.options.currentLang || "java"; // mặc định
 
-    // Lọc các từ khóa phù hợp
-    const matches = list.filter((item) =>
-      item.toLowerCase().startsWith(currentWord)
-    );
+            // Xác định ngôn ngữ hiện tại
+            if (currentMode === "text/x-java") currentLang = "java";
+            else if (currentMode === "text/x-sql") currentLang = "sql";
+            else if (currentMode === "text/x-csrc") currentLang = "c";
+            else if (currentMode === "text/x-c++src") currentLang = "cpp";
 
-    // Nếu không có kết quả phù hợp, không hiện gợi ý
-    if (!matches.length) {
-      return null;
-    }
+            const list = keywords[currentLang] || [];
 
-    return {
-      list: matches,
-      from: CodeMirror.Pos(cursor.line, start),
-      to: CodeMirror.Pos(cursor.line, cursor.ch),
-    };
-  }
+            // Lọc các từ khóa phù hợp
+            const matches = list.filter((item) =>
+                item.toLowerCase().startsWith(currentWord)
+            );
 
-  // Đăng ký hàm gợi ý
-  CodeMirror.registerHelper("hint", "anyword", getHints);
+            // Nếu không có kết quả phù hợp, không hiện gợi ý
+            if (!matches.length) {
+                return null;
+            }
 
-  // Bật tự động gợi ý khi gõ
-  editor.on("keyup", function (cm, event) {
-    // Chỉ hiện gợi ý khi gõ chữ cái hoặc số
-    const shouldComplete =
-      !cm.state.completionActive && // Không có gợi ý đang hiển thị
-      event.keyCode != 13 && // Không phải phím Enter
-      event.keyCode != 27 && // Không phải phím Escape
-      event.keyCode != 32 && // Không phải phím Space
-      !/^[!@#$%^&*(),.?":{}|<>]$/.test(event.key) && // Không phải ký tự đặc biệt
-      event.key.length === 1; // Là ký tự đơn
+            return {
+                list: matches,
+                from: CodeMirror.Pos(cursor.line, start),
+                to: CodeMirror.Pos(cursor.line, cursor.ch),
+            };
+        }
 
-    if (shouldComplete) {
-      CodeMirror.commands.autocomplete(cm, null, { completeSingle: false });
-    }
-  });
+        // Đăng ký hàm gợi ý
+        CodeMirror.registerHelper("hint", "anyword", getHints);
 
-  // Thay đổi ngôn ngữ code
-  const languageSelect = document.getElementById("language-select");
-  if (languageSelect) {
-    languageSelect.addEventListener("change", function () {
-      let mode = "";
-      switch (this.value) {
-        case "python":
-          mode = "text/x-python";
-          break;
-        case "java":
-          mode = "text/x-java";
-          break;
-        case "sql":
-          mode = "text/x-sql";
-          break;
-        case "c":
-          mode = "text/x-csrc";
-          break;
-        default:
-          mode = "text/x-java";
-      }
-      editor.setOption("mode", mode);
-    });
-  }
+        // Bật tự động gợi ý khi gõ
+        editor.on("keyup", function (cm, event) {
+            // Chỉ hiện gợi ý khi gõ chữ cái hoặc số
+            const shouldComplete =
+                !cm.state.completionActive && // Không có gợi ý đang hiển thị
+                event.keyCode != 13 && // Không phải phím Enter
+                event.keyCode != 27 && // Không phải phím Escape
+                event.keyCode != 32 && // Không phải phím Space
+                !/^[!@#$%^&*(),.?":{}|<>]$/.test(event.key) && // Không phải ký tự đặc biệt
+                event.key.length === 1; // Là ký tự đơn
 
-  // Submit form
-  const form = document.getElementById("code-form");
-  if (form) {
-    form.addEventListener("submit", function () {
-      editor.save(); // Đảm bảo CodeMirror lưu lại nội dung vào textarea
-    });
-  }
+            if (shouldComplete) {
+                CodeMirror.commands.autocomplete(cm, null, { completeSingle: false });
+            }
+        });
 
-  // Xử lý nút Pre-check
-  const preCheckButton = document.getElementById("precheck-button");
-  if (preCheckButton) {
-    preCheckButton.addEventListener("click", function () {
-      runPrecheck();
-    });
-  }
+        // Thay đổi ngôn ngữ code
+        const languageSelect = document.getElementById("language-select");
+        if (languageSelect) {
+            languageSelect.addEventListener("change", function () {
+                let mode = "";
+                switch (this.value) {
+                    case "java":
+                        mode = "text/x-java";
+                        break;
+                    case "sql":
+                        mode = "text/x-sql";
+                        break;
+                    case "c":
+                        mode = "text/x-csrc";
+                        break;
+                    case "cpp":
+                        mode = "text/x-c++src";
+                        break;
+                    default:
+                        mode = "text/x-java";
+                }
+                editor.setOption("mode", mode);
+                editor.options.currentLang = this.value.toLowerCase();
+            });
+        }
 
-  // Xử lý nút Clear output
-  const clearButton = document.getElementById("clear-button");
-  if (clearButton) {
-    clearButton.addEventListener("click", function () {
-      document.getElementById("output").innerHTML = "";
-      console.log("Output cleared.");
-    });
-  }
+        // Submit form
+        const form = document.getElementById("code-form");
+        if (form) {
+            form.addEventListener("submit", function () {
+                editor.save(); // Đảm bảo CodeMirror lưu lại nội dung vào textarea
+            });
+        }
 
-// Xử lý nút Submit exercise
-        const submitButton = document.getElementById("submit-button");
+        // Xử lý nút Pre-check
+        const preCheckButton = document.getElementById("precheck-button");
+        if (preCheckButton) {
+            preCheckButton.addEventListener("click", function () {
+                runPrecheck();
+            });
+        }
+
+        // Xử lý nút Clear output
+        const clearButton = document.getElementById("clear-button");
+        if (clearButton) {
+            clearButton.addEventListener("click", function () {
+                document.getElementById("output").innerHTML = "";
+                console.log("Output cleared.");
+            });
+        }
+
+        // Xử lý nút Submit exercise
+        const submitButton = document.getElementById("confirm-submit");
         if (submitButton) {
             submitButton.addEventListener("click", function () {
                 submitExercise();
             });
         }
 
-  // Xác nhận Submit
-  const confirmSubmit = document.getElementById("confirm-submit");
-  if (confirmSubmit) {
-    confirmSubmit.addEventListener("click", function (event) {
-      let codeContent = editor.getValue();
-      if (!codeContent.trim()) {
-        event.preventDefault();
-        $("#confirmModal").modal("hide");
-        document.getElementById(
-          "output"
-        ).innerHTML = `<div class="alert alert-danger" role="alert">This code field is required.</div>`;
-      } else {
-        editor.save();
-      }
-    });
-  }
+        // Xác nhận Submit
+        const confirmSubmit = document.getElementById("confirm-submit");
+        if (confirmSubmit) {
+            confirmSubmit.addEventListener("click", function (event) {
+                let codeContent = editor.getValue();
+                if (!codeContent.trim()) {
+                    event.preventDefault();
+                    $("#confirmModal").modal("hide");
+                    document.getElementById(
+                        "output"
+                    ).innerHTML = `<div class="alert alert-danger" role="alert">This code field is required.</div>`;
+                } else {
+                    editor.save();
+                }
+            });
+        }
 
-  // Chức năng Pre-check
-  // function runPrecheck() {
-  //   const code = editor.getValue();
-  //   const language = languageSelect.value;
-  //
-  //   fetch("/api/exercises/precheck/120", {
-  //     method: "POST",
-  //     headers: { "Content-Type": "application/json" },
-  //     body: JSON.stringify({ code: code, language: language }),
-  //   })
-  //     .then((response) => response.json())
-  //     .then((data) => {
-  //       let outputDiv = document.getElementById("output");
-  //       if (data.error) {
-  //         outputDiv.innerHTML = `
-  //                       <div class="alert alert-danger">Error: Code is formatted and structured incorrectly.</div>
-  //                       <div class="alert alert-warning">Please fix the format and structure correctly...</div>`;
-  //       } else {
-  //         outputDiv.innerHTML = `<div style="background-color: #282a36 !important;">${data.combinedMessage}</div>`;
-  //       }
-  //     })
-  //     .catch((error) => {
-  //       console.error("Error:", error);
-  //       document.getElementById("output").innerHTML =
-  //         "<pre>Error: Error during Pre-check</pre>";
-  //     });
-  // }
+        // Chức năng Pre-check
+        // function runPrecheck() {
+        //   const code = editor.getValue();
+        //   const language = languageSelect.value;
+        //
+        //   fetch("/api/exercises/precheck/120", {
+        //     method: "POST",
+        //     headers: { "Content-Type": "application/json" },
+        //     body: JSON.stringify({ code: code, language: language }),
+        //   })
+        //     .then((response) => response.json())
+        //     .then((data) => {
+        //       let outputDiv = document.getElementById("output");
+        //       if (data.error) {
+        //         outputDiv.innerHTML = `
+        //                       <div class="alert alert-danger">Error: Code is formatted and structured incorrectly.</div>
+        //                       <div class="alert alert-warning">Please fix the format and structure correctly...</div>`;
+        //       } else {
+        //         outputDiv.innerHTML = `<div style="background-color: #282a36 !important;">${data.combinedMessage}</div>`;
+        //       }
+        //     })
+        //     .catch((error) => {
+        //       console.error("Error:", error);
+        //       document.getElementById("output").innerHTML =
+        //         "<pre>Error: Error during Pre-check</pre>";
+        //     });
+        // }
         function runPrecheck() {
             const exerciseId = document.getElementById("exerciseId").value;
             const code = editor.getValue();
@@ -1378,7 +1571,7 @@
             document.body.appendChild(form);
             form.submit();
         }
-  // Xử lý submit exercise
+        // Xử lý submit exercise
         function submitExercise() {
             const exerciseId = document.getElementById("exerciseId").value;
             const code = editor.getValue();
@@ -1401,122 +1594,166 @@
             document.body.appendChild(form);
             form.submit();
         }
-  // Scroll to Top Button
-  const scrollToTopButton = document.getElementById("scrollToTopButton");
-  if (scrollToTopButton) {
-    window.onscroll = function () {
-      scrollToTopButton.style.display = window.scrollY > 100 ? "flex" : "none";
-    };
+        // Scroll to Top Button
+        const scrollToTopButton = document.getElementById("scrollToTopButton");
+        if (scrollToTopButton) {
+            window.onscroll = function () {
+                scrollToTopButton.style.display = window.scrollY > 100 ? "flex" : "none";
+            };
 
-    scrollToTopButton.addEventListener("click", function () {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    });
-  }
+            scrollToTopButton.addEventListener("click", function () {
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            });
+        }
 
-  // Xử lý resize và ẩn hiện left panel
-  const leftPanel = document.getElementById("leftPanel");
-  const centerPanel = document.getElementById("centerPanel");
-  const resizer = document.getElementById("resizer");
-  const toggleBtn = document.getElementById("toggleLeftPanel");
+        // Xử lý resize và ẩn hiện left panel
+        const leftPanel = document.getElementById("leftPanel");
+        const centerPanel = document.getElementById("centerPanel");
+        const resizer = document.getElementById("resizer");
+        const toggleBtn = document.getElementById("toggleLeftPanel");
 
-  function updateCenterPanel() {
-    if (leftPanel.style.display === "none" || leftPanel.offsetWidth === 0) {
-      centerPanel.style.width = "100%";
-    } else {
-      centerPanel.style.width = `calc(100% - ${leftPanel.offsetWidth}px)`;
-    }
-  }
+        function updateCenterPanel() {
+            if (leftPanel.style.display === "none" || leftPanel.offsetWidth === 0) {
+                centerPanel.style.width = "100%";
+            } else {
+                centerPanel.style.width = `calc(100% - ${leftPanel.offsetWidth}px)`;
+            }
+        }
 
-  if (toggleBtn) {
-    let isPanelCollapsed = false;
-    toggleBtn.addEventListener("click", function () {
-      isPanelCollapsed = !isPanelCollapsed;
-      if (isPanelCollapsed) {
-        leftPanel.style.width = "0px";
-        leftPanel.style.display = "none";
-      } else {
-        leftPanel.style.width = "450px";
-        leftPanel.style.display = "block";
-      }
-      updateCenterPanel();
-    });
-  }
+        if (toggleBtn) {
+            let isPanelCollapsed = false;
+            toggleBtn.addEventListener("click", function () {
+                isPanelCollapsed = !isPanelCollapsed;
+                if (isPanelCollapsed) {
+                    leftPanel.style.width = "0px";
+                    leftPanel.style.display = "none";
+                } else {
+                    leftPanel.style.width = "450px";
+                    leftPanel.style.display = "block";
+                }
+                updateCenterPanel();
+            });
+        }
 
-  if (resizer) {
-    let isResizing = false;
-    let startX = 0;
-    let startWidth = 0;
+        if (resizer) {
+            let isResizing = false;
+            let startX = 0;
+            let startWidth = 0;
 
-    resizer.addEventListener("mousedown", function (event) {
-      isResizing = true;
-      startX = event.clientX;
-      startWidth = leftPanel.offsetWidth;
+            resizer.addEventListener("mousedown", function (event) {
+                isResizing = true;
+                startX = event.clientX;
+                startWidth = leftPanel.offsetWidth;
 
-      document.addEventListener("mousemove", resizePanel);
-      document.addEventListener("mouseup", stopResizing);
-    });
+                document.addEventListener("mousemove", resizePanel);
+                document.addEventListener("mouseup", stopResizing);
+            });
 
-    function resizePanel(event) {
-      if (!isResizing) return;
-      let newWidth = startWidth + (event.clientX - startX);
+            function resizePanel(event) {
+                if (!isResizing) return;
+                let newWidth = startWidth + (event.clientX - startX);
 
-      if (newWidth < 200) {
-        leftPanel.style.width = "200px";
-      } else if (newWidth > 200 && newWidth <= 450) {
-        requestAnimationFrame(() => {
-          leftPanel.style.width = `${newWidth}px`;
-          centerPanel.style.width = `calc(100% - ${newWidth}px)`;
+                if (newWidth < 200) {
+                    leftPanel.style.width = "200px";
+                } else if (newWidth > 200 && newWidth <= 450) {
+                    requestAnimationFrame(() => {
+                        leftPanel.style.width = `${newWidth}px`;
+                        centerPanel.style.width = `calc(100% - ${newWidth}px)`;
+                    });
+                }
+            }
+
+            function stopResizing() {
+                isResizing = false;
+                document.removeEventListener("mousemove", resizePanel);
+                document.removeEventListener("mouseup", stopResizing);
+            }
+        }
+
+        // Cập nhật kích thước center panel ngay từ đầu
+        updateCenterPanel();
+
+        // Thêm chức năng tìm kiếm Google
+        const searchInput = document.getElementById("searchInput");
+        const searchButton = document.getElementById("searchButton");
+        const searchTab = document.getElementById("search-tab");
+        const searchFrame = document.getElementById("searchFrame");
+
+        function performSearch() {
+            const searchQuery = searchInput.value.trim();
+            if (searchQuery) {
+                // Chuyển đến tab tìm kiếm
+                searchTab.click();
+                // Ẩn trạng thái trống và hiện iframe
+                document.getElementById('emptySearchState').style.display = 'none';
+                searchFrame.style.display = 'block';
+                // Load kết quả tìm kiếm trong iframe
+                searchFrame.src = `https://www.google.com/search?igu=1&q=${encodeURIComponent(searchQuery)}`;
+            }
+        }
+
+        // Xử lý sự kiện click nút tìm kiếm
+        searchButton.addEventListener("click", performSearch);
+
+        // Xử lý sự kiện nhấn Enter trong ô input
+        searchInput.addEventListener("keypress", function (e) {
+            if (e.key === "Enter") {
+                performSearch();
+            }
         });
-      }
-    }
 
-    function stopResizing() {
-      isResizing = false;
-      document.removeEventListener("mousemove", resizePanel);
-      document.removeEventListener("mouseup", stopResizing);
-    }
-  }
+        // Thêm xử lý khi chuyển tab
+        document.getElementById('search-tab').addEventListener('click', function () {
+            if (!searchInput.value.trim()) {
+                document.getElementById('emptySearchState').style.display = 'block';
+                searchFrame.style.display = 'none';
+            }
+        });
 
-  // Cập nhật kích thước center panel ngay từ đầu
-  updateCenterPanel();
-
-  // Thêm chức năng tìm kiếm Google
-  const searchInput = document.getElementById("searchInput");
-  const searchButton = document.getElementById("searchButton");
-  const searchTab = document.getElementById("search-tab");
-  const searchFrame = document.getElementById("searchFrame");
-
-  function performSearch() {
-    const searchQuery = searchInput.value.trim();
-    if (searchQuery) {
-      // Chuyển đến tab tìm kiếm
-      searchTab.click();
-      // Load kết quả tìm kiếm trong iframe
-      searchFrame.src = `https://www.google.com/search?igu=1&q=${encodeURIComponent(
-        searchQuery
-      )}`;
-    }
-  }
-
-  // Xử lý sự kiện click nút tìm kiếm
-  searchButton.addEventListener("click", performSearch);
-
-  // Xử lý sự kiện nhấn Enter trong ô input
-  searchInput.addEventListener("keypress", function (e) {
-    if (e.key === "Enter") {
-      performSearch();
-    }
-  });
-
-  // Xử lý sự kiện thay đổi theme
-  document
-    .getElementById("theme-select")
-    .addEventListener("change", function () {
-      const selectedTheme = this.value;
-      editor.setOption("theme", selectedTheme);
+        // Xử lý sự kiện thay đổi theme
+        document
+            .getElementById("theme-select")
+            .addEventListener("change", function () {
+                const selectedTheme = this.value;
+                editor.setOption("theme", selectedTheme);
+            });
     });
-});
 
+    window.addEventListener("DOMContentLoaded", function () {
+        let outputDiv = document.getElementById("output");
+        if (outputDiv.innerText.trim() !== "") {
+            outputDiv.style.overflow = "auto";
+        }
+    });
+    // Hàm chạy custom input
+    document.addEventListener("DOMContentLoaded", function () {
+        // Xử lý chạy code với custom input
+        const runCustomInputButton = document.getElementById("runCustomInput");
+        if (runCustomInputButton) {
+            runCustomInputButton.addEventListener("click", function () {
+                const customInput = document.getElementById("customInput").value;
+                const code = editor.getValue();
+                const customOutput = document.getElementById("customOutput");
+
+                // Hiển thị loading state
+                customOutput.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Running code...</div>';
+
+                // TODO: Thay thế bằng API call thực tế để chạy code
+                setTimeout(() => {
+                    // Giả lập kết quả chạy code
+                    customOutput.innerHTML = `<pre>Program output with input:
+${customInput}
+-------------------
+Result will appear here...</pre>`;
+                }, 1000);
+            });
+        }
+    });
+
+    document.getElementById('confirm-submit').addEventListener('click', function () {
+        document.getElementById('code-form').submit();
+        $('#confirmModal').modal('hide');
+    });
 </script>
 
 </html>

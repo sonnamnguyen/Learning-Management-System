@@ -28,6 +28,34 @@ public class CodeJudgementController {
         return "judgement/code_space";
     }
 
+    // Chạy code khi user nhập custom input và trả lại output
+    @PostMapping("/run-custom-code")
+    public String runCustomCode(@RequestParam("exerciseId") Long exerciseId,
+                                @RequestParam("code") String code,
+                                @RequestParam("customInput") String customInput,
+                                Model model) {
+        // Lấy bài tập
+        Exercise exercise = exerciseService.getExerciseById(exerciseId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));
+
+        // Thực thi mã nguồn với custom input dựa trên ngôn ngữ
+        if(customInput == null) {
+            model.addAttribute("customOutput", "No custom input defined for this exercise.");
+            model.addAttribute("exercise", exercise);
+            model.addAttribute("code", code);
+            return "judgement/code_space";
+        }
+
+        // Đưa kết quả vào model để hiển thị
+        model.addAttribute("exercise", exercise);
+        model.addAttribute("code", code);
+        model.addAttribute("customInput", customInput);
+        model.addAttribute("customOutput", "");
+
+        String targetPath = "/judgement/" + exercise.getLanguage().getLanguage().toLowerCase() + "/run-custom-code";
+        return "forward:" + targetPath;
+    }
+
     // Nhận request chạy code, sau đó chuyển tiếp đến controller xử lý code tương ứng với ngôn ngữ
     @PostMapping("/precheck-code")
     public String runCode(@RequestParam("exerciseId") Long exerciseId,
@@ -47,34 +75,17 @@ public class CodeJudgementController {
 
         // Xây dựng đường dẫn chuyển tiếp dựa trên ngôn ngữ (ví dụ: "java" -> "/judgement/java_judge/precheck-code")
         String targetPath = "/judgement/" + (exercise.getLanguage().getLanguage().equalsIgnoreCase("c#")?"csharp":exercise.getLanguage().getLanguage().toLowerCase()) + "/precheck-code";
+        System.out.println(targetPath);
         return "forward:" + targetPath;
     }
 
-    @PostMapping("/run-custom-code")
-    public String runCustomCode(@RequestParam("exerciseId") Long exerciseId,
-                                @RequestParam("code") String code,
-                                @RequestParam("customInput") String customInput,
-                                Model model) {
-        // Lấy bài tập
-        Exercise exercise = exerciseService.getExerciseById(exerciseId)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));
-
-        // Thực thi mã nguồn với custom input dựa trên ngôn ngữ
-       if(customInput == null) {
-           model.addAttribute("customOutput", "No custom input defined for this exercise.");
-           model.addAttribute("exercise", exercise);
-           model.addAttribute("code", code);
-           return "judgement/code_space";
-       }
-
-        // Đưa kết quả vào model để hiển thị
-        model.addAttribute("exercise", exercise);
+    @PostMapping("/run_test_case")
+    public String runTestCase(@RequestParam("exerciseId") Long exerciseId,
+                              @RequestParam("code") String code,
+                              Model model) {
+        model.addAttribute("exerciseId", exerciseId);
         model.addAttribute("code", code);
-        model.addAttribute("customInput", customInput);
-        model.addAttribute("customOutput", "");
-
-        String targetPath = "/judgement/" + exercise.getLanguage().getLanguage().toLowerCase() + "/run-custom-code";
-        return "forward:" + targetPath;
+        return "judgement/run_test_case";
     }
 
     @PostMapping("/submit_exercise")
