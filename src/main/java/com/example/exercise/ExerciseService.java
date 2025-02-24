@@ -108,7 +108,7 @@ public class ExerciseService {
         XSSFSheet sheet = workbook.createSheet("Exercises");
 
         // Create the header row
-        String[] headers = { "ID", "Name", "Description", "Level", "Module" };
+        String[] headers = {"ID", "Name", "Description", "Level", "Module"};
         sheet.createRow(0).createCell(0).setCellValue(headers[0]);
         sheet.getRow(0).createCell(1).setCellValue(headers[1]);
         sheet.getRow(0).createCell(2).setCellValue(headers[2]);
@@ -144,5 +144,9 @@ public class ExerciseService {
                 : Exercise.Level.valueOf(level.toUpperCase());
 
         return exerciseRepository.findByFilters(languageId, exerciseLevel, pageable);
+    }
+
+    public List<Exercise> getExercisesByAssessmentId(Long assessmentId) {
+        return exerciseRepository.findExercisesByAssessmentId(assessmentId);
     }
 }

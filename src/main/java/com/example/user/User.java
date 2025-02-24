@@ -1,15 +1,17 @@
 package com.example.user;
 
+import com.example.course.Course;
+import com.example.quiz.model.AnswerOption;
+import com.example.quiz.model.Quiz;
 import com.example.role.Role;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
-import java.util.Collection;
-import java.util.List;
+
+import java.util.*;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -45,7 +47,16 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private Boolean isLocked = false;
 
+    @ManyToMany(mappedBy = "participants")
+    private Set<Quiz> participatedQuizzes = new HashSet<>();
 
+    @OneToMany(mappedBy = "creator", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<Course> createdCourses = new ArrayList<>();
+
+    @OneToMany(mappedBy = "instructor", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<Course> taughtCourses = new ArrayList<>();
 
     // Many-to-many relationship with Role
     @ManyToMany(fetch = FetchType.EAGER)
@@ -55,6 +66,9 @@ public class User implements UserDetails {
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     private List<Role> roles;
+
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TestSession> testSessions;
 
     @Override
     public String toString() {

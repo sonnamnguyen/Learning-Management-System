@@ -2,8 +2,10 @@ package com.example.quiz.controller;
 
 import com.example.course.Course;
 import com.example.course.CourseService;
+import com.example.exception.DateException;
 import com.example.quiz.model.Quiz;
 import com.example.quiz.service.QuizService;
+import com.example.user.User;
 import com.example.user.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
@@ -18,6 +20,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
+import java.security.Principal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.security.core.Authentication;
@@ -75,41 +79,46 @@ public class QuizController {
         // Get the authenticated user's details
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName(); // Get the username of the logged-in user
-
+        User currentUser = userService.findByUsername(username);
         // Add a new Quiz object to the model
         Quiz quiz = new Quiz();
         quiz.setCreatedBy(userService.findByUsername(username)); // Assume you have a method to get the User object
 
         model.addAttribute("quizes", quiz);
         model.addAttribute("courses", courseService.getAllCourses());
+        model.addAttribute("user", currentUser);
         model.addAttribute("users", userService.getAllUsers()); // Fetch all users for the dropdown
 
         model.addAttribute("content", "quizes/create");
         return "layout";
     }
 
+
+
     @PostMapping("/create")
-    public String create(@ModelAttribute("quizes") Quiz quiz) {
-        quizService.save(quiz);
+    public String submitQuiz(@ModelAttribute Quiz quiz, Model model) {
+        quizService.createQuiz(quiz);
+        model.addAttribute("message", "Quiz created successfully!");
         return "redirect:/quizes";
     }
-
     @GetMapping("/edit/{id}")
-    public String showEditForm(@PathVariable("id") Long id, Model model) {
+    public String showEditForm(@PathVariable("id") Long id, Model model, Principal principal) {
         Quiz quiz = quizService.findById(id).orElse(null);
         List<Course> courses = courseService.getAllCourses();
+        User user = userService.findByUsername(principal.getName());
+
         model.addAttribute("quiz", quiz);
         model.addAttribute("courses", courses);
         model.addAttribute("users", userService.getAllUsers()); // Fetch all users for the dropdown
-
+        model.addAttribute("user", user);
         model.addAttribute("content", "quizes/edit");
         return "layout";
     }
 
+
     @PostMapping("/edit/{id}")
     public String update(@PathVariable("id") Long id, @ModelAttribute Quiz quiz) {
-        quiz.setId(id);
-        quizService.save(quiz);
+        quizService.update(id,quiz);
         return "redirect:/quizes";
     }
 
@@ -118,6 +127,24 @@ public class QuizController {
         quizService.deleteById(id);
         return "redirect:/quizes";
     }
+    @PostMapping("/attempt/{quizId}")
+    public String attemptQuiz(@PathVariable("quizId") Long quizId, Model model) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        String resultMessage = quizService.attemptQuiz(quizId, username);
+
+        if (resultMessage != null) {
+            model.addAttribute("message", resultMessage);
+            return "redirect:/quizes";
+        }
+
+        Quiz quiz = quizService.findById(quizId).orElse(null);
+        model.addAttribute("quiz", quiz);
+        model.addAttribute("content", "quizes/start");
+        return "layout";
+    }
+
 
     // Print roles page
     @GetMapping("/print")
@@ -149,4 +176,19 @@ public class QuizController {
         quizService.importExcel(file);
         return "redirect:/quizes";
     }
+
+    @GetMapping("/detail/{id}")
+    public String showDetailForm(@PathVariable("id") Long id, Model model) {
+        Quiz quiz = quizService.findById(id).orElse(null);
+        model.addAttribute("quiz", quiz);
+        model.addAttribute("content", "quizes/detail");
+        return "layout";
+    }
+
+    @PostMapping("/{quizId}/questions/{questionId}")
+    public String addQuestionToQuiz(@PathVariable Long quizId, @PathVariable Long questionId) {
+        quizService.addQuestion(quizId, questionId);
+        return "layout";
+    }
+
 }

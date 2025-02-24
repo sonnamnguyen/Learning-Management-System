@@ -1,0 +1,196 @@
+<div class="container-fluid px-5 mb-4">
+
+  <h1 class="text-center" style="margin: 37px">Quiz</h1>
+
+  <!-- Course Selection -->
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <div class="form-group">
+        <label for="course" class="form-label fw-bold ">Select Course</label>
+        <select id="course" class="form-select form-select " required="">
+          <option value="" disabled="" selected="">-- Select a Course --</option>
+          <option value="math">Java</option>
+          <option value="science">Python</option>
+          <option value="history">React</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Quiz Title Input -->
+    <div class="col-md-6">
+      <div class="form-group">
+        <label for="quizTitle" class="form-label fw-bold">Quiz Title</label>
+        <input type="text" class="form-control form-control " id="quizTitle" placeholder="Enter quiz title">
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Question Library -->
+    <div class="col-md-6">
+      <div class="card border">
+        <div class="card-header" style="background-color: #E1E1E1">
+          <h5 class="mb-0">
+            <i class="fas fa-book fa-sm me-2"></i>Question Library
+          </h5>
+        </div>
+        <div class="card-body" style="height: calc(50vh + 50px); overflow-y: auto;">
+          <div class="accordion" id="courseChapters">
+            <!-- Chapter 1 -->
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button fw-bold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#chapter1" style="background-color: #F8F8F8 ; color: black !important; border-color: black; box-shadow: none !important;" aria-expanded="false">
+                  Chapter 1
+                </button>
+              </h2>
+              <div id="chapter1" class="accordion-collapse collapse" style="">
+                <div class="accordion-body">
+                  <ul class="list-group">
+                    <li class="list-group-item d-flex justify-content-between align-items-center hover-effect">
+                      <span>Question 1</span>
+                      <a href="#" class="btn btn-sm rounded-pill px-3" style="background-color: #F8F8F8">
+                        <i class="fas fa-plus fa-xs me-1 "></i>
+                      </a>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center hover-effect">
+                      <span>Question 2</span>
+                      <button class="btn btn-sm rounded-pill px-3" style="background-color: #F8F8F8">
+                        <i class="fas fa-plus fa-xs me-1"></i>
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Chapter 2 -->
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button fw-bold collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#chapter2" style="background-color: #F8F8F8 ; color: black; border-color: black !important; box-shadow: none !important;" aria-expanded="false">
+                  Chapter 2
+                </button>
+              </h2>
+              <div id="chapter2" class="accordion-collapse collapse" style="">
+                <div class="accordion-body">
+                  <ul class="list-group">
+                    <li class="list-group-item d-flex justify-content-between align-items-center hover-effect">
+                      <span>Question 3</span>
+                      <button class="btn btn-sm rounded-pill px-3" style="background-color: #F8F8F8">
+                        <i class="fas fa-plus fa-xs me-1"></i>
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Selected Questions -->
+    <div class="col-md-6">
+      <div class="card border">
+        <div class="card-header" style="background-color: #E1E1E1">
+          <h5 class="mb-0">
+            <i class="fas fa-check-circle fa-sm me-2"></i>Selected Questions
+          </h5>
+        </div>
+        <div class="card-body" style="height: 50vh; overflow-y: auto;">
+          <ul class="list-group">
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span>Sample Question 1</span>
+              <a href="#" class="btn btn-danger btn-sm">
+                <i class="fas fa-times fa-xs me-1"></i>
+              </a>
+            </li>
+            <!-- ... các item khác ... -->
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span>Sample Question 2</span>
+              <a href="#" class="btn btn-danger btn-sm">
+                <i class="fas fa-times fa-xs me-1"></i>
+              </a>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span>Sample Question 3</span>
+              <a href="#" class="btn btn-danger btn-sm">
+                <i class="fas fa-times fa-xs me-1"></i>
+              </a>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span>Sample Question 1</span>
+              <a href="#" class="btn btn-danger btn-sm">
+                <i class="fas fa-times fa-xs me-1"></i>
+              </a>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span>Sample Question 1</span>
+              <a href="#" class="btn btn-danger btn-sm">
+                <i class="fas fa-times fa-xs me-1"></i>
+              </a>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span>Sample Question 1</span>
+              <a href="#" class="btn btn-danger btn-sm">
+                <i class="fas fa-times fa-xs me-1"></i>
+              </a>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span>Sample Question 1</span>
+              <a href="#" class="btn btn-danger btn-sm">
+                <i class="fas fa-times fa-xs me-1"></i>
+              </a>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span>Sample Question 1</span>
+              <a href="#" class="btn btn-danger btn-sm">
+                <i class="fas fa-times fa-xs me-1"></i>
+              </a>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span>Sample Question 1</span>
+              <a href="#" class="btn btn-danger btn-sm">
+                <i class="fas fa-times fa-xs me-1"></i>
+              </a>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span>Sample Question 1</span>
+              <a href="#" class="btn btn-danger btn-sm">
+                <i class="fas fa-times fa-xs me-1"></i>
+              </a>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span>Sample Question 1</span>
+              <a href="#" class="btn btn-danger btn-sm">
+                <i class="fas fa-times fa-xs me-1"></i>
+              </a>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span>Sample Question 1</span>
+              <a href="#" class="btn btn-danger btn-sm">
+                <i class="fas fa-times fa-xs me-1"></i>
+              </a>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span>Sample Question 1</span>
+              <a href="#" class="btn btn-danger btn-sm">
+                <i class="fas fa-times fa-xs me-1"></i>
+              </a>
+            </li>
+          </ul>
+        </div>
+        <div class="card-footer">
+          <div class="d-flex justify-content-end gap-2">
+            <a href="#" class="btn btn-primary btn-sm">
+              <i class="fas fa-save fa-lg me-1"></i> Save
+            </a>
+            <a href="#" class="btn btn-danger btn-sm">
+              <i class="fas fa-trash fa-lg me-1"></i> Clear All
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

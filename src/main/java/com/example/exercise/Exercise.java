@@ -7,6 +7,7 @@ import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
+
 @Entity
 @Getter
 @Setter
@@ -15,7 +16,7 @@ import java.util.List;
 @Builder
 public class Exercise {
 
-    public enum Level { EASY, MEDIUM, HARD }
+    public enum Level {EASY, MEDIUM, HARD}
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,9 +33,6 @@ public class Exercise {
 
     @Column(columnDefinition = "TEXT")
     private String setup;
-
-    @Column(columnDefinition = "TEXT")
-    private String setupsql;
 
     @Enumerated(EnumType.STRING)
     private Level level = Level.EASY;

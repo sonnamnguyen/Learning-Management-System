@@ -36,4 +36,6 @@ public interface ExerciseRepository extends PagingAndSortingRepository<Exercise,
 
     void deleteById(Long id);
 
+    @Query("SELECT e FROM Assessment a JOIN a.exercises e WHERE a.id = :assessmentId")
+    List<Exercise> findExercisesByAssessmentId(@Param("assessmentId") Long assessmentId);
 }

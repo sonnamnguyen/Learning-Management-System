@@ -92,7 +92,7 @@
 
                         <div class="card-footer bg-light d-flex justify-content-between align-items-center small text-muted" style="margin-top: -0.9rem;">
                             <div class="btn-group gap-2">
-                                <a th:href="@{'/assessments/take/' + ${assessment.id} + '?preview=true'}"
+                                <a th:href="@{assessments/{id}/preview(id=${assessment.id})}"
                                    class="btn btn-sm btn-outline-secondary" title="Preview">
                                     <i class="fas fa-eye"></i>
                                 </a>
@@ -100,10 +100,13 @@
                                    class="btn btn-sm btn-outline-secondary" title="Invite">
                                     <i class="fas fa-envelope"></i>
                                 </a>
-                                <a href="#" class="btn btn-outline-secondary btn-sm"
-                                   onclick="copyInviteLink(event, [[${assessment.id}]])" title="Copy Link">
+                                <a href="javascript:void(0);" class="btn btn-outline-secondary btn-sm"
+                                   th:attr="data-assessment-id=${assessment.id}"
+                                   onclick="copyInviteLink(event, this.getAttribute('data-assessment-id'))"
+                                   title="Copy Link">
                                     <i class="fas fa-copy"></i>
                                 </a>
+
                             </div>
                             <small>
                                 <i class="fas fa-user me-1"></i>
@@ -155,3 +158,47 @@
         </div>
     </div>
 </div>
+<script>
+    function copyInviteLink(event, assessmentId) {
+        event.preventDefault();  // Stop any default behavior
+
+        if (!assessmentId) {
+            console.error("Error: assessmentId is undefined!");
+            alert("Invalid assessment ID!");
+            return;
+        }
+
+        console.log("Copying invite link for ID:", assessmentId); // Debugging
+
+        const url = `/assessments/${assessmentId}/copy_invite_link/`;
+
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Network response was not ok");
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("Response Data:", data); // Debugging
+
+                if (data.invite_link) {
+                    navigator.clipboard.writeText(data.invite_link)
+                        .then(() => {
+                            console.log("Copied to clipboard:", data.invite_link);
+                            alert("Invite link copied!");
+                        })
+                        .catch(err => {
+                            console.error("Clipboard error:", err);
+                            alert("Failed to copy invite link.");
+                        });
+                } else {
+                    alert("No invite link found.");
+                }
+            })
+            .catch(err => {
+                console.error("Fetch error:", err);
+                alert("Error fetching invite link.");
+            });
+    }
+</script>

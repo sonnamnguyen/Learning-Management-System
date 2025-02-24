@@ -1,12 +1,11 @@
 package com.example.assessment.service;
 
-
 import com.example.assessment.model.StudentAssessmentAttempt;
 import com.example.assessment.repository.StudentAssessmentAttemptRepository;
-import com.example.assessment.repository.StudentAssessmentAttemptRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -24,8 +23,12 @@ public class StudentAssessmentAttemptService {
         return repository.findById(id);
     }
 
-    public List<StudentAssessmentAttempt> findByAssessmentId(Long assessmentId) {
-        return repository.findByAssessmentId(assessmentId);
+    public List<StudentAssessmentAttempt> findByAssessment_Id(Long assessmentId) {
+        return repository.findByAssessment_Id(assessmentId);
+    }
+
+    public Page<StudentAssessmentAttempt> findByAssessment_Id(Long assessmentId, Pageable pageable) {
+        return repository.findByAssessment_Id(assessmentId, pageable);
     }
 
     public List<StudentAssessmentAttempt> findByUserId(Long userId) {
@@ -40,4 +43,3 @@ public class StudentAssessmentAttemptService {
         return repository.findAll();
     }
 }
-

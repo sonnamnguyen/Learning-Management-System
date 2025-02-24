@@ -23,40 +23,4 @@ public class CourseMaterialController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
-
-    @DeleteMapping("/delete/{id}")
-    public ResponseEntity<?> deleteMaterial(@PathVariable Long id) {
-        try {
-            courseMaterialService.deleteMaterial(id);
-            return ResponseEntity.ok("Deleted Material");
-        }catch (Exception e){
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
-
-    @PostMapping("/upload-text")
-    public ResponseEntity<?> uploadText(@RequestParam("sectionId") Long sectionId,
-                                        @RequestParam("content") String content,
-                                        @RequestParam("materialType") String materialType,
-                                        @RequestParam("title") String title) {
-        try {
-
-            return ResponseEntity.ok(courseMaterialService.uploadText(sectionId, content, materialType, title));
-        }catch (Exception e){
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
-
-    @PostMapping("/upload-lecture")
-    public ResponseEntity<?> uploadLecture(@RequestParam("sectionId") Long sectionId,
-                                        @RequestParam("video") String videoUrl,
-                                        @RequestParam("materialType") String materialType,
-                                        @RequestParam("title") String title) {
-        try {
-
-            return ResponseEntity.ok(courseMaterialService.uploadLecture(sectionId, videoUrl, materialType, title));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
 }

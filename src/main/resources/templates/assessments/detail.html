@@ -1,5 +1,21 @@
-
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Assessment Detail</title>
+    <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
 <div class="container mt-4">
+    <div class="d-flex justify-content-center">
+        <h1>Assessment</h1>
+    </div>
+
+    <!-- Hiển thị thông báo lỗi nếu có -->
+    <div th:if="${errorMessage != null}" class="alert alert-danger" role="alert">
+        <p th:text="${errorMessage}"></p>
+    </div>
+
     <!-- Assessment Details Section -->
     <div class="card mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
@@ -15,16 +31,20 @@
                 <!-- Left Column -->
                 <div class="col-md-6">
                     <p>
-                        <strong>Course:</strong> <span th:text="${assessment.course.name}"></span><br>
-                        <strong>Assessment Type:</strong> <span th:text="${assessment.assessmentType.name}"></span>
+                        <strong>Course:</strong>
+                        <span th:text="${assessment.course.name}"></span><br />
+                        <strong>Assessment Type:</strong>
+                        <span th:text="${assessment.assessmentType.name}"></span>
                     </p>
                 </div>
 
                 <!-- Right Column -->
                 <div class="col-md-6">
                     <p>
-                        <strong>Due Date:</strong> <span th:text="${assessment.timeLimit}"></span><br>
-                        <strong>Total Score:</strong> <span th:text="${assessment.totalScore}"></span>
+                        <strong>Due Date:</strong>
+                        <span th:text="${assessment.timeLimit}"></span><br />
+                        <strong>Total Score:</strong>
+                        <span th:text="${assessment.totalScore}"></span>
                     </p>
                 </div>
             </div>
@@ -42,9 +62,15 @@
                 <div class="card-body" style="max-height: 300px; overflow-y: auto;">
                     <ul class="list-group">
                         <li class="list-group-item" th:each="exercise : ${assessment.exercises}">
-                            <a th:href="@{/exercises/detail/{exerciseId}(exerciseId=${exercise.id})}" target="_blank" th:text="${exercise.title}"></a>
+                            <a th:href="@{/exercises/detail/{exerciseId}(exerciseId=${exercise.id})}"
+                               target="_blank"
+                               th:text="${exercise.name}">
+                                Exercise Name
+                            </a>
                         </li>
-                        <li class="list-group-item text-muted" th:if="${#lists.isEmpty(assessment.exercises)}">No exercises assigned.</li>
+                        <li class="list-group-item text-muted" th:if="${#lists.isEmpty(assessment.exercises)}">
+                            No exercises assigned.
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -59,19 +85,22 @@
                 <div class="card-body" style="max-height: 300px; overflow-y: auto;">
                     <ul class="list-group">
                         <li class="list-group-item" th:each="question, iterStat : ${assessment.questions}">
-                            <span th:text="${iterStat.count}"></span>. <span th:utext="${question.questionText}"></span>
+                            <span th:text="${iterStat.count}"></span>.
+                            <span th:utext="${question.questionText}"></span>
                         </li>
-                        <li class="list-group-item text-muted" th:if="${#lists.isEmpty(assessment.questions)}">No questions assigned.</li>
+                        <li class="list-group-item text-muted" th:if="${#lists.isEmpty(assessment.questions)}">
+                            No questions assigned.
+                        </li>
                     </ul>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Invited Candidates Section -->
+    <!-- Registered Attempts Section -->
     <div class="card">
         <div class="card-header">
-            <h3>Invited Candidates</h3>
+            <h3>Registered Attempts</h3>
         </div>
         <div class="card-body">
             <table class="table table-sm table-bordered">
@@ -88,27 +117,120 @@
                 </tr>
                 </thead>
                 <tbody>
+                <!-- Lưu ý: Đối tượng attempt giờ là Map chứa candidateUsername -->
                 <tr th:each="attempt, iterStat : ${registeredAttempts}">
                     <td th:text="${iterStat.count}"></td>
-                    <td>
-                        <span th:if="${attempt.email in invitedCandidatesEmails}" th:text="${attempt.email}"></span>
-                        <span th:if="${!(attempt.email in invitedCandidatesEmails)}">Not Invited</span>
-                    </td>
+                    <td th:text="${attempt.candidateUsername}"></td>
                     <td th:text="${attempt.email}"></td>
-                    <td th:each="candidate : ${invitedCandidates}" th:if="${candidate.email == attempt.email}" th:text="${candidate.invitationDate}"></td>
-                    <td th:each="candidate : ${invitedCandidates}" th:if="${candidate.email == attempt.email}" th:text="${candidate.expirationDate}"></td>
-                    <td th:text="${#numbers.formatDecimal(attempt.quizScore, 0)}"></td>
-                    <td th:each="score : ${finalScores}" th:if="${attempt.email == score.key}" th:text="${score.value}"></td>
+                    <td th:text="${#temporals.format(attempt.attemptDate, 'yyyy-MM-dd HH:mm')}"></td>
+                    <td><!-- Hiển thị ngày hết hạn nếu có --></td>
+                    <td th:text="${attempt.scoreQuiz}"></td>
+                    <td th:text="${attempt.scoreAss}"></td>
                     <td>
-                        <a th:href="@{/assessments/report/{id}/{attemptId}/{email}(id=${assessment.id}, attemptId=${attempt.id}, email=${attempt.email})}">View</a>
+                        <a th:href="@{'/assessments/attempt/' + ${attempt.id}}"
+                           class="btn btn-sm btn-outline-primary">View</a>
                     </td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(registeredAttempts)}">
-                    <td colspan="8" class="text-center text-muted">No attempts yet.</td>
+                    <td colspan="8" class="text-center text-muted">
+                        No attempts yet.
+                    </td>
                 </tr>
                 </tbody>
             </table>
+
+            <!-- PHÂN TRANG Registered Attempts -->
+            <div class="pagination float-end" th:if="${registeredAttemptsPage.totalPages > 0}">
+                <ul class="pagination">
+                    <li class="page-item" th:classappend="${registeredAttemptsPage.number == 0} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/assessments/detail/{id}(id=${assessment.id}, pageReg=${registeredAttemptsPage.number - 1}, pageInv=${invitedCandidatesPage.number}, searchEmail=${searchEmail})}">
+                            Previous
+                        </a>
+                    </li>
+                    <li class="page-item"
+                        th:each="i : ${#numbers.sequence(0, registeredAttemptsPage.totalPages - 1)}"
+                        th:classappend="${registeredAttemptsPage.number == i} ? 'active'">
+                        <a class="page-link"
+                           th:href="@{/assessments/detail/{id}(id=${assessment.id}, pageReg=${i}, pageInv=${invitedCandidatesPage.number}, searchEmail=${searchEmail})}"
+                           th:text="${i + 1}">
+                        </a>
+                    </li>
+                    <li class="page-item" th:classappend="${registeredAttemptsPage.number == registeredAttemptsPage.totalPages - 1} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/assessments/detail/{id}(id=${assessment.id}, pageReg=${registeredAttemptsPage.number + 1}, pageInv=${invitedCandidatesPage.number}, searchEmail=${searchEmail})}">
+                            Next
+                        </a>
+                    </li>
+                </ul>
+            </div>
         </div>
     </div>
-</div>
+    <!-- All Invited Candidates Section - chỉ hiển thị khi currentUser có role id=1 hoặc role name là "SUPERADMIN" -->
+    <div class="card mt-4"
+         th:if="${currentUser != null and (currentUser.roles.?[id == 1].size() > 0 or currentUser.roles.?[name=='SUPERADMIN'].size() > 0)}">
+        <div class="card-header">
+            <h3>All Invited Candidates</h3>
+        </div>
+        <div class="card-body">
+            <!-- Search Bar -->
+            <form th:action="@{/assessments/detail/{id}(id=${assessment.id})}" method="get" class="mb-2 d-flex">
+                <input type="hidden" name="pageReg" th:value="${registeredAttemptsPage.number}" />
+                <input type="hidden" name="pageInv" value="0" />
+                <input type="text" name="searchEmail" th:value="${searchEmail}"
+                       placeholder="Search email..."
+                       class="form-control"
+                       style="max-width: 200px; margin-right: 10px;" />
+                <button class="btn btn-primary" type="submit">Search</button>
+            </form>
 
+            <table class="table table-sm table-bordered">
+                <thead class="thead-light">
+                <tr>
+                    <th>#</th>
+                    <th>Email</th>
+                    <th>Invitation Date</th>
+                    <th>Expiration Date</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="candidate, stat : ${invitedCandidates}">
+                    <td th:text="${stat.count}"></td>
+                    <td th:text="${candidate.email}"></td>
+                    <td th:text="${candidate.invitationDate}"></td>
+                    <td th:text="${candidate.expirationDate}"></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(invitedCandidates)}">
+                    <td colspan="4" class="text-center text-muted">
+                        No invited candidates yet.
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+            <!-- Pagination for Invited Candidates -->
+            <div class="d-flex justify-content-between align-items-center mt-2">
+                <div>
+                    <span th:text="'Page ' + (${invitedCandidatesPage.number} + 1) + ' of ' + ${invitedCandidatesPage.totalPages}"></span>
+                </div>
+                <div>
+                    <a th:if="${!invitedCandidatesPage.first}"
+                       th:href="@{/assessments/detail/{id}(id=${assessment.id}, pageInv=${invitedCandidatesPage.number - 1}, pageReg=${registeredAttemptsPage.number}, searchEmail=${searchEmail})}"
+                       class="btn btn-outline-secondary btn-sm">
+                        Previous
+                    </a>
+                    <a th:if="${!invitedCandidatesPage.last}"
+                       th:href="@{/assessments/detail/{id}(id=${assessment.id}, pageInv=${invitedCandidatesPage.number + 1}, pageReg=${registeredAttemptsPage.number}, searchEmail=${searchEmail})}"
+                       class="btn btn-outline-secondary btn-sm">
+                        Next
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+</div>
+</body>
+</html>
