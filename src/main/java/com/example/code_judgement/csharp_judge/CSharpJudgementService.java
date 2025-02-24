@@ -1,4 +1,4 @@
-package com.example.code_judgement.csharp_judge;
+package com.example.code_judgement.Csharp_judge;
 
 import com.example.code_judgement.CompilationResult;
 import com.example.code_judgement.languageFactory.ExecutionBasedLanguage;
