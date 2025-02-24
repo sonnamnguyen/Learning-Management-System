@@ -42,6 +42,12 @@
             <textarea class="form-control" id="setup" th:field="*{setup}"></textarea>
         </div>
 
+        <!-- Setup Code For SQL-->
+        <div class="mb-3">
+            <label for="setup" class="form-label">Setup Code For SQL</label>
+            <textarea class="form-control" id="setupsql" th:field="*{setupsql}"></textarea>
+        </div>
+
         <!-- Difficulty Level -->
         <div class="mb-3">
             <label for="level" class="form-label">Difficulty Level</label>
@@ -80,6 +86,7 @@
                 <tr>
                     <th>Input</th>
                     <th>Expected Output</th>
+                    <th>SQL Tag</th>
 <!--                    <th>Action</th>-->
                 </tr>
                 </thead>
@@ -94,6 +101,11 @@
                         <input type="text" class="form-control"
                                th:name="|testCaseFormList.testCasesList[${stat.index}].expectedOutput|"
                                th:value="${testCase.expectedOutput}" placeholder="Expected Output" required>
+                    </td>
+                    <td>
+                        <input type="text" class="form-control"
+                               th:name="|testCaseFormList.testCasesList[${stat.index}].sqlTagNumber|"
+                               th:value="${testCase.sqlTagNumber}" placeholder="SQL Tag if SQL exercises">
                     </td>
                 </tr>
                 </tbody>
@@ -143,6 +155,7 @@
         newRow.innerHTML = `
             <td><input type="text" class="form-control" name="testCaseFormList.testCasesList[${rowCount}].input" placeholder="Input" required></td>
             <td><input type="text" class="form-control" name="testCaseFormList.testCasesList[${rowCount}].expectedOutput" placeholder="Expected Output" required></td>
+            <td><input type="text" class="form-control" name="testCaseFormList.testCasesList[${rowCount}].sqlTagNumber" placeholder="SQL Tag" required></td>
             `;
         container.appendChild(newRow);
     }

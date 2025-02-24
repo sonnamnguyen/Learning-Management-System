@@ -1,17 +1,18 @@
 package com.example.code_judgement.sql_judge;
 
 import com.example.code_judgement.ExecutionResponse;
+import com.example.exercise.Exercise;
 import com.example.testcase.TestCase;
 import com.example.testcase.TestCaseResult;
+import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,144 +22,486 @@ public class SqlJudgementService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    @Value("${SQL_DIR}")
-    private String SQL_DIR;
-    @Value("${USER_SCHEMAS}")
-    private String USER_SCHEMAS;
+    public ExecutionResponse executeSQLCode(Exercise exercise, String userCode, List<TestCase> testCases) {
+        userCode = removeCommentsFromSQL(userCode);
 
-    public ExecuteUserCodeResponse hashAndRunSQL(String scriptSQL) { // return hash token
-        // hash code for tables
-        List<String> originalTableName = extractTableName(scriptSQL);
-        List<String> randomTableNames = new ArrayList<>();
-        String randomId = generateRandomString(16);
-        originalTableName.forEach(tableName -> {
-            randomTableNames.add( USER_SCHEMAS + "." + tableName + "_" + randomId); // tạo bảng cho user trong schema khác
-        });
-        for(int i = 0; i < randomTableNames.size(); i++){
-            scriptSQL = scriptSQL.replaceFirst("CREATE TABLE\\s+" + originalTableName.get(i), "CREATE TABLE " + randomTableNames.get(i))
-                    .replaceFirst("\\s+" + originalTableName.get(i) +"\\s*[(]", " "+randomTableNames.get(i)+"(")
-                    .replaceFirst("INSERT INTO\\s+" + originalTableName.get(i) +"\\s*[(]", "INSERT INTO " + randomTableNames.get(i)+"("); // if sql exercise is type 1 (include insert data)
-        }
-        scriptSQL = deleteBreakLine(scriptSQL);
-        try{
-            jdbcTemplate.execute(scriptSQL);
-            return new ExecuteUserCodeResponse(true,"Create tables successfully", randomTableNames, randomId);
-        } catch (Exception e){
-            return new ExecuteUserCodeResponse(false, e.getMessage(),null, null);
-        }
-    }
+        // Sinh suffix duy nhất (8 ký tự)
+        String uniqueSuffix = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
 
-    // ***************************************************************************
-    // Type 1: FOR SELECT TABLE
-    public List<Map<String, Object>> select(String code){
-        try {
-            return jdbcTemplate.queryForList(code);
-        } catch(Exception e) {
-            return null;
+        // Kiểm tra schema 'sql_judge', nếu không tồn tại thì tạo
+        String checkSchemaQuery = "SELECT 1 FROM information_schema.schemata WHERE schema_name = 'sql_judge'";
+        List<Map<String, Object>> result = jdbcTemplate.queryForList(checkSchemaQuery);
+        if (result.isEmpty()) {
+            jdbcTemplate.execute("CREATE SCHEMA sql_judge");
         }
-    }
+        jdbcTemplate.execute("SET SCHEMA 'sql_judge'");
 
-    public ExecutionResponse runTestCases1(String scriptSetup, String code, List<TestCase> testCases, List<String> randomTableNames) {
-        // split user's code
-        List<String> userScriptCode = new ArrayList<>();
-        String[] splits = code.split("\\s*[;]\\s*");
-        for (String s : splits) {
-            if (!s.isEmpty()) {
-                userScriptCode.add(deleteBreakLine(s) + ";");
+        // Tách code người dùng thành các segment dựa theo marker (sql_1:, sql_2:, ...)
+        Map<String, String> codeSegments = parseUserCode(userCode);
+        if (codeSegments.isEmpty()) {
+            codeSegments.put("sql_1", userCode);
+        }
+        // Kiểm tra định dạng và thứ tự của segment tags
+        for (String tag : codeSegments.keySet()) {
+            if (!tag.matches("(?i)sql_\\d+")) {
+                throw new IllegalArgumentException("Invalid segment tag format: " + tag);
             }
         }
-        int passed = 0;
-        List<String> originalTableName = extractTableName(scriptSetup);
-        List<TestCaseResult> testResults = new ArrayList<>();
-        for(int i = 0; i < userScriptCode.size(); i++){
-            String userCode = userScriptCode.get(i), testcase = testCases.get(i).getInput();
-            for(int j = 0; j < randomTableNames.size(); j++){
-                // change table name for user's code
-                userCode = userCode.replace(originalTableName.get(j), randomTableNames.get(j));
-                // change table name for test cases
-                testcase = testcase.replace(originalTableName.get(j), randomTableNames.get(j));
-            }
-            List<Map<String, Object>> resultUserCode = select(userCode);
-            List<Map<String, Object>> resultTestCase = select(testcase);
-            if (resultUserCode.equals(resultTestCase)) {
-                passed++;
-                testResults.add(new TestCaseResult(testCases.get(i), "Passed", true));
-            } else {
-                testResults.add(new TestCaseResult(testCases.get(i), "Failed", false));
+        validateConsecutiveSegmentTags(codeSegments);
+
+        // Xác định exercise có liên quan đến tạo bảng hay không
+        boolean isTableCreationExercise = false;
+        for (String segment : codeSegments.values()) {
+            if (segment.trim().toUpperCase().startsWith("CREATE TABLE")) {
+                isTableCreationExercise = true;
+                break;
             }
         }
-        // delete table
-        try{
-            deleteUserTable(randomTableNames);
-            System.out.println( "Delete tables successfully");
-        } catch (Exception e){
-            System.out.println( "Error: " + e.getMessage()+", failed to delete tables");
+        String globalSuffix = isTableCreationExercise ? uniqueSuffix + "_user" : uniqueSuffix;
+
+        // Xây dựng mapping đổi tên bảng toàn cục
+        Set<String> allTableNames = new HashSet<>();
+        String setupSQL = exercise.getSetupsql();
+        if (setupSQL != null && !setupSQL.trim().isEmpty()) {
+            allTableNames.addAll(extractTableNames(setupSQL));
         }
-        return new ExecutionResponse(code, passed, testCases.size(), testResults);
-    }
-
-
-    // ***************************************************************************
-    // Type 2: FOR CREATING TABLE - 1 bài có thể tạo ra nhiều bảng
-    public String runTestCases(TestCase testCase, String randomId) {
-        List<String> originalTableName = extractTableNameFromInsert(testCase.getInput());
-        String query = testCase.getInput().replace(originalTableName.get(0), USER_SCHEMAS + "." + originalTableName.get(0) + "_" + randomId);
-        try{
-            int success = jdbcTemplate.update(query);
-            if(success==1){
-                return "Passed";
+        for (String segment : codeSegments.values()) {
+            allTableNames.addAll(extractTableNames(segment));
+        }
+        for (TestCase tc : testCases) {
+            String testSQL = tc.getInput();
+            if (testSQL != null && !testSQL.trim().isEmpty()) {
+                allTableNames.addAll(extractTableNames(testSQL));
             }
-        } catch (Exception e){
-            return "Failed";
         }
-        return "Failed";
-    }
-
-    private static List<String> extractTableName(String userSQL) {
-        Pattern pattern = Pattern.compile("CREATE TABLE\\s+(\\w+)");
-        Matcher matcher = pattern.matcher(userSQL.toUpperCase());
-        List<String> list = new ArrayList<>();
-        while (matcher.find()) {
-            list.add(matcher.group(1).toLowerCase());
+        Map<String, String> tableMapping = new HashMap<>();
+        for (String tableName : allTableNames) {
+            tableMapping.put(tableName, tableName + "_" + globalSuffix);
         }
-        return list;
-    }
 
-    private static List<String> extractTableNameFromInsert(String userSQL) {
-        Pattern pattern = Pattern.compile("INSERT INTO\\s+(\\w+)");
-        Matcher matcher = pattern.matcher(userSQL.toUpperCase());
-        List<String> list = new ArrayList<>();
-        while (matcher.find()) {
-            list.add(matcher.group(1).toLowerCase());
-        }
-        return list;
-    }
-
-    private static String generateRandomString(int length) {
-        SecureRandom random = new SecureRandom();
-        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        StringBuilder sb = new StringBuilder(length);
-        for (int i = 0; i < length; i++) {
-            sb.append(chars.charAt(random.nextInt(chars.length())));
-        }
-        return sb.toString();
-    }
-
-        // delete user's table already created
-        public String deleteUserTable(List<String> randomTableNames) {
+        // Thực thi setup SQL (nếu có) bằng cách tách và thực thi từng câu lệnh
+        if (setupSQL != null && !setupSQL.trim().isEmpty()) {
+            String modifiedSetupSQL = renameTables(setupSQL, tableMapping);
             try {
-                for(int i = randomTableNames.size()-1; i >= 0; i--){
-                    jdbcTemplate.execute("DROP TABLE IF EXISTS " + randomTableNames.get(i));
-                }
-                return "Delete tables successfully";
+                // Thực thi setup với giao dịch riêng biệt
+                getThis().executeScriptNew(modifiedSetupSQL);
             } catch (Exception e) {
-                return "Error: " + e.getMessage();
+                // Dù lỗi setup xảy ra, cố gắng cleanup các bảng (nếu có)
+                cleanupTables(tableMapping.values());
+                throw new RuntimeException("Error during setup execution: " + e.getMessage(), e);
             }
         }
 
+        int totalTestCases = 0;
+        int passedTestCases = 0;
+        List<TestCaseResult> resultsList = new ArrayList<>();
 
-    private String deleteBreakLine(String userSQL) {
-        return userSQL.replaceAll("[\r\n]+", " ").replaceAll("[\n]+", " ");
+        // Sắp xếp các segment theo thứ tự (sql_1, sql_2, ...)
+        List<String> sortedTags = new ArrayList<>(codeSegments.keySet());
+        sortedTags.sort(Comparator.comparingInt(this::extractNumber));
+
+        try {
+            // Xử lý từng segment
+            for (String tag : sortedTags) {
+                String segmentCode = codeSegments.get(tag);
+                String modifiedSegmentCode = renameTables(segmentCode, tableMapping);
+                List<TestCase> segmentTestCases = filterTestCasesByTag(testCases, tag);
+
+                // Nếu segment chỉ có 1 câu lệnh SELECT thì dùng executeTestQueryNew
+                if (isSingleSelectQuery(modifiedSegmentCode)) {
+                    List<Map<String, Object>> userSegmentResult;
+                    try {
+                        userSegmentResult = getThis().executeTestQueryNew(modifiedSegmentCode);
+                    } catch (Exception e) {
+                        String errorMessage = e.getMessage();
+                        for (Map.Entry<String, String> entry : tableMapping.entrySet()) {
+                            errorMessage = errorMessage.replace(entry.getValue(), entry.getKey());
+                        }
+
+                        for (TestCase tc : segmentTestCases) {
+                            totalTestCases++;
+                            resultsList.add(new TestCaseResult(tc, "Execution error: " + errorMessage, false));
+                        }
+                        markRemainingSegmentsAsNotExecuted(sortedTags, tag, testCases, resultsList);
+                        break;
+                    }
+                    // Với mỗi test case của segment, thực thi test query và so sánh kết quả
+                    for (TestCase tc : segmentTestCases) {
+                        totalTestCases++;
+                        String output;
+                        boolean testPassed = false;
+                        try {
+                            String modifiedTestQuery = renameTables(tc.getInput(), tableMapping);
+                            List<Map<String, Object>> testQueryResult = getThis().executeTestQueryNew(modifiedTestQuery);
+                            output = testQueryResult.toString();
+                            testPassed = userSegmentResult.toString().equals(output);
+                        } catch (Exception e) {
+                            output = extractErrorMessage(e.getMessage());
+                            for (Map.Entry<String, String> entry : tableMapping.entrySet()) {
+                                output = output.replace(entry.getValue(), entry.getKey());
+                            }
+//                            System.out.println("Error during test case execution: " + e.getMessage());
+                            testPassed = output.equals(tc.getExpectedOutput());
+                        }
+                        if (testPassed) {
+                            passedTestCases++;
+                        }
+                        resultsList.add(new TestCaseResult(tc, output, testPassed));
+                    }
+                } else {
+                    // Nếu segment chứa nhiều câu lệnh (không chỉ SELECT)
+                    try {
+                        getThis().executeScriptNew(modifiedSegmentCode);
+                    } catch (Exception e) {
+                        String errorMessage = e.getMessage();
+
+                        for (Map.Entry<String, String> entry : tableMapping.entrySet()) {
+                            errorMessage = errorMessage.replace(entry.getValue(), entry.getKey());
+                        }
+
+                        for (TestCase tc : segmentTestCases) {
+                            totalTestCases++;
+                            resultsList.add(new TestCaseResult(tc, "Execution error: " + errorMessage, false));
+                        }
+                        markRemainingSegmentsAsNotExecuted(sortedTags, tag, testCases, resultsList);
+                        break;
+                    }
+                    // Thực thi và chấm điểm test case cho segment này
+                    for (TestCase tc : segmentTestCases) {
+                        totalTestCases++;
+                        String output;
+                        boolean testPassed = false;
+                        try {
+                            String modifiedTestQuery = renameTables(tc.getInput(), tableMapping);
+                            List<Map<String, Object>> userResult = getThis().executeScriptAndReturnLastSelectNew(modifiedTestQuery);
+                            output = userResult != null ? userResult.toString() : "";
+                            testPassed = output.equals(tc.getExpectedOutput());
+                        } catch (Exception e) {
+                            output = extractErrorMessage(e.getMessage());
+                            for (Map.Entry<String, String> entry : tableMapping.entrySet()) {
+                                output = output.replace(entry.getValue(), entry.getKey());
+                            }
+//                            System.out.println("Error during test case execution: " + e.getMessage());
+                            testPassed = output.equals(tc.getExpectedOutput());
+                        }
+                        if (testPassed) {
+                            passedTestCases++;
+                        }
+                        resultsList.add(new TestCaseResult(tc, output, testPassed));
+                    }
+                }
+            }
+        } finally {
+            // Dọn dẹp các bảng được tạo
+            cleanupTables(tableMapping.values());
+            jdbcTemplate.execute("SET SCHEMA 'public'");
+        }
+
+        ExecutionResponse response = new ExecutionResponse();
+        response.setPassed(passedTestCases);
+        response.setTotal(totalTestCases);
+        response.setTestCasesResults(resultsList);
+        return response;
+    }
+
+    /**
+     * Phương thức chạy với custom input. Tương tự, các bước thực thi (script và custom query)
+     * sẽ được cách ly trong giao dịch riêng.
+     */
+    public String runWithCusTomInput(String code, String customInput) {
+        code = removeCommentsFromSQL(code);
+        String uniqueSuffix = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+
+        String checkSchemaQuery = "SELECT 1 FROM information_schema.schemata WHERE schema_name = 'sql_judge'";
+        List<Map<String, Object>> result = jdbcTemplate.queryForList(checkSchemaQuery);
+        if (result.isEmpty()) {
+            jdbcTemplate.execute("CREATE SCHEMA sql_judge");
+        }
+        jdbcTemplate.execute("SET SCHEMA 'sql_judge'");
+
+        Map<String, String> codeSegments = parseUserCode(code);
+        if (codeSegments.isEmpty()) {
+            codeSegments.put("sql_1", code);
+        }
+
+        Set<String> allTableNames = new HashSet<>();
+        for (String segment : codeSegments.values()) {
+            allTableNames.addAll(extractTableNames(segment));
+        }
+        if (customInput != null && !customInput.trim().isEmpty()) {
+            allTableNames.addAll(extractTableNames(customInput));
+        }
+        Map<String, String> tableMapping = new HashMap<>();
+        for (String tableName : allTableNames) {
+            tableMapping.put(tableName, tableName + "_" + uniqueSuffix);
+        }
+
+        List<String> sortedTags = new ArrayList<>(codeSegments.keySet());
+        sortedTags.sort(Comparator.comparingInt(this::extractNumber));
+
+        try {
+            for (String tag : sortedTags) {
+                String segmentCode = codeSegments.get(tag);
+                String modifiedSegmentCode = renameTables(segmentCode, tableMapping);
+                getThis().executeScriptNew(modifiedSegmentCode);
+            }
+            String modifiedCustomInput = renameTables(customInput, tableMapping);
+            List<Map<String, Object>> resultList = getThis().executeScriptAndReturnLastSelectNew(modifiedCustomInput);
+            return resultList != null ? resultList.toString() : "";
+        } catch (Exception e) {
+            String output = e.getMessage();
+
+            for (Map.Entry<String, String> entry : tableMapping.entrySet()) {
+                output = output.replace(entry.getValue(), entry.getKey());
+            }
+            return output;
+        } finally {
+            cleanupTables(tableMapping.values());
+        }
+    }
+
+    /* ==================== Các hàm helper ==================== */
+
+    private String removeCommentsFromSQL(String sql) {
+        String[] lines = sql.split("\n");
+        StringBuilder processedSQL = new StringBuilder();
+        for (String line : lines) {
+            String processedLine = line.replaceAll("^\\s*--.*", "").trim();
+            if (!processedLine.isEmpty()) {
+                processedSQL.append(processedLine).append("\n");
+            }
+        }
+        return processedSQL.toString().replaceAll("(?s)/\\*.*?\\*/", "");
+    }
+
+    private Map<String, String> parseUserCode(String userCode) {
+        Map<String, String> segments = new LinkedHashMap<>();
+        Pattern pattern = Pattern.compile("(?i)(sql_\\d+:)");
+        Matcher matcher = pattern.matcher(userCode);
+        List<Integer> startIndexes = new ArrayList<>();
+        List<String> tags = new ArrayList<>();
+        while (matcher.find()) {
+            startIndexes.add(matcher.start());
+            tags.add(matcher.group().toLowerCase().replace(":", ""));
+        }
+        if (startIndexes.isEmpty()) {
+            return segments;
+        }
+        for (int i = 0; i < startIndexes.size(); i++) {
+            int start = startIndexes.get(i);
+            int end = (i < startIndexes.size() - 1) ? startIndexes.get(i + 1) : userCode.length();
+            String segment = userCode.substring(start, end);
+            String currentTag = tags.get(i);
+            String segmentCode = segment.replaceFirst("(?i)" + currentTag + ":", "").trim();
+            segments.put(currentTag, segmentCode);
+        }
+        return segments;
+    }
+
+    private void validateConsecutiveSegmentTags(Map<String, String> segments) {
+        List<Integer> numbers = new ArrayList<>();
+        for (String tag : segments.keySet()) {
+            numbers.add(extractNumber(tag));
+        }
+        Collections.sort(numbers);
+        for (int i = 0; i < numbers.size(); i++) {
+            if (numbers.get(i) != i + 1) {
+                throw new IllegalArgumentException(
+                        "SQL segment tags must be consecutive starting from sql_1. Expected sql_" + (i + 1) +
+                                " but found sql_" + numbers.get(i));
+            }
+        }
+    }
+
+    private int extractNumber(String tag) {
+        try {
+            return Integer.parseInt(tag.replaceAll("[^0-9]", ""));
+        } catch (NumberFormatException e) {
+            return Integer.MAX_VALUE;
+        }
+    }
+
+    private List<TestCase> filterTestCasesByTag(List<TestCase> testCases, String tag) {
+        List<TestCase> filtered = new ArrayList<>();
+        for (TestCase tc : testCases) {
+            String testCaseTag = tc.getSqlTagNumber();
+            if (testCaseTag == null || !testCaseTag.matches("(?i)sql_\\d+")) {
+                throw new IllegalArgumentException("Test case SQL tag is not in the correct format: " + testCaseTag);
+            }
+            if (tag.equalsIgnoreCase(testCaseTag)) {
+                filtered.add(tc);
+            }
+        }
+        return filtered;
+    }
+
+    private String renameTables(String sql, Map<String, String> tableMapping) {
+        for (Map.Entry<String, String> entry : tableMapping.entrySet()) {
+            String oldTable = entry.getKey();
+            String newTable = entry.getValue();
+            sql = sql.replaceAll("(?i)\\b" + Pattern.quote(oldTable) + "\\b", newTable);
+        }
+        return sql;
+    }
+
+    private Set<String> extractTableNames(String sql) {
+        Set<String> tableNames = new HashSet<>();
+        Pattern pattern = Pattern.compile("(?i)\\b(CREATE\\s+TABLE|FROM|JOIN|INTO|UPDATE)\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\b");
+        Matcher matcher = pattern.matcher(sql);
+        while (matcher.find()) {
+            String tableName = matcher.group(2);
+            tableNames.add(tableName);
+        }
+        return tableNames;
+    }
+
+    private boolean isSingleSelectQuery(String sql) {
+        List<String> statements = splitSqlStatements(sql);
+        return statements.size() == 1 && statements.get(0).trim().toLowerCase().startsWith("select");
+    }
+
+    private List<String> splitSqlStatements(String script) {
+        List<String> statements = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+        boolean inSingleQuote = false;
+        boolean inDoubleQuote = false;
+        for (int i = 0; i < script.length(); i++) {
+            char c = script.charAt(i);
+            if (c == '\'' && !inDoubleQuote) {
+                if (inSingleQuote && i + 1 < script.length() && script.charAt(i + 1) == '\'') {
+                    current.append("''");
+                    i++;
+                    continue;
+                }
+                inSingleQuote = !inSingleQuote;
+            } else if (c == '"' && !inSingleQuote) {
+                inDoubleQuote = !inDoubleQuote;
+            }
+            if (c == ';' && !inSingleQuote && !inDoubleQuote) {
+                String stmt = current.toString().trim();
+                if (!stmt.isEmpty()) {
+                    statements.add(stmt);
+                }
+                current.setLength(0);
+            } else {
+                current.append(c);
+            }
+        }
+        String lastStmt = current.toString().trim();
+        if (!lastStmt.isEmpty()) {
+            statements.add(lastStmt);
+        }
+        return statements;
+    }
+
+    private void cleanupTables(Collection<String> tableNames) {
+        String checkSchemaQuery = "SELECT 1 FROM information_schema.schemata WHERE schema_name = 'sql_judge'";
+        List<Map<String, Object>> result = jdbcTemplate.queryForList(checkSchemaQuery);
+        if (result.isEmpty()) {
+            jdbcTemplate.execute("CREATE SCHEMA sql_judge");
+        }
+        jdbcTemplate.execute("SET SCHEMA 'sql_judge'");
+
+        for (String tableName : tableNames) {
+            String dropQuery = "DROP TABLE IF EXISTS " + tableName + " CASCADE";
+            try {
+                jdbcTemplate.execute(dropQuery);
+            } catch (Exception ex) {
+                // Log nếu cần
+                System.err.println("SQL Dropping table " + tableName + " failed: " + ex.getMessage());
+            }
+        }
+    }
+
+    private void markRemainingSegmentsAsNotExecuted(List<String> sortedTags, String currentTag,
+                                                    List<TestCase> allTestCases, List<TestCaseResult> results) {
+        int currentIndex = sortedTags.indexOf(currentTag);
+        for (int i = currentIndex + 1; i < sortedTags.size(); i++) {
+            String remainingTag = sortedTags.get(i);
+            List<TestCase> remainingTCs = filterTestCasesByTag(allTestCases, remainingTag);
+            for (TestCase tc : remainingTCs) {
+                results.add(new TestCaseResult(tc, "Not executed due to previous error", false));
+            }
+        }
+    }
+
+    private String extractErrorMessage(String fullError) {
+        int index = fullError.toUpperCase().indexOf("ERROR:");
+        if (index >= 0) {
+            int endIndex = fullError.indexOf("\n", index);
+            if (endIndex > 0) {
+                return fullError.substring(index, endIndex).trim();
+            } else {
+                return fullError.substring(index).trim();
+            }
+        }
+        return fullError;
+    }
+
+    /* ==================== Các phương thức thực thi với REQUIRES_NEW ==================== */
+
+    /**
+     * Thực thi câu lệnh SELECT (hoặc script có SELECT) trong giao dịch mới.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public List<Map<String, Object>> executeTestQueryNew(String query) {
+        String checkSchemaQuery = "SELECT 1 FROM information_schema.schemata WHERE schema_name = 'sql_judge'";
+        List<Map<String, Object>> result = jdbcTemplate.queryForList(checkSchemaQuery);
+        if (result.isEmpty()) {
+            jdbcTemplate.execute("CREATE SCHEMA sql_judge");
+        }
+        jdbcTemplate.execute("SET SCHEMA 'sql_judge'");
+
+        return jdbcTemplate.queryForList(query);
+    }
+
+    /**
+     * Thực thi một SQL script (chia câu lệnh theo dấu ;) trong giao dịch mới.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void executeScriptNew(String script) {
+        String checkSchemaQuery = "SELECT 1 FROM information_schema.schemata WHERE schema_name = 'sql_judge'";
+        List<Map<String, Object>> result = jdbcTemplate.queryForList(checkSchemaQuery);
+        if (result.isEmpty()) {
+            jdbcTemplate.execute("CREATE SCHEMA sql_judge");
+        }
+        jdbcTemplate.execute("SET SCHEMA 'sql_judge'");
+
+        List<String> statements = splitSqlStatements(script);
+        for (String stmt : statements) {
+            String trimmed = stmt.trim();
+            if (trimmed.toLowerCase().startsWith("select")) {
+                jdbcTemplate.queryForList(trimmed);
+            } else {
+                jdbcTemplate.execute(trimmed);
+            }
+        }
+    }
+
+    /**
+     * Thực thi SQL script và trả về kết quả của câu lệnh SELECT cuối cùng trong giao dịch mới.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public List<Map<String, Object>> executeScriptAndReturnLastSelectNew(String script) {
+        List<String> statements = splitSqlStatements(script);
+        List<Map<String, Object>> lastSelectResult = new ArrayList<>();
+        for (String stmt : statements) {
+            String trimmed = stmt.trim();
+            if (trimmed.toLowerCase().startsWith("select")) {
+                lastSelectResult = jdbcTemplate.queryForList(trimmed);
+            } else {
+                jdbcTemplate.execute(trimmed);
+            }
+        }
+        return lastSelectResult;
+    }
+
+    /**
+     * Trả về "proxy" của bean hiện tại để gọi các phương thức có @Transactional với propagation = REQUIRES_NEW.
+     * Yêu cầu cấu hình Spring phải cho phép exposeProxy (ví dụ: <tx:annotation-driven proxy-target-class="true" expose-proxy="true" />).
+     */
+    private SqlJudgementService getThis() {
+        return (SqlJudgementService) AopContext.currentProxy();
     }
 
 }
