@@ -34,6 +34,9 @@ public class Exercise {
     @Column(columnDefinition = "TEXT")
     private String setup;
 
+    @Column(columnDefinition = "TEXT")
+    private String setupsql;
+
     @Enumerated(EnumType.STRING)
     private Level level = Level.EASY;
 

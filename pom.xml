@@ -43,9 +43,22 @@
       <version>2.6.0</version>
     </dependency>
     <dependency>
+      <groupId>org.quartz-scheduler</groupId>
+      <artifactId>quartz</artifactId>
+      <version>2.5.0</version>
+    </dependency>
+
+    <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-data-jdbc</artifactId>
     </dependency>
+ <!-- https://mvnrepository.com/artifact/org.quartz-scheduler/quartz -->
+    <dependency>
+      <groupId>org.quartz-scheduler</groupId>
+      <artifactId>quartz</artifactId>
+      <version>2.5.0-rc1</version>
+    </dependency>
+
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -54,25 +67,23 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-thymeleaf</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-devtools</artifactId>
-      <scope>runtime</scope>
-      <optional>true</optional>
-    </dependency>
-
-        <dependency>
-          <groupId>org.postgresql</groupId>
-          <artifactId>postgresql</artifactId>
-          <version>42.6.0</version>  <!-- Use the latest version if needed -->
-        </dependency>
+<!--    <dependency>-->
+<!--      <groupId>org.springframework.boot</groupId>-->
+<!--      <artifactId>spring-boot-devtools</artifactId>-->
+<!--      <scope>runtime</scope>-->
+<!--      <optional>true</optional>-->
+<!--    </dependency>-->
 
     <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-text</artifactId>
-      <version>1.10.0</version>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>42.6.0</version>  <!-- Use the latest version if needed -->
     </dependency>
-
+      <dependency>
+          <groupId>org.apache.commons</groupId>
+          <artifactId>commons-text</artifactId>
+          <version>1.10.0</version>
+      </dependency>
     <dependency>
       <groupId>com.h2database</groupId>
       <artifactId>h2</artifactId>
@@ -92,6 +103,12 @@
       <groupId>org.modelmapper</groupId>
       <artifactId>modelmapper</artifactId>
       <version>3.1.1</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.hashids</groupId>
+      <artifactId>hashids</artifactId>
+      <version>1.0.3</version>
     </dependency>
 
     <dependency>
@@ -129,21 +146,57 @@
     </repository>
   </repositories>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-maven-plugin</artifactId>
-        <configuration>
-          <excludes>
-            <exclude>
-              <groupId>org.projectlombok</groupId>
-              <artifactId>lombok</artifactId>
-            </exclude>
-          </excludes>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+<!--?  <build>-->
+<!--?    <plugins>-->
+<!--?      <!- Compiler plugin for Java version 17 and Lombok annotation processor -->
+<!--?      <plugin>-->
+<!--?        <groupId>org.apache.maven.plugins</groupId>-->
+<!--?        <artifactId>maven-compiler-plugin</artifactId>-->
+<!--?        <version>3.10.1</version> <!- Use the latest version -->
+<!--?        <configuration>-->
+<!--?          <source>17</source> <!- Match your project's Java version -->
+<!--?          <target>17</target>-->
+<!--?          <annotationProcessorPaths>-->
+<!--?            <path>-->
+<!--?              <groupId>org.projectlombok</groupId>-->
+<!--?              <artifactId>lombok</artifactId>-->
+<!--?              <version>1.18.30</version> <!- Match the Lombok version -->
+<!--?            </path>-->
+<!--?          </annotationProcessorPaths>-->
+<!--?        </configuration>-->
+<!--?      </plugin>-->
+
+<!--?      <!- JAR plugin to specify the Main-Class in the manifest -->
+<!--?      <plugin>-->
+<!--?        <groupId>org.apache.maven.plugins</groupId>-->
+<!--?        <artifactId>maven-jar-plugin</artifactId>-->
+<!--?        <version>3.2.2</version>-->
+<!--?        <configuration>-->
+<!--?          <archive>-->
+<!--?            <manifest>-->
+<!--?              <mainClass>com.example.App</mainClass> <!- Replace with your main class -->
+<!--?            </manifest>-->
+<!--?          </archive>-->
+<!--?        </configuration>-->
+<!--?      </plugin>-->
+<!--?    </plugins>-->
+<!--?  </build>-->
 
 </project>
