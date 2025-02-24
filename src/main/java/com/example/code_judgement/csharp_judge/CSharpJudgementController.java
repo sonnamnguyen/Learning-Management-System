@@ -75,7 +75,7 @@ public class CSharpJudgementController {
             return "judgement/code_space";
         }
         try{
-            ExecutionResponse response = codeExecutionService.executeCodeOptimized(code,testCases,new JavaJudgementService());
+            ExecutionResponse response = codeExecutionService.executeCodeOptimized(code,testCases,new CSharpJudgementService());
             // Đưa kết quả vào model để hiển thị trong view
             model.addAttribute("exercise", exercise);
             model.addAttribute("code", code);
