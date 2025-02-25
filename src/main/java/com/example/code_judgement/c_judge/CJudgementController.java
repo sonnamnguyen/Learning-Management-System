@@ -30,7 +30,7 @@ public class CJudgementController {
         // Lấy bài tập và test cases
         Exercise exercise = exerciseService.getExerciseById(exerciseId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));
-        List<TestCase> testCases = exercise.getTestCases();
+        List<TestCase> testCases = exercise.getTwoTestCases();
 
         if (testCases == null || testCases.isEmpty()) {
             model.addAttribute("output", "No test cases defined for this exercise.");

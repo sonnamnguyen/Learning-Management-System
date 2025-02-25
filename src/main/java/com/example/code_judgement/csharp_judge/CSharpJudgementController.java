@@ -30,7 +30,7 @@ public class CSharpJudgementController {
         // Get exercise and test cases
         Exercise exercise = exerciseService.getExerciseById(exerciseId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));
-        java.util.List<TestCase> testCases = exercise.getTestCases();
+        java.util.List<TestCase> testCases = exercise.getTwoTestCases();
 
         if (testCases == null || testCases.isEmpty()) {
             model.addAttribute("output", "No test cases defined for this exercise.");
