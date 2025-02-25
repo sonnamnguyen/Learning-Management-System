@@ -2,18 +2,25 @@ package com.example.code_judgement.c_judge;
 
 import com.example.code_judgement.CodeExecutionService;
 import com.example.code_judgement.ExecutionResponse;
+import com.example.code_judgement.csharp_judge.CSharpJudgementService;
 import com.example.code_judgement.java_judge.JavaJudgementService;
 import com.example.exercise.Exercise;
 import com.example.exercise.ExerciseService;
 import com.example.testcase.TestCase;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/judgement/c")
@@ -76,7 +83,7 @@ public class CJudgementController {
             return "judgement/code_space";
         }
         try{
-            ExecutionResponse response = codeExecutionService.executeCodeOptimized(code,testCases,new JavaJudgementService());
+            ExecutionResponse response = codeExecutionService.executeCodeOptimized(code,testCases,new CSharpJudgementService());
             // Đưa kết quả vào model để hiển thị trong view
             model.addAttribute("exercise", exercise);
             model.addAttribute("code", code);
@@ -94,25 +101,10 @@ public class CJudgementController {
         }
     }
 
-    @PostMapping("/run-custom-code")
-    public String runCustomCode(@RequestParam("exerciseId") Long exerciseId,
-                                @RequestParam("code") String code,
-                                @RequestParam("customInput") String customInput,
-                                Model model) {
-        // Lấy bài tập
-        Exercise exercise = exerciseService.getExerciseById(exerciseId)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));
-
-        // Thực thi mã nguồn với custom input
-        String userOutput = codeExecutionService.runWithCusTomInput(code, customInput,new CJudgementService());
-
-
-        // Đưa kết quả vào model để hiển thị
-        model.addAttribute("exercise", exercise);
-        model.addAttribute("code", code);
-        model.addAttribute("customOutput", userOutput);
-        model.addAttribute("output", "");
-
-        return "judgement/code_space";
+    @PostMapping("/run_custom_code")
+    public ResponseEntity<String> runCustomCode(@RequestParam("code") String code,
+                                                @RequestParam("customInput") String customInput){
+        String userOutput = codeExecutionService.runWithCusTomInput(code, customInput,new JavaJudgementService());
+        return ResponseEntity.ok(userOutput);
     }
 }

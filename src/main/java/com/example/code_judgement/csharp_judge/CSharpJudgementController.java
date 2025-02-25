@@ -6,13 +6,17 @@ import com.example.code_judgement.java_judge.JavaJudgementService;
 import com.example.exercise.Exercise;
 import com.example.exercise.ExerciseService;
 import com.example.testcase.TestCase;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.List;
 
 @Controller
@@ -75,7 +79,7 @@ public class CSharpJudgementController {
             return "judgement/code_space";
         }
         try{
-            ExecutionResponse response = codeExecutionService.executeCodeOptimized(code,testCases,new JavaJudgementService());
+            ExecutionResponse response = codeExecutionService.executeCodeOptimized(code,testCases,new CSharpJudgementService());
             // Đưa kết quả vào model để hiển thị trong view
             model.addAttribute("exercise", exercise);
             model.addAttribute("code", code);
@@ -93,24 +97,10 @@ public class CSharpJudgementController {
         }
     }
 
-    @PostMapping("/run-custom-code")
-    public String runCustomCode(@RequestParam("exerciseId") Long exerciseId,
-                                @RequestParam("code") String code,
-                                @RequestParam("customInput") String customInput,
-                                Model model) {
-        // Get exercise
-        Exercise exercise = exerciseService.getExerciseById(exerciseId)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));
-
-        // Execute code with custom input
-        String userOutput = codeExecutionService.runWithCusTomInput(code, customInput, new CSharpJudgementService());
-
-        // Add results to model for display
-        model.addAttribute("exercise", exercise);
-        model.addAttribute("code", code);
-        model.addAttribute("customOutput", userOutput);
-        model.addAttribute("output", "");
-
-        return "judgement/code_space";
+    @PostMapping("/run_custom_code")
+    public ResponseEntity<String> runCustomCode(@RequestParam("code") String code,
+                                                @RequestParam("customInput") String customInput){
+        String userOutput = codeExecutionService.runWithCusTomInput(code, customInput,new JavaJudgementService());
+        return ResponseEntity.ok(userOutput);
     }
 }

@@ -5,16 +5,19 @@ import com.example.code_judgement.ExecutionResponse;
 import com.example.exercise.Exercise;
 import com.example.exercise.ExerciseService;
 import com.example.testcase.TestCase;
-import com.example.testcase.TestCaseResult;
-import com.example.testcase.TestCaseService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.Response;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
-import java.util.ArrayList;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.List;
 
 @Controller
@@ -98,25 +101,10 @@ public class JavaJudgementController {
         }
     }
 
-    @PostMapping("/run-custom-code")
-    public String runCustomCode(@RequestParam("exerciseId") Long exerciseId,
-                                @RequestParam("code") String code,
-                                @RequestParam("customInput") String customInput,
-                                Model model) {
-        // Lấy bài tập
-        Exercise exercise = exerciseService.getExerciseById(exerciseId)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));
-
-        // Thực thi mã nguồn với custom input
+    @PostMapping("/run_custom_code")
+    public ResponseEntity<String> runCustomCode(@RequestParam("code") String code,
+                                        @RequestParam("customInput") String customInput){
         String userOutput = codeExecutionService.runWithCusTomInput(code, customInput,new JavaJudgementService());
-
-
-        // Đưa kết quả vào model để hiển thị
-        model.addAttribute("exercise", exercise);
-        model.addAttribute("code", code);
-        model.addAttribute("customOutput", userOutput);
-        model.addAttribute("output", "");
-
-        return "judgement/code_space";
+        return ResponseEntity.ok(userOutput);
     }
 }

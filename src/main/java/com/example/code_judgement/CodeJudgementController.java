@@ -29,7 +29,7 @@ public class CodeJudgementController {
     }
 
     // Chạy code khi user nhập custom input và trả lại output
-    @PostMapping("/run-custom-code")
+    @PostMapping("/run_custom_code")
     public String runCustomCode(@RequestParam("exerciseId") Long exerciseId,
                                 @RequestParam("code") String code,
                                 @RequestParam("customInput") String customInput,
@@ -52,7 +52,7 @@ public class CodeJudgementController {
         model.addAttribute("customInput", customInput);
         model.addAttribute("customOutput", "");
 
-        String targetPath = "/judgement/" + exercise.getLanguage().getLanguage().toLowerCase() + "/run-custom-code";
+        String targetPath = "/judgement/" + exercise.getLanguage().getLanguage().toLowerCase() + "/run_custom_code";
         return "forward:" + targetPath;
     }
 

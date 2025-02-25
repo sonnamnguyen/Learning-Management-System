@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code Submission UI</title>
+    <title>Result</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
@@ -483,9 +483,42 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/sql/sql.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/clike/clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
 </head>
 
 <body>
+<!-- CodeMirror CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
+<!-- CodeMirror JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+<!-- CodeMirror Theme -->
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/dracula.min.css">
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/monokai.min.css">
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/material.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/nord.min.css">
+
+
+<!-- CodeMirror Language Modes -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/clike/clike.min.js"></script>
+<!-- Java -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/python/python.min.js"></script>
+<!-- Python -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/sql/sql.min.js"></script>
+<!-- SQL -->
+
+<!-- Autocomplete Addons -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/show-hint.min.js"></script>
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/show-hint.min.css">
+<script
+        src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/anyword-hint.min.js"></script>
+<!-- Add jQuery -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
 <div class="container">
     <div class="justify-content-between align-items-center" style="display: flex;">
         <h1 style="font-weight: bold;" class="title">RESULT</h1>
@@ -537,11 +570,11 @@
             </div>
         </div>
     </div>
-
+    <input id="exerciseId" type="hidden" th:value="${exercise.id}"/>
     <textarea id="codeEditor" th:text="${code}" style=""></textarea>
 
     <div class="input-area">
-        <input type="text" id="inputText" placeholder='Enter input here...'>
+        <input type="text" id="inputText" placeholder='Enter custom input here...'>
         <select id="languageSelect" class="language-select">
             <option value="en">English</option>
             <option value="vi">Vietnamese</option>
@@ -579,28 +612,28 @@
         return "text/x-sql"; // Mặc định là SQL nếu không phát hiện được ngôn ngữ khác
     }
 
-    document.addEventListener("DOMContentLoaded", function () {
-        var editor = CodeMirror.fromTextArea(document.getElementById("codeEditor"), {
-            mode: detectLanguage(document.getElementById("codeEditor").value),
-            theme: "monokai",
-            lineNumbers: true,
-            autoCloseBrackets: true,
-            matchBrackets: true,
-            indentUnit: 4,
-            readOnly: false, // Đặt thành false để có thể chỉnh sửa
-            cursorBlinkRate: 530,
-            indentWithTabs: true,
-            smartIndent: true,
-            lineWrapping: true,
-            extraKeys: { "Ctrl-Space": "autocomplete" },
-            hintOptions: {
-                tables: {
-                    users: ["name", "score", "birthDate"],
-                    countries: ["name", "population", "size"]
-                }
+    var editor = CodeMirror.fromTextArea(document.getElementById("codeEditor"), {
+        mode: detectLanguage(document.getElementById("codeEditor").value),
+        theme: "monokai",
+        lineNumbers: true,
+        autoCloseBrackets: true,
+        matchBrackets: true,
+        indentUnit: 4,
+        readOnly: false, // Đặt thành false để có thể chỉnh sửa
+        cursorBlinkRate: 530,
+        indentWithTabs: true,
+        smartIndent: true,
+        lineWrapping: true,
+        extraKeys: { "Ctrl-Space": "autocomplete" },
+        hintOptions: {
+            tables: {
+                users: ["name", "score", "birthDate"],
+                countries: ["name", "population", "size"]
             }
-        });
+        }
+    });
 
+    document.addEventListener("DOMContentLoaded", function () {
         editor.on("change", function () {
             var newMode = detectLanguage(editor.getValue());
             editor.setOption("mode", newMode);
@@ -608,13 +641,31 @@
     });
 
     function runCode() {
-        const input = document.getElementById("inputText").value;
-        if (!input.trim()) {
-            document.getElementById("output").innerText = "Error: Please enter input before running code!";
+        const customInput = document.getElementById("inputText").value;
+        if (!customInput.trim()) {
+            document.getElementById("output").innerHTML = `<span style="color: red">Error: Please enter your input!</span>`;
             return;
         }
+
+        const exerciseId = document.getElementById("exerciseId").value;
         const code = editor.getValue();
-        document.getElementById("output").innerText = "Processing input: " + input + "\nCode:\n" + code;
+
+        $.ajax({
+            url: "/judgement/run_custom_code",
+            method: "POST",
+            data:{
+                exerciseId: exerciseId,
+                code: code,
+                customInput: customInput
+            },
+            success: function (response) {
+                document.getElementById("output").innerHTML = `<span style="color: green">Your output:  </span><span>${response}</span>`;
+            },
+            error: function (xhr) {
+                let errorMessage = xhr.responseText ? xhr.responseText : "Something went wrong!";
+                document.getElementById("output").innerHTML = `<span style='color: red;'>${errorMessage}</span>`;
+            }
+        });
     }
 
     async function reviewCode() {
