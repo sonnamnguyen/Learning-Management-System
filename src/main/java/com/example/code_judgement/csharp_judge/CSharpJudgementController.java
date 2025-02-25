@@ -7,6 +7,8 @@ import com.example.exercise.Exercise;
 import com.example.exercise.ExerciseService;
 import com.example.testcase.TestCase;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -94,23 +96,22 @@ public class CSharpJudgementController {
     }
 
     @PostMapping("/run-custom-code")
-    public String runCustomCode(@RequestParam("exerciseId") Long exerciseId,
-                                @RequestParam("code") String code,
-                                @RequestParam("customInput") String customInput,
-                                Model model) {
-        // Get exercise
-        Exercise exercise = exerciseService.getExerciseById(exerciseId)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));
+    public ResponseEntity<String> runCustomCode(@RequestParam("exerciseId") Long exerciseId,
+                                                @RequestParam("code") String code,
+                                                @RequestParam("customInput") String customInput) {
+        try {
+            // Lấy bài tập
+            Exercise exercise = exerciseService.getExerciseById(exerciseId)
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));
 
-        // Execute code with custom input
-        String userOutput = codeExecutionService.runWithCusTomInput(code, customInput, new CSharpJudgementService());
+            // Thực thi mã nguồn với custom input
+            String userOutput = codeExecutionService.runWithCusTomInput(code, customInput, new CSharpJudgementService());
 
-        // Add results to model for display
-        model.addAttribute("exercise", exercise);
-        model.addAttribute("code", code);
-        model.addAttribute("customOutput", userOutput);
-        model.addAttribute("output", "");
+            // Trả về output dưới dạng JSON
+            return ResponseEntity.ok(userOutput);
 
-        return "judgement/code_space";
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error: " + e.getMessage());
+        }
     }
 }

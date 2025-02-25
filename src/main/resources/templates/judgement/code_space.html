@@ -1118,7 +1118,7 @@
                         <div class="tab-pane fade" id="inputContent" role="tabpanel">
                             <div class="form-group">
                                 <label for="customInput" class="mb-2">Input:</label>
-                                <textarea class="form-control mb-3" id="customInput" rows="6"
+                                <textarea th:value="${customInput}" class="form-control mb-3" id="customInput" rows="6"
                                           placeholder="Enter your custom input here..."></textarea>
 
                                 <label for="customOutput" class="mb-2">Output:</label>
@@ -1182,6 +1182,7 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
 </body>
 <script>
+    let editor;
     document.addEventListener("DOMContentLoaded", function () {
         // Lấy ngôn ngữ ban đầu từ select box
         const initialLanguage = document.getElementById("language-select").value.toLowerCase();
@@ -1203,7 +1204,7 @@
                 break;
         }
 
-        var editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
+         editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
             mode: initialMode,
             lineNumbers: true,
             theme: "dracula",
@@ -1488,6 +1489,14 @@
             });
         }
 
+        const runCustomInputButton = document.getElementById("runCustomInput");
+        if (runCustomInputButton) {
+            runCustomInputButton.addEventListener("click", function () {
+                UserRunCustomCode();
+            });
+        }
+
+
         // Xử lý nút Clear output
         const clearButton = document.getElementById("clear-button");
         if (clearButton) {
@@ -1727,34 +1736,43 @@
         }
     });
     // Hàm chạy custom input
-    document.addEventListener("DOMContentLoaded", function () {
-        // Xử lý chạy code với custom input
-        const runCustomInputButton = document.getElementById("runCustomInput");
-        if (runCustomInputButton) {
-            runCustomInputButton.addEventListener("click", function () {
-                const customInput = document.getElementById("customInput").value;
-                const code = editor.getValue();
-                const customOutput = document.getElementById("customOutput");
-
-                // Hiển thị loading state
-                customOutput.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Running code...</div>';
-
-                // TODO: Thay thế bằng API call thực tế để chạy code
-                setTimeout(() => {
-                    // Giả lập kết quả chạy code
-                    customOutput.innerHTML = `<pre>Program output with input:
-${customInput}
--------------------
-Result will appear here...</pre>`;
-                }, 1000);
-            });
-        }
-    });
+    // document.addEventListener("DOMContentLoaded", function () {
+    //     const runCustomInputButton = document.getElementById("runCustomInput");
+    //     if (runCustomInputButton) {
+    //         runCustomInputButton.addEventListener("click", function () {
+    //             UserRunCustomCode();
+    //         });
+    //     }
+    // });
 
     document.getElementById('confirm-submit').addEventListener('click', function () {
         document.getElementById('code-form').submit();
         $('#confirmModal').modal('hide');
     });
+
+    function UserRunCustomCode() {
+        const exerciseId = document.getElementById("exerciseId").value;
+        const code = editor.getValue();
+        const customInput = document.getElementById("customInput").value;
+
+        $.ajax({
+            url: "/judgement/run-custom-code",
+            method: "POST",
+            data: {
+                exerciseId: exerciseId,
+                code: code,
+                customInput: customInput
+            },
+            success: function(response) {
+                document.getElementById("customOutput").innerHTML = `<span>${response}</span>`;
+            },
+            error: function(xhr) {
+                let errorMessage = xhr.responseText ? xhr.responseText : "Something went wrong!";
+                document.getElementById("customOutput").innerHTML = `<span style='color: red;'>${errorMessage}</span>`;
+            }
+        });
+    }
+
 </script>
 
 </html>
