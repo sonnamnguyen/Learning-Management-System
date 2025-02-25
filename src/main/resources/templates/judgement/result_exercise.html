@@ -486,6 +486,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/sql/sql.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/clike/clike.min.js"></script>
+    <!-- Add jQuery -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 </head>
 
 <body>
@@ -540,7 +542,7 @@
             </div>
         </div>
     </div>
-
+    <input id="exerciseId" type="hidden" th:value="${exercise.id}"/>
     <textarea id="codeEditor" th:text="${code}" style=""></textarea>
 
     <div class="input-area">
@@ -613,13 +615,31 @@
     });
 
     function runCode() {
-        const input = document.getElementById("inputText").value;
-        if (!input.trim()) {
-            document.getElementById("output").innerText = "Error: Please enter input before running code!";
+        const customInput = document.getElementById("inputText").value;
+        if (!customInput.trim()) {
+            document.getElementById("output").innerHTML = `<span style="color: red">Error: Please enter your input!</span>`;
             return;
         }
+
+        const exerciseId = document.getElementById("exerciseId").value;
         const code = editor.getValue();
-        document.getElementById("output").innerText = "Processing input: " + input + "\nCode:\n" + code;
+
+        $.ajax({
+            url: "/judgement/run-custom-code",
+            method: "POST",
+            data:{
+                exerciseId: exerciseId,
+                code: code,
+                customInput: customInput
+            },
+            success: function (response) {
+                document.getElementById("output").innerHTML = `<span style="color: green">Your output:  </span><span>${response}</span>`;
+            },
+            error: function (xhr) {
+                let errorMessage = xhr.responseText ? xhr.responseText : "Something went wrong!";
+                document.getElementById("output").innerHTML = `<span style='color: red;'>${errorMessage}</span>`;
+            }
+        });
     }
 
     async function reviewCode() {
