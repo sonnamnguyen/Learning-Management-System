@@ -2,9 +2,10 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 
 <head>
+    <!-- Keep all your existing head content -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Result</title>
+    <title>Code Submission UI</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
@@ -16,7 +17,9 @@
           href="https://cdn.jsdelivr.net/gh/sindresorhus/github-markdown-css@4.0.0/github-markdown.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/sql/sql.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/clike/clike.min.js"></script>
+    <!-- Keep all your existing styles -->
     <style>
+        /* All your existing styles */
         body {
             font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Oxygen, Ubuntu, sans-serif;
             background-color: #f0f2f5;
@@ -483,42 +486,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/sql/sql.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/clike/clike.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+    <!-- Add jQuery -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 </head>
 
 <body>
-<!-- CodeMirror CSS -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
-<!-- CodeMirror JS -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
-<!-- CodeMirror Theme -->
-<link rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/dracula.min.css">
-<link rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/monokai.min.css">
-<link rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/material.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/nord.min.css">
-
-
-<!-- CodeMirror Language Modes -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/clike/clike.min.js"></script>
-<!-- Java -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/python/python.min.js"></script>
-<!-- Python -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/sql/sql.min.js"></script>
-<!-- SQL -->
-
-<!-- Autocomplete Addons -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/show-hint.min.js"></script>
-<link rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/show-hint.min.css">
-<script
-        src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/anyword-hint.min.js"></script>
-<!-- Add jQuery -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-
 <div class="container">
     <div class="justify-content-between align-items-center" style="display: flex;">
         <h1 style="font-weight: bold;" class="title">RESULT</h1>
@@ -574,7 +546,7 @@
     <textarea id="codeEditor" th:text="${code}" style=""></textarea>
 
     <div class="input-area">
-        <input type="text" id="inputText" placeholder='Enter custom input here...'>
+        <input type="text" id="inputText" placeholder='Enter input here...'>
         <select id="languageSelect" class="language-select">
             <option value="en">English</option>
             <option value="vi">Vietnamese</option>
@@ -592,6 +564,8 @@
 </div>
 
 <script>
+    let editor;
+
     function detectLanguage(code) {
         const lowerCode = code.toLowerCase();
 
@@ -612,28 +586,28 @@
         return "text/x-sql"; // Mặc định là SQL nếu không phát hiện được ngôn ngữ khác
     }
 
-    var editor = CodeMirror.fromTextArea(document.getElementById("codeEditor"), {
-        mode: detectLanguage(document.getElementById("codeEditor").value),
-        theme: "monokai",
-        lineNumbers: true,
-        autoCloseBrackets: true,
-        matchBrackets: true,
-        indentUnit: 4,
-        readOnly: false, // Đặt thành false để có thể chỉnh sửa
-        cursorBlinkRate: 530,
-        indentWithTabs: true,
-        smartIndent: true,
-        lineWrapping: true,
-        extraKeys: { "Ctrl-Space": "autocomplete" },
-        hintOptions: {
-            tables: {
-                users: ["name", "score", "birthDate"],
-                countries: ["name", "population", "size"]
-            }
-        }
-    });
-
     document.addEventListener("DOMContentLoaded", function () {
+        editor = CodeMirror.fromTextArea(document.getElementById("codeEditor"), {
+            mode: detectLanguage(document.getElementById("codeEditor").value),
+            theme: "monokai",
+            lineNumbers: true,
+            autoCloseBrackets: true,
+            matchBrackets: true,
+            indentUnit: 4,
+            readOnly: false, // Đặt thành false để có thể chỉnh sửa
+            cursorBlinkRate: 530,
+            indentWithTabs: true,
+            smartIndent: true,
+            lineWrapping: true,
+            extraKeys: { "Ctrl-Space": "autocomplete" },
+            hintOptions: {
+                tables: {
+                    users: ["name", "score", "birthDate"],
+                    countries: ["name", "population", "size"]
+                }
+            }
+        });
+
         editor.on("change", function () {
             var newMode = detectLanguage(editor.getValue());
             editor.setOption("mode", newMode);
@@ -651,7 +625,7 @@
         const code = editor.getValue();
 
         $.ajax({
-            url: "/judgement/run_custom_code",
+            url: "/judgement/run-custom-code",
             method: "POST",
             data:{
                 exerciseId: exerciseId,
@@ -669,95 +643,47 @@
     }
 
     async function reviewCode() {
-        const code = editor.getValue();
-        const selectedLanguage = document.getElementById('languageSelect').value;
+        try {
+            // Get code from the CodeMirror editor
+            const code = editor.getValue();
+            const selectedLanguage = document.getElementById('languageSelect').value;
 
-        document.getElementById("output").innerHTML = `
-                        ${selectedLanguage === 'vi' ? 'Đang phân tích code của bạn...' : 'Analyzing your code...'}
-
+            // Show loading state
+            document.getElementById("output").innerHTML = `
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    ${selectedLanguage === 'vi' ? 'Đang phân tích code...' : 'Analyzing your code...'}
+                </div>
             `;
 
-        try {
-            const username = 'admin';
-            const password = 'admin';
-            const basicAuth = 'Basic ' + btoa(username + ':' + password);
-
-            const requestBody = {
-                model: "llama3.1:latest",
-                prompt: selectedLanguage === 'vi' ?
-                    `Analyze the following code and provide a detailed review in Vietnamese:
-                        ## 📝 Tổng Quan
-                        - Mô tả cấu trúc và mục đích của code
-                        - Đánh giá chung về chất lượng code
-
-                        ## ✅ Điểm Mạnh
-                        - Liệt kê những điểm tốt trong code
-                        - Các phần đã được triển khai đúng
-
-                        ## ⚠️ Cần Cải Thiện
-                        - Xác định các vấn đề tiềm ẩn
-                        - Các phần có thể tối ưu hóa
-
-                        ## 🔒 Vấn Đề Bảo Mật
-                        - Liệt kê các lỗ hổng bảo mật (nếu có)
-                        - Các rủi ro tiềm ẩn về bảo mật
-
-                        Code to review:
-                        \`\`\`java
-                        ${code}
-                        \`\`\`
-
-                        Note: Only provide analysis in Vietnamese, "SUGGEST" code changes or rewrite any code.` :
-                    `Analyze the following code and provide a detailed review:
-                        ## 📝 Overview
-                        - Describe the overall structure and purpose of the code
-                        - Provide a general assessment of code quality
-
-                        ## ✅ Strengths
-                        - List the good parts of the code
-                        - Parts that have been implemented correctly
-
-                        ## ⚠️ Areas for improvement
-                        - Identify potential issues
-                        - Parts that can be optimized
-
-                        ## 🔒 Security issues
-                        - List any security vulnerabilities if present
-                        - Potential security risks
-
-                        Code to review:
-                        \`\`\`java
-                        ${code}
-                        \`\`\`
-
-                        Note: Only provide analysis in English, suggest code changes or rewrite any code.`,
-                stream: false
-            };
-
-            const response = await fetch('https://ollama.truong51972.id.vn/api/generate', {
+            // Send code to backend for AI review
+            const response = await fetch('/api/code/review', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': basicAuth
+                    'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(requestBody)
+                body: JSON.stringify({
+                    code: code,
+                    language: selectedLanguage
+                })
             });
 
             if (!response.ok) {
                 throw new Error(selectedLanguage === 'vi' ?
-                    'Yêu cầu API thất bại' :
-                    'API request failed');
+                    'Không thể kết nối với dịch vụ AI' :
+                    'Failed to connect to AI service');
             }
 
             const data = await response.json();
-            if (!data.response) {
-                throw new Error(selectedLanguage === 'vi' ?
+
+            if (!data.review) {
+                throw new Error(data.error || (selectedLanguage === 'vi' ?
                     'Không nhận được phản hồi từ AI' :
-                    'No response from AI');
+                    'No response from AI'));
             }
 
-            // Sử dụng Marked.js để render markdown
-            const renderedHtml = marked.parse(data.response, {
+            // Render markdown content
+            const renderedHtml = marked.parse(data.review, {
                 gfm: true,
                 breaks: true,
                 highlight: function (code, lang) {
@@ -769,16 +695,15 @@
             });
 
             document.getElementById("output").innerHTML = `
-                    <div class="markdown-body">
-                        ${renderedHtml}
-                    </div>
-                `;
+                <div class="markdown-body">
+                    ${renderedHtml}
+                </div>
+            `;
 
-            // Highlight tất cả code <blocks></blocks>
+            // Add copy buttons to code blocks
             document.querySelectorAll('pre code').forEach((block) => {
                 hljs.highlightBlock(block);
 
-                // Tạo nút copy cho mỗi code block
                 const copyButton = document.createElement('button');
                 copyButton.className = 'copy-suggestion';
                 copyButton.innerHTML = '<i class="fas fa-copy"></i>';
@@ -793,27 +718,23 @@
                         }, 2000);
                     } catch (err) {
                         console.error('Failed to copy text: ', err);
-                        alert(document.getElementById('languageSelect').value === 'vi' ?
+                        alert(selectedLanguage === 'vi' ?
                             'Không thể sao chép code!' :
                             'Failed to copy code!');
                     }
                 };
 
-                // Thêm nút copy vào code block
                 block.parentElement.style.position = 'relative';
                 block.parentElement.appendChild(copyButton);
             });
-
         } catch (error) {
+            console.error('Error in reviewCode function:', error);
             document.getElementById("output").innerHTML = `
-                    <div class="error-message">
-                        <i class="fas fa-exclamation-circle"></i>
-                        ${selectedLanguage === 'vi' ?
-                'Lỗi: ' + error.message :
-                'Error: ' + error.message}
-                    </div>
-                `;
-            console.error('Error:', error);
+                <div class="error-message">
+                    <i class="fas fa-exclamation-circle"></i>
+                    Error: ${error.message || 'Unknown error occurred'}
+                </div>
+            `;
         }
     }
 
@@ -825,6 +746,7 @@
                 'Code copied!');
         });
     }
+
     function downloadCode() {
         const code = editor.getValue();
 

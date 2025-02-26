@@ -2,14 +2,25 @@ package com.example.quiz.service;
 
 
 import com.example.course.CourseRepository;
+import com.example.exception.DateException;
+import com.example.exception.NotFoundException;
+import com.example.quiz.model.Question;
 import com.example.quiz.model.Quiz;
+import com.example.quiz.model.SchedulerUtil;
+import com.example.quiz.repository.QuestionRepository;
 import com.example.quiz.repository.QuizRepository;
+import com.example.user.User;
+import com.example.user.UserService;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.checkerframework.checker.units.qual.A;
+import org.quartz.Scheduler;
+import org.quartz.SchedulerException;
+import org.quartz.xml.ValidationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -28,6 +40,13 @@ import static com.example.utils.Helper.getCellValueAsString;
 @Service
 public class QuizService {
 
+    @Autowired
+    private QuestionRepository questionRepository;
+
+    @Autowired
+    private ScheduleJob scheduleJob;
+    @Autowired
+    private UserService userService;
     @Autowired
     private QuizRepository quizRepository;
 
@@ -65,6 +84,34 @@ public class QuizService {
     boolean existsByName(String quizName) {
         return quizRepository.existsByName(quizName);
     }
+
+    public void createQuiz (Quiz quiz){
+            User user = userService.getCurrentUser();
+            if (user == null) {
+               throw new RuntimeException("User not found");
+            }
+            if(quiz.getStartTime().isBefore(LocalDateTime.now())){
+                throw new DateException("Start time can not in the past");
+            }
+            if(quiz.getEndTime().isBefore(quiz.getStartTime())){
+                throw new DateException("End time can not before Start Time");
+            }
+            quiz.setCreatedAt(LocalDateTime.now());
+            quiz.setCreatedBy(user);
+            quiz.setQuizType(Quiz.QuizType.CLOSE);
+            Quiz quiz1= quizRepository.save(quiz);
+
+            try {
+                SchedulerUtil.startScheduler();
+
+                Scheduler scheduler = SchedulerUtil.getScheduler();
+                scheduleJob.scheduleQuizOpenJob(quiz1.getId(), quiz1.getStartTime());
+                scheduleJob.scheduleQuizCloseJob(quiz1.getId(), quiz1.getEndTime());
+            } catch (SchedulerException e) {
+                e.printStackTrace();
+            }
+    }
+
 
     public void importExcel(MultipartFile file) {
         try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
@@ -150,4 +197,69 @@ public class QuizService {
 
         return new ByteArrayInputStream(out.toByteArray());
     }
+
+    public int getAttemptCountForUser(Quiz quiz, User user) {
+        Integer count = quizRepository.getAttemptCountForUser(quiz.getId(), user.getId());
+        return (count != null) ? count : 0;
+    }
+
+    public void incrementAttemptCount(Quiz quiz, User user) {
+        quizRepository.incrementAttemptCount(quiz.getId(), user.getId());
+    }
+
+
+    public String attemptQuiz(Long quizId, String username) {
+        Quiz quiz = findById(quizId).orElse(null);
+        if (quiz == null) {
+            return "Quiz not found!";
+        }
+
+        User user = userService.findByUsername(username);
+        int attemptCount = getAttemptCountForUser(quiz, user);
+
+        if (attemptCount >= quiz.getAttemptLimit()) {
+            return "You have reached the maximum number of attempts for this quiz!";
+        }
+
+        incrementAttemptCount(quiz, user);
+        return null;
+    }
+
+    public void addQuestion(Long quizId,Long questionId){
+        Quiz quiz = quizRepository.findById(quizId)
+                .orElseThrow(() -> new NotFoundException("Quiz not found!"));
+        Question question = questionRepository.findById(questionId)
+                .orElseThrow(() -> new NotFoundException("Question not found!"));
+        quiz.getQuestions().add(question);
+        quizRepository.save(quiz);
+    }
+    public void update(Long id, Quiz quiz){
+        Quiz quiz1 = quizRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Quiz not found!"));
+        if(quiz.getStartTime().isBefore(LocalDateTime.now())){
+            throw new DateException("Start time can not in the past");
+        }
+        if(quiz.getEndTime().isBefore(quiz.getStartTime())){
+            throw new DateException("End time can not before Start Time");
+        }
+        quiz1.setName(quiz.getName());
+        quiz1.setAttemptLimit(quiz.getAttemptLimit());
+        quiz1.setDescription(quiz.getDescription());
+        quiz1.setUpdatedAt(LocalDateTime.now());
+        quiz1.setStartTime(quiz.getStartTime());
+        quiz1.setEndTime(quiz.getEndTime());
+        quiz1.setId(id);
+        quiz1.setQuizType(Quiz.QuizType.CLOSE);
+        try {
+            SchedulerUtil.startScheduler();
+
+            Scheduler scheduler = SchedulerUtil.getScheduler();
+            scheduleJob.scheduleQuizOpenJob(quiz1.getId(), quiz1.getStartTime());
+            scheduleJob.scheduleQuizCloseJob(quiz1.getId(), quiz1.getEndTime());
+        } catch (SchedulerException e) {
+            e.printStackTrace();
+        }
+        quizRepository.save(quiz1);
+    }
+
 }

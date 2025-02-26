@@ -6,10 +6,7 @@ import com.example.quiz.model.Question;
 import com.example.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -18,6 +15,8 @@ import java.util.Set;
 @Entity
 @Data
 @Builder
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "assessment")
@@ -82,6 +81,7 @@ public class Assessment {
     private int timeLimit;
 
     @Lob
+    @Column(columnDefinition = "TEXT")
     private String invitedEmails;
 
     @ManyToOne

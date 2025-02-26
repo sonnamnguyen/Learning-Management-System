@@ -7,6 +7,7 @@ import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
+
 @Entity
 @Getter
 @Setter
@@ -15,7 +16,7 @@ import java.util.List;
 @Builder
 public class Exercise {
 
-    public enum Level { EASY, MEDIUM, HARD }
+    public enum Level {EASY, MEDIUM, HARD}
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,6 +42,10 @@ public class Exercise {
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TestCase> testCases = new ArrayList<>();
+
+    public List<TestCase> getTwoTestCases() {
+        return testCases.size() > 2 ? testCases.subList(0, 2) : new ArrayList<>(testCases);
+    }
 
     public void setTestCases(List<TestCase> testCases) {
         if (testCases == null) return;

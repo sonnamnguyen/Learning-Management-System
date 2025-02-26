@@ -6,7 +6,8 @@
                 <!-- Search Form -->
                 <form action="/quizes" method="get" class="d-flex w-50">
                     <!-- Correctly bind the searchQuery model attribute using Thymeleaf -->
-                    <input type="text" class="form-control me-2" name="searchQuery" th:value="${searchQuery}" placeholder="Search by quize name" aria-label="Search">
+                    <input type="text" class="form-control me-2" name="searchQuery" th:value="${searchQuery}"
+                           placeholder="Search by quize name" aria-label="Search">
                     <button class="btn btn-outline-secondary me-2" type="submit">
                         <i class="bi bi-search"></i>
                     </button>
@@ -19,6 +20,11 @@
                 <!-- Export Button -->
                 <a href="quizes/export" class="btn btn-outline-secondary me-2">
                     <i class="bi bi-file-earmark-excel"></i> Export
+                </a>
+
+                <!--Convert-->
+                <a href="tools" class="btn btn-outline-secondary me-2">
+                    <i class="bi bi-arrow-repeat"></i> Convert
                 </a>
 
                 <!-- Import Button that triggers modal -->
@@ -47,9 +53,9 @@
                     <td class="text-center" th:text="${iterStat.index + 1}"></td>
                     <td th:text="${quize.getName()}"></td>
                     <td th:text="${quize.getDescription()}"></td>
-<!--                    <td>-->
-<!--                        <i th:class="${quize.getAttempt()}"></i>-->
-<!--                    </td>-->
+                    <td>
+                        <!--                        <i th:class="${quize.getAttempt()}"></i>-->
+                    </td>
                     <td>
                         <a th:href="@{'/quizes/edit/' + ${quize.getId()}}" class="btn btn-outline-secondary btn-sm"
                            title="Edit">
@@ -59,26 +65,49 @@
                            onclick="return confirm('Are you sure?')" title="Delete">
                             <i class="bi bi-trash"></i>
                         </a>
+                        <a th:href="@{'/quizes/detail/' + ${quize.getId()}}" class="btn btn-outline-secondary btn-sm"
+                           title="Detail">
+                            <i class="bi bi-body-text"></i>
+                        </a>
 
                     </td>
                 </tr>
                 </tbody>
             </table>
         </div>
-        <div class="pagination float-end" th:if="${totalPages > 0}">
-            <ul class="pagination">
-                <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
-                    <a class="page-link" th:href="@{/quizes(page=${currentPage - 1}, pageSize=${pageSize}, searchQuery=${searchQuery})}">Previous</a>
-                </li>
 
-                <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}" th:classappend="${currentPage == i} ? 'active'">
-                    <a class="page-link" th:href="@{/quizes(page=${i}, pageSize=${pageSize}, searchQuery=${searchQuery})}" th:text="${i + 1}"></a>
-                </li>
+        <!-- Pagination -->
+        <div class="row justify-content-center">
+            <div class="pagination col-4 justify-content-center pe-0" th:if="${totalPages > 0}">
+                <ul class="pagination">
+                    <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/quizes(page=${0}, pageSize=${pageSize}, searchQuery=${searchQuery})}"><<<</a>
+                    </li>
 
-                <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
-                    <a class="page-link" th:href="@{/quizes(page=${currentPage + 1}, pageSize=${pageSize}, searchQuery=${searchQuery})}">Next</a>
-                </li>
-            </ul>
+                    <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/quizes(page=${currentPage - 1}, pageSize=${pageSize}, searchQuery=${searchQuery})}"><<</a>
+                    </li>
+
+                    <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                        th:classappend="${currentPage == i} ? 'active'">
+                        <a class="page-link"
+                           th:href="@{/quizes(page=${i}, pageSize=${pageSize}, searchQuery=${searchQuery})}"
+                           th:text="${i + 1}"></a>
+                    </li>
+
+                    <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/quizes(page=${currentPage + 1}, pageSize=${pageSize}, searchQuery=${searchQuery})}">>></a>
+                    </li>
+
+                    <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/quizes(page=${totalPages - 1}, pageSize=${pageSize}, searchQuery=${searchQuery})}">>>></a>
+                    </li>
+                </ul>
+            </div>
         </div>
     </div>
 </div>

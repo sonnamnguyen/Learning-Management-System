@@ -67,6 +67,8 @@ public class CourseController {
         return "course/list";  // Your view template for displaying courses
     }
 
+
+
     // Show create form
     @GetMapping("/create")
     public String showCreateForm(Model model) {

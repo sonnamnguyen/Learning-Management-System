@@ -5,19 +5,18 @@ import com.example.code_judgement.ExecutionResponse;
 import com.example.exercise.Exercise;
 import com.example.exercise.ExerciseService;
 import com.example.testcase.TestCase;
-import jakarta.servlet.http.HttpServletResponse;
+import com.example.testcase.TestCaseResult;
+import com.example.testcase.TestCaseService;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.Response;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.List;
 
 @Controller
@@ -35,7 +34,7 @@ public class JavaJudgementController {
         // Lấy bài tập và test cases
         Exercise exercise = exerciseService.getExerciseById(exerciseId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));
-        List<TestCase> testCases = exercise.getTestCases();
+        List<TestCase> testCases = exercise.getTwoTestCases();
 
         if (testCases == null || testCases.isEmpty()) {
             model.addAttribute("output", "No test cases defined for this exercise.");
@@ -54,9 +53,6 @@ public class JavaJudgementController {
             model.addAttribute("output", response.getPassed() + "/" + response.getTotal() + " test cases passed.");
 
             return "judgement/code_space";
-//            StringBuilder sb = new StringBuilder();
-//            sb.append("You passed ").append(response.getPassed()).append(" of ").append(response.getTotal()).append(" test cases.");
-//            return sb.toString();
         }
         catch (Exception e){
             model.addAttribute("output", e.getMessage());
@@ -101,10 +97,24 @@ public class JavaJudgementController {
         }
     }
 
-    @PostMapping("/run_custom_code")
-    public ResponseEntity<String> runCustomCode(@RequestParam("code") String code,
-                                        @RequestParam("customInput") String customInput){
-        String userOutput = codeExecutionService.runWithCusTomInput(code, customInput,new JavaJudgementService());
-        return ResponseEntity.ok(userOutput);
+    @PostMapping("/run-custom-code")
+    public ResponseEntity<String> runCustomCode(@RequestParam("exerciseId") Long exerciseId,
+                                                @RequestParam("code") String code,
+                                                @RequestParam("customInput") String customInput) {
+        try {
+            // Lấy bài tập
+            Exercise exercise = exerciseService.getExerciseById(exerciseId)
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));
+
+            // Thực thi mã nguồn với custom input
+            String userOutput = codeExecutionService.runWithCusTomInput(code, customInput, new JavaJudgementService());
+
+            // Trả về output dưới dạng JSON
+            return ResponseEntity.ok(userOutput);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error: " + e.getMessage());
+        }
     }
+
 }

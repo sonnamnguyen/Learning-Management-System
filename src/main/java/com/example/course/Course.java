@@ -23,7 +23,7 @@ public class Course {
     private String name;
     private String code;
 
-    @Lob
+    //@Lob
     private String description;  // Rich text field equivalent in Spring Boot
 
     @ManyToOne

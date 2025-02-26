@@ -1,4 +1,4 @@
-<div class="container mt-5">
+<div class="container mt-5" xmlns:th="http://www.w3.org/1999/xhtml">
     <div class="card shadow-lg">
         <div class="card-header bg-primary text-white">
             <h3 class="card-title mb-0">Create Quiz</h3>
@@ -6,7 +6,7 @@
         <div class="card-body">
             <form th:action="@{/quizes/create}" th:object="${quizes}" method="post" class="needs-validation" novalidate>
                 <!-- Quiz Name -->
-                <div class="mb-3">a
+                <div class="mb-3">
                     <label for="quizName" class="form-label">Quiz Name</label>
                     <input type="text" id="quizName" th:field="*{name}" class="form-control" placeholder="Enter quiz name" required>
                     <div class="invalid-feedback">Quiz name is required.</div>
@@ -20,18 +20,25 @@
                 </div>
 
 
-                <!-- Created At -->
+                <!-- Start Time -->
                 <div class="mb-3">
-                    <label for="createdAt" class="form-label">Created At</label>
-                    <input type="datetime-local" id="createdAt" th:field="*{createdAt}" class="form-control" readonly required>
-                    <div class="invalid-feedback">Created date and time are required.</div>
+                    <label for="startTime" class="form-label">Start Time</label>
+                    <input type="datetime-local" id="startTime" th:field="*{startTime}" class="form-control" required>
+                    <div class="invalid-feedback">Start time is required.</div>
                 </div>
 
-                <!-- Updated At -->
+                <!-- End Time -->
                 <div class="mb-3">
-                    <label for="updatedAt" class="form-label">Updated At</label>
-                    <input type="datetime-local" id="updatedAt" th:field="*{updatedAt}" class="form-control" readonly required>
-                    <div class="invalid-feedback">Updated date and time are required.</div>
+                    <label for="endTime" class="form-label">End Time</label>
+                    <input type="datetime-local" id="endTime" th:field="*{endTime}" class="form-control" required>
+                    <div class="invalid-feedback">End time is required.</div>
+                </div>
+
+                <!-- Duration -->
+                <div class="mb-3">
+                    <label for="duration" class="form-label">Duration (minutes)</label>
+                    <input type="number" id="duration" th:field="*{duration}" class="form-control" placeholder="Enter duration" min="1" required>
+                    <div class="invalid-feedback">Duration is required and must be at least 1 minute.</div>
                 </div>
 
                 <!-- Course -->
@@ -44,14 +51,25 @@
                     <div class="invalid-feedback">Course is required.</div>
                 </div>
 
-                <!-- Created By -->
+
+
+                <!-- Attempt Limit -->
+                <div class="mb-3">
+                    <label for="attemptLimit" class="form-label">Attempt Limit</label>
+                    <input type="number" id="attemptLimit" th:field="*{attemptLimit}" class="form-control" placeholder="Enter attempt limit" min="1" required>
+                    <div class="invalid-feedback">Attempt limit is required and must be at least 1.</div>
+                </div>
+
+
+                <!-- Created By (Readonly) -->
                 <div class="mb-3">
                     <label for="createdBy" class="form-label">Created By</label>
-                    <select id="createdBy" th:field="*{createdBy}" class="form-select">
-                        <option value="" disabled selected>-- Select Creator --</option>
-                        <option th:each="user : ${users}" th:value="${user.getId()}" th:text="${user.getUsername()}"></option>
-                    </select>
+                    <div id="createdBy" th:text="${user.username}" class="form-control-plaintext"></div>
+
+                    <!-- Trường ẩn để submit createdBy -->
+                    <input type="hidden" th:field="*{createdBy}" th:value="${user.id}" />
                 </div>
+
 
                 <!-- Buttons -->
                 <div class="d-flex justify-content-end">
@@ -59,6 +77,9 @@
                     <a th:href="@{/quizes}" class="btn btn-secondary ms-2">Back to List</a>
                 </div>
             </form>
+            <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+            <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+
         </div>
     </div>
 </div>

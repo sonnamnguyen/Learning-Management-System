@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Taking Assessment</title>
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+            crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+    <style>
+        /* Smooth scroll behavior */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Marking checkbox */
+        .form-check-input {
+            margin-left: auto;
+            transform: scale(1);
+            cursor: pointer;
+        }
+
+        .question-card, .exercise-card {
+            scroll-margin-top: 80px;
+        }
+
+        /* Sidebar fixed on the right */
+        .sidebar {
+            position: fixed;
+            right: 0;
+            height: 90%;
+            overflow-y: auto;
+            margin-top: 14px;
+            width: 25%;
+        }
+
+        /* Main content area margin adjustment */
+        .main-content {
+            margin-right: 25%;
+        }
+
+        @media (max-width: 768px) {
+            #sidebar {
+                position: fixed;
+                left: -250px;
+                bottom: 10px;
+                width: auto;
+                background: white;
+                transition: left 0.3s ease-in-out;
+                box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+                z-index: 1049;
+            }
+
+            #sidebar.active {
+                left: 0;
+            }
+        }
+
+    </style>
+</head>
+<body>
+<!-- Navbar -->
+<div th:replace="~{fragments :: header}" class="sticky-top"></div> <!-- Header always on top -->
+<!-- Main Content Container -->
+<div class="container-fluid">
+    <button class="btn btn-primary d-md-none" onclick="toggleSidebar()"
+            style="position: fixed; bottom: 30px; right: 10px; z-index: 1050; width: 100px; height: 50px">
+        Review
+    </button>
+    <div class="row" style="height: 100%;">
+        <!-- Right Section (Sidebar) -->
+        <nav id="sidebar" class="sidebar d-none d-md-block">
+            <div>
+                <div class="card text-bg-light">
+                    <!-- Time -->
+                    <div class="card-header">
+                        <div class="text-lg-center">
+                            <div id="time_limit" style="text-align: center; font-weight: bold">
+                                Time limit: <span id="time_display"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- List of Questions as Buttons -->
+                <div class="card-footer">
+                    <div class="text-center">
+                        <h5>Questions</h5>
+                        <div class="row">
+                            <div th:each="question, iterStat : ${questions}" class="mb-2 col-3 col-md-3 col-xl-2">
+                                <div class="d-flex align-items-center">
+                                    <button type="button" class="btn btn-outline-primary" style="min-width: 40px"
+                                            th:attr="onclick='document.getElementById(\'question_' + ${question.id} + '\').scrollIntoView({behavior: \'smooth\'})'">
+                                        <span th:text="${iterStat.count}"></span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- List of Exercises as Buttons -->
+                <div class="card-footer">
+                    <div class="text-center">
+                        <h5>Exercises</h5>
+                        <div class="row">
+                            <div th:each="exercise, stat : ${exercises}" class="col-12 mb-2">
+                                <div class="d-flex align-items-center">
+                                    <button type="button" class="btn btn-outline-primary w-100"
+                                            th:attr="onclick='document.getElementById(\'exercise_' + ${exercise.id} + '\').scrollIntoView({behavior: \'smooth\'})'">
+                                        Exercise <span th:text="${stat.index + 1}"></span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <a href="#" class="btn btn-warning d-flex align-items-center justify-content-center"
+                   style="height: 50px; width: 100px; margin-bottom: 20px"
+                   onclick="return confirm('Submit the assessment?')">Submit</a>
+            </div>
+        </nav>
+        <!-- Left Section (Content Area) -->
+        <main role="main" class="col-md-9 ms-sm-auto px-2 d-flex flex-column main-content">
+            <div class="flex-grow-1">
+                <div style="height: 100%;">
+                    <!-- Display Questions -->
+                    <div class="mb-4">
+                        <h3 style="margin-top: 10px">Questions</h3>
+                        <div class="border rounded p-3"
+                             style="max-height: 80vh; overflow-y: auto;">
+                            <!-- Loop through questions -->
+                            <div th:each="question, iterStat : ${questions}"
+                                 class="card mb-4 shadow-sm question-card" th:id="'question_' + ${question.id}">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-start">
+                                        <h5 class="me-2 question-number">
+                                            <strong th:text="${iterStat.index + 1}"></strong>
+                                        </h5>
+                                        <p class="question-text" th:text="${question.questionText}"></p>
+                                        <input type="checkbox" class="form-check-input me-2"
+                                               th:attr="id='check_' + ${question.id}">
+                                        <i class="bi bi-flag"></i>
+                                    </div>
+                                    <!-- Answers loop -->
+                                    <ul class="list-group mt-3">
+                                        <li class="list-group-item option-item"
+                                            th:each="option, optionStat : ${question.answerOptions}">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio"
+                                                       th:attr="name=${'question_' + question.id}, value=${optionStat.index}, id=${'option_' + question.id + '_' + optionStat.index}">
+                                                <label class="form-check-label"
+                                                       th:for="${'option_' + question.id + '_' + optionStat.index}"
+                                                       th:text="${option.optionText}"></label>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Display Exercises -->
+                    <div class="mb-4">
+                        <h3>Exercises</h3>
+                        <div class="border rounded p-3"
+                             style="max-height: 50vh; overflow-y: auto;">
+                            <!-- Loop through exercises -->
+                            <div th:each="exercise, stat : ${exercises}" class="card mb-4 shadow-sm exercise-card"
+                                 th:id="'exercise_' + ${exercise.id}">
+                                <div class="card-body d-flex justify-content-between align-items-center">
+                                    <h6 class="exercise-title btn btn-light">
+                                        <span th:text="'Exercise ' + (${stat.index} + 1) + ': '"></span>
+                                        <!--redirect to coding site-->
+                                        <a href="#" th:text="${exercise.name}"></a>
+                                    </h6>
+                                    <input type="checkbox" class="form-check-input me-2"
+                                           th:attr="id='check_' + ${exercise.id}">
+                                    <i class="bi bi-flag"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+<!--Duration-->
+<script th:inline="javascript">
+    var durationInMinutes = /*[[${assessment.getTimeLimit()}]]*/ 120;
+    var durationInSeconds = durationInMinutes * 60;
+
+    function updateTime() {
+        var hours = Math.floor(durationInSeconds / 3600);
+        var minutes = Math.floor((durationInSeconds % 3600) / 60);
+        var seconds = durationInSeconds % 60;
+        var timeFormatted = hours.toString().padStart(2, '0') + ':' +
+            minutes.toString().padStart(2, '0') + ':' +
+            seconds.toString().padStart(2, '0');
+        document.getElementById('time_display').textContent = timeFormatted;
+        if (durationInSeconds > 0) {
+            durationInSeconds--;
+        } else {
+            clearInterval(timerInterval);
+        }
+    }
+
+    var timerInterval = setInterval(updateTime, 1000);
+    updateTime();
+</script>
+<!--Side bar in phone UI-->
+<script>
+    function toggleSidebar() {
+        var sidebar = document.getElementById("sidebar");
+        sidebar.classList.toggle("active");
+        if (sidebar.classList.contains("active")) {
+            sidebar.classList.remove("d-none");
+        } else {
+            setTimeout(() => sidebar.classList.add("d-none"), 300); // Ẩn sidebar sau hiệu ứng
+        }
+    }
+</script>
+<script>
+    document.querySelectorAll('input[type="checkbox"][id^="check_"]').forEach(function (checkbox) {
+        checkbox.addEventListener('change', function () {
+            var id = checkbox.id.split('_')[1];
+            var type = checkbox.closest('.question-card') ? 'question' : 'exercise';
+            var button = document.querySelector(
+                type === 'question'
+                    ? 'button[onclick*="question_' + id + '"]'
+                    : 'button[onclick*="exercise_' + id + '"]'
+            );
+            if (checkbox.checked) {
+                button.classList.add('bg-primary', 'text-dark');
+            } else {
+                button.classList.remove('bg-primary', 'text-dark');
+            }
+        });
+    });
+</script>
+</body>
+</html>

@@ -20,22 +20,30 @@
                     <div class="invalid-feedback">Quiz description is required.</div>
                 </div>
 
-                <!-- Created At -->
+                <!-- Start Time -->
                 <div class="mb-3">
-                    <label for="createdAt" class="form-label">Created At</label>
-                    <!-- Format createdAt to 'yyyy-MM-dd'T'HH:mm' for datetime-local input -->
-                    <input type="datetime-local" id="createdAt" th:field="*{createdAt}"
-                           class="form-control" readonly>
-                    <div class="invalid-feedback">Created date and time are required.</div>
+                    <label for="startTime" class="form-label">Start Time</label>
+                    <input type="datetime-local" id="startTime"
+                           th:value="${#temporals.format(quiz.startTime, 'yyyy-MM-dd''T''HH:mm')}"
+                           name="startTime" class="form-control" required>
+                    <div class="invalid-feedback">Start time is required.</div>
                 </div>
 
-                <!-- Updated At -->
+                <!-- End Time -->
                 <div class="mb-3">
-                    <label for="updatedAt" class="form-label">Updated At</label>
-                    <!-- Format updatedAt to 'yyyy-MM-dd'T'HH:mm' for datetime-local input -->
-                    <input type="datetime-local" id="updatedAt" th:field="*{updatedAt}"
-                           class="form-control" readonly required>
-                    <div class="invalid-feedback">Updated date and time are required.</div>
+                    <label for="endTime" class="form-label">End Time</label>
+                    <input type="datetime-local" id="endTime"
+                           th:value="${#temporals.format(quiz.endTime, 'yyyy-MM-dd''T''HH:mm')}"
+                           name="endTime" class="form-control" required>
+                    <div class="invalid-feedback">End time is required.</div>
+                </div>
+
+
+                <!-- Duration -->
+                <div class="mb-3">
+                    <label for="duration" class="form-label">Duration (minutes)</label>
+                    <input type="number" id="duration" th:field="*{duration}" class="form-control" placeholder="Enter duration" min="1" required>
+                    <div class="invalid-feedback">Duration is required and must be at least 1 minute.</div>
                 </div>
 
 
@@ -49,14 +57,24 @@
                     <div class="invalid-feedback">Course is required.</div>
                 </div>
 
-                <!-- Created By -->
+                <!-- Attempt Limit -->
+                <div class="mb-3">
+                    <label for="attemptLimit" class="form-label">Attempt Limit</label>
+                    <input type="number" id="attemptLimit" th:field="*{attemptLimit}" class="form-control" placeholder="Enter attempt limit" min="1" required>
+                    <div class="invalid-feedback">Attempt limit is required and must be at least 1.</div>
+                </div>
+
+
+                <!-- Created By (Readonly) -->
                 <div class="mb-3">
                     <label for="createdBy" class="form-label">Created By</label>
-                    <select id="createdBy" th:field="*{createdBy}" class="form-select">
-                        <option value="" disabled selected>-- Select Creator --</option>
-                        <option th:each="user : ${users}" th:value="${user.getId()}" th:text="${user.getUsername()}"></option>
-                    </select>
+                    <div id="createdBy" th:text="${user.username}" class="form-control-plaintext"></div>
+
+                    <!-- Trường ẩn để submit createdBy -->
+                    <input type="hidden" th:field="*{createdBy}" th:value="${user.id}" />
                 </div>
+
+
 
                 <!-- Buttons -->
                 <div class="d-flex justify-content-end">

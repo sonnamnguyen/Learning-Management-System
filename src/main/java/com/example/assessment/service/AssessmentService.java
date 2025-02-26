@@ -6,23 +6,26 @@ import com.example.course.Course;
 import com.example.course.CourseService;
 import com.example.user.User;
 import com.example.user.UserService;
+import com.google.gson.Gson;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.hashids.Hashids;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.*;
 
 import static com.example.utils.Helper.getCellValueAsString;
 
@@ -36,8 +39,40 @@ public class AssessmentService {
     private UserService userService;
 
     @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @Autowired
     private CourseService courseService;
 
+    @Autowired
+    private final Gson gson = new Gson();
+
+    //Hashids to hash the assessment id
+    private Hashids hashids = new Hashids("BaTramBaiCodeThieuNhi", 32);
+
+    //   phần create ass mới
+    //   phần create ass mớimai
+    public Assessment createAssessment(Assessment assessment) {
+//        Assessment newAssessment = Assessment.builder()
+//                .course(assessment.getCourse())
+//                .title(assessment.getTitle())
+//                .assessmentType(assessment.getAssessmentType())
+//                .timeLimit(assessment.getTimeLimit())
+//                .totalScore(assessment.getTotalScore())
+//
+//                .build();
+        return assessmentRepository.save(assessment);
+    }
+
+    public boolean duplicateAss(String name) {
+        return assessmentRepository.existsByName(name);
+    }
+
+    private final String SECRET_KEY = "BaTramBaiCodeThieuNhi";
+
+   // private final String inviteUrlHeader = "https://group-02.cookie-candy.id.vn/assessments/invite/";
+   private final String inviteUrlHeader = "http://localhost:9091/assessments/invite/";
+    //  private final String inviteUrlHeader = "https://java02.fsa.io.vn/assessments/invite/";
     public Optional<Assessment> findById(Long id) {
         return assessmentRepository.findById(id);
     }
@@ -156,5 +191,98 @@ public class AssessmentService {
         }
 
         return new ByteArrayInputStream(out.toByteArray());
+    }
+
+    public void increaseInvitedCount(long assessmentId, int count) {
+        Optional<Assessment> assessmentOpt = assessmentRepository.findById(assessmentId);
+        if (assessmentOpt.isPresent()) {
+            Assessment assessment = assessmentOpt.get();
+            assessment.setInvitedCount(assessment.getInvitedCount() + count); // Increase by batch size
+            assessmentRepository.save(assessment);
+        }
+    }
+
+    /**
+     * Stores or updates the invited emails in the PostgreSQL LOB column and inserts into the invited_candidate table.
+     * This method appends new emails to the existing ones instead of overwriting.
+     *
+     * @param assessmentId The ID of the assessment.
+     * @param newEmails    List of new emails to be added.
+     */
+    public void storeInvitedEmail(long assessmentId, List<String> newEmails, LocalDateTime invitationDate, LocalDateTime expirationDate) {
+        List<String> existingEmails = getInvitedEmails(assessmentId);
+        Set<String> updatedEmails = new HashSet<>(existingEmails);
+        updatedEmails.addAll(newEmails);
+
+        // Debugging logs
+        System.out.println("System Timezone: " + ZoneId.systemDefault());
+        System.out.println("Current Time: " + LocalDateTime.now());
+        System.out.println("Vietnam Time: " + ZonedDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")));
+        System.out.println("Invitation Date (Before Storing): " + invitationDate);
+        System.out.println("Expiration Date (Before Storing): " + expirationDate);
+
+        // Convert LocalDateTime directly to Timestamp (No need for extra timezone conversions)
+        Timestamp invitationTimestamp = Timestamp.valueOf(invitationDate);
+        Timestamp expirationTimestamp = Timestamp.valueOf(expirationDate);
+
+        for (String email : newEmails) {
+            Integer count = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM invited_candidate WHERE email = ? AND assessment_id = ?",
+                    Integer.class, email, assessmentId
+            );
+
+            if (count != null && count > 0) {
+                jdbcTemplate.update(
+                        "UPDATE invited_candidate SET invitation_date = ?, expiration_date = ? WHERE email = ? AND assessment_id = ?",
+                        invitationTimestamp, expirationTimestamp, email, assessmentId
+                );
+            } else {
+                jdbcTemplate.update(
+                        "INSERT INTO invited_candidate (email, invitation_date, expiration_date, assessment_id) VALUES (?, ?, ?, ?)",
+                        email, invitationTimestamp, expirationTimestamp, assessmentId
+                );
+            }
+        }
+    }
+
+
+
+    /**
+     * Retrieves the list of invited emails stored in PostgreSQL LOB column.
+     *
+     * @param assessmentId The ID of the assessment.
+     * @return List of invited email addresses.
+     */
+    public List<String> getInvitedEmails(long assessmentId) {
+        // Step 1: Retrieve text data from the database
+        String emailsText = jdbcTemplate.queryForObject(
+                "SELECT invited_emails FROM assessment WHERE id = ?",
+                String.class, assessmentId
+        );
+
+        // Step 2: Convert comma-separated string back to a list
+        if (emailsText == null || emailsText.isBlank()) {
+            return List.of();
+        }
+        return List.of(emailsText.split(","));
+    }
+
+    //Encode the assessment id into some hashed code to send email for invitation
+
+    public String encodeId(long id) {
+        return hashids.encode(id);
+    }
+
+    public long[] decodeId(String hash) {
+         return hashids.decode(hash);
+    }
+
+    public String generateInviteLink(long id){
+        return inviteUrlHeader + encodeId(id) + "/take";
+    }
+
+    public Assessment getAssessmentByIdForPreview(Long id) {
+        return assessmentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Assessment not found!"));
     }
 }

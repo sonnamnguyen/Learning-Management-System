@@ -1,29 +1,34 @@
 package com.example.quiz.service;
 
+import com.example.course.Course;
+import com.example.exception.NotFoundException;
 import com.example.quiz.model.Question;
 import com.example.quiz.model.Question.QuestionType;
 import com.example.quiz.model.Quiz;
 import com.example.quiz.repository.QuestionRepository;
+import com.example.quiz.repository.QuizRepository;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static com.example.utils.Helper.getCellValueAsString;
 
 @Service
 public class QuestionService {
 
+    @Autowired
+    private QuizRepository quizRepository;
     @Autowired
     private QuestionRepository questionRepository;
 
@@ -55,11 +60,15 @@ public class QuestionService {
     }
 
     public List<Question> findByQuiz(Quiz quiz) {
-        return questionRepository.findByQuiz(quiz);
+        return questionRepository.findByQuizzes_Id(quiz.getId());
+    }
+    public List<Question> findByQuizName(String name) {
+        return questionRepository.findByQuizzes_Name(name);
     }
 
-    public void importExcel(MultipartFile file) {
-        try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
+
+    public void importExcel(MultipartFile _file_) {
+        try (Workbook workbook = new XSSFWorkbook(_file_.getInputStream())) {
             Sheet sheet = workbook.getSheetAt(0);
             int rowCount = sheet.getPhysicalNumberOfRows();
             List<Question> questions = new ArrayList<>();
@@ -84,7 +93,8 @@ public class QuestionService {
                             QuestionType questionType = QuestionType.valueOf(questionTypeString.toUpperCase());
 
                             Question question = new Question();
-                            question.setQuiz(quiz);
+                            // Use addQuiz to maintain many-to-many relationship
+                            question.addQuiz(quiz);
                             question.setQuestionText(questionText);
                             question.setQuestionType(questionType);
                             question.setPoints(points);
@@ -95,12 +105,17 @@ public class QuestionService {
             }
 
             for (Question question : questions) {
-                questionRepository.save(question);
+                questionRepository.save(question); // Save each Question with its associated Quizzes
             }
 
-        } catch (IOException e) {
-            throw new RuntimeException("Error importing questions from Excel", e);
+        } catch (IOException _e_) {
+            throw new RuntimeException("Error importing questions from Excel", _e_);
         }
+    }
+
+    private String getCellValueAsString(Cell cell) {
+        DataFormatter formatter = new DataFormatter();
+        return formatter.formatCellValue(cell);
     }
 
     public ByteArrayInputStream exportToExcel(List<Question> questions) {
@@ -108,7 +123,7 @@ public class QuestionService {
         Sheet sheet = workbook.createSheet("Questions");
 
         // Header row
-        String[] headers = {"ID", "Quiz", "Question Text", "Question Type", "Points"};
+        String[] headers = {"ID", "Quiz(s)", "Question Text", "Question Type", "Points"};
         Row headerRow = sheet.createRow(0);
         for (int i = 0; i < headers.length; i++) {
             headerRow.createCell(i).setCellValue(headers[i]);
@@ -118,23 +133,89 @@ public class QuestionService {
         int rowNum = 1;
         for (Question question : questions) {
             Row row = sheet.createRow(rowNum++);
+
+            // ID
             row.createCell(0).setCellValue(question.getId());
-            row.createCell(1).setCellValue(question.getQuiz() != null ? question.getQuiz().getName() : "");
+
+            // Quiz(s)
+            String quizNames = question.getQuizzes().stream()
+                    .map(Quiz::getName)
+                    .reduce((name1, name2) -> name1 + ", " + name2)
+                    .orElse("");
+            row.createCell(1).setCellValue(quizNames);
+
+            // Question Text
             row.createCell(2).setCellValue(question.getQuestionText());
+
+            // Question Type
             row.createCell(3).setCellValue(question.getQuestionType().name());
-            row.createCell(4).setCellValue(question.getPoints() != null ? question.getPoints() : 0);
+
+            // Points
+            row.createCell(4).setCellValue(question.getPoints());
         }
 
-        // Write to output stream
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        // Auto-size columns to fit content
+        for (int i = 0; i < headers.length; i++) {
+            sheet.autoSizeColumn(i);
+        }
+
+        // Write the output to a byte array
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         try {
-            workbook.write(out);
+            workbook.write(outputStream);
+        } catch (IOException e) {
+            e.printStackTrace(); // Handle exception as needed
+        }
+
+        // Close the workbook to free resources
+        try {
             workbook.close();
         } catch (IOException e) {
-            throw new RuntimeException("Error exporting questions to Excel", e);
+            e.printStackTrace(); // Handle exception as needed
         }
 
-        return new ByteArrayInputStream(out.toByteArray());
+        return new ByteArrayInputStream(outputStream.toByteArray());
+    }
+
+    //Find list quiz and question form course
+    public Set<Quiz> showAllQuizzesWithQuestions(String courseName) {
+        Set<Quiz> quizzes = quizRepository.findQuizByCourseName(courseName);
+
+        if (quizzes == null || quizzes.isEmpty()) {
+            throw new NotFoundException("Quiz not found");
+        }
+
+        for (Quiz quiz : quizzes) {
+            List<Question> questions = questionRepository.findByQuizzes_Name(quiz.getName());
+
+            quiz.setQuestions((questions != null && !questions.isEmpty())
+                    ? new HashSet<>(questions)
+                    : Collections.emptySet());
+        }
+
+        return quizzes;
+    }
+    @Transactional
+    public void create(Long quizId,Question question) throws NotFoundException{
+        Quiz quiz = quizRepository.findById(quizId)
+                .orElseThrow(() -> new NotFoundException("Quiz not found!"));
+        question.addQuiz(quiz);
+        questionRepository.save(question);
+        quizRepository.save(quiz);
+    }
+
+    public List<Question> findQuestionsByQuizId(Long id) {
+        Quiz quiz = quizRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Quiz not found!"));
+        return new ArrayList<>(quiz.getQuestions());
+    }
+    @Autowired
+    public QuestionService(QuestionRepository questionRepository) {
+        this.questionRepository = questionRepository;
+    }
+
+    public List<Question> getQuestionsByAssessmentId(Long assessmentId) {
+        return questionRepository.findQuestionsWithAnswersByAssessmentId(assessmentId);
     }
 }
 

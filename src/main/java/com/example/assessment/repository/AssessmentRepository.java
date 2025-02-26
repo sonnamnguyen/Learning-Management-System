@@ -17,6 +17,12 @@ public interface AssessmentRepository extends PagingAndSortingRepository<Assessm
     @Query("SELECT a FROM Assessment a WHERE a.title LIKE %:searchQuery%")
     Page<Assessment> search(@Param("searchQuery") String searchQuery, Pageable pageable);
 
+    @Query("SELECT COUNT(a) > 0 FROM Assessment a WHERE LOWER(a.title) = LOWER(:name)")
+    boolean existsByName(@Param("name") String name);
+
+    @Query("SELECT a FROM Assessment a JOIN FETCH a.questions WHERE a.id = :id")
+    Assessment findByAssessmentIdWithQuestions(@Param("id") Long id);
+
     Page<Assessment> findAll(Pageable pageable);
 
     List<Assessment> findAll();

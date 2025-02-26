@@ -12,5 +12,5 @@ public class TestCaseForm {
     // Getters and Setters
     private String input;
     private String expectedOutput;
-    private String sqlTagNumber;
+
 }
