@@ -1,4 +1,7 @@
-<div class="flex-grow-1 container mt-5">
+<style>
+    .cke_notification { display: none !important; }
+</style>
+<div class="flex-grow-1 container mt-5" xmlns:th="http://www.thymeleaf.org">
     <!-- Card for Form -->
     <div class="card shadow-lg">
         <div class="card-header bg-primary text-white">
@@ -15,9 +18,9 @@
 
                 <!-- Description -->
                 <div class="mb-3">
-                    <label for="description" class="form-label">Description:</label>
-                    <textarea id="description" th:field="*{description}" class="form-control" rows="4" placeholder="Enter a detailed description" required></textarea>
-                    <div class="invalid-feedback">Please enter a description.</div>
+                    <label for="description" class="form-label">Description</label>
+                    <textarea class="form-control" id="description" th:field="*{description}"  th:class="${#fields.hasErrors('description')} ? 'form-control is-invalid' : 'form-control'"></textarea>
+                    <div th:if="${#fields.hasErrors('description')}" th:errors="*{description}" class="error"></div>
                 </div>
 
                 <!-- Programming Language -->
@@ -32,7 +35,7 @@
                 <!-- Setup -->
                 <div class="mb-3">
                     <label for="setup" class="form-label">Setup:</label>
-                    <textarea id="setup" th:field="*{setup}" class="form-control" rows="3" placeholder="Enter any setup instructions"></textarea>
+                    <textarea id="setup" th:field="*{setup}" class="form-control" rows="12" placeholder="Enter any setup instructions"></textarea>
                 </div>
 
                 <!-- Level -->
@@ -47,17 +50,136 @@
                 </div>
 
                 <!-- Test Cases -->
+                <!--                <div class="mb-3">-->
+                <!--                    <label for="testCases" class="form-label">Test Cases:</label>-->
+                <!--                    <textarea id="testCases" th:field="*{testCases}" class="form-control" rows="5" placeholder="Enter test cases in JSON format"></textarea>-->
+                <!--                </div>-->
                 <div class="mb-3">
-                    <label for="testCases" class="form-label">Test Cases:</label>
-                    <textarea id="testCases" th:field="*{testCases}" class="form-control" rows="5" placeholder="Enter test cases in JSON format"></textarea>
+                    <label class="form-label d-block">Select Test Case Input Method</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" id="jsonOption" name="testCaseMethod" value="json" checked onclick="toggleTestCaseMethod()">
+                        <label class="form-check-label" for="jsonOption">Enter as JSON</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" id="uiOption" name="testCaseMethod" value="ui" onclick="toggleTestCaseMethod()">
+                        <label class="form-check-label" for="uiOption">Add Manually</label>
+                    </div>
+                </div>
+                <!-- JSON Input Method -->
+                <div id="jsonInputDiv">
+                    <label for="testCases" class="form-label">Test Cases (JSON Format)</label>
+                    <textarea th:text="${testCasesJson}" class="form-control" id="testCases" name="testCasesJson" placeholder='[{"input": "", "expectedOutput": ""}]'></textarea>
+                </div>
+
+                <div id="uiInputDiv" style="display: none;">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>Input</th>
+                            <th>Expected Output</th>
+                        </tr>
+                        </thead>
+                        <tbody id="testCasesContainer"></tbody>
+                    </table>
+
+                    <button type="button" class="btn btn-success btn-sm" onclick="addTestCase()">+</button>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="removeLastTestCase()">-</button>
+
                 </div>
 
                 <!-- Submit and Back Buttons -->
-                <div class="d-flex justify-content-end">
+                <div class="d-flex justify-content-end mt-2">
                     <button type="submit" class="btn btn-primary">Save</button>
                     <a href="#" th:href="@{/exercises}" class="btn btn-secondary ms-2">Back to List</a>
                 </div>
+
             </form>
         </div>
     </div>
 </div>
+<script src="https://cdn.ckeditor.com/4.20.2/standard/ckeditor.js"></script>
+<script>
+    CKEDITOR.replace('description', {
+        removePlugins: 'easyimage, cloudservices',
+        allowedContent: false // Chặn HTML, chỉ cho nhập text
+    });
+</script>
+<!--<script>-->
+<!--    function toggleTestCaseMethod() {-->
+<!--            const isJsonSelected = document.getElementById('jsonOption').checked;-->
+<!--            document.getElementById('jsonInputDiv').style.display = isJsonSelected ? 'block' : 'none';-->
+<!--            document.getElementById('uiInputDiv').style.display = isJsonSelected ? 'none' : 'block';-->
+<!--        }-->
+<!--        function addTestCase() {-->
+<!--            let container = document.getElementById('testCasesContainer');-->
+<!--            let rowCount = container.children.length;-->
+<!--            let newRow = document.createElement('tr');-->
+<!--            newRow.innerHTML = `-->
+<!--                <td><input type="text" class="form-control" name="testCases[${rowCount}].input" placeholder="Input"></td>-->
+<!--                <td><input type="text" class="form-control" name="testCases[${rowCount}].expectedOutput" placeholder="Expected Output"></td>-->
+<!--            `;-->
+<!--            container.appendChild(newRow);-->
+<!--        }-->
+<!--        function removeLastTestCase() {-->
+<!--            let container = document.getElementById('testCasesContainer');-->
+<!--            if (container.children.length > 0) {-->
+<!--                container.removeChild(container.lastElementChild);-->
+<!--            }-->
+<!--        }-->
+
+<!--</script>-->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        let testCases = JSON.parse(document.getElementById("testCases").textContent || "[]");
+
+        let jsonInputDiv = document.getElementById("jsonInputDiv");
+        let uiInputDiv = document.getElementById("uiInputDiv");
+        let jsonOption = document.getElementById("jsonOption");
+        let testCasesContainer = document.getElementById("testCasesContainer");
+
+        function toggleTestCaseMethod() {
+            const isJsonSelected = jsonOption.checked;
+            jsonInputDiv.style.display = isJsonSelected ? "block" : "none";
+            uiInputDiv.style.display = isJsonSelected ? "none" : "block";
+            if (!isJsonSelected) {
+                renderTestCases();
+            }
+        }
+
+        function renderTestCases() {
+            testCasesContainer.innerHTML = "";
+            testCases.forEach((testCase, index) => {
+                let newRow = document.createElement("tr");
+                newRow.innerHTML = `
+                    <td><input type="text" class="form-control" name="testCases[${index}].input" value="${testCase.input}" placeholder="Input"></td>
+                    <td><input type="text" class="form-control" name="testCases[${index}].expectedOutput" value="${testCase.expectedOutput}" placeholder="Expected Output"></td>
+                `;
+                testCasesContainer.appendChild(newRow);
+            });
+        }
+
+        function addTestCase() {
+            let rowCount = testCasesContainer.children.length;
+            let newRow = document.createElement("tr");
+            newRow.innerHTML = `
+                <td><input type="text" class="form-control" name="testCases[${rowCount}].input" placeholder="Input"></td>
+                <td><input type="text" class="form-control" name="testCases[${rowCount}].expectedOutput" placeholder="Expected Output"></td>
+            `;
+            testCasesContainer.appendChild(newRow);
+        }
+
+        function removeLastTestCase() {
+            if (testCasesContainer.children.length > 0) {
+                testCasesContainer.removeChild(testCasesContainer.lastElementChild);
+            }
+        }
+
+        window.addTestCase = addTestCase;
+        window.removeLastTestCase = removeLastTestCase;
+
+        document.getElementById("jsonOption").addEventListener("change", toggleTestCaseMethod);
+        document.getElementById("uiOption").addEventListener("change", toggleTestCaseMethod);
+
+        toggleTestCaseMethod();
+    });
+</script>
