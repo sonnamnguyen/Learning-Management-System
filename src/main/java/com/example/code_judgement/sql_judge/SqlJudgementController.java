@@ -23,7 +23,6 @@ public class SqlJudgementController {
 
     private final SqlJudgementService sqlJudgementService;
 
-    // Sau khi gửi từ CodeJudgementController về nhận và xử lý chức năng pre-check
     @PostMapping("/precheck-code")
     public String precheckCode(@RequestParam("exerciseId") Long exerciseId,
                                @RequestParam("code") String code,
@@ -35,7 +34,7 @@ public class SqlJudgementController {
             model.addAttribute("exercise", exercise);
             model.addAttribute("code", code);
             model.addAttribute("output", "No test case defined for this exercise");
-            return "judgement/code_space";
+            return "judgement/precheck_judge/precheck_code";
         }
         try {
             ExecutionResponse response;
@@ -46,7 +45,7 @@ public class SqlJudgementController {
                 model.addAttribute("output", "No test cases defined for this exercise.");
                 model.addAttribute("exercise", exercise);
                 model.addAttribute("code", code);
-                return "judgement/code_space";
+                return "judgement/precheck_judge/precheck_code";
             }
             // Đưa kết quả vào model
             model.addAttribute("exercise", exercise);
@@ -55,14 +54,14 @@ public class SqlJudgementController {
             model.addAttribute("total", response.getTotal());
             model.addAttribute("testResults", response.getTestCasesResults());
             model.addAttribute("output", response.getPassed() + "/" + response.getTotal() + " test cases passed.");
-            return "judgement/code_space";
+            return "judgement/precheck_judge/precheck_code";
         } catch (Exception e) {
             System.out.println(e.getMessage());
             model.addAttribute("output", e.getMessage());
             model.addAttribute("exercise", exercise);
             model.addAttribute("code", code);
             model.addAttribute("language", exercise.getLanguage().getLanguage());
-            return "judgement/code_space";
+            return "judgement/precheck_judge/precheck_code";
         }
     }
 
@@ -91,10 +90,11 @@ public class SqlJudgementController {
                 return "judgement/code_space";
             }
             // Đưa kết quả vào model
-                model.addAttribute("exercise", exercise);
-                model.addAttribute("code", code);
-                model.addAttribute("testResults", response.getTestCasesResults());
-                model.addAttribute("failed", response.getTotal() - response.getPassed());
+            model.addAttribute("exercise", exercise);
+            model.addAttribute("code", code);
+            model.addAttribute("testResults", response.getTestCasesResults());
+            model.addAttribute("failed", response.getTotal() - response.getPassed());
+            model.addAttribute("score", response.getScore());
             return "judgement/result_exercise";
         } catch (Exception e) {
             System.out.println(e.getMessage());

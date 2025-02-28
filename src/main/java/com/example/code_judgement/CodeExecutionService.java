@@ -3,16 +3,21 @@ package com.example.code_judgement;
 
 import com.example.code_judgement.java_judge.JavaJudgementService;
 import com.example.code_judgement.languageFactory.ExecutionBasedLanguage;
+import com.example.exercise.Exercise;
 import com.example.exercise.ExerciseRepository;
+import com.example.student_exercise_attemp.StudentExerciseAttempt;
+import com.example.student_exercise_attemp.StudentExerciseAttemptService;
 import com.example.testcase.TestCase;
 import com.example.testcase.TestCaseResult;
 import com.example.testcase.TestCaseService;
+import com.example.user.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -36,6 +41,12 @@ public class CodeExecutionService {
 
     @Autowired
     private ExerciseRepository exerciseRepository;
+
+    @Autowired
+    private StudentExerciseAttemptService studentExerciseAttemptService;
+
+    @Autowired
+    private UserService userService;
 
     public String runWithCusTomInput(String code, String input, ExecutionBasedLanguage executionBasedLanguage) {
 //        ExecutionBasedLanguage executionBasedLanguage = initialLanguage(language);
@@ -77,7 +88,20 @@ public class CodeExecutionService {
         return userOutput;
     }
 
-    public ExecutionResponse executeCodeOptimized(String code, List<TestCase> testCases, ExecutionBasedLanguage executionBasedLanguage) {
+    // calculate score for exercise
+    public double exerciseScore(int total, int passed) {
+        try {
+            if (total == 0) {
+                throw new ArithmeticException("TestCase is null");
+            }
+            return (double) passed / total * 100;
+        } catch (ArithmeticException e) {
+            System.err.println("Error: " + e.getMessage());
+            return 0.0;
+        }
+    }
+
+    public ExecutionResponse executeCodeOptimized(boolean submitExercise, String code, List<TestCase> testCases, ExecutionBasedLanguage executionBasedLanguage, Exercise exercise) {
         // Biên dịch mã nguồn một lần
 //        ExecutionBasedLanguage executionBasedLanguage = initialLanguage(language);
         CompilationResult compilationResult = executionBasedLanguage.compileCode(code);
@@ -144,10 +168,24 @@ public class CodeExecutionService {
             }
         }
 
+        double score = 0;
+        // Lưu kết quả exercise
+        if(submitExercise){
+            score = exerciseScore(passed, testResults.size());
+            StudentExerciseAttempt studentExerciseAttempt = new StudentExerciseAttempt();
+            studentExerciseAttempt.setAttemptDate(LocalDateTime.now());
+            studentExerciseAttempt.setSubmitted_code(code);
+            studentExerciseAttempt.setSubmitted_exercise(exercise);
+            studentExerciseAttempt.setAttendant_user(userService.getCurrentUser());
+            studentExerciseAttempt.setSubmitted(true);
+            studentExerciseAttempt.setScore_exercise(score);
+            studentExerciseAttemptService.save(studentExerciseAttempt);
+        }
 
         // Tính toán kết quả tổng quát
-        return new ExecutionResponse(code,passed,testCases.size(),testResults);
+        return new ExecutionResponse(code,passed,testCases.size(),score,testResults);
     }
+
     private void deleteDirectoryRecursively(Path path) throws IOException {
         if (Files.exists(path)) {
             Files.walk(path)

@@ -40,10 +40,10 @@ public class JavaJudgementController {
             model.addAttribute("output", "No test cases defined for this exercise.");
             model.addAttribute("exercise", exercise);
             model.addAttribute("code", code);
-            return "judgement/code_space";
+            return "judgement/precheck_judge/precheck_code";
         }
         try{
-            ExecutionResponse response = codeExecutionService.executeCodeOptimized(code,testCases,new JavaJudgementService());
+            ExecutionResponse response = codeExecutionService.executeCodeOptimized(false, code,testCases,new JavaJudgementService(), exercise);
             // Đưa kết quả vào model để hiển thị trong view
             model.addAttribute("exercise", exercise);
             model.addAttribute("code", code);
@@ -52,14 +52,14 @@ public class JavaJudgementController {
             model.addAttribute("testResults", response.getTestCasesResults());
             model.addAttribute("output", response.getPassed() + "/" + response.getTotal() + " test cases passed.");
 
-            return "judgement/code_space";
+            return "judgement/precheck_judge/precheck_code";
         }
         catch (Exception e){
             model.addAttribute("output", e.getMessage());
             model.addAttribute("exercise", exercise);
             model.addAttribute("code", code);
             model.addAttribute("language", exercise.getLanguage().getLanguage());
-            return "judgement/code_space";
+            return "judgement/precheck_judge/precheck_code";
         }
     }
 
@@ -79,12 +79,14 @@ public class JavaJudgementController {
             return "judgement/code_space";
         }
         try{
-            ExecutionResponse response = codeExecutionService.executeCodeOptimized(code,testCases,new JavaJudgementService());
+            ExecutionResponse response = codeExecutionService.executeCodeOptimized(true, code,testCases,new JavaJudgementService(), exercise);
+
             // Đưa kết quả vào model để hiển thị trong view
                 model.addAttribute("exercise", exercise);
                 model.addAttribute("code", code);
                 model.addAttribute("testResults", response.getTestCasesResults());
                 model.addAttribute("failed", response.getTotal() - response.getPassed());
+                model.addAttribute("score", response.getScore());
 
             return "judgement/result_exercise";
         }
