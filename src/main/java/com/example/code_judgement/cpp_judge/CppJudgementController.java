@@ -105,7 +105,7 @@ public class CppJudgementController {
                     .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));
 
             // Thực thi mã nguồn với custom input
-            String userOutput = codeExecutionService.runWithCusTomInput(code, customInput, new CppJudgementService());
+            String userOutput = codeExecutionService.runWithCustomInput(code, customInput, new CppJudgementService());
 
             // Trả về output dưới dạng JSON
             return ResponseEntity.ok(userOutput);

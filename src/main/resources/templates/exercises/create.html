@@ -52,6 +52,12 @@
             <textarea class="form-control" id="setup" th:field="*{setup}" rows="13"></textarea>
         </div>
 
+        <!-- Setup Code for SQL -->
+        <div class="mb-3 hidden" data-sql>
+            <label for="setup_for_sql" class="form-label">Setup Code (SQL)</label>
+            <textarea class="form-control" id="setup_for_sql" name="setup_for_sql" rows="5"></textarea>
+        </div>
+
         <!-- Difficulty Level -->
         <div class="mb-3">
             <label for="level" class="form-label">Difficulty Level</label>
@@ -65,13 +71,11 @@
         <!-- Select Test Case Input Method -->
         <div class="mb-3">
             <label class="form-label d-block">Select Test Case Input Method</label>
-
             <div class="form-check">
                 <input class="form-check-input" type="radio" id="jsonOption" name="testCaseMethod" value="json" checked
                        onclick="toggleTestCaseMethod()">
                 <label class="form-check-label" for="jsonOption">Enter as JSON</label>
             </div>
-
             <div class="form-check">
                 <input class="form-check-input" type="radio" id="uiOption" name="testCaseMethod" value="ui"
                        onclick="toggleTestCaseMethod()">
@@ -86,86 +90,136 @@
                       name="testCasesJson">[{"input": " ", "expectedOutput": " "}]</textarea>
         </div>
 
-        <!-- Manual UI Input Method -->
+        <!-- Manual UI Input Method with Tabs -->
         <div id="uiInputDiv" style="display: none;">
             <label class="form-label">Test Cases</label>
 
-            <table class="table table-bordered">
-                <thead>
-                <tr>
-                    <th>Input</th>
-                    <th>Expected Output</th>
-                    <!--                    <th>Action</th>-->
-                </tr>
-                </thead>
-                <tbody id="testCasesContainer">
-                <tr th:each="testCase, stat : ${testCaseFormList.testCasesList}">
-                    <td>
-                        <input type="text" class="form-control"
-                               th:name="|testCaseFormList.testCasesList[${stat.index}].input|"
-                               th:value="${testCase.input}" placeholder="Input" required>
-                    </td>
-                    <td>
-                        <input type="text" class="form-control"
-                               th:name="|testCaseFormList.testCasesList[${stat.index}].expectedOutput|"
-                               th:value="${testCase.expectedOutput}" placeholder="Expected Output" required>
-                    </td>
-                </tr>
-                </tbody>
+            <!-- Tabs Navigation -->
+            <ul class="nav nav-tabs" id="testCaseTabs" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" id="normal-tab" data-bs-toggle="tab" href="#normalTestCases" role="tab">Test
+                        Cases</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="hidden-tab" data-bs-toggle="tab" href="#hiddenTestCases" role="tab">Hidden
+                        Test Cases</a>
+                </li>
+            </ul>
 
-            </table>
+            <!-- Tab Content -->
+            <div class="tab-content mt-2" id="testCaseTabContent">
+                <!-- Normal Test Cases Tab -->
+                <div class="tab-pane fade show active" id="normalTestCases" role="tabpanel">
+                    <table class="table table-bordered">
+                        <thead>
+                        <tr>
+                            <th>Input</th>
+                            <th>Expected Output</th>
+                            <th class="tagSQLColumn" style="display: none;">Tag SQL</th>
+                        </tr>
+                        </thead>
+                        <tbody id="normalTestCasesContainer">
+                        <tr th:each="testCase, stat : ${testCaseFormList.testCasesList}">
+                            <td>
+                                <input type="text" class="form-control"
+                                       th:name="|testCaseFormList.testCasesList[${stat.index}].input|"
+                                       th:value="${testCase.input}" placeholder="Input" >
+                            </td>
+                            <td>
+                                <input type="text" class="form-control"
+                                       th:name="|testCaseFormList.testCasesList[${stat.index}].expectedOutput|"
+                                       th:value="${testCase.expectedOutput}" placeholder="Expected Output" >
+                            </td>
+                            <!-- Tag SQL trong bảng Test Case -->
+                            <td class="tagSQLColumn hidden" data-sql>
+                                <input type="text" class="form-control"
+                                       th:name="|testCaseFormList.testCasesList[${stat.index}].sqlTagNumber|"
+                                       th:value="${testCase.sqlTagNumber}" placeholder="Tag SQL">
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    <button type="button" class="btn btn-success btn-sm"
+                            onclick="addTestCase('normalTestCasesContainer')">+
+                    </button>
+                    <button type="button" class="btn btn-danger btn-sm"
+                            onclick="removeLastTestCase('normalTestCasesContainer')">-
+                    </button>
+                </div>
 
-            <!-- "+" button -->
-
-            <button type="button" class="btn btn-success btn-sm" onclick="addTestCase()">+</button>
-            <button type="button" class="btn btn-danger btn-sm" onclick="removeLastTestCase()">-</button>
-
+                <!-- Hidden Test Cases Tab -->
+                <div class="tab-pane fade" id="hiddenTestCases" role="tabpanel">
+                    <table class="table table-bordered">
+                        <thead>
+                        <tr>
+                            <th>Input</th>
+                            <th>Expected Output</th>
+                            <th class="tagSQLColumn" style="display: none;">Tag SQL</th>
+                        </tr>
+                        </thead>
+                        <tbody id="hiddenTestCasesContainer">
+                        <tr>
+                            <td><input type="text" class="form-control" name="hiddenTestCases[0].input"
+                                       placeholder="HiddenInput" ></td>
+                            <td><input type="text" class="form-control" name="hiddenTestCases[0].expectedOutput"
+                                       placeholder="HiddenExpected Output" ></td>
+                            <td><input type="text" class="form-control" name="hiddenTestCase[0].sqlTagNumber" placeholder="Tag SQL"></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    <button type="button" class="btn btn-success btn-sm"
+                            onclick="addTestCase('hiddenTestCasesContainer')">+
+                    </button>
+                    <button type="button" class="btn btn-danger btn-sm"
+                            onclick="removeLastTestCase('hiddenTestCasesContainer')">-
+                    </button>
+                </div>
+            </div>
         </div>
-
 
         <!-- Centered Save Exercise Button -->
         <div class="d-flex justify-content-end mt-4">
             <button type="submit" class="btn btn-primary">Save Exercise</button>
             <a href="#" th:href="@{/exercises}" class="btn btn-secondary ms-2">Back to List</a>
-
         </div>
-
     </form>
 </div>
 
-<!-- JavaScript to handle dynamic UI -->
+<!-- JavaScript -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script src="https://cdn.ckeditor.com/4.20.2/standard/ckeditor.js"></script>
 <script>
-    console.log(CKEDITOR.instances.description.getData());
-</script>
-<script>
     CKEDITOR.replace('description', {
-        removePlugins: 'easyimage, cloudservices',
-        allowedContent: true,
-        extraAllowedContent: '*[*]{*}(*)'
+        removePlugins: 'easyimage, cloudservices, toolbar, format, styles, link',
+        allowedContent: 'p; br; strong; em; u', // Chỉ cho phép các thẻ cơ bản (bỏ nếu muốn plain text)
+        extraAllowedContent: '',
+        enterMode: CKEDITOR.ENTER_BR
     });
 
+    function getPlainTextFromCKEditor() {
+        const editorData = CKEDITOR.instances.description.getData();
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = editorData;
+        return tempDiv.textContent || tempDiv.innerText || '';
+    }
+
     $(document).ready(function () {
-        let isSubmitting = false; // Tránh submit nhiều lần
+        let isSubmitting = false;
 
         $("#create-ex-form").submit(function (event) {
-            event.preventDefault(); // Ngăn form submit mặc định
-
-            if (isSubmitting) {
-                return; // Nếu đã submit, không cho gửi request nữa
-            }
-            isSubmitting = true; // Đánh dấu đang submit
-
-            $("button[type=submit]").prop("disabled", true); // Vô hiệu hóa nút submit
+            event.preventDefault();
+            if (isSubmitting) return;
+            isSubmitting = true;
+            $("button[type=submit]").prop("disabled", true);
 
             for (var instance in CKEDITOR.instances) {
                 CKEDITOR.instances[instance].updateElement();
             }
 
+            const plainText = getPlainTextFromCKEditor();
             let formData = new FormData(this);
+            formData.set('description', plainText); // Ghi đè description bằng plain text
 
             $.ajax({
                 type: "POST",
@@ -180,51 +234,46 @@
                 error: function (xhr) {
                     alert("Error: " + xhr.responseText);
                     $("button[type=submit]").prop("disabled", false);
-                    isSubmitting = false; // Cho phép thử lại nếu lỗi
+                    isSubmitting = false;
                 }
             });
         });
     });
 
-
-</script>
-<script>
     function toggleTestCaseMethod() {
         const isJsonSelected = document.getElementById('jsonOption').checked;
         document.getElementById('jsonInputDiv').style.display = isJsonSelected ? 'block' : 'none';
         document.getElementById('uiInputDiv').style.display = isJsonSelected ? 'none' : 'block';
 
-        // Enable/disable fields based on selection
         document.getElementById('testCases').required = isJsonSelected;
-        const manualFields = document.querySelectorAll('input[name^="testCaseFormList.testCasesList["]');
+        document.getElementById('testCases').disabled = !isJsonSelected;
+
+        const manualFields = document.querySelectorAll('input[name^="testCaseFormList.testCasesList["], input[name^="hiddenTestCases["]');
         manualFields.forEach(field => {
             field.required = !isJsonSelected;
             field.disabled = isJsonSelected;
         });
-
-        // Disable JSON test case field when manual UI is selected
-        document.getElementById('testCases').disabled = !isJsonSelected;
     }
 
-    function addTestCase() {
-        let container = document.getElementById('testCasesContainer');
+    function addTestCase(containerId) {
+        let container = document.getElementById(containerId);
         let rowCount = container.children.length;
         let newRow = document.createElement('tr');
+        let prefix = containerId === 'normalTestCasesContainer' ? 'testCaseFormList.testCasesList' : 'hiddenTestCases';
         newRow.innerHTML = `
-            <td><input type="text" class="form-control" name="testCaseFormList.testCasesList[${rowCount}].input" placeholder="Input" required></td>
-            <td><input type="text" class="form-control" name="testCaseFormList.testCasesList[${rowCount}].expectedOutput" placeholder="Expected Output" required></td>
-            `;
+            <td><input type="text" class="form-control" name="${prefix}[${rowCount}].input" placeholder="Input" required></td>
+            <td><input type="text" class="form-control" name="${prefix}[${rowCount}].expectedOutput" placeholder="Expected Output" required></td>
+        `;
         container.appendChild(newRow);
     }
 
-    function removeLastTestCase() {
-        let container = document.getElementById('testCasesContainer');
-        if (container.children.length > 1) { // Prevent removing all test cases
+    function removeLastTestCase(containerId) {
+        let container = document.getElementById(containerId);
+        if (container.children.length > 1) {
             container.removeChild(container.lastElementChild);
         }
     }
 
-    // JSON Validation
     document.querySelector('form').addEventListener('submit', function (event) {
         const isJsonSelected = document.getElementById('jsonOption').checked;
         if (isJsonSelected) {
@@ -237,6 +286,150 @@
             }
         }
     });
+
+
+    //--------------- Xử lý  tqgSQL vs SetUpSQL
+    document.addEventListener("DOMContentLoaded", function () {
+        const languageSelect = document.getElementById("language");
+        const testCaseMethodRadios = document.querySelectorAll('input[name="testCaseMethod"]');
+        const jsonInputDiv = document.getElementById("jsonInputDiv");
+        const uiInputDiv = document.getElementById("uiInputDiv");
+        const testCasesTextarea = document.getElementById("testCases");
+        const testCasesContainer = document.getElementById("testCasesContainer");
+
+        function updateSQLUI() {
+            let selectedLang = languageSelect.options[languageSelect.selectedIndex]?.text;
+            let isSQL = selectedLang === "SQL";
+
+            // ✅ Hiển thị Setup SQL nếu là SQL
+            document.querySelectorAll("[data-sql]").forEach(el => {
+                el.classList.toggle("hidden", !isSQL);
+                let input = el.querySelector("input, textarea");
+                if (input) {
+                    input.required = isSQL;
+                    input.value = isSQL ? input.value : "";
+                }
+            });
+
+            // ✅ Hiển thị cột SQL Tag trong Test Cases nếu là SQL
+            document.querySelectorAll(".tagSQLColumn").forEach(col => {
+                col.style.display = isSQL ? "table-cell" : "none";
+            });
+
+            // ✅ Hiển thị ô nhập SQL Tag nếu là SQL
+            document.querySelectorAll("input[name$='.sqlTagNumber']").forEach(input => {
+                input.parentElement.style.display = isSQL ? "table-cell" : "none";
+                input.required = isSQL;
+                if (!isSQL) input.value = "";
+            });
+        }
+
+
+        function toggleTestCaseMethod() {
+            const isJsonSelected = document.getElementById('jsonOption').checked;
+            jsonInputDiv.style.display = isJsonSelected ? 'block' : 'none';
+            uiInputDiv.style.display = isJsonSelected ? 'none' : 'block';
+
+            // ✅ Vô hiệu hóa hoặc bật input phù hợp
+            testCasesTextarea.required = isJsonSelected;
+            document.querySelectorAll('input[name^="testCaseFormList.testCasesList["]').forEach(field => {
+                field.required = !isJsonSelected;
+                field.disabled = isJsonSelected;
+            });
+
+            // ✅ Nếu chọn UI, kiểm tra xem có phải SQL không
+            updateSQLUI();
+        }
+
+        function convertUIToJson() {
+            const isJsonSelected = document.getElementById('jsonOption').checked;
+            if (!isJsonSelected) {
+                let testCasesArray = [];
+                document.querySelectorAll("#testCasesContainer tr").forEach(row => {
+                    let input = row.querySelector('input[name$=".input"]').value.trim();
+                    let expectedOutput = row.querySelector('input[name$=".expectedOutput"]').value.trim();
+                    let sqlTagNumber = row.querySelector('input[name$=".sqlTagNumber"]')?.value.trim() || null;
+
+                    let testCase = {input, expectedOutput};
+                    if (sqlTagNumber) testCase.sqlTagNumber = sqlTagNumber;
+                    testCasesArray.push(testCase);
+                });
+
+                // ✅ Chuyển danh sách test cases thành JSON string và đặt vào textarea
+                testCasesTextarea.value = JSON.stringify(testCasesArray, null, 2);
+            }
+        }
+
+        // ✅ Xử lý khi submit form
+        document.getElementById("create-ex-form").addEventListener("submit", function (event) {
+            if (!validateAndSubmit()) {
+                event.preventDefault();
+                return;
+            }
+            convertUIToJson();
+        });
+
+        // ✅ Cập nhật UI khi thay đổi ngôn ngữ hoặc chế độ nhập test case
+        languageSelect.addEventListener("change", updateSQLUI);
+        testCaseMethodRadios.forEach(radio => radio.addEventListener("change", toggleTestCaseMethod));
+
+        // ✅ Chạy khi trang tải lần đầu
+        updateSQLUI();
+        toggleTestCaseMethod();
+    });
+
+    function toggleTestCaseMethod() {
+        const isJsonSelected = document.getElementById('jsonOption').checked;
+        document.getElementById('jsonInputDiv').style.display = isJsonSelected ? 'block' : 'none';
+        document.getElementById('uiInputDiv').style.display = isJsonSelected ? 'none' : 'block';
+
+        // Lấy giá trị của ngôn ngữ hiện tại
+        let selectedLang = document.getElementById('language').options[document.getElementById('language').selectedIndex].text;
+        let isSQL = (selectedLang === "SQL");
+
+        // Lấy danh sách tất cả các input tagSQL
+        let tagSQLInputs = document.querySelectorAll('input[name^="testCaseFormList.testCasesList"][name$=".sqltagnumber"]');
+        tagSQLInputs.forEach(input => {
+            input.style.display = isSQL ? "block" : "none";
+            if (isSQL) {
+                input.setAttribute("required", "required");  // Bắt buộc nếu là SQL
+            } else {
+                input.removeAttribute("required");  // Không bắt buộc nếu không phải SQL
+            }
+        });
+
+        // Enable/disable fields based on selection
+        document.getElementById('testCases').required = isJsonSelected;
+        document.getElementById('testCases').disabled = !isJsonSelected;
+
+        const manualFields = document.querySelectorAll('input[name^="testCaseFormList.testCasesList["], input[name^="hiddenTestCases["]');
+        manualFields.forEach(field => {
+            field.required = !isJsonSelected;
+            field.disabled = isJsonSelected;
+        });
+    }
+
+    function removeLastTestCase(containerId) {
+        let container = document.getElementById(containerId);
+        if (container.children.length > 1) {
+            container.removeChild(container.lastElementChild);
+        }
+    }
+
+    document.querySelector('form').addEventListener('submit', function (event) {
+        const isJsonSelected = document.getElementById('jsonOption').checked;
+        if (isJsonSelected) {
+            const testCases = document.getElementById('testCases').value;
+            try {
+                JSON.parse(testCases);
+            } catch (e) {
+                event.preventDefault();
+                alert('Invalid JSON format. Please correct it before submitting.');
+            }
+        }
+    });
+
+
 
 </script>
 </body>

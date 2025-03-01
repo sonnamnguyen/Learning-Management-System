@@ -34,26 +34,21 @@ public class ExerciseService {
         this.exerciseRepository = exerciseRepository;
     }
 
+
     public List<Exercise> searchByTitle(String title) {
         System.out.println("Searching for: " + title);
         List<Exercise> exercises = exerciseRepository.searchByTitle(title);
         System.out.println("Results found: " + exercises.size());
         return exercises;
     }
+
     public Optional<Exercise> getExerciseById(Long id) {
         return exerciseRepository.findById(id);
     }
+
     public List<Exercise> findAllExercises() {
         return exerciseRepository.findAll();
     }
-
-//    public void saveExercise(Exercise exercise) {
-//        Optional<Exercise> existingExercise = exerciseRepository.findByName(exercise.getName());
-//        if (existingExercise.isPresent()) {
-//            throw new RuntimeException("Exercise with this name already exists!");
-//        }
-//        exerciseRepository.save(exercise);
-//    }
 
     public void deleteExercise(Long id) {
         exerciseRepository.deleteById(id);
@@ -64,15 +59,19 @@ public class ExerciseService {
     }
 
 
-
-
-
     public boolean existsByTitleExcludingId(String title, Long id) {
         return exerciseRepository.existsByNameExcludingId(title, id);
     }
 
     public void saveExercise(Exercise exercise) {
+        if (!"SQL".equalsIgnoreCase(exercise.getLanguage().getLanguage())) {
+            exercise.setSetupsql(null);
+        }
+        System.out.println("📩 Saving Exercise: " + exercise.getName());
         exerciseRepository.save(exercise);
+        System.out.println("✔ Exercise Saved Successfully!");
+
+
     }
 
 
@@ -84,56 +83,13 @@ public class ExerciseService {
         return exerciseRepository.existsByName(exerciseName);
     }
 
-//    public void importExcel(MultipartFile file) {
-//        try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
-//            Sheet sheet = workbook.getSheetAt(0);
-//            int rowCount = sheet.getPhysicalNumberOfRows();
-//            List<Exercise> exercises = new ArrayList<>();
-//
-//            for (int i = 1; i < rowCount; i++) { // Start from 1 to skip header row
-//                Row row = sheet.getRow(i);
-//                if (row != null) {
-//                    Cell idCell = row.getCell(0);
-//                    Cell nameCell = row.getCell(1);
-//                    Cell descriptionCell = row.getCell(2);
-//                    Cell levelCell = row.getCell(3);
-//                    Cell moduleCell = row.getCell(4);
-//
-//                    if (nameCell != null && descriptionCell != null) {
-//                        String exerciseName = getCellValueAsString(nameCell).trim(); // Get exercise name
-//                        String exerciseDescription = getCellValueAsString(descriptionCell).trim(); // Get description
-//                        String exerciseLevel = levelCell != null ? getCellValueAsString(levelCell).trim() : null; // Get level if available
-//                        String moduleName = moduleCell != null ? getCellValueAsString(moduleCell).trim() : null; // Get module name
-//
-//                        // Check if exercise already exists based on some criteria (e.g., name)
-//                        if (!exerciseExists(exerciseName)) {
-//                            Exercise exercise = new Exercise();
-//                            exercise.setName(exerciseName);
-//                            exercise.setDescription(exerciseDescription);
-//                            exercise.setLevel(Exercise.Level.valueOf(exerciseLevel));
-//
-//                            exercises.add(exercise);
-//                        }
-//                    }
-//                }
-//            }
-//
-//            // Save exercises to the database
-//            for (Exercise exercise : exercises) {
-//                exerciseRepository.save(exercise);
-//            }
-//        } catch (IOException e) {
-//            throw new RuntimeException("Error importing exercises from Excel", e);
-//        }
-//    }
-
     // Method to export exercises to Excel
     public ByteArrayInputStream exportExercisesToExcel(List<Exercise> exercises) {
         XSSFWorkbook workbook = new XSSFWorkbook();
         XSSFSheet sheet = workbook.createSheet("Exercises");
 
         // Create the header row
-        String[] headers = { "ID", "Name", "Description", "Level", "Module" };
+        String[] headers = {"ID", "Name", "Description", "Level", "Module"};
         sheet.createRow(0).createCell(0).setCellValue(headers[0]);
         sheet.getRow(0).createCell(1).setCellValue(headers[1]);
         sheet.getRow(0).createCell(2).setCellValue(headers[2]);
@@ -162,6 +118,7 @@ public class ExerciseService {
 
         return new ByteArrayInputStream(out.toByteArray());
     }
+
     public static boolean hasExcelFormat(MultipartFile file) {
         return file.getContentType().equals("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     }
@@ -177,7 +134,6 @@ public class ExerciseService {
             if (!rowIterator.hasNext()) {
                 throw new RuntimeException("Excel file is empty!");
             }
-
 
             Row headerRow = rowIterator.next();
             Map<String, Integer> columnIndexMap = new HashMap<>();
@@ -198,9 +154,13 @@ public class ExerciseService {
             }
 
 
-
             while (rowIterator.hasNext()) {
                 Row row = rowIterator.next();
+
+                if (row.getCell(0) == null || row.getCell(0).getCellType() == CellType.BLANK) {
+                    continue;  // Bỏ qua dòng trống
+                }
+
                 Exercise exercise = new Exercise();
 
                 if (columnIndexMap.containsKey("ID")) {
@@ -211,10 +171,13 @@ public class ExerciseService {
                 }
 
                 if (columnIndexMap.containsKey("Title")) {
-                    exercise.setName(row.getCell(columnIndexMap.get("Title")).getStringCellValue());
+                    Cell cell = row.getCell(columnIndexMap.get("Title"));
+                    exercise.setName((cell != null) ? cell.getStringCellValue().trim() : "");
                 }
+
                 if (columnIndexMap.containsKey("Language")) {
-                    String languageName = row.getCell(columnIndexMap.get("Language")).getStringCellValue();
+                    Cell cell = row.getCell(columnIndexMap.get("Language"));
+                    String languageName = (cell != null) ? cell.getStringCellValue().trim() : "Unknown";
                     ProgrammingLanguage language = programmingLanguageRepository.findByLanguage(languageName).orElse(null);
                     if (language == null) {
                         language = new ProgrammingLanguage();
@@ -223,36 +186,48 @@ public class ExerciseService {
                     }
                     exercise.setLanguage(language);
                 }
+
                 if (columnIndexMap.containsKey("Level")) {
-                    try {
-                        String levelText = row.getCell(columnIndexMap.get("Level")).getStringCellValue().toUpperCase();
-                        Exercise.Level level = Exercise.Level.valueOf(levelText);
-                        exercise.setLevel(level);
-                    } catch (IllegalArgumentException e) {
-                        throw new RuntimeException("Invalid exercise level: " + row.getCell(columnIndexMap.get("Level")).getStringCellValue());
+                    Cell cell = row.getCell(columnIndexMap.get("Level"));
+                    if (cell != null) {
+                        try {
+                            String levelText = cell.getStringCellValue().toUpperCase();
+                            Exercise.Level level = Exercise.Level.valueOf(levelText);
+                            exercise.setLevel(level);
+                        } catch (IllegalArgumentException e) {
+                            throw new RuntimeException("Invalid exercise level: " + cell.getStringCellValue());
+                        }
                     }
                 }
+
                 if (columnIndexMap.containsKey("Description")) {
-                    exercise.setDescription(row.getCell(columnIndexMap.get("Description")).getStringCellValue());
+                    Cell cell = row.getCell(columnIndexMap.get("Description"));
+                    exercise.setDescription((cell != null) ? cell.getStringCellValue().trim() : "");
                 }
+
                 if (columnIndexMap.containsKey("Set Up Code")) {
-                    exercise.setSetup(row.getCell(columnIndexMap.get("Set Up Code")).getStringCellValue());
+                    Cell cell = row.getCell(columnIndexMap.get("Set Up Code"));
+                    exercise.setSetup((cell != null) ? cell.getStringCellValue().trim() : "");
                 }
+
                 if (columnIndexMap.containsKey("Test Case")) {
-                    String testCaseText = row.getCell(columnIndexMap.get("Test Case")).getStringCellValue();
+                    Cell cell = row.getCell(columnIndexMap.get("Test Case"));
+                    String testCaseText = (cell != null) ? cell.getStringCellValue().trim() : "";
                     List<TestCase> testCases = new ArrayList<>();
-                    String[] testCaseArray = testCaseText.split(";");
-                    for (String testCaseStr : testCaseArray) {
-                        testCaseStr = testCaseStr.trim();
-                        if (!testCaseStr.isEmpty()) {
-                            String[] parts = testCaseStr.split(",");
-                            if (parts.length == 2) {
-                                String input = parts[0].replace("Input:", "").trim();
-                                String expected = parts[1].replace("Expected:", "").trim();
-                                TestCase testCase = new TestCase();
-                                testCase.setInput(input);
-                                testCase.setExpectedOutput(expected);
-                                testCases.add(testCase);
+                    if (!testCaseText.isEmpty()) {
+                        String[] testCaseArray = testCaseText.split(";");
+                        for (String testCaseStr : testCaseArray) {
+                            testCaseStr = testCaseStr.trim();
+                            if (!testCaseStr.isEmpty()) {
+                                String[] parts = testCaseStr.split(",");
+                                if (parts.length == 2) {
+                                    String input = parts[0].replace("Input:", "").trim();
+                                    String expected = parts[1].replace("Expected:", "").trim();
+                                    TestCase testCase = new TestCase();
+                                    testCase.setInput(input);
+                                    testCase.setExpectedOutput(expected);
+                                    testCases.add(testCase);
+                                }
                             }
                         }
                     }
@@ -262,16 +237,17 @@ public class ExerciseService {
                 exercises.add(exercise);
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Error reading Excel file: " + e.getMessage(), e);
         }
 
         return exercises;
     }
 
 
+
     public void saveExercisesToDatabase(MultipartFile file) {
-        if(hasExcelFormat(file)) {
-            try(InputStream inputStream = file.getInputStream()) {
+        if (hasExcelFormat(file)) {
+            try (InputStream inputStream = file.getInputStream()) {
                 List<Exercise> exercises = getExerciseDataFromExcel(inputStream);
                 exerciseRepository.saveAll(exercises);
             } catch (IOException e) {
@@ -294,12 +270,4 @@ public class ExerciseService {
         exerciseRepository.deleteAllByIdIn(ids);
     }
 
-
-//    public Page<Exercise> getExercisesByLanguageAndLevel(Long languageId, String level, String title, Pageable pageable) {
-//        Exercise.Level exerciseLevel = (level == null || level.trim().isEmpty())
-//                ? null
-//                : Exercise.Level.valueOf(level.toUpperCase());
-//
-//        return exerciseRepository.findByFilters(languageId, exerciseLevel, title, pageable);
-//    }
 }

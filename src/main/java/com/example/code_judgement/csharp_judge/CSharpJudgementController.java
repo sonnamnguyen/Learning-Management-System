@@ -105,7 +105,7 @@ public class CSharpJudgementController {
                     .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));
 
             // Thực thi mã nguồn với custom input
-            String userOutput = codeExecutionService.runWithCusTomInput(code, customInput, new CSharpJudgementService());
+            String userOutput = codeExecutionService.runWithCustomInput(code, customInput, new CSharpJudgementService());
 
             // Trả về output dưới dạng JSON
             return ResponseEntity.ok(userOutput);

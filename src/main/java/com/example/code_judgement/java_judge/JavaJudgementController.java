@@ -110,7 +110,7 @@ public class JavaJudgementController {
                     .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));
 
             // Thực thi mã nguồn với custom input
-            String userOutput = codeExecutionService.runWithCusTomInput(code, customInput, new JavaJudgementService());
+            String userOutput = codeExecutionService.runWithCustomInput(code, customInput, new JavaJudgementService());
 
             // Trả về output dưới dạng JSON
             return ResponseEntity.ok(userOutput);

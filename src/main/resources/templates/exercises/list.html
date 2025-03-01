@@ -135,7 +135,17 @@
             }
         }
 
+        .col-md-6.d-flex .btn {
+            height: 37px;
+            position: relative;
+            top: -23px;
+            display: flex;
+            align-items: center;
+        }
 
+        .col-md-6.d-flex a.btn {
+            text-decoration: none;
+        }
     </style>
 </head>
 <body>
@@ -173,13 +183,13 @@
 
             <!-- Combined Filter and Toolbar Section -->
             <div class="container-fluid mt-4">
-                <div class="row gx-2 align-items-end mb-3">
+                <div class="row gx-2 align-items-center mb-3">
                     <!-- Search Bar and Filters -->
                     <div class="col-md-6">
-                        <form id="filterForm" method="get" action="/exercises">
-                            <div class="row gx-2 align-items-end">
-                                <!-- Search Input -->
-                                <div class="col-md-6">
+                        <div class="row gx-2 align-items-center">
+                            <!-- Search Input -->
+                            <div class="col-9">
+                                <form id="filterForm" method="get" action="/exercises">
                                     <label for="searchInput" class="form-label">Search</label>
                                     <div class="input-group">
                                         <input type="text" id="searchInput" name="title" class="form-control"
@@ -188,13 +198,10 @@
                                             <i class="bi bi-search"></i>
                                         </button>
                                         <button type="button" class="btn clear-btn btn-secondary ms-1 px-4"
-                                                onclick="clearFilters()">Clear
-                                        </button>
+                                                onclick="clearFilters()">Clear</button>
                                     </div>
-                                </div>
-                                <!-- Language and Difficulty Filters -->
-                                <div class="col-md-6">
-                                    <div class="row gx-2">
+
+                                    <div class="row gx-2 mt-2">
                                         <!-- Language Filter -->
                                         <div class="col-md-6">
                                             <label for="languageFilter" class="form-label">Language</label>
@@ -218,13 +225,13 @@
                                             </select>
                                         </div>
                                     </div>
-                                </div>
+                                </form>
                             </div>
-                        </form>
+                        </div>
                     </div>
 
                     <!-- Buttons: Import, Export, Print, Add, Delete -->
-                    <div class="col-md-6 d-flex justify-content-end align-items-end">
+                    <div class="col-md-6 d-flex justify-content-end align-items-center">
                         <!-- Import Button (Opens Modal) -->
                         <button class="btn btn-outline-secondary me-2" data-bs-toggle="modal"
                                 data-bs-target="#importModal">
@@ -259,7 +266,7 @@
                                 <!-- Template Import -->
                                 <div class="mb-3">
                                     <p>Download the Excel template before uploading your file:</p>
-                                    <a href="https://drive.google.com/drive/folders/1uFnY6InGu54Ll-gUElgfgMFkQgB-E3O1?usp=sharing" class="btn btn-link" download>Download Exercise Template</a>
+                                    <a href="https://drive.usercontent.google.com/u/0/uc?id=1iHpWEW4r80Xofw9zhZXAjnjXzExYELz3&export=download" class="btn btn-link" download>Download Exercise Template</a>
                                 </div>
                                 <!-- Form Upload -->
                                 <form id="UploadForm" action="/exercises/import" method="post" enctype="multipart/form-data">
@@ -403,7 +410,7 @@
             if (alert) {
                 setTimeout(() => {
                     closeAlert(alertId);
-                }, 1000);
+                }, 3000);
             }
         }
 
@@ -413,7 +420,7 @@
                 alert.style.animation = 'fadeOut 0.5s ease-out forwards';
                 setTimeout(() => {
                     alert.remove();
-                }, 500);
+                }, 2000);
             }
         }
 
