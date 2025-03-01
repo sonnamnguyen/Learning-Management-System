@@ -59,7 +59,7 @@ public class JavaJudgementService implements ExecutionBasedLanguage {
             if (classFile.exists()) {
                 return new CompilationResult(true, null , originalClassName, classFile,".java" ); // Thành công
             } else {
-                return new CompilationResult(false, compileOutput, originalClassName, null, null ); // Thất bại (kèm thông báo lỗi)
+                return new CompilationResult(false,"Runtime exception: "+compileOutput, originalClassName, null, null ); // Thất bại (kèm thông báo lỗi)
             }
         } catch (Exception e) {
             return new CompilationResult(false, "Exception occurred: " + e.getMessage(), originalClassName, null, null );

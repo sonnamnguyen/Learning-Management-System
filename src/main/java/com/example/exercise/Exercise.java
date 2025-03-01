@@ -1,6 +1,7 @@
 package com.example.exercise;
 
 import com.example.assessment.model.ProgrammingLanguage;
+import com.example.student_exercise_attemp.StudentExerciseAttempt;
 import com.example.testcase.TestCase;
 import jakarta.persistence.*;
 import lombok.*;
@@ -42,6 +43,9 @@ public class Exercise {
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TestCase> testCases = new ArrayList<>();
+
+    @OneToMany(mappedBy = "submitted_exercise", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<StudentExerciseAttempt> studentExerciseAttempts = new ArrayList<>();
 
     public List<TestCase> getTwoTestCases() {
         return testCases.size() > 2 ? testCases.subList(0, 2) : new ArrayList<>(testCases);

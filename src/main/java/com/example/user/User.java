@@ -4,6 +4,8 @@ import com.example.course.Course;
 import com.example.quiz.model.AnswerOption;
 import com.example.quiz.model.Quiz;
 import com.example.role.Role;
+import com.example.student_exercise_attemp.StudentExerciseAttempt;
+import com.example.testcase.TestCase;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
@@ -57,6 +59,9 @@ public class User implements UserDetails {
     @OneToMany(mappedBy = "instructor", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<Course> taughtCourses = new ArrayList<>();
+
+    @OneToMany(mappedBy = "attendant_user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<StudentExerciseAttempt> studentExerciseAttempts = new ArrayList<>();
 
     // Many-to-many relationship with Role
     @ManyToMany(fetch = FetchType.EAGER)

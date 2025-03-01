@@ -482,6 +482,11 @@
         .mb-2 {
             margin-bottom: 0.5rem;
         }
+
+        .error-compile{
+            display: block !important;
+            color: #c5221f;
+        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/sql/sql.min.js"></script>
@@ -517,6 +522,7 @@
             <i style="color: #ed4528;" class="fas fa-chevron-down"></i>
         </div>
         <div class="test-cases" id="testCases" style="display: none;">
+            <span class="error-compile" th:text="${error}"></span>
             <div class="test-case" th:each="result : ${testResults}" th:if="${!result.isCorrect}">
                 <div class="test-case-header">
                     <span class="test-number">Test Case</span>
@@ -538,7 +544,7 @@
 
         <div class="score" style="margin-bottom: 30px;">
             <div class="score-left-2">
-                <span class="score-number-2" th:text="${failed}"></span> TOTAL SCORE
+                <span class="score-number-2" th:text="${score}"></span> TOTAL SCORE
             </div>
         </div>
     </div>

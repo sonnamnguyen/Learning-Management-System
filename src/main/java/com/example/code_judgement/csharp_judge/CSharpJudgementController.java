@@ -32,17 +32,21 @@ public class CSharpJudgementController {
         // Get exercise and test cases
         Exercise exercise = exerciseService.getExerciseById(exerciseId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));
-        java.util.List<TestCase> testCases = exercise.getTwoTestCases();
+        List<TestCase> testCases = exercise.getTwoTestCases();
 
         if (testCases == null || testCases.isEmpty()) {
             model.addAttribute("output", "No test cases defined for this exercise.");
             model.addAttribute("exercise", exercise);
             model.addAttribute("code", code);
-            return "judgement/code_space";
+            return "judgement/precheck_judge/precheck_code";
         }
 
         try {
-            ExecutionResponse response = codeExecutionService.executeCodeOptimized(code,testCases,new CSharpJudgementService());
+            ExecutionResponse response = codeExecutionService.executeCodeOptimized(false, code,testCases,new CSharpJudgementService(), exercise);
+            if(response.getErrorMessage()!=null){
+                model.addAttribute("error", response.getErrorMessage());
+                return "judgement/precheck_judge/precheck_code";
+            }
             // Add results to model for view display
             model.addAttribute("exercise", exercise);
             model.addAttribute("code", code);
@@ -51,13 +55,13 @@ public class CSharpJudgementController {
             model.addAttribute("testResults", response.getTestCasesResults());
             model.addAttribute("output", response.getPassed() + "/" + response.getTotal() + " test cases passed.");
 
-            return "judgement/code_space";
+            return "judgement/precheck_judge/precheck_code";
         } catch (Exception e) {
             model.addAttribute("output", e.getMessage());
             model.addAttribute("exercise", exercise);
             model.addAttribute("code", code);
             model.addAttribute("language", exercise.getLanguage().getLanguage());
-            return "judgement/code_space";
+            return "judgement/precheck_judge/precheck_code";
         }
     }
 
@@ -77,13 +81,18 @@ public class CSharpJudgementController {
             return "judgement/code_space";
         }
         try{
-            ExecutionResponse response = codeExecutionService.executeCodeOptimized(code,testCases,new CSharpJudgementService());
+            ExecutionResponse response = codeExecutionService.executeCodeOptimized(true, code,testCases,new CSharpJudgementService(), exercise);
             // Đưa kết quả vào model để hiển thị trong view
             model.addAttribute("exercise", exercise);
             model.addAttribute("code", code);
-            model.addAttribute("testResults", response.getTestCasesResults());
             model.addAttribute("failed", response.getTotal() - response.getPassed());
+            model.addAttribute("score", response.getScore());
 
+            if(response.getErrorMessage()!=null){
+                model.addAttribute("error", response.getErrorMessage());
+                return "judgement/result_exercise";
+            }
+            model.addAttribute("testResults", response.getTestCasesResults());
             return "judgement/result_exercise";
         }
         catch (Exception e){
@@ -105,7 +114,7 @@ public class CSharpJudgementController {
                     .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));
 
             // Thực thi mã nguồn với custom input
-            String userOutput = codeExecutionService.runWithCustomInput(code, customInput, new CSharpJudgementService());
+            String userOutput = codeExecutionService.runWithCusTomInput(code, customInput, new CSharpJudgementService());
 
             // Trả về output dưới dạng JSON
             return ResponseEntity.ok(userOutput);

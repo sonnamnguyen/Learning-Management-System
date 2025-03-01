@@ -1,0 +1,14 @@
+package com.example.student_exercise_attemp;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service
+public class StudentExerciseAttemptService {
+    @Autowired
+    private StudentExerciseAttemptRepository studentExerciseAttemptRepository;
+
+    public void save(StudentExerciseAttempt studentExerciseAttempt) {
+        studentExerciseAttemptRepository.save(studentExerciseAttempt);
+    }
+}

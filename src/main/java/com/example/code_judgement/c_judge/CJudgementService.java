@@ -40,7 +40,7 @@ public class CJudgementService implements ExecutionBasedLanguage {
             if (executableFile.exists()) {
                 return new CompilationResult(true,null,fileName,executableFile,".exe");
             } else {
-                return new CompilationResult(false, compileOutput, fileName, null,null);
+                return new CompilationResult(false, "Error: " + compileOutput, fileName, null,null);
             }
         } catch (Exception e) {
             return new CompilationResult(false, "Exception occurred: " + e.getMessage(), fileName, null ,null);

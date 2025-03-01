@@ -80,7 +80,7 @@ public class CSharpJudgementService implements ExecutionBasedLanguage {
             if (buildExitCode == 0 && Files.exists(executablePath)) {
                 return new CompilationResult(true, null, executablePath.toString(), executablePath.toFile(), ".cs");
             } else {
-                return new CompilationResult(false, buildOutput, projectName, null, null);
+                return new CompilationResult(false, "Error: " + buildOutput, projectName, null, null);
             }
 
         } catch (Exception e) {

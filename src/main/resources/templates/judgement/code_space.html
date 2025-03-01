@@ -1068,7 +1068,7 @@
 
                 <!-- Right Panel -->
                 <div class="col-md-3 p-3 text-white d-flex flex-column" id="rightPanel"
-                     style="height:100%; padding: 16px 16px 0 16px !important;">
+                     style="overflow-y:auto; height:100%; padding: 16px 16px 0 16px !important;">
                     <!-- Tab Content -->
                     <div class="tab-content flex-grow-1">
                         <!-- Output Tab -->
@@ -1531,55 +1531,26 @@
             });
         }
 
-        // Chức năng Pre-check
-        // function runPrecheck() {
-        //   const code = editor.getValue();
-        //   const language = languageSelect.value;
-        //
-        //   fetch("/api/exercises/precheck/120", {
-        //     method: "POST",
-        //     headers: { "Content-Type": "application/json" },
-        //     body: JSON.stringify({ code: code, language: language }),
-        //   })
-        //     .then((response) => response.json())
-        //     .then((data) => {
-        //       let outputDiv = document.getElementById("output");
-        //       if (data.error) {
-        //         outputDiv.innerHTML = `
-        //                       <div class="alert alert-danger">Error: Code is formatted and structured incorrectly.</div>
-        //                       <div class="alert alert-warning">Please fix the format and structure correctly...</div>`;
-        //       } else {
-        //         outputDiv.innerHTML = `<div style="background-color: #282a36 !important;">${data.combinedMessage}</div>`;
-        //       }
-        //     })
-        //     .catch((error) => {
-        //       console.error("Error:", error);
-        //       document.getElementById("output").innerHTML =
-        //         "<pre>Error: Error during Pre-check</pre>";
-        //     });
-        // }
-
+        // Xử lý run precheck
         function runPrecheck() {
             const exerciseId = document.getElementById("exerciseId").value;
             const code = editor.getValue();
-            let form = document.createElement('form');
-            form.method = 'POST';
-            form.action = "/judgement/precheck-code";
 
-            let params = {
-                exerciseId: exerciseId,
-                code: code,
-            };
-
-            for (let key in params) {
-                let input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = key;
-                input.value = params[key];
-                form.appendChild(input);
-            }
-            document.body.appendChild(form);
-            form.submit();
+            $.ajax({
+                url: "/judgement/precheck-code",
+                method: "POST",
+                data: {
+                    exerciseId: exerciseId,
+                    code: code
+                },
+                success: function (response) {
+                    document.getElementById("output").innerHTML = `<span>${response}</span>`;
+                },
+                error: function (xhr) {
+                    let errorMessage = xhr.responseText ? xhr.responseText : "Something went wrong!";
+                    document.getElementById("customOutput").innerHTML = `<span style='color: red;'>${errorMessage}</span>`;
+                }
+            });
         }
         // Xử lý submit exercise
         function submitExercise() {
