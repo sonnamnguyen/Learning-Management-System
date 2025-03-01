@@ -16,4 +16,5 @@ public class ExecutionResponse {
     int total;
     double score;
     List<TestCaseResult> testCasesResults;
+    String errorMessage;
 }

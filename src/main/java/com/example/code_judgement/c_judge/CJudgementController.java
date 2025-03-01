@@ -42,6 +42,10 @@ public class CJudgementController {
         }
         try{
             ExecutionResponse response = codeExecutionService.executeCodeOptimized(false, code,testCases,new CJudgementService(), exercise);
+            if(response.getErrorMessage()!=null){
+                model.addAttribute("error", response.getErrorMessage());
+                return "judgement/precheck_judge/precheck_code";
+            }
             // Đưa kết quả vào model để hiển thị trong view
             model.addAttribute("exercise", exercise);
             model.addAttribute("code", code);
@@ -82,9 +86,14 @@ public class CJudgementController {
             // Đưa kết quả vào model để hiển thị trong view
             model.addAttribute("exercise", exercise);
             model.addAttribute("code", code);
-            model.addAttribute("testResults", response.getTestCasesResults());
             model.addAttribute("failed", response.getTotal() - response.getPassed());
             model.addAttribute("score", response.getScore());
+
+            if(response.getErrorMessage()!=null){
+                model.addAttribute("error", response.getErrorMessage());
+                return "judgement/result_exercise";
+            }
+            model.addAttribute("testResults", response.getTestCasesResults());
             return "judgement/result_exercise";
         }
         catch (Exception e){

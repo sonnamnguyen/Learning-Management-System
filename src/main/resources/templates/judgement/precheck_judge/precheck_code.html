@@ -1,5 +1,5 @@
 <div class="result-container h-100">
-    <h5 class="mb-3 align-items-center" th:text="${type_check}"></h5>
+    <p class="mb-3 align-items-center" style="color: red" th:text="${error}"></p>
 
     <!-- Display grading results if available -->
     <div th:if="${passed != null}">

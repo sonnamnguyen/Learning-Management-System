@@ -44,6 +44,11 @@ public class JavaJudgementController {
         }
         try{
             ExecutionResponse response = codeExecutionService.executeCodeOptimized(false, code,testCases,new JavaJudgementService(), exercise);
+            // Nếu compile code bị thất bại trả về error message
+            if(response.getErrorMessage()!=null){
+                model.addAttribute("error", response.getErrorMessage());
+                return "judgement/precheck_judge/precheck_code";
+            }
             // Đưa kết quả vào model để hiển thị trong view
             model.addAttribute("exercise", exercise);
             model.addAttribute("code", code);
@@ -54,7 +59,7 @@ public class JavaJudgementController {
 
             return "judgement/precheck_judge/precheck_code";
         }
-        catch (Exception e){
+        catch (RuntimeException e){
             model.addAttribute("output", e.getMessage());
             model.addAttribute("exercise", exercise);
             model.addAttribute("code", code);
@@ -80,14 +85,17 @@ public class JavaJudgementController {
         }
         try{
             ExecutionResponse response = codeExecutionService.executeCodeOptimized(true, code,testCases,new JavaJudgementService(), exercise);
-
             // Đưa kết quả vào model để hiển thị trong view
-                model.addAttribute("exercise", exercise);
-                model.addAttribute("code", code);
-                model.addAttribute("testResults", response.getTestCasesResults());
-                model.addAttribute("failed", response.getTotal() - response.getPassed());
-                model.addAttribute("score", response.getScore());
+            model.addAttribute("exercise", exercise);
+            model.addAttribute("code", code);
+            model.addAttribute("failed", response.getTotal() - response.getPassed());
+            model.addAttribute("score", response.getScore());
 
+            if(response.getErrorMessage()!=null){
+                model.addAttribute("error", response.getErrorMessage());
+                return "judgement/result_exercise";
+            }
+            model.addAttribute("testResults", response.getTestCasesResults());
             return "judgement/result_exercise";
         }
         catch (Exception e){
