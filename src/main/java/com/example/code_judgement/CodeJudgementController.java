@@ -52,7 +52,7 @@ public class CodeJudgementController {
         model.addAttribute("customInput", customInput);
         model.addAttribute("customOutput", "");
 
-        String targetPath = "/judgement/" + exercise.getLanguage().getLanguage().toLowerCase() + "/run-custom-code";
+        String targetPath = "/judgement/" +  (exercise.getLanguage().getLanguage().equalsIgnoreCase("c#")?"csharp":exercise.getLanguage().getLanguage().toLowerCase()) + "/run-custom-code";
         return "forward:" + targetPath;
     }
 
@@ -102,7 +102,7 @@ public class CodeJudgementController {
             model.addAttribute("code", code);
             return "judgement/code_space";
         }
-        String targetPath = "/judgement/" + exercise.getLanguage().getLanguage().toLowerCase() + "/submit_exercise";
+        String targetPath = "/judgement/" +  (exercise.getLanguage().getLanguage().equalsIgnoreCase("c#")?"csharp":exercise.getLanguage().getLanguage().toLowerCase()) + "/submit_exercise";
         System.out.println(targetPath);
         return "forward:" + targetPath;
     }
