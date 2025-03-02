@@ -89,12 +89,13 @@ public class CodeExecutionService {
     }
 
     // calculate score for exercise
-    public double exerciseScore(int total, int passed) {
+    public double exerciseScore(int passed, int total) {
         try {
             if (total == 0) {
                 throw new ArithmeticException("TestCase is null");
             }
-            return (double) passed / total * 100;
+            double score = (double) passed / total * 100;
+            return Math.round(score * 10.0) / 10.0;
         } catch (ArithmeticException e) {
             System.err.println("Error: " + e.getMessage());
             return 0.0;

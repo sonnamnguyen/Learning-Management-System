@@ -47,10 +47,6 @@ public class Exercise {
     @OneToMany(mappedBy = "submitted_exercise", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<StudentExerciseAttempt> studentExerciseAttempts = new ArrayList<>();
 
-    public List<TestCase> getTwoTestCases() {
-        return testCases.size() > 2 ? testCases.subList(0, 2) : new ArrayList<>(testCases);
-    }
-
     public void setTestCases(List<TestCase> testCases) {
         if (testCases == null) return;
         this.testCases.clear();
