@@ -106,7 +106,7 @@ public class CodeExecutionService {
 //        ExecutionBasedLanguage executionBasedLanguage = initialLanguage(language);
         CompilationResult compilationResult = executionBasedLanguage.compileCode(code);
         if (!compilationResult.isSuccess()) {
-            return new ExecutionResponse(code, 0, testCases.size(), 0, null, compilationResult.getErrorMessage());
+            throw new RuntimeException(compilationResult.getErrorMessage());
         }
 
         // Sử dụng ExecutorService để chạy các test case song song
@@ -183,8 +183,9 @@ public class CodeExecutionService {
         }
 
         // Tính toán kết quả tổng quát
-        return new ExecutionResponse(code,passed,testCases.size(),score,testResults, null);
+        return new ExecutionResponse(code,passed,testCases.size(),score,testResults);
     }
+
 
     private void deleteDirectoryRecursively(Path path) throws IOException {
         if (Files.exists(path)) {

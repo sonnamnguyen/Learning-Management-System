@@ -43,10 +43,6 @@ public class CSharpJudgementController {
 
         try {
             ExecutionResponse response = codeExecutionService.executeCodeOptimized(false, code,testCases,new CSharpJudgementService(), exercise);
-            if(response.getErrorMessage()!=null){
-                model.addAttribute("error", response.getErrorMessage());
-                return "judgement/precheck_judge/precheck_code";
-            }
             // Add results to model for view display
             model.addAttribute("exercise", exercise);
             model.addAttribute("code", code);
@@ -56,11 +52,8 @@ public class CSharpJudgementController {
             model.addAttribute("output", response.getPassed() + "/" + response.getTotal() + " test cases passed.");
 
             return "judgement/precheck_judge/precheck_code";
-        } catch (Exception e) {
-            model.addAttribute("output", e.getMessage());
-            model.addAttribute("exercise", exercise);
-            model.addAttribute("code", code);
-            model.addAttribute("language", exercise.getLanguage().getLanguage());
+        } catch (RuntimeException e) {
+            model.addAttribute("error", e.getMessage());
             return "judgement/precheck_judge/precheck_code";
         }
     }
@@ -81,26 +74,22 @@ public class CSharpJudgementController {
             return "judgement/code_space";
         }
         try{
-            ExecutionResponse response = codeExecutionService.executeCodeOptimized(true, code,testCases,new CSharpJudgementService(), exercise);
+            ExecutionResponse response = codeExecutionService.executeCodeOptimized(true, code,testCases,new JavaJudgementService(), exercise);
             // Đưa kết quả vào model để hiển thị trong view
             model.addAttribute("exercise", exercise);
             model.addAttribute("code", code);
             model.addAttribute("failed", response.getTotal() - response.getPassed());
             model.addAttribute("score", response.getScore());
-
-            if(response.getErrorMessage()!=null){
-                model.addAttribute("error", response.getErrorMessage());
-                return "judgement/result_exercise";
-            }
             model.addAttribute("testResults", response.getTestCasesResults());
             return "judgement/result_exercise";
         }
-        catch (Exception e){
-            model.addAttribute("output", e.getMessage());
+        catch (RuntimeException e){
+            model.addAttribute("error", e.getMessage());
             model.addAttribute("exercise", exercise);
             model.addAttribute("code", code);
-            model.addAttribute("language", exercise.getLanguage().getLanguage());
-            return "judgement/code_space";
+            model.addAttribute("failed", testCases.size());
+            model.addAttribute("score", 0);
+            return "judgement/result_exercise";
         }
     }
 
