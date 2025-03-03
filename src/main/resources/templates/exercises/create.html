@@ -8,6 +8,9 @@
     .cke_notification {
         display: none !important;
     }
+    .hidden{
+        display: none;
+    }
 </style>
 <body onload="toggleTestCaseMethod()">
 
@@ -123,12 +126,12 @@
                             <td>
                                 <input type="text" class="form-control"
                                        th:name="|testCaseFormList.testCasesList[${stat.index}].input|"
-                                       th:value="${testCase.input}" placeholder="Input" >
+                                       th:value="${testCase.input}" placeholder="Input" required>
                             </td>
                             <td>
                                 <input type="text" class="form-control"
                                        th:name="|testCaseFormList.testCasesList[${stat.index}].expectedOutput|"
-                                       th:value="${testCase.expectedOutput}" placeholder="Expected Output" >
+                                       th:value="${testCase.expectedOutput}" placeholder="Expected Output" required>
                             </td>
                             <!-- Tag SQL trong bảng Test Case -->
                             <td class="tagSQLColumn hidden" data-sql>
@@ -154,7 +157,8 @@
                         <tr>
                             <th>Input</th>
                             <th>Expected Output</th>
-                            <th class="tagSQLColumn" style="display: none;">Tag SQL</th>
+<!--                            <th class="tagSQLColumn " style="display: none;">Tag SQL</th>-->
+                            <th class="tagSQLColumn hidden" data-sql>Tag SQL</th>
                         </tr>
                         </thead>
                         <tbody id="hiddenTestCasesContainer">
@@ -163,7 +167,7 @@
                                        placeholder="HiddenInput" ></td>
                             <td><input type="text" class="form-control" name="hiddenTestCases[0].expectedOutput"
                                        placeholder="HiddenExpected Output" ></td>
-                            <td><input type="text" class="form-control" name="hiddenTestCase[0].sqlTagNumber" placeholder="Tag SQL"></td>
+                            <td><input type="text" class="form-control" name="hiddenTestCase[0].sqlTagNumber" placeholder="Tag SQL" value=" "></td>
                         </tr>
                         </tbody>
                     </table>
@@ -190,13 +194,19 @@
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 <script src="https://cdn.ckeditor.com/4.20.2/standard/ckeditor.js"></script>
 <script>
+
+    // 1. Cấu hình CKEditor
+    // ==========================
     CKEDITOR.replace('description', {
         removePlugins: 'easyimage, cloudservices, toolbar, format, styles, link',
-        allowedContent: 'p; br; strong; em; u', // Chỉ cho phép các thẻ cơ bản (bỏ nếu muốn plain text)
+        allowedContent: 'p; br; strong; em; u', // Chỉ cho phép các thẻ cơ bản
         extraAllowedContent: '',
         enterMode: CKEDITOR.ENTER_BR
     });
 
+    // ==========================
+    // 2. Lấy dữ liệu dạng plain text từ CKEditor
+    // ==========================
     function getPlainTextFromCKEditor() {
         const editorData = CKEDITOR.instances.description.getData();
         const tempDiv = document.createElement('div');
@@ -204,6 +214,9 @@
         return tempDiv.textContent || tempDiv.innerText || '';
     }
 
+    // ==========================
+    // 3. Xử lý submit form
+    // ==========================
     $(document).ready(function () {
         let isSubmitting = false;
 
@@ -213,10 +226,12 @@
             isSubmitting = true;
             $("button[type=submit]").prop("disabled", true);
 
+            // Cập nhật nội dung CKEditor
             for (var instance in CKEDITOR.instances) {
                 CKEDITOR.instances[instance].updateElement();
             }
 
+            // Lấy plain text từ CKEditor
             const plainText = getPlainTextFromCKEditor();
             let formData = new FormData(this);
             formData.set('description', plainText); // Ghi đè description bằng plain text
@@ -240,32 +255,49 @@
         });
     });
 
+    // ==========================
+    // 4. Chuyển đổi giữa nhập test case bằng JSON hoặc UI
+    // ==========================
     function toggleTestCaseMethod() {
         const isJsonSelected = document.getElementById('jsonOption').checked;
         document.getElementById('jsonInputDiv').style.display = isJsonSelected ? 'block' : 'none';
         document.getElementById('uiInputDiv').style.display = isJsonSelected ? 'none' : 'block';
 
-        document.getElementById('testCases').required = isJsonSelected;
         document.getElementById('testCases').disabled = !isJsonSelected;
-
-        const manualFields = document.querySelectorAll('input[name^="testCaseFormList.testCasesList["], input[name^="hiddenTestCases["]');
-        manualFields.forEach(field => {
-            field.required = !isJsonSelected;
-            field.disabled = isJsonSelected;
-        });
     }
 
+    // ==========================
+    // 5. Thêm / Xóa test case
+    // ==========================
     function addTestCase(containerId) {
         let container = document.getElementById(containerId);
         let rowCount = container.children.length;
+        let isHiddenTestCase = containerId === 'hiddenTestCasesContainer';
+        let prefix = isHiddenTestCase ? 'hiddenTestCases' : 'testCaseFormList.testCasesList';
+
+        // Kiểm tra ngôn ngữ đang chọn
+        let languageSelect = document.getElementById("language");
+        let selectedLang = languageSelect.options[languageSelect.selectedIndex]?.text;
+        let isSQL = selectedLang === "SQL";
+
+        // Định nghĩa placeholder dựa vào loại test case
+        let inputPlaceholder = isHiddenTestCase ? "HiddenInput" : "Input";
+        let expectedOutputPlaceholder = isHiddenTestCase ? "HiddenExpectedOutput" : "Expected Output";
+        let sqlTagPlaceholder = isHiddenTestCase ? "HiddenTagSQL" : "Tag SQL";
+
         let newRow = document.createElement('tr');
-        let prefix = containerId === 'normalTestCasesContainer' ? 'testCaseFormList.testCasesList' : 'hiddenTestCases';
         newRow.innerHTML = `
-            <td><input type="text" class="form-control" name="${prefix}[${rowCount}].input" placeholder="Input" required></td>
-            <td><input type="text" class="form-control" name="${prefix}[${rowCount}].expectedOutput" placeholder="Expected Output" required></td>
-        `;
+        <td><input type="text" class="form-control" name="${prefix}[${rowCount}].input" placeholder="${inputPlaceholder}"></td>
+        <td><input type="text" class="form-control" name="${prefix}[${rowCount}].expectedOutput" placeholder="${expectedOutputPlaceholder}"></td>
+        ${isSQL ? `<td class="tagSQLColumn"><input type="text" class="form-control" name="${prefix}[${rowCount}].sqlTagNumber" placeholder="${sqlTagPlaceholder}"></td>` : ''}
+    `;
+
         container.appendChild(newRow);
     }
+
+
+
+
 
     function removeLastTestCase(containerId) {
         let container = document.getElementById(containerId);
@@ -274,6 +306,9 @@
         }
     }
 
+    // ==========================
+    // 6. Kiểm tra JSON hợp lệ trước khi submit
+    // ==========================
     document.querySelector('form').addEventListener('submit', function (event) {
         const isJsonSelected = document.getElementById('jsonOption').checked;
         if (isJsonSelected) {
@@ -287,147 +322,56 @@
         }
     });
 
-
-    //--------------- Xử lý  tqgSQL vs SetUpSQL
+    // ==========================
+    // 7. Xử lý khi chọn ngôn ngữ là SQL
+    // ==========================
     document.addEventListener("DOMContentLoaded", function () {
         const languageSelect = document.getElementById("language");
-        const testCaseMethodRadios = document.querySelectorAll('input[name="testCaseMethod"]');
-        const jsonInputDiv = document.getElementById("jsonInputDiv");
-        const uiInputDiv = document.getElementById("uiInputDiv");
-        const testCasesTextarea = document.getElementById("testCases");
-        const testCasesContainer = document.getElementById("testCasesContainer");
 
         function updateSQLUI() {
-            let selectedLang = languageSelect.options[languageSelect.selectedIndex]?.text;
-            let isSQL = selectedLang === "SQL";
+            const selectedLang = languageSelect.options[languageSelect.selectedIndex]?.text;
+            const isSQL = selectedLang === "SQL";
 
-            // ✅ Hiển thị Setup SQL nếu là SQL
             document.querySelectorAll("[data-sql]").forEach(el => {
                 el.classList.toggle("hidden", !isSQL);
-                let input = el.querySelector("input, textarea");
+                const input = el.querySelector("input, textarea");
                 if (input) {
-                    input.required = isSQL;
-                    input.value = isSQL ? input.value : "";
+                    if (!isSQL) {
+                        input.setAttribute("data-original-value", input.value);
+                        input.value = "";
+                        input.removeAttribute("placeholder");
+                    } else {
+                        input.value = input.getAttribute("data-original-value") || "";
+                        if (input.tagName.toLowerCase() === "textarea") {
+                            input.setAttribute("placeholder", "SQL setup...");
+                        }
+                    }
+                    input.required = false;
                 }
             });
 
-            // ✅ Hiển thị cột SQL Tag trong Test Cases nếu là SQL
             document.querySelectorAll(".tagSQLColumn").forEach(col => {
                 col.style.display = isSQL ? "table-cell" : "none";
             });
 
-            // ✅ Hiển thị ô nhập SQL Tag nếu là SQL
             document.querySelectorAll("input[name$='.sqlTagNumber']").forEach(input => {
                 input.parentElement.style.display = isSQL ? "table-cell" : "none";
-                input.required = isSQL;
-                if (!isSQL) input.value = "";
+                if (!isSQL) {
+                    input.setAttribute("data-original-value", input.value);
+                    input.value = "";
+                    input.removeAttribute("placeholder");
+                } else {
+                    input.value = input.getAttribute("data-original-value") || "";
+                    input.setAttribute("placeholder", "Tag SQL...");
+                }
+                input.required = false;
             });
         }
 
-
-        function toggleTestCaseMethod() {
-            const isJsonSelected = document.getElementById('jsonOption').checked;
-            jsonInputDiv.style.display = isJsonSelected ? 'block' : 'none';
-            uiInputDiv.style.display = isJsonSelected ? 'none' : 'block';
-
-            // ✅ Vô hiệu hóa hoặc bật input phù hợp
-            testCasesTextarea.required = isJsonSelected;
-            document.querySelectorAll('input[name^="testCaseFormList.testCasesList["]').forEach(field => {
-                field.required = !isJsonSelected;
-                field.disabled = isJsonSelected;
-            });
-
-            // ✅ Nếu chọn UI, kiểm tra xem có phải SQL không
-            updateSQLUI();
-        }
-
-        function convertUIToJson() {
-            const isJsonSelected = document.getElementById('jsonOption').checked;
-            if (!isJsonSelected) {
-                let testCasesArray = [];
-                document.querySelectorAll("#testCasesContainer tr").forEach(row => {
-                    let input = row.querySelector('input[name$=".input"]').value.trim();
-                    let expectedOutput = row.querySelector('input[name$=".expectedOutput"]').value.trim();
-                    let sqlTagNumber = row.querySelector('input[name$=".sqlTagNumber"]')?.value.trim() || null;
-
-                    let testCase = {input, expectedOutput};
-                    if (sqlTagNumber) testCase.sqlTagNumber = sqlTagNumber;
-                    testCasesArray.push(testCase);
-                });
-
-                // ✅ Chuyển danh sách test cases thành JSON string và đặt vào textarea
-                testCasesTextarea.value = JSON.stringify(testCasesArray, null, 2);
-            }
-        }
-
-        // ✅ Xử lý khi submit form
-        document.getElementById("create-ex-form").addEventListener("submit", function (event) {
-            if (!validateAndSubmit()) {
-                event.preventDefault();
-                return;
-            }
-            convertUIToJson();
-        });
-
-        // ✅ Cập nhật UI khi thay đổi ngôn ngữ hoặc chế độ nhập test case
         languageSelect.addEventListener("change", updateSQLUI);
-        testCaseMethodRadios.forEach(radio => radio.addEventListener("change", toggleTestCaseMethod));
-
-        // ✅ Chạy khi trang tải lần đầu
-        updateSQLUI();
-        toggleTestCaseMethod();
+        updateSQLUI(); // Gọi ngay khi trang tải
     });
 
-    function toggleTestCaseMethod() {
-        const isJsonSelected = document.getElementById('jsonOption').checked;
-        document.getElementById('jsonInputDiv').style.display = isJsonSelected ? 'block' : 'none';
-        document.getElementById('uiInputDiv').style.display = isJsonSelected ? 'none' : 'block';
-
-        // Lấy giá trị của ngôn ngữ hiện tại
-        let selectedLang = document.getElementById('language').options[document.getElementById('language').selectedIndex].text;
-        let isSQL = (selectedLang === "SQL");
-
-        // Lấy danh sách tất cả các input tagSQL
-        let tagSQLInputs = document.querySelectorAll('input[name^="testCaseFormList.testCasesList"][name$=".sqltagnumber"]');
-        tagSQLInputs.forEach(input => {
-            input.style.display = isSQL ? "block" : "none";
-            if (isSQL) {
-                input.setAttribute("required", "required");  // Bắt buộc nếu là SQL
-            } else {
-                input.removeAttribute("required");  // Không bắt buộc nếu không phải SQL
-            }
-        });
-
-        // Enable/disable fields based on selection
-        document.getElementById('testCases').required = isJsonSelected;
-        document.getElementById('testCases').disabled = !isJsonSelected;
-
-        const manualFields = document.querySelectorAll('input[name^="testCaseFormList.testCasesList["], input[name^="hiddenTestCases["]');
-        manualFields.forEach(field => {
-            field.required = !isJsonSelected;
-            field.disabled = isJsonSelected;
-        });
-    }
-
-    function removeLastTestCase(containerId) {
-        let container = document.getElementById(containerId);
-        if (container.children.length > 1) {
-            container.removeChild(container.lastElementChild);
-        }
-    }
-
-    document.querySelector('form').addEventListener('submit', function (event) {
-        const isJsonSelected = document.getElementById('jsonOption').checked;
-        if (isJsonSelected) {
-            const testCases = document.getElementById('testCases').value;
-            try {
-                JSON.parse(testCases);
-            } catch (e) {
-                event.preventDefault();
-                alert('Invalid JSON format. Please correct it before submitting.');
-            }
-        }
-    });
 
 
 
