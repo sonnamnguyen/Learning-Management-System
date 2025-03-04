@@ -2,11 +2,9 @@ package com.example.code_judgement.java_judge;
 
 import com.example.code_judgement.CodeExecutionService;
 import com.example.code_judgement.ExecutionResponse;
-import com.example.exercise.Exercise;
-import com.example.exercise.ExerciseService;
+import com.example.student_exercise_attemp.model.Exercise;
+import com.example.student_exercise_attemp.service.ExerciseService;
 import com.example.testcase.TestCase;
-import com.example.testcase.TestCaseResult;
-import com.example.testcase.TestCaseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +14,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Controller

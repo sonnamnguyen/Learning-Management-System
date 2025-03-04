@@ -2,9 +2,8 @@ package com.example.code_judgement.c_judge;
 
 import com.example.code_judgement.CodeExecutionService;
 import com.example.code_judgement.ExecutionResponse;
-import com.example.code_judgement.java_judge.JavaJudgementService;
-import com.example.exercise.Exercise;
-import com.example.exercise.ExerciseService;
+import com.example.student_exercise_attemp.model.Exercise;
+import com.example.student_exercise_attemp.service.ExerciseService;
 import com.example.testcase.TestCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

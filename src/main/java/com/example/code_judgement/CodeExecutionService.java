@@ -3,10 +3,10 @@ package com.example.code_judgement;
 
 import com.example.code_judgement.java_judge.JavaJudgementService;
 import com.example.code_judgement.languageFactory.ExecutionBasedLanguage;
-import com.example.exercise.Exercise;
-import com.example.exercise.ExerciseRepository;
-import com.example.student_exercise_attemp.StudentExerciseAttempt;
-import com.example.student_exercise_attemp.StudentExerciseAttemptService;
+import com.example.student_exercise_attemp.model.Exercise;
+import com.example.student_exercise_attemp.repository.ExerciseRepository;
+import com.example.student_exercise_attemp.model.StudentExerciseAttempt;
+import com.example.student_exercise_attemp.service.StudentExerciseAttemptService;
 import com.example.testcase.TestCase;
 import com.example.testcase.TestCaseResult;
 import com.example.testcase.TestCaseService;

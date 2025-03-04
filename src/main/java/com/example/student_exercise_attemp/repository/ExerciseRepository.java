@@ -1,6 +1,6 @@
-package com.example.exercise;
+package com.example.student_exercise_attemp.repository;
 
-import com.example.testcase.TestCase;
+import com.example.student_exercise_attemp.model.Exercise;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
