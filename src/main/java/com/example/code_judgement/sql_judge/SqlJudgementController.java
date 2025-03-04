@@ -29,7 +29,9 @@ public class SqlJudgementController {
                                Model model) {
         Exercise exercise = exerciseService.getExerciseById(exerciseId)
                 .orElseThrow(()-> new IllegalArgumentException("Invalid exercise ID"));
-        List<TestCase> testCases = exercise.getTestCases();
+        List<TestCase> testCases = exercise.getTestCases().stream().filter(testCase -> !testCase.isHidden()).toList();
+
+
         if(testCases.isEmpty()) {
             model.addAttribute("exercise", exercise);
             model.addAttribute("code", code);
