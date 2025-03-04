@@ -3,6 +3,7 @@ package com.example.course;
 import com.example.course.section.Section;
 
 import com.example.course.tag.Tag;
+import com.example.quiz.model.Quiz;
 import com.example.user.User;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
@@ -76,5 +77,13 @@ public class Course {
     @Override
     public String toString() {
         return name;
+    }
+
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Quiz> quizzes;
+    // group 1
+    public void addQuiz(Quiz quiz) {
+        quizzes.add(quiz);
+        quiz.setCourse(this);
     }
 }

@@ -25,8 +25,8 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
 
     List<Question> findByQuizzes_Name(String name);
 
-
-    @Query("SELECT q FROM Assessment a JOIN a.questions q LEFT JOIN FETCH q.answerOptions WHERE a.id = :assessmentId")
-    List<Question> findQuestionsWithAnswersByAssessmentId(@Param("assessmentId") Long assessmentId);
+    @Query("SELECT q FROM Question q JOIN FETCH q.answerOptions WHERE q.id IN " +
+            "(SELECT aq.question.id FROM AssessmentQuestion aq WHERE aq.assessment.id = :id)")
+    List<Question> findQuestionsWithAnswersByAssessmentId(@Param("id") Long id);
 
 }

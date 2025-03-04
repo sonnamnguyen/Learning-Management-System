@@ -1,12 +1,21 @@
 package com.example.assessment.service;
 
 import com.example.assessment.model.Assessment;
+import com.example.assessment.model.StudentAssessmentAttempt;
 import com.example.assessment.repository.AssessmentRepository;
+import com.example.assessment.repository.StudentAssessmentAttemptRepository;
 import com.example.course.Course;
 import com.example.course.CourseService;
+import com.example.exercise.Exercise;
+import com.example.exercise.ExerciseRepository;
+import com.example.exercise.ExerciseService;
 import com.example.user.User;
+import com.example.user.UserRepository;
 import com.example.user.UserService;
 import com.google.gson.Gson;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.transaction.Transactional;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.hashids.Hashids;
@@ -34,12 +43,16 @@ public class AssessmentService {
 
     @Autowired
     private AssessmentRepository assessmentRepository;
-
+    @Autowired
+    private ExerciseRepository exerciseRepository;
     @Autowired
     private UserService userService;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private StudentAssessmentAttemptRepository attemptRepository;
 
     @Autowired
     private CourseService courseService;
@@ -49,18 +62,32 @@ public class AssessmentService {
 
     //Hashids to hash the assessment id
     private Hashids hashids = new Hashids("BaTramBaiCodeThieuNhi", 32);
+    @Autowired
+    private UserRepository userRepository;
 
-    //   phần create ass mới
-    //   phần create ass mớimai
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    @Transactional
+    public void alignSequence() {
+        Object maxId = entityManager.createQuery("SELECT MAX(i.id) FROM InvitedCandidate i").getSingleResult();
+        if (maxId != null) {
+            entityManager.createNativeQuery("SELECT setval('assessment_id_seq', :newValue, true)")
+                    .setParameter("newValue", ((Number) maxId).longValue())
+                    .getSingleResult();
+        }
+    }
+    @Transactional
+    public void alignSequenceForAssessmentQuestion() {
+        Object maxId = entityManager.createQuery("SELECT MAX(aq.id) FROM AssessmentQuestion aq").getSingleResult();
+        if (maxId != null) {
+            entityManager.createNativeQuery("SELECT setval('assessment_question_id_seq', :newValue, true)")
+                    .setParameter("newValue", ((Number) maxId).longValue())
+                    .getSingleResult();
+        }
+    }
     public Assessment createAssessment(Assessment assessment) {
-//        Assessment newAssessment = Assessment.builder()
-//                .course(assessment.getCourse())
-//                .title(assessment.getTitle())
-//                .assessmentType(assessment.getAssessmentType())
-//                .timeLimit(assessment.getTimeLimit())
-//                .totalScore(assessment.getTotalScore())
-//
-//                .build();
+
         return assessmentRepository.save(assessment);
     }
 
@@ -70,13 +97,15 @@ public class AssessmentService {
 
     private final String SECRET_KEY = "BaTramBaiCodeThieuNhi";
 
-   // private final String inviteUrlHeader = "https://group-02.cookie-candy.id.vn/assessments/invite/";
-   private final String inviteUrlHeader = "http://localhost:9091/assessments/invite/";
+    // private final String inviteUrlHeader = "https://group-02.cookie-candy.id.vn/assessments/invite/";
+    private final String inviteUrlHeader = "http://localhost:9091/assessments/invite/";
+
     //  private final String inviteUrlHeader = "https://java02.fsa.io.vn/assessments/invite/";
     public Optional<Assessment> findById(Long id) {
         return assessmentRepository.findById(id);
     }
 
+    @Transactional
     public Assessment save(Assessment assessment) {
         return assessmentRepository.save(assessment);
     }
@@ -214,16 +243,15 @@ public class AssessmentService {
         Set<String> updatedEmails = new HashSet<>(existingEmails);
         updatedEmails.addAll(newEmails);
 
-        // Debugging logs
-        System.out.println("System Timezone: " + ZoneId.systemDefault());
-        System.out.println("Current Time: " + LocalDateTime.now());
-        System.out.println("Vietnam Time: " + ZonedDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")));
-        System.out.println("Invitation Date (Before Storing): " + invitationDate);
-        System.out.println("Expiration Date (Before Storing): " + expirationDate);
+        ZoneId vietnamZone = ZoneId.of("Asia/Ho_Chi_Minh");
 
-        // Convert LocalDateTime directly to Timestamp (No need for extra timezone conversions)
-        Timestamp invitationTimestamp = Timestamp.valueOf(invitationDate);
-        Timestamp expirationTimestamp = Timestamp.valueOf(expirationDate);
+        // Convert LocalDateTime to ZonedDateTime (GMT+7)
+        ZonedDateTime invitationZoned = invitationDate.atZone(ZoneId.systemDefault()).withZoneSameInstant(vietnamZone);
+        ZonedDateTime expirationZoned = expirationDate.atZone(ZoneId.systemDefault());
+
+        // Convert ZonedDateTime to Timestamp
+        Timestamp invitationTimestamp = Timestamp.valueOf(invitationZoned.toLocalDateTime());
+        Timestamp expirationTimestamp = Timestamp.valueOf(expirationZoned.toLocalDateTime());
 
         for (String email : newEmails) {
             Integer count = jdbcTemplate.queryForObject(
@@ -244,7 +272,6 @@ public class AssessmentService {
             }
         }
     }
-
 
 
     /**
@@ -274,10 +301,10 @@ public class AssessmentService {
     }
 
     public long[] decodeId(String hash) {
-         return hashids.decode(hash);
+        return hashids.decode(hash);
     }
 
-    public String generateInviteLink(long id){
+    public String generateInviteLink(long id) {
         return inviteUrlHeader + encodeId(id) + "/take";
     }
 
@@ -285,4 +312,33 @@ public class AssessmentService {
         return assessmentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Assessment not found!"));
     }
+
+    public List<Exercise> getExercisesByAssessmentId(Long assessmentId) {
+        return exerciseRepository.findExercisesByAssessmentId(assessmentId);
+    }
+
+    public void createAssessmentAttempt(Long assessmentId, String email) {
+        Assessment assessment = assessmentRepository.findById(assessmentId)
+                .orElseThrow(() -> new IllegalArgumentException("Assessment not found"));
+
+        StudentAssessmentAttempt attempt = new StudentAssessmentAttempt();
+        attempt.setAttemptDate(LocalDateTime.now());
+        attempt.setDuration(0);
+        attempt.setEmail(email);
+        attempt.setProctored(false);
+        attempt.setSubmitted(false);
+        attempt.setNote(null);
+        attempt.setProctoringData(null);
+        attempt.setScoreAss(0);
+        attempt.setScoreQuiz(0);
+        attempt.setAssessment(assessment);
+        userRepository.findByEmail(email).ifPresent(attempt::setUser);
+
+        attemptRepository.save(attempt);
+    }
+
+    public long countAttemptsByAssessmentId(Long assessmentId) {
+        return attemptRepository.countByAssessmentId(assessmentId);
+    }
+
 }

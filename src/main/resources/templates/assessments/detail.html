@@ -84,11 +84,11 @@
                 </div>
                 <div class="card-body" style="max-height: 300px; overflow-y: auto;">
                     <ul class="list-group">
-                        <li class="list-group-item" th:each="question, iterStat : ${assessment.questions}">
+                        <li class="list-group-item" th:each="question, iterStat : ${questions}">
                             <span th:text="${iterStat.count}"></span>.
                             <span th:utext="${question.questionText}"></span>
                         </li>
-                        <li class="list-group-item text-muted" th:if="${#lists.isEmpty(assessment.questions)}">
+                        <li class="list-group-item text-muted" th:if="${#lists.isEmpty(questions)}">
                             No questions assigned.
                         </li>
                     </ul>
@@ -127,8 +127,8 @@
                     <td th:text="${attempt.scoreQuiz}"></td>
                     <td th:text="${attempt.scoreAss}"></td>
                     <td>
-                        <a th:href="@{'/assessments/attempt/' + ${attempt.id}}"
-                           class="btn btn-sm btn-outline-primary">View</a>
+                        <a  th:href="@{/assessments/viewReport/{assessmentId}(assessmentId=${assessment.id}, attempt-id=${attempt.id})}"
+                            class="btn btn-sm btn-outline-primary">View</a>
                     </td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(registeredAttempts)}">

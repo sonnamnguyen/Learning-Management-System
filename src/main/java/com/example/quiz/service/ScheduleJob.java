@@ -40,4 +40,18 @@ public class ScheduleJob {
 
         scheduler.scheduleJob(jobDetail, trigger);
     }
+    public void scheduleClearCacheJob(Long quizId, LocalDateTime clearTime) throws SchedulerException {
+        JobDetail jobDetail = JobBuilder.newJob(QuizCacheClearJob.class)
+                .withIdentity("quizCacheClearJob-" + quizId, "quizJobs")
+                .usingJobData("quizId", quizId)
+                .build();
+
+        Trigger trigger = TriggerBuilder.newTrigger()
+                .withIdentity("quizCacheClearTrigger-" + quizId, "quizTriggers")
+                .startAt(Date.from(clearTime.atZone(java.time.ZoneId.systemDefault()).toInstant()))
+                .build();
+
+        scheduler.scheduleJob(jobDetail, trigger);
+    }
+
 }

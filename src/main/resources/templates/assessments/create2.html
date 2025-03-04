@@ -38,7 +38,7 @@
         #scrollToTopButton {
             position: fixed;
             bottom: 3vh;
-            right: 20px;
+            right: 10px;
             display: none; /* Bắt đầu ẩn */
             width: 50px;
             height: 50px;
@@ -59,7 +59,50 @@
             opacity: 1; /* Tăng độ rõ */
             background: linear-gradient(45deg, #2575fc, #6a11cb); /* Đảo gradient khi hover */
         }
+        .select-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
 
+        .select-wrapper select {
+            width: 100%;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            padding-right: 30px; /* Adjust as needed */
+        }
+
+        .select-wrapper .select-arrow {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+
+
+        .no-wrap-label {
+            white-space: nowrap;
+        }
+
+        .btn.saved { /* Class 'saved' áp dụng cho bất kỳ nút nào có class 'btn' */
+            background-color: #5cb85c; /* Màu nền xanh lá cây cho trạng thái đã lưu */
+            border-color: #4cae4c;
+            color: white;
+        }
+
+        .btn-primary:hover:not(.saved) { /* Hover cho nút btn-primary khi KHÔNG ở trạng thái 'saved' */
+            background-color: #0b5ed7; /* Màu hover xanh dương đậm hơn một chút, ví dụ */
+            border-color: #0a58ca;
+            color: white;
+        }
+
+        .btn.saved:hover { /* Hover cho nút khi ở trạng thái 'saved' (màu xanh lá cây) */
+            background-color: #4cae4c; /* Màu hover xanh lá cây đậm hơn nữa */
+            border-color: #3d8b3d;
+            color: white;
+        }
         /* Adjust max-height for medium-sized screens */
         @media (max-width: 1200px) {
             .scrollable-table {
@@ -85,70 +128,89 @@
 </style>
 
 <body>
-
 <div th:replace="~{fragments :: header}" class="sticky-top"></div> <!-- Header always on top -->
+
+
 
 <div class="mt-3" id="mainContentArea">
 
 
-    <h1 class="text-center mt-2">
-        Assessment
-    </h1>
+    <a href="/assessments" class=" btn-outline-secondary btn-sm rounded mx-2" style="padding: 0.5rem 1rem; border-width: 1px; font-size: 0.9rem; color: #777; border-color: #ccc; transition: all 0.3s ease; /* Thêm transition cho hiệu ứng mượt */"
+       onmouseover="this.style.backgroundColor='#f8f9fa'; this.style.borderColor='#bbb'; this.style.color='#555';"
+       onmouseout="this.style.backgroundColor='transparent'; this.style.borderColor='#ccc'; this.style.color='#777';">
+        <i class="fas fa-arrow-left" style="margin-right: 0.5rem;"></i> Back to List
+    </a>
+
+
     <head>
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/5.1.3/css/bootstrap.min.css">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     </head>
 
-    <div class="container mt-4">
-        <h2 class="text-center mb-4">Create New Assessment</h2>
+    <div class="container mt-1">
         <form method="POST" th:action="@{/assessments/create}" th:object="${assessment}" id="assessment-form" >
+
             <input type="hidden" name="csrfmiddlewaretoken" value="GIF6HSeEVpwBn48uJuRZ00xfC9yYxY6L3rEFxKHZoLVncpHCyfwfsOKrOyYPlSzx">
             <input type="hidden" th:field="*{createdBy}" th:value="${currentUser.username}" />
+            <!-- Title -->
 
-            <div class="card mb-4 shadow">
-                <div class="card-header bg-primary text-white">
-                    <h4>Assessment Details</h4>
+            <div class="col-md-4 mt-4 d-flex align-items-center m-0">
+                <label for="id_title" class="form-label me-2">Title:</label>
+                <input th:field="*{title}" type="text" name="title" class="form-control" placeholder="Enter assessment title" maxlength="255" required id="id_title">
+                <div class="text-danger" th:if="${duplicateTitleError}" th:text="${duplicateTitleError}"></div>
+            </div>
 
+            <div class="d-flex justify-content-end mb-2">  <!-- Thay đổi class thành 'd-flex justify-content-between' và thêm 'mb-3' -->
+
+                <button type="submit" class="btn btn-outline-success btn-sm rounded mx-2" style="padding: 0.5rem 1rem; border-width: 1px; font-size: 0.9rem; color: #5cb85c; border-color: #5cb85c; transition: all 0.3s ease; /* Thêm transition cho hiệu ứng mượt */"
+                        onmouseover="this.style.backgroundColor='#e2f0e2'; this.style.borderColor='#4cae4c'; this.style.color='#3d8b3d';"
+                        onmouseout="this.style.backgroundColor='transparent'; this.style.borderColor='#5cb85c'; this.style.color='#5cb85c';">
+                    <i class="fas fa-save" style="margin-right: 0.5rem;"></i> Save Assessment
+                </button>
+            </div>
+            <div class="card mb-1 shadow">
+                <div class="card-header
+                 text-black">
+                    <h4>Create Assessment</h4>
                 </div>
+
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <label for="id_assessment_type" class="form-label">Assessment Type</label>
-                            <select th:field="*{assessmentType}" name="assessment_type" class="form-control" placeholder="Select assessment type" required id="id_assessment_type">
-                                <option value="" selected>---------</option>
-                                <th:block th:each="assessmentType : ${assessmentTypes}">
-                                    <option th:value="${assessmentType.id}" th:text="${assessmentType.name}"></option>
-                                </th:block>
-                            </select>
-
+                    <div class="row justify-content-around">
+                        <div class="col-md-4  d-flex align-items-center m-0">
+                            <label for="id_assessment_type" class="form-label me-2 no-wrap-label">Assessment Type: </label>
+                            <div class="select-wrapper">  <!-- Add this wrapper -->
+                                <select th:field="*{assessmentType}" name="assessment_type" class="form-control" placeholder="Select assessment type" required id="id_assessment_type">
+                                    <th:block th:each="assessmentType : ${assessmentTypes}">
+                                        <option th:value="${assessmentType.id}" th:text="${assessmentType.name}"
+                                                th:selected="${assessmentType.name == 'Quiz'}"></option>
+                                    </th:block>
+                                </select>
+                                <i class="bi bi-chevron-down select-arrow"></i> <!-- Bootstrap Icon -->
+                            </div>
                         </div>
-                        <div class="col-md-4">
-                            <label for="id_title" class="form-label">Title</label>
-                            <input th:field="*{title}" type="text" name="title" class="form-control" placeholder="Enter assessment title" maxlength="255" required id="id_title">
-                            <div class="text-danger" th:if="${duplicateAss}" th:text="${duplicateAss}"></div>
 
-                        </div>
-                        <div class="col-md-4">
-                            <label for="id_course" class="form-label">Course</label>
-                            <select th:field="*{course}" name="course" class="form-control" style="width: 100%;" required id="id_course">
-                                <option value="" selected>---------</option>
 
-                                <th:block  th:each= "course : ${courses}" >
-                                    <option th:value="${course.id}" th:text="${course.name}"></option>
-                                </th:block>
+                        <div class="col-md-4  d-flex align-items-center m-0">
+                            <label for="id_course" class="form-label me-2">Course: </label>
+                            <div class="select-wrapper">  <!-- Add this wrapper -->
+                                <select th:field="*{course}" name="course" class="form-control" style="width: 100%;" required id="id_course">
+                                    <option value="" selected>All Course</option>
 
-                            </select>
+                                    <th:block  th:each= "course : ${courses}" >
+                                        <option th:value="${course.id}" th:text="${course.name}"></option>
+                                    </th:block>
 
+                                </select>
+                                <i class="bi bi-chevron-down select-arrow"></i> <!-- Bootstrap Icon -->
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-
+            <!--cudamsamset-->
             <div class="card mb-4 shadow">
-                <div class="card-header bg-secondary text-white">
-                    <h4>Exercises/Questions/Settings</h4>
-                </div>
+
                 <div class="card-body">
                     <ul class="nav nav-tabs" id="myTab" role="tablist">
                         <li class="nav-item" role="presentation">
@@ -160,36 +222,41 @@
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab" aria-controls="settings" aria-selected="false">Settings</button>
                         </li>
+
+
                     </ul>
+
+
 
                     <div class="tab-content mt-3" id="myTabContent">
                         <!-- Exercises Tab -->
-                            <div class="tab-pane fade show active p-3" id="exercises" role="tabpanel" aria-labelledby="exercises-tab">
-                                <div class="row">
-                                    <div class="col-md-12">
-                                        <div class="mb-3 d-flex align-items-center">
-                                            <div style="max-width: 80px; margin-right: 10px;">
-                                                <select name="language" id="id_language" class="form-select" onchange="filterExercises()">
-                                                    <option value="">All</option>
-                                                    <th:block th:each="language : ${languages}">
-                                                        <option th:value="${language.language.toLowerCase()}"
-                                                        th:text="${#strings.capitalize(language.language)}"
-                                                        >
-                                                        </option>
-                                                    </th:block>
-                                                </select>
-                                            </div>
-                                            <div class="flex-grow-1 d-flex align-items-center">
-                                                <input type="text" id="search-exercises" class="form-control" placeholder="Search for exercises..." onkeyup="filterExercises()">
-                                            </div>
+                        <div class="tab-pane fade show active p-3" id="exercises" role="tabpanel" aria-labelledby="exercises-tab">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="mb-3 d-flex align-items-center">
+                                        <div style="max-width: 110px; margin-right: 10px; position: relative;">
+                                            <i class="fas fa-filter" style="position: absolute; top: 50%; left: 5px; transform: translateY(-50%);"></i>
+                                            <select name="language" id="id_language" class="form-select" style="padding-left: 18px; text-indent: 5px;"    onchange="filterExercises()">
+                                                <option value="">   All</option>
+                                                <th:block th:each="language : ${languages}">
+                                                    <option th:value="${language.language.toLowerCase()}"
+                                                            th:text="${#strings.capitalize(language.language)}"
+                                                    >
+                                                    </option>
+                                                </th:block>
+                                            </select>
+                                        </div>
+                                        <div class="flex-grow-1 d-flex align-items-center">
+                                            <input type="text" id="search-exercises" class="form-control" placeholder="Search for exercises..." onkeyup="filterExercises()">
                                         </div>
                                     </div>
+                                </div>
                                 <div class="col-md-6">
                                     <h5 class="fw-bold text-dark border-bottom pb-1 mb-2">Exercises</h5>
                                     <div id="exercise-list" class="list-group overflow-auto border" style="max-height: 300px;">
                                         <th:block th:each="exercise : ${exercises}">
                                             <div class="list-group-item exercise-item d-flex align-items-center" th:data-exercise-id="${exercise.id}">
-                                                <input class="form-check-input me-2" type="checkbox" name="exercises" th:value="${exercise.id}" th:id="'exercise-' + ${exercise.id}" >                                                <label class="form-check-label" th:for="'exercise-' + ${exercise.id}" th:text="${exercise.name}"></label>
+                                                <input class="form-check-input me-2" type="checkbox" name="exercises" th:value="${exercise.id}" th:id="'exercise-' + ${exercise.id}" onclick="/*updateSaveButtonState()*/" >                                                <label class="form-check-label" th:for="'exercise-' + ${exercise.id}" th:text="${exercise.name}"></label>
                                                 <span class="badge rounded-pill bg-light text-dark small ms-auto border border-primary" th:text="${exercise.language}"></span>
                                                 <button type="button" class="btn btn-link text-secondary view-button ms-2" th:onclick="'toggleViewButton(this, ' + ${exercise.id} + ')'">
                                                     <i class="bi bi-eye-slash"></i>
@@ -199,7 +266,7 @@
                                     </div>
                                     <div id="filtered-exercises" class="list-group overflow-auto border" style="max-height: 300px; display: none;"></div>
                                 </div>
-                                <div class="col-md-6">F
+                                <div class="col-md-6">
                                     <h5 class="fw-bold text-dark border-bottom pb-1 mb-2">Preview Selected Exercise</h5>
                                     <div id="exercise-content" class="border p-2 overflow-auto" style="max-height: 300px;">
                                         <p>Select an exercise from the list to preview its content here.</p>
@@ -265,22 +332,22 @@
                                                                 <!-- Thymeleaf loop to iterate through questions within each quiz -->
                                                                 <li class="list-group-item d-flex align-items-start justify-content-between shadow-sm"
                                                                     th:each="question : ${quizQuestionsMap.get(quiz.id)}">
-                                                                    <div class="d-flex flex-column"> <!- - ADDED this div with flex-column -->
+                                                                    <div class="d-flex flex-row  justify-content-between align-items-center" style="width: 100%;"> <!- - ADDED this div with flex-column -->
                                                                         <!-- Dynamic question text using Thymeleaf -->
                                                                         <span class="question-text" th:utext="${question.questionText}">
                                             Question Text (will be replaced by dynamic data)
                                         </span>
-                                                                        <div class="answer-options bg-success-subtle">
+                                                                        <div class="answer-options bg-success-subtle d-none">  <!-- ADDED d-none CLASS HERE -->
+
                                                                             <div th:each="answerOption : ${questionAnswerOptionsMap.get(question.id)}" class="answer-option">
-                                                                                <span th:text="${answerOption.optionText}"></span>
-                                                                                <span th:if="${answerOption.isCorrect}" class="text-success">(Correct)</span>
-                                                                                <span th:unless="${answerOption.isCorrect}" class="text-danger">(Incorrect)</span>
+                                                                              <span th:text="${answerOption.optionText}"
+                                                                                    th:class="${answerOption.isCorrect ? 'text-success' : 'text-dark'}">  <!-- Conditional class here -->
+        </span>
                                                                             </div>
-                                                                        </div>
-                                                                    </div> <!- - END of ADDED div -->
-                                                                    <!-- Add question button with dynamic question ID -->
-                                                                    <button class="btn btn-sm btn-primary add-question align-self-center" th:data-question-id="${question.id}">+</button>
-                                                                    <div class="answer-options bg-success-subtle d-none">
+
+                                                                        </div> <!- - END of ADDED div -->
+                                                                        <!-- Add question button with dynamic question ID -->
+                                                                        <button class="btn btn-sm btn-primary add-question align-self-center" th:data-question-id="${question.id}">+</button>
                                                                         <!-- Answer options are hidden in library -->
                                                                     </div>
                                                                 </li>
@@ -295,9 +362,9 @@
 
                                 <div class="col-md-7">
                                     <div class="card shadow-sm hover-shadow">
-                                        <div class="card-header">
+                                        <div class="card-header d-flex justify-content-between align-items-center"> <!-- ADDED d-flex justify-content-between align-items-center -->
                                             <h5 class="mb-0">Selected Questions</h5>
-                                        </div>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-randomize-order"> <i class="fas fa-random me-2"></i> Randomize Order</button>                                     </div>
                                         <div class="card-body" style="max-height: 800px; overflow-y: auto;">
                                             <ul class="list-group" id="selected-questions">
                                                 <!-- Selected questions will be added here -->
@@ -340,10 +407,7 @@
             </div>
 
 
-            <div class="text-center">
-                <button type="submit" class="btn btn-success">Save Assessment</button>
-                <a href="/assessments" class="btn btn-secondary">Back to List</a>
-            </div>
+
         </form>
     </div>
 
@@ -352,18 +416,23 @@
     </div>
 
     <script>
+
+
         document.addEventListener('DOMContentLoaded', function () {
+
+
             const addQuestionButtons = document.querySelectorAll('.add-question');
             const selectedQuestionsList = document.getElementById('selected-questions');
+            const randomizeOrderButton = document.getElementById('btn-randomize-order'); // Get the randomize button
 
             const buttonContainer = document.createElement('div');
-            buttonContainer.className = 'd-flex justify-content-end mt-3';
+            // buttonContainer.className = 'd-flex justify-content-end mt-3';
 
             const saveButton = document.createElement('button');
-            saveButton.className = 'btn btn-success btn-sm';
-            saveButton.innerText = 'Save Selections';
-            saveButton.style.display = 'none';
-            buttonContainer.appendChild(saveButton);
+            // saveButton.className = 'btn btn-success btn-sm';
+            // saveButton.innerText = 'Save Selections';
+            // saveButton.style.display = 'none';
+            // buttonContainer.appendChild(saveButton);
             selectedQuestionsList.parentElement.appendChild(buttonContainer);
             const exerciseCheckboxes = document.querySelectorAll('input[name="exercises"]:checked');
 
@@ -390,6 +459,7 @@
                         if (selectedQuestionsList.children.length === 0) {
                             saveButton.style.display = 'none'; // Hide save button if no questions left
                         }
+                        // updateSaveButtonState(); //NO NEED
                     }
                 }
             });
@@ -397,6 +467,32 @@
 
 
             const questionMap = new Map();
+
+
+            function randomizeQuestionOrder() {
+                const list = selectedQuestionsList;
+                const items = Array.from(list.children); // Get list items and convert to array
+
+                if (items.length <= 1) {
+                    return; // No need to randomize if 0 or 1 item
+                }
+
+                // Fisher-Yates (Knuth) Shuffle Algorithm
+                for (let i = items.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [items[i], items[j]] = [items[j], items[i]]; // Swap elements
+                }
+
+                // Re-append shuffled items to the list
+                list.innerHTML = ''; // Clear the list
+                items.forEach(item => list.appendChild(item)); // Append in new order
+
+                updateQuestionNumbers(); // Re-number the questions
+            }
+
+            randomizeOrderButton.addEventListener('click', randomizeQuestionOrder); // Event listener for randomize button
+
+
             const quizDropdowns = document.querySelectorAll('.quiz-dropdown');
             quizDropdowns.forEach(dropdown => {
                 dropdown.addEventListener('click', function (event) {
@@ -415,6 +511,7 @@
                     }
                 });
 
+
                 // Optional: Add functionality to the Add All button
                 const addAllButton = dropdown.querySelector('.btn-add-question');
             });
@@ -422,43 +519,47 @@
 
             addQuestionButtons.forEach(button => {
                 button.addEventListener('click', function (event) {
-                    try { // <--- ADD THIS TRY BLOCK
+                    try {
                         event.preventDefault();
                         event.stopPropagation();
+                        // updateSaveButtonState();//NO NEED
 
                         const questionId = this.dataset.questionId;
                         const questionTextElement = this.parentElement.querySelector('.question-text');
                         questionTextElement.classList.add('fw-normal');
                         const questionText = questionTextElement.innerHTML;
-                        const answerOptions = Array.from(this.parentElement.querySelectorAll('.answer-option'));
+
+                        // **Correctly select answer options by finding the hidden container first**
+                        const hiddenAnswerOptionsContainer = this.parentElement.querySelector('.answer-options');
+                        const answerOptions = Array.from(hiddenAnswerOptionsContainer.querySelectorAll('.answer-option'));
 
                         // Kiểm tra nếu câu hỏi đã có trong danh sách
                         if (questionMap.has(questionId)) {
-                            // Question already exists, maybe update? For now, do nothing to keep it simple.
-                            // You could implement update logic here if needed.
                             return;
                         } else {
                             // Tạo mục mới cho câu hỏi đã chọn
                             const listItem = document.createElement('li');
                             listItem.dataset.order = selectedQuestionsList.children.length + 1;
                             listItem.className = 'list-group-item d-flex align-items-center justify-content-between';
-
+                            // Thêm style trực tiếp vào listItem.style
+                            listItem.style.border = '2px solid #ced4da'; // Thêm viền solid, màu xám nhạt
+                            listItem.style.borderRadius = '0.25rem'; // Thêm bo tròn góc nhẹ (tùy chọn)
                             listItem.innerHTML = `
                     <div class="question-content flex-grow-1">
-                        <div class="question-input" style="padding: 8px;">
+                        <div class="question-input" style="padding: 8px; font-size: 1.1rem; border: 1px solid #ced4da; border-radius: 0.25rem; font-weight: 800;">
                             ${questionText}
                         </div>
                         <div id="answerOptionsContainer" class="mt-2"></div>
                     </div>
                     <div class="actions d-flex flex-column align-items-center" style="margin-left: 10px; gap: 5px;">
                         <i class="fas fa-trash-alt remove-question text-danger" data-question-id="${questionId}" title="Remove question" style="cursor: pointer; font-size: 1.1rem;"></i>
-                        <button class="move-up btn btn-light btn-sm d-flex justify-content-center align-items-center rounded-circle" style="width: 30px; height: 30px; font-size: 0.9rem;">
+                        <button type="button"  class="move-up btn btn-light btn-sm d-flex justify-content-center align-items-center rounded-circle" style="width: 30px; height: 30px; font-size: 0.9rem;">
                             <i class="fas fa-arrow-up" style="font-size: 0.8rem;"></i>
                         </button>
                         <span class="question-number d-flex justify-content-center align-items-center" style="font-size: 0.9rem; width: 30px; height: 30px; border-radius: 50%; background-color: #f8f9fa; color: #6c757d; font-weight: bold;">
                             ${listItem.dataset.order}
                         </span>
-                        <button class="move-down btn btn-light btn-sm d-flex justify-content-center align-items-center rounded-circle" style="width: 30px; height: 30px; font-size: 0.9rem;">
+                        <button type="button" class="move-down btn btn-light btn-sm d-flex justify-content-center align-items-center rounded-circle" style="width: 30px; height: 30px; font-size: 0.9rem;">
                             <i class="fas fa-arrow-down" style="font-size: 0.8rem;"></i>
                         </button>
                     </div>
@@ -471,57 +572,40 @@
                             const answerOptionsContainer = listItem.querySelector('#answerOptionsContainer');
                             answerOptions.forEach(optionElement => {
                                 const optionText = optionElement.querySelector('span:first-child').textContent;
-                                let correctnessSpan = optionElement.querySelector('span:nth-child(2)');
+
+                                // **CORRECTED LINE: Select the FIRST span and check its classList directly**
+                                const correctnessSpan = optionElement.querySelector('span:first-child'); // Select the first (and only) span
                                 let correctnessClass = '';
-                                let correctnessText = '';
+
                                 if (correctnessSpan) {
-                                    if (correctnessSpan.classList.contains('text-success')) {
+                                    if (correctnessSpan.classList.contains('text-success')) { // Check classList of the span directly
                                         correctnessClass = 'text-success';
-                                        correctnessText = '(Correct)';
-                                    } else if (correctnessSpan.classList.contains('text-danger')) {
-                                        correctnessClass = 'text-danger';
-                                        correctnessText = '(Incorrect)';
+                                    } else if (correctnessSpan.classList.contains('text-dark')) {
+                                        correctnessClass = 'text-dark';
+                                    } else {
+                                        correctnessClass = 'text-dark'; // Default if no correctness class found
                                     }
+                                } else {
+                                    correctnessClass = 'text-dark'; // Default if no span found (shouldn't happen based on HTML)
                                 }
 
                                 const optionDiv = document.createElement('div');
-                                optionDiv.className = 'answer-option bg-success-subtle p-2 mb-1 rounded shadow-sm'; // Added styling
+                                optionDiv.className = 'answer-option p-2 mb-1 rounded shadow-sm'; // KEEP THESE CLASSES
+
+                                // **ADD CLASS FOR CORRECT ANSWER OPTION DIV**
+                                if (correctnessClass === 'text-success') {
+                                    optionDiv.classList.add('correct-answer-option'); // Add the new class
+                                }
+
                                 optionDiv.innerHTML = `
-                                <span>${optionText}</span>
-                                <span class="${correctnessClass} ms-1">${correctnessText}</span>
-                            `;
+                        <span class="${correctnessClass}">${optionText}</span>
+                        ${correctnessClass === 'text-success' ? '<span class="text-success">     (is correct)</span>' : ''}
+                    `;
                                 answerOptionsContainer.appendChild(optionDiv);
                             });
 
 
 
-
-
-
-
-
-                            document.getElementById('assessment-form').addEventListener('submit', function(event) {
-                                // ... (code to remove existing hidden inputs) ...
-
-                                // **2. Add hidden input fields for selected exercise IDs**
-                                window.selectedExerciseIds.forEach(exerciseId => {
-                                    const hiddenInput = document.createElement('input');
-                                    hiddenInput.type = 'hidden';
-                                    hiddenInput.name = 'exercises-ids'; // **Correct name: exercises-ids**
-                                    hiddenInput.value = exerciseId;
-                                    document.getElementById('assessment-form').appendChild(hiddenInput);
-                                });
-
-                                // **3. Add hidden input fields for selected question IDs**
-                                window.selectedQuestionIds.forEach(questionId => {
-                                    const hiddenInput = document.createElement('input');
-                                    hiddenInput.type = 'hidden';
-                                    hiddenInput.name = 'questions-ids'; // **Correct name: questions-ids**
-                                    hiddenInput.value = questionId;
-                                    document.getElementById('assessment-form').appendChild(hiddenInput);
-                                });
-                                // No preventDefault() here to allow form submission
-                            });
 
 
 
@@ -577,69 +661,59 @@
                     } else {
                         selectedQuestionsList.insertBefore(targetElement, elementToMove); // Insert before original for 'down' (swaps effectively)
                     }
+                    // updateSaveButtonState(); //NO NEED
                     updateQuestionNumbers(); // Re-number the questions
                 }
             }
 
+            const assessmentForm = document.getElementById('assessment-form');
+            assessmentForm.addEventListener('submit', function (event) {
+                event.preventDefault();
+
+                // **1. Collect Selected Exercise IDs**
+                window.selectedExerciseIds = []; // Clear previous selections
+                const exerciseCheckboxes = document.querySelectorAll('input[name="exercises"]:checked');
+                exerciseCheckboxes.forEach(checkbox => {
+                    window.selectedExerciseIds.push(checkbox.value); // Store exercise IDs in the global variable
+                });
+
+                // **2. Collect Selected Question IDs**
+                window.selectedQuestionIds = []; // Clear previous selections
+                const selectedQuestionItems = selectedQuestionsList.children; // Get list items in current order
+                for (let i = 0; i < selectedQuestionItems.length; i++) {
+                    const listItem = selectedQuestionItems[i];
+                    const questionId = listItem.querySelector('.remove-question').getAttribute('data-question-id'); // Get questionId from the remove button
+                    window.selectedQuestionIds.push(questionId); // Store question IDs in the global variable in the current order
+                }
+
+                console.log("Exercises IDs saved in JavaScript variable:", window.selectedExerciseIds);
+                console.log("Question IDs saved in JavaScript variable:", window.selectedQuestionIds);
 
 
+                // Remove existing hidden inputs for exercises and questions (to avoid duplicates)
+                document.querySelectorAll('input[name="exercises-ids"], input[name="questions-ids"]').forEach(input => input.remove());
 
-        saveButton.addEventListener('click', function (event) {
-            event.preventDefault(); // Prevent any default button behavior
-            // **1. Collect Selected Exercise IDs**
-            window.selectedExerciseIds = []; // Clear previous selections
-            const exerciseCheckboxes = document.querySelectorAll('input[name="exercises"]:checked');
-            exerciseCheckboxes.forEach(checkbox => {
-                window.selectedExerciseIds.push(checkbox.value); // Store exercise IDs in the global variable
-            });
 
-            // **2. Collect Selected Question IDs**
-            window.selectedQuestionIds = []; // Clear previous selections
-            questionMap.forEach((item, questionId) => {
-                window.selectedQuestionIds.push(questionId); // Store question IDs in the global variable
-            });
+                // **2. Add hidden input fields for selected exercise IDs**
+                window.selectedExerciseIds.forEach(exerciseId => {
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = 'exercises-ids'; // **Correct name: exercises-ids**
+                    hiddenInput.value = exerciseId;
+                    assessmentForm.appendChild(hiddenInput); // Append to the form
+                });
 
-            console.log("Exercises IDs saved in JavaScript variable:", window.selectedExerciseIds);
-            console.log("Question IDs saved in JavaScript variable:", window.selectedQuestionIds);
-            alert("Selections temporarily saved in JavaScript variables. Click 'Save Assessment' to submit."); // Optional
+                // **3. Add hidden input fields for selected question IDs**
+                window.selectedQuestionIds.forEach(questionId => {
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = 'questions-ids'; // **Correct name: questions-ids**
+                    hiddenInput.value = questionId;
+                    assessmentForm.appendChild(hiddenInput); // Append to the form
+                });
 
-            // const savedData = [];
-            //     questionMap.forEach((item, questionId) => {
-            //         const editedQuestionText = item.querySelector('.question-input').innerHTML.trim(); // Get question text
-            //         savedData.push({
-            //             id: questionId,
-            //             text: editedQuestionText,
-            //             // Answers can be added here if needed to be saved in this simplified version
-            //         });
-            //     });
-            //
-            //     if (savedData.length > 0) {
-            //         // In a real application, you would send 'savedData' to your backend
-            //         console.log("Questions to be saved:", savedData);
-            //         alert("Questions data logged to console (Save functionality not fully implemented in this simplified version).");
-            //         // Example of how to send data to backend using fetch (you'll need to adapt the URL and backend logic)
-            //         /*
-            //         fetch('/your-save-endpoint', {
-            //             method: 'POST',
-            //             headers: {
-            //                 'Content-Type': 'application/json',
-            //                 // Include CSRF token if needed for your backend framework
-            //             },
-            //             body: JSON.stringify({ questions: savedData })
-            //         })
-            //         .then(response => response.json())
-            //         .then(data => {
-            //             if (data.status === 'success') {
-            //                 alert('Questions saved successfully!');
-            //             } else {
-            //                 alert('Failed to save questions.');
-            //             }
-            //         })
-            //         .catch(error => console.error('Error:', error));
-            //         */
-            //     } else {
-            //         alert('No questions selected to save.');
-            //     }
+                assessmentForm.submit(); // **Programmatically submit the form after adding hidden inputs**
+
 
             });
 
@@ -648,18 +722,14 @@
             addQuizButtons.forEach(button => {
                 button.addEventListener('click', function () {
                     const questions = this.closest('.accordion-header').nextElementSibling.querySelectorAll('.add-question');
+                    // **REMOVED the IF/ELSE condition - Always add questions**
+                    questions.forEach(question => {
+                        if (!questionMap.has(question.dataset.questionId)) { // Still check for duplicates
+                            question.click();
+                            // updateSaveButtonState();//NO NEED
 
-                    if (selectedQuestionsList.children.length === 0) {
-                        questions.forEach(question => {
-                            if (!questionMap.has(question.dataset.questionId)) {
-                                question.click();
-                            }
-                        });
-                    } else {
-                        selectedQuestionsList.innerHTML = ''; // Clear the selected questions list directly
-                        questionMap.clear();
-                        saveButton.style.display = 'none';
-                    }
+                        }
+                    });
                 });
             });
         });
@@ -717,48 +787,40 @@
         function filterExercises() {
             const input = document.getElementById('search-exercises').value.toLowerCase();
             const selectedLanguage = document.getElementById('id_language').value.toLowerCase();
-            const exercises = document.querySelectorAll('.exercise-item'); // Get the original exercise items
+            const exercises = document.querySelectorAll('#exercise-list .exercise-item'); // Select exercises from the original list
             const filteredExercisesContainer = document.getElementById('filtered-exercises');
             const exerciseListContainer = document.getElementById('exercise-list');
 
-            filteredExercisesContainer.innerHTML = ''; // Clear any content in filtered container
+            filteredExercisesContainer.innerHTML = ''; // Clear previous filtered results
 
-            let hasFilteredResults = false; // Flag to track if any exercises match the filter
+            let hasFilteredResults = false;
 
             exercises.forEach(exercise => {
                 const title = exercise.querySelector('label').textContent.toLowerCase();
-                const exerciseLanguage = exercise.querySelector('.badge').textContent.toLowerCase();
+                const exerciseLanguageElement = exercise.querySelector('.badge');
+                const exerciseLanguage = exerciseLanguageElement ? exerciseLanguageElement.textContent.trim().toLowerCase() : '';
 
                 const titleMatches = input.trim() === "" || title.includes(input);
                 const languageMatches = selectedLanguage === "" || exerciseLanguage === selectedLanguage;
 
                 if (titleMatches && languageMatches) {
-                    exercise.style.display = 'flex'; // Show the exercise in the original list
-                    hasFilteredResults = true; // Indicate that we have at least one filtered result
-                } else {
-                    exercise.style.display = 'none'; // Hide the exercise in the original list
+                    const clonedExercise = exercise.cloneNode(true); // Clone the exercise item
+                    filteredExercisesContainer.appendChild(clonedExercise); // Append the clone to filtered container
+                    hasFilteredResults = true;
                 }
             });
 
-            if (hasFilteredResults || (input.trim() !== "" || selectedLanguage !== "")) {
-                // If there are filtered results OR filters are applied, show exercise-list and hide filtered-exercises
-                exerciseListContainer.style.display = 'block'; // Show the original exercise list (which now contains filtered items)
-                filteredExercisesContainer.style.display = 'none'; // Hide the filtered results container
-                if (!hasFilteredResults && (input.trim() !== "" || selectedLanguage !== "")) {
-                    exerciseListContainer.style.display = 'none'; // If no results but filters applied, hide exercise list
+            if (input.trim() !== "" || selectedLanguage !== "") { // Apply filter logic only when there is a filter
+                exerciseListContainer.style.display = 'none';
+                filteredExercisesContainer.style.display = 'block';
+                if (!hasFilteredResults) {
                     filteredExercisesContainer.innerHTML = '<li class="list-group-item">No exercises found matching your criteria.</li>';
-                    filteredExercisesContainer.style.display = 'block'; // Show "No results" in filtered container
                 }
-            } else {
-                // No filters applied or no results and no filters - show all in exercise-list
-                exerciseListContainer.style.display = 'block'; // Ensure original list is shown
-                filteredExercisesContainer.style.display = 'none'; // Hide filtered container
-                // If no filters, ensure all exercises are visible (reset display)
-                exercises.forEach(exercise => exercise.style.display = 'flex'); // Reset display for all
+            } else { // No filters applied: Show all exercises.
+                exerciseListContainer.style.display = 'block';
+                filteredExercisesContainer.style.display = 'none';
             }
         }
-
-
 
         fullscreenPreview.appendChild(closeFullscreenButton);
 
@@ -810,21 +872,17 @@
                     </div>
                 </div>
                 `;
-
                         fullscreenPreview.classList.remove('d-none');
-
                         const closeBtn = document.getElementById('close-fullscreen');
                         closeBtn.addEventListener('click', (event) => {
                             event.stopPropagation();
                             fullscreenPreview.classList.add('d-none');
                         });
-
                         fullscreenPreview.addEventListener('click', (event) => {
                             if (event.target === fullscreenPreview) {
                                 fullscreenPreview.classList.add('d-none');
                             }
                         });
-
                         fullscreenPreview.classList.remove('d-none');
                     });
                 })

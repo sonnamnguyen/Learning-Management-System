@@ -1,6 +1,6 @@
 package com.example.quiz.model;
 
-import com.example.user.TestSession;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 import jakarta.persistence.*;
@@ -20,6 +20,7 @@ public class Result {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "test_session_id", nullable = false)
+    @JsonIgnore
     private TestSession testSession;
 
     @Column(name = "score")

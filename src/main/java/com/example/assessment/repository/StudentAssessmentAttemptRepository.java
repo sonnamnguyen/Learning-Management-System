@@ -16,4 +16,6 @@ public interface StudentAssessmentAttemptRepository extends JpaRepository<Studen
 
     // Lấy danh sách attempts theo user id
     List<StudentAssessmentAttempt> findByUserId(Long userId);
+    long countByAssessmentId(Long assessmentId);
+
 }

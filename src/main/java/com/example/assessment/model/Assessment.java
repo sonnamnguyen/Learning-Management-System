@@ -2,14 +2,15 @@ package com.example.assessment.model;
 
 import com.example.course.Course;
 import com.example.exercise.Exercise;
-import com.example.quiz.model.Question;
 import com.example.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -41,13 +42,8 @@ public class Assessment {
     )
     private Set<Exercise> exercises = new HashSet<>();
 
-    @ManyToMany
-    @JoinTable(
-            name = "assessment_question",
-            joinColumns = @JoinColumn(name = "assessment_id"),
-            inverseJoinColumns = @JoinColumn(name = "question_id")
-    )
-    private Set<Question> questions = new HashSet<>();
+    @OneToMany(mappedBy = "assessment", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<AssessmentQuestion> assessmentQuestions = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assessment_type_id", nullable = false)
