@@ -3,6 +3,7 @@ package com.example.exercise;
 import com.example.assessment.model.ProgrammingLanguage;
 import com.example.assessment.repository.ProgrammingLanguageRepository;
 import com.example.testcase.TestCase;
+import com.example.testcase.TestCaseRepository;
 import jakarta.transaction.Transactional;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -29,6 +30,7 @@ public class ExerciseService {
 
     @Autowired
     private ProgrammingLanguageRepository programmingLanguageRepository;
+    private TestCaseRepository testCaseRepository;
 
     public ExerciseService(ExerciseRepository exerciseRepository) {
         this.exerciseRepository = exerciseRepository;
@@ -58,6 +60,9 @@ public class ExerciseService {
         return exerciseRepository.findAll(pageable); // Fetch all exercises with pagination
     }
 
+    public List<TestCase> getTestCases(Long exerciseId) {
+        return testCaseRepository.findByExerciseId(exerciseId);
+    }
 
     public boolean existsByTitleExcludingId(String title, Long id) {
         return exerciseRepository.existsByNameExcludingId(title, id);
@@ -220,12 +225,20 @@ public class ExerciseService {
                             testCaseStr = testCaseStr.trim();
                             if (!testCaseStr.isEmpty()) {
                                 String[] parts = testCaseStr.split(",");
-                                if (parts.length == 2) {
+                                if (parts.length >= 2) {
                                     String input = parts[0].replace("Input:", "").trim();
                                     String expected = parts[1].replace("Expected:", "").trim();
+                                    boolean isHidden = false;
+
+                                    if(parts.length == 3) {
+                                        String hiddenPart = parts[2].replace("Hidden:", "").trim();
+                                        isHidden = Boolean.parseBoolean(hiddenPart);
+                                    }
+
                                     TestCase testCase = new TestCase();
                                     testCase.setInput(input);
                                     testCase.setExpectedOutput(expected);
+                                    testCase.setHidden(isHidden);
                                     testCases.add(testCase);
                                 }
                             }
@@ -268,6 +281,10 @@ public class ExerciseService {
     @Transactional
     public void deleteExercisesByIds(List<Long> ids) {
         exerciseRepository.deleteAllByIdIn(ids);
+    }
+
+    public List<Exercise> getExercisesByAssessmentId(Long assessmentId) {
+        return exerciseRepository.findExercisesByAssessmentId(assessmentId);
     }
 
 }

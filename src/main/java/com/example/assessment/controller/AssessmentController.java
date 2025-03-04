@@ -520,14 +520,14 @@ public class AssessmentController {
         }
         // Get list question and exercise
         List<Question> questions = questionService.getQuestionsByAssessmentId(id);
-//        List<Exercise> exercises = exerciseService.getExercisesByAssessmentId(id);
+        List<Exercise> exercises = exerciseService.getExercisesByAssessmentId(id);
         //Shuffle list
         Collections.shuffle(questions);
-//        Collections.shuffle(exercises);
+        //Collections.shuffle(exercises);
         // Add to model
         model.addAttribute("assessment", assessment);
         model.addAttribute("questions", questions);
-//        model.addAttribute("exercises", exercises);
+        model.addAttribute("exercises", exercises);
         return "assessments/AssessmentPreview";
     }
 
@@ -592,14 +592,14 @@ public class AssessmentController {
 
         // Get list of questions and exercises
         List<Question> questions = questionService.getQuestionsByAssessmentId(id);
-//        List<Exercise> exercises = exerciseService.getExercisesByAssessmentId(id);
+        //List<Exercise> exercises = exerciseService.getExercisesByAssessmentId(id);
         //Shuffle list
         Collections.shuffle(questions);
-//        Collections.shuffle(exercises);
+        //Collections.shuffle(exercises);
         // Add to model
         model.addAttribute("assessment", assessment);
         model.addAttribute("questions", questions);
-//        model.addAttribute("exercises", exercises);
+        //model.addAttribute("exercises", exercises);
         model.addAttribute("email", email);
 
         return "assessments/TakeAssessment";
