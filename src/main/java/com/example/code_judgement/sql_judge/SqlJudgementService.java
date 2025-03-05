@@ -1,7 +1,7 @@
 package com.example.code_judgement.sql_judge;
 
 import com.example.code_judgement.ExecutionResponse;
-import com.example.exercise.Exercise;
+import com.example.student_exercise_attemp.model.Exercise;
 import com.example.testcase.TestCase;
 import com.example.testcase.TestCaseResult;
 import org.springframework.aop.framework.AopContext;

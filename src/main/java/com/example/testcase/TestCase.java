@@ -1,7 +1,7 @@
 package com.example.testcase;
 
 import com.example.assessment.model.ProgrammingLanguage;
-import com.example.exercise.Exercise;
+import com.example.student_exercise_attemp.model.Exercise;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
