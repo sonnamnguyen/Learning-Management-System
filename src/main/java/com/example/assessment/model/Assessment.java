@@ -1,12 +1,13 @@
 package com.example.assessment.model;
 
 import com.example.course.Course;
-import com.example.student_exercise_attemp.model.Exercise;
+import com.example.exercise.Exercise;
 import com.example.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -74,6 +75,13 @@ public class Assessment {
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @Column(nullable = false)
+    private LocalDateTime updatedAt = LocalDateTime.now();
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @Column(nullable = false)
     private int timeLimit;
 
     @Lob
@@ -83,6 +91,10 @@ public class Assessment {
     @ManyToOne
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
+
+    @ManyToOne
+    @JoinColumn(name = "updated_by", nullable = true)
+    private User updatedBy;
 
 //    @PostPersist
 //    public void createProgressNotificationOnAssessmentAttempt() {

@@ -37,6 +37,9 @@ public class StudentAssessmentAttempt {
     private int scoreQuiz;
 
     @Min(0)
+    private int scoreEx;
+
+    @Min(0)
     private int scoreAss;
 
     private String note;

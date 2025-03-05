@@ -103,6 +103,7 @@
                                     <th>Input</th>
                                     <th>Expected Output</th>
                                     <th id="sqlTagHeaderNormal" class="sqlTagHeader" style="display: none;">SQL Tag Number</th>
+                                    <th>Action</th>
                                 </tr>
                                 </thead>
                                 <tbody id="normalTestCasesContainer">
@@ -112,11 +113,11 @@
                                     <td class="sqlTagInput" th:if="${exercise.language.language == 'SQL'}">
                                         <input type="text" class="form-control" name="normalTestCases[${iterStat.index}].sqlTagNumber" th:value="${testCase.sqlTagNumber}" placeholder="SQL Tag Number">
                                     </td>
+                                    <td><button type="button" class="btn btn-danger btn-sm" onclick="removeTestCase(this)">-</button></td>
                                 </tr>
                                 </tbody>
                             </table>
-                            <button type="button" class="btn btn-success btn-sm" onclick="addTestCase('normalTestCasesContainer')">+</button>
-                            <button type="button" class="btn btn-danger btn-sm" onclick="removeLastTestCase('normalTestCasesContainer')">-</button>
+                            <button type="button" class="btn btn-success btn-sm" onclick="addTestCase('normalTestCasesContainer')"><i class="bi bi-plus-circle"></i></button>
                         </div>
 
                         <!-- Hidden Test Cases Tab -->
@@ -127,6 +128,7 @@
                                     <th>Input</th>
                                     <th>Expected Output</th>
                                     <th id="sqlTagHeaderHidden" class="sqlTagHeader" style="display: none;">SQL Tag Number</th>
+                                    <th>Action</th>
                                 </tr>
                                 </thead>
                                 <tbody id="hiddenTestCasesContainer">
@@ -136,12 +138,14 @@
                                     <td class="sqlTagInput" th:if="${exercise.language.language == 'SQL'}">
                                         <input type="text" class="form-control" name="hiddenTestCases[${iterStat.index}].sqlTagNumber" th:value="${testCase.sqlTagNumber}" placeholder="SQL Tag Number">
                                     </td>
+                                    <td><button type="button" class="btn btn-danger btn-sm" onclick="removeTestCase(this)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                    </td>
                                 </tr>
-
                                 </tbody>
                             </table>
-                            <button type="button" class="btn btn-success btn-sm" onclick="addTestCase('hiddenTestCasesContainer')">+</button>
-                            <button type="button" class="btn btn-danger btn-sm" onclick="removeLastTestCase('hiddenTestCasesContainer')">-</button>
+                            <button type="button" class="btn btn-success btn-sm" onclick="addTestCase('hiddenTestCasesContainer')"><i class="bi bi-plus-circle"></i></button>
                         </div>
                     </div>
                 </div>
@@ -196,7 +200,10 @@
         }
 
         function toggleSqlFields() {
-            const isSqlSelected = languageSelect.value === "7"; // Giả sử 7 là ID của SQL
+            // Lấy text của option được chọn thay vì dựa vào value
+            const selectedOption = languageSelect.options[languageSelect.selectedIndex];
+            const isSqlSelected = selectedOption.textContent.trim().toUpperCase() === "SQL";
+
             sqlFieldsDiv.style.display = isSqlSelected ? "block" : "none";
             sqlTagHeaderNormal.style.display = isSqlSelected ? "table-cell" : "none";
             sqlTagHeaderHidden.style.display = isSqlSelected ? "table-cell" : "none";
@@ -205,6 +212,7 @@
             sqlTagInputs.forEach(input => {
                 input.style.display = isSqlSelected ? "table-cell" : "none";
             });
+
             console.log("All Test Cases:", testCases);
             console.log("Normal Test Cases:", testCases.filter(testCase => !testCase.isHidden));
             console.log("Hidden Test Cases:", testCases.filter(testCase => testCase.isHidden));
@@ -218,11 +226,17 @@
                 .filter(testCase => testCase.hidden === false)
                 .forEach((testCase, index) => {
                     let newRow = document.createElement("tr");
+                    const selectedOption = languageSelect.options[languageSelect.selectedIndex];
+                    const isSqlSelected = selectedOption.textContent.trim().toUpperCase() === "SQL";
                     newRow.innerHTML = `
                 <td><input type="text" class="form-control" name="normalTestCases[${index}].input" value="${testCase.input || ''}" placeholder="Input"></td>
                 <td><input type="text" class="form-control" name="normalTestCases[${index}].expectedOutput" value="${testCase.expectedOutput || ''}" placeholder="Expected Output"></td>
-                <td class="sqlTagInput" style="display: ${languageSelect.value === '7' ? 'table-cell' : 'none'};">
+                <td class="sqlTagInput" style="display: ${isSqlSelected ? 'table-cell' : 'none'};">
                     <input type="text" class="form-control" name="normalTestCases[${index}].sqlTagNumber" value="${testCase.sqlTagNumber || ''}" placeholder="SQL Tag Number">
+                </td>
+                <td><button type="button" class="btn btn-danger btn-sm" onclick="removeTestCase(this)">
+                            <i class="bi bi-trash"></i>
+                    </button>
                 </td>
                 <td><input type="hidden" name="normalTestCases[${index}].hidden" value="false"></td>
             `;
@@ -236,11 +250,17 @@
                 .filter(testCase => testCase.hidden === true)
                 .forEach((testCase, index) => {
                     let newRow = document.createElement("tr");
+                    const selectedOption = languageSelect.options[languageSelect.selectedIndex];
+                    const isSqlSelected = selectedOption.textContent.trim().toUpperCase() === "SQL";
                     newRow.innerHTML = `
                 <td><input type="text" class="form-control" name="hiddenTestCases[${index}].input" value="${testCase.input || ''}" placeholder="Hidden Input"></td>
                 <td><input type="text" class="form-control" name="hiddenTestCases[${index}].expectedOutput" value="${testCase.expectedOutput || ''}" placeholder="Hidden Expected Output"></td>
-                <td class="sqlTagInput" style="display: ${languageSelect.value === '7' ? 'table-cell' : 'none'};">
+                <td class="sqlTagInput" style="display: ${isSqlSelected ? 'table-cell' : 'none'};">
                     <input type="text" class="form-control" name="hiddenTestCases[${index}].sqlTagNumber" value="${testCase.sqlTagNumber || ''}" placeholder="SQL Tag Number">
+                </td>
+                <td><button type="button" class="btn btn-danger btn-sm" onclick="removeTestCase(this)">
+                        <i class="bi bi-trash"></i>
+                    </button>
                 </td>
                 <td><input type="hidden" name="hiddenTestCases[${index}].hidden" value="true"></td>
             `;
@@ -252,23 +272,29 @@
             let container = document.getElementById(containerId);
             let rowCount = container.children.length;
             let prefix = containerId === "normalTestCasesContainer" ? "normalTestCases" : "hiddenTestCases";
+            let isHidden = containerId === "hiddenTestCasesContainer";
+            const selectedOption = languageSelect.options[languageSelect.selectedIndex];
+            const isSqlSelected = selectedOption.textContent.trim().toUpperCase() === "SQL";
             let newRow = document.createElement("tr");
             newRow.innerHTML = `
-                <td><input type="text" class="form-control" name="${prefix}[${rowCount}].input" placeholder="Input"></td>
-                <td><input type="text" class="form-control" name="${prefix}[${rowCount}].expectedOutput" placeholder="Expected Output"></td>
-                <td class="sqlTagInput" style="display: ${languageSelect.value === '7' ? 'table-cell' : 'none'};">
-                    <input type="text" class="form-control" name="${prefix}[${rowCount}].sqlTagNumber" placeholder="SQL Tag Number">
+        <td><input type="text" class="form-control" name="${prefix}[${rowCount}].input" placeholder="${isHidden ? 'Hidden ' : ''}Input"></td>
+        <td><input type="text" class="form-control" name="${prefix}[${rowCount}].expectedOutput" placeholder="${isHidden ? 'Hidden ' : ''}Expected Output"></td>
+        <td class="sqlTagInput" style="display: ${isSqlSelected ? 'table-cell' : 'none'};">
+            <input type="text" class="form-control" name="${prefix}[${rowCount}].sqlTagNumber" placeholder="SQL Tag Number">
+        </td>
+        <td><button type="button" class="btn btn-danger btn-sm" onclick="removeTestCase(this)">
+                            <i class="bi bi-trash"></i>
+                    </button>
                 </td>
-
-            `;
+        ${isHidden ? `<td><input type="hidden" name="${prefix}[${rowCount}].hidden" value="true"></td>` :
+                `<td><input type="hidden" name="${prefix}[${rowCount}].hidden" value="false"></td>`}
+    `;
             container.appendChild(newRow);
         };
 
-        window.removeLastTestCase = function(containerId) {
-            let container = document.getElementById(containerId);
-            if (container.children.length > 0) {
-                container.removeChild(container.lastElementChild);
-            }
+        window.removeTestCase = function(button) {
+            let row = button.closest('tr');
+            row.parentNode.removeChild(row);
         };
 
         document.getElementById("jsonOption").addEventListener("change", toggleTestCaseMethod);

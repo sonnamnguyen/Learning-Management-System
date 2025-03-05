@@ -1,12 +1,10 @@
-package com.example.student_exercise_attemp.controller;
+package com.example.exercise;
 
-import com.example.student_exercise_attemp.model.Exercise;
 import com.example.assessment.model.ProgrammingLanguage;
 import com.example.assessment.service.ProgrammingLanguageService;
-import com.example.student_exercise_attemp.repository.ExerciseRepository;
-import com.example.student_exercise_attemp.service.ExerciseService;
 import com.example.testcase.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.*;
@@ -27,8 +25,11 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.security.SecureRandom;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.*;
 
 @Controller
 @RequestMapping("/exercises")
@@ -85,15 +86,18 @@ public class ExerciseController {
             @RequestParam(value = "page", defaultValue = "0") int page,
             Model model) {
 
-        Pageable pageable = PageRequest.of(page, 10);
+        Pageable pageable = PageRequest.of(page, 12);
 
         List<Exercise> exercises;
         int totalPages;
 
         // Search by title if provided
         if (title != null && !title.isEmpty()) {
-            exercises = exerciseService.searchByTitle(title);
-            totalPages = 1; // No pagination for search results
+            List<Exercise> allResults = exerciseService.searchByTitle(title); // Current method
+            totalPages = (int) Math.ceil((double) allResults.size() / pageable.getPageSize());
+            int start = (int) pageable.getOffset();
+            int end = Math.min((start + pageable.getPageSize()), allResults.size());
+            exercises = allResults.subList(start, end);
         } else {
             // Filter by language and level
             Page<Exercise> exercisesPage = exerciseService.getExercisesByLanguageAndLevel(languageId, level, pageable);
@@ -291,7 +295,7 @@ public class ExerciseController {
             @RequestParam(name = "testCaseMethod") String testCaseMethod, // Thêm để xác định phương thức
             @RequestParam(name = "testCasesJson", required = false) String testCasesJson,
             @RequestParam Map<String, String> allParams, // Lấy dữ liệu từ UI
-            Model model) {
+            Model model, RedirectAttributes redirectAttributes) {
 
         Exercise existingExercise = exerciseService.getExerciseById(id).orElse(null);
         if (existingExercise == null) {
@@ -402,6 +406,12 @@ public class ExerciseController {
         exercise.setLanguage(existingExercise.getLanguage());
         exerciseService.saveExercise(existingExercise);
 
+        try {
+            redirectAttributes.addFlashAttribute("success", "Edit successful!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Edit failed: " + e.getMessage());
+        }
+
         return "redirect:/exercises";
     }
 
@@ -477,8 +487,8 @@ public class ExerciseController {
             row.createCell(5).setCellValue(exercise.getSetup());
 // Concatenate test cases
 //            StringBuilder testCaseText = new StringBuilder();
-              StringBuilder visibleTestCases = new StringBuilder();
-              StringBuilder hiddenTestCases = new StringBuilder();
+            StringBuilder visibleTestCases = new StringBuilder();
+            StringBuilder hiddenTestCases = new StringBuilder();
 
             for (TestCase testCase : exercise.getTestCases()) {
 //                testCaseText.append("Input: ").append(testCase.getInput())
