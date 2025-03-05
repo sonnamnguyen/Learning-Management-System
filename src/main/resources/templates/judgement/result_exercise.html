@@ -547,7 +547,7 @@
     <textarea id="codeEditor" th:text="${code}" style=""></textarea>
 
     <div class="input-area">
-        <input type="text" id="inputText" placeholder='Enter input here...'>
+        <input type="text" id="inputText" placeholder='Enter input here...' th:value="${exercise.getTestCases().get(0).getInput()}">
         <select id="languageSelect" class="language-select">
             <option value="en">English</option>
             <option value="vi">Vietnamese</option>
@@ -729,7 +729,6 @@
                 block.parentElement.appendChild(copyButton);
             });
         } catch (error) {
-            console.error('Error in reviewCode function:', error);
             document.getElementById("output").innerHTML = `
                 <div class="error-message">
                     <i class="fas fa-exclamation-circle"></i>
@@ -749,61 +748,77 @@
     }
 
     function downloadCode() {
-        const code = editor.getValue();
-
-        // Xác định ngôn ngữ và tên class/function từ code
+        const code = editor.getValue().trim();
         let fileName = 'code.txt';
 
-        // Tìm kiếm các mẫu phổ biến trong các ngôn ngữ khác nhau
+        // Danh sách ngôn ngữ và từ khóa đặc trưng
         const patterns = {
             java: {
                 pattern: /class\s+(\w+)/,
-                ext: '.java'
-            },
-            python: {
-                pattern: /(class|def)\s+(\w+)/,
-                ext: '.py'
+                keywords: ['public class ', 'System.out.println', 'extends ', 'implements ', 'new ', 'public static void main'],
+                ext: '.java',
+                defaultName: 'Main'
             },
             cpp: {
                 pattern: /(class|struct)\s+(\w+)|void\s+(\w+)\s*\(/,
-                ext: '.cpp'
+                keywords: ['#include', 'using namespace', 'cout', 'cin', 'std::', '->', '::', 'template'],
+                ext: '.cpp',
+                defaultName: 'main'
             },
             csharp: {
                 pattern: /(class|interface)\s+(\w+)/,
-                ext: '.cs'
+                keywords: ['namespace ', 'using ', 'Console.WriteLine', 'public class ', 'List<>', 'async ', 'await '],
+                ext: '.cs',
+                defaultName: 'Program'
             },
             c: {
                 pattern: /(void|int|char|double|float)\s+(\w+)\s*\(/,
-                ext: '.c'
+                keywords: ['#include', 'printf(', 'scanf(', 'main()', 'struct ', 'typedef ', 'malloc(', 'free('],
+                ext: '.c',
+                defaultName: 'main'
             },
             sql: {
                 pattern: /CREATE\s+(TABLE|PROCEDURE|FUNCTION|VIEW)\s+(\w+)/i,
-                ext: '.sql'
-            }
+                keywords: ['SELECT ', 'INSERT INTO ', 'UPDATE ', 'DELETE ', 'JOIN ', 'GROUP BY ', 'ORDER BY '],
+                ext: '.sql',
+                defaultName: 'query'
+            },
         };
 
-        // Kiểm tra từng ngôn ngữ
-        for (const [lang, config] of Object.entries(patterns)) {
-            const match = code.match(config.pattern);
-            if (match) {
-                // Lấy tên từ nhóm phù hợp
-                const name = match[2] || match[1] || match[3];
-                if (name) {
-                    fileName = name + config.ext;
+        let detectedLang = null;
+        let matchCounts = {};
+
+        // Ưu tiên kiểm tra từ khóa đặc trưng
+        for (const lang in patterns) {
+            let count = patterns[lang].keywords.reduce((acc, keyword) => acc + (code.split(keyword).length - 1), 0);
+            if (count > 0) {
+                matchCounts[lang] = count;
+            }
+        }
+
+        // Xác định ngôn ngữ có nhiều từ khóa xuất hiện nhất
+        if (Object.keys(matchCounts).length > 0) {
+            detectedLang = Object.keys(matchCounts).reduce((a, b) => matchCounts[a] > matchCounts[b] ? a : b);
+        }
+
+        // Nếu vẫn chưa xác định được, thử regex
+        if (!detectedLang) {
+            for (const lang in patterns) {
+                const match = code.match(patterns[lang].pattern);
+                if (match) {
+                    detectedLang = lang;
+                    fileName = (match[2] || match[1] || match[3]) + patterns[lang].ext;
                     break;
                 }
             }
         }
 
-        // Xử lý các trường hợp đặc biệt
-        if (code.includes('#include')) {
-            fileName = fileName.replace('.txt', '.cpp');
-        } else if (code.includes('import numpy') || code.includes('import pandas')) {
-            fileName = fileName.replace('.txt', '.py');
-        } else if (code.includes('SELECT') && code.includes('FROM')) {
-            fileName = 'query.sql';
+        // Nếu vẫn chưa tìm được tên, đặt tên mặc định
+        if (detectedLang && !fileName.endsWith(patterns[detectedLang].ext)) {
+            fileName = patterns[detectedLang].defaultName + patterns[detectedLang].ext;
         }
 
+        // Tạo file và tải về
         const blob = new Blob([code], { type: 'text/plain' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -812,6 +827,7 @@
         a.click();
         window.URL.revokeObjectURL(url);
     }
+
 
     function toggleTestCases() {
         const testCases = document.getElementById('testCases');
