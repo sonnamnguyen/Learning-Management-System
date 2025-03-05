@@ -1,5 +1,8 @@
-package com.example.exercise;
+package com.example.student_exercise_attemp.controller;
 
+import com.example.student_exercise_attemp.model.Exercise;
+import com.example.student_exercise_attemp.repository.ExerciseRepository;
+import com.example.student_exercise_attemp.service.ExerciseService;
 import com.example.assessment.model.ProgrammingLanguage;
 import com.example.assessment.service.ProgrammingLanguageService;
 import com.example.testcase.*;
@@ -129,7 +132,7 @@ public class ExerciseController {
         List<ProgrammingLanguage> programmingLanguages = programmingLanguageService.getAllProgrammingLanguages();
         model.addAttribute("programmingLanguages", programmingLanguages);
         model.addAttribute("content", "exercises/create");
-        return "layout";
+        return "exercises/create";
     }
 
     @PostMapping("/create")
