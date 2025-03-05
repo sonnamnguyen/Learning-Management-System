@@ -3,6 +3,7 @@ package com.example.quiz.repository;
 import com.example.quiz.model.Quiz;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
@@ -14,12 +15,16 @@ import java.util.Optional;
 import java.util.Set;
 
 @Repository
-public interface QuizRepository extends PagingAndSortingRepository<Quiz, Long> {
+public interface QuizRepository extends JpaRepository<Quiz, Long> {
+    Optional<Quiz> findById(Long id);
     @Query("SELECT m FROM Quiz m WHERE m.name LIKE %:searchQuery%")
     Page<Quiz> searchQuizs(@Param("searchQuery") String searchQuery, Pageable pageable);
     Page<Quiz> findAll(Pageable pageable);
     List<Quiz> findAll();
-    Optional<Quiz> findById(Long id);
+
+    List<Quiz> findByIdNot(Long id);
+    List<Quiz> findByCourseIdAndIdNot(Long courseId, Long id);
+
 
     Quiz save(Quiz quiz);
     boolean existsByName(String name);

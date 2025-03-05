@@ -1,7 +1,5 @@
 package com.example.quiz.model;
 
-import com.example.user.TestSession;
-import com.example.user.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,19 +17,21 @@ public class Answer {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "test_session_id", nullable = false)
+    private String answerText;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "answer_option_id", nullable = false)
+    private AnswerOption selectedOption;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "test_session_id", nullable = true) // Cho phép null
     private TestSession testSession;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "question_id", nullable = false)
     private Question question;
 
-    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinTable(
-            name = "test_question_answer_options",
-            joinColumns = @JoinColumn(name = "test_question_id"),
-            inverseJoinColumns = @JoinColumn(name = "answer_option_id")
-    )
-    private List<AnswerOption> answerOptions;
+    @Column(name = "is_correct", nullable = false)
+    private Boolean isCorrect;
+
 }

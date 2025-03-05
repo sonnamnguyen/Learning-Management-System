@@ -32,7 +32,7 @@ public class CJudgementController {
         // Lấy bài tập và test cases
         Exercise exercise = exerciseService.getExerciseById(exerciseId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));
-        List<TestCase> testCases = exercise.getTwoTestCases();
+        List<TestCase> testCases = exercise.getTestCases();
 
         if (testCases == null || testCases.isEmpty()) {
             model.addAttribute("output", "No test cases defined for this exercise.");
@@ -42,6 +42,10 @@ public class CJudgementController {
         }
         try{
             ExecutionResponse response = codeExecutionService.executeCodeOptimized(false, code,testCases,new CJudgementService(), exercise);
+            if(response.getErrorMessage()!=null){
+                model.addAttribute("error", response.getErrorMessage());
+                return "judgement/precheck_judge/precheck_code";
+            }
             // Đưa kết quả vào model để hiển thị trong view
             model.addAttribute("exercise", exercise);
             model.addAttribute("code", code);
@@ -52,8 +56,11 @@ public class CJudgementController {
 
             return "judgement/precheck_judge/precheck_code";
         }
-        catch (RuntimeException e){
-            model.addAttribute("error", e.getMessage());
+        catch (Exception e){
+            model.addAttribute("output", e.getMessage());
+            model.addAttribute("exercise", exercise);
+            model.addAttribute("code", code);
+            model.addAttribute("language", exercise.getLanguage().getLanguage());
             return "judgement/precheck_judge/precheck_code";
         }
 
@@ -75,22 +82,26 @@ public class CJudgementController {
             return "judgement/code_space";
         }
         try{
-            ExecutionResponse response = codeExecutionService.executeCodeOptimized(true, code,testCases,new JavaJudgementService(), exercise);
+            ExecutionResponse response = codeExecutionService.executeCodeOptimized(true, code,testCases,new CJudgementService(), exercise);
             // Đưa kết quả vào model để hiển thị trong view
             model.addAttribute("exercise", exercise);
             model.addAttribute("code", code);
             model.addAttribute("failed", response.getTotal() - response.getPassed());
             model.addAttribute("score", response.getScore());
+
+            if(response.getErrorMessage()!=null){
+                model.addAttribute("error", response.getErrorMessage());
+                return "judgement/result_exercise";
+            }
             model.addAttribute("testResults", response.getTestCasesResults());
             return "judgement/result_exercise";
         }
-        catch (RuntimeException e){
-            model.addAttribute("error", e.getMessage());
+        catch (Exception e){
+            model.addAttribute("output", e.getMessage());
             model.addAttribute("exercise", exercise);
             model.addAttribute("code", code);
-            model.addAttribute("failed", testCases.size());
-            model.addAttribute("score", 0);
-            return "judgement/result_exercise";
+            model.addAttribute("language", exercise.getLanguage().getLanguage());
+            return "judgement/code_space";
         }
     }
 

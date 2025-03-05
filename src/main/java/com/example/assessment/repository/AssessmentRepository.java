@@ -1,8 +1,10 @@
 package com.example.assessment.repository;
 
 import com.example.assessment.model.Assessment;
+import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
@@ -20,7 +22,7 @@ public interface AssessmentRepository extends PagingAndSortingRepository<Assessm
     @Query("SELECT COUNT(a) > 0 FROM Assessment a WHERE LOWER(a.title) = LOWER(:name)")
     boolean existsByName(@Param("name") String name);
 
-    @Query("SELECT a FROM Assessment a JOIN FETCH a.questions WHERE a.id = :id")
+    @Query("SELECT a FROM Assessment a LEFT JOIN FETCH a.assessmentQuestions WHERE a.id = :id")
     Assessment findByAssessmentIdWithQuestions(@Param("id") Long id);
 
     Page<Assessment> findAll(Pageable pageable);
@@ -34,5 +36,14 @@ public interface AssessmentRepository extends PagingAndSortingRepository<Assessm
     boolean existsByTitle(String title);
 
     void deleteById(Long id);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE Assessment a SET a.invitedCount = a.invitedCount + 1 WHERE a.id = :id")
+    int incrementInvitedCount(@Param("id") Long id);
+
+    // ✅ New method: Refresh entity to avoid Hibernate caching issues
+    @Query("SELECT a FROM Assessment a WHERE a.id = :id")
+    Optional<Assessment> refresh(@Param("id") Long id);
 }
 

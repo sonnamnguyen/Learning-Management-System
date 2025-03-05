@@ -2,6 +2,7 @@ package com.example.student_exercise_attemp;
 
 
 import com.example.exercise.Exercise;
+import com.example.student_exercise_attemp.model.ExerciseSession;
 import com.example.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
@@ -29,6 +30,11 @@ public class StudentExerciseAttempt {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "exercise_id", referencedColumnName = "id",nullable = false)
     private Exercise submitted_exercise;
+
+    // có thể null
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "exercise_session_id", referencedColumnName = "id", nullable = true)
+    private ExerciseSession exercise_session;
 
     @Column(columnDefinition = "TEXT")
     private String submitted_code;

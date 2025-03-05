@@ -6,6 +6,8 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import org.hashids.Hashids;
+import org.springframework.mail.MailException;
+import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -17,6 +19,8 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -55,9 +59,10 @@ public class EmailService {
 
         // Convert list to array for sending
         String[] recipients = emailList.toArray(new String[0]);
+        List<String> recipientList = Arrays.asList(recipients);
 
         // Send the email
-        sendHtmlEmails(recipients, "Assessment Invitation", generateAssessmentEmailBody(assessmentLink));
+        sendHtmlEmails(recipientList, "Assessment Invitation", generateAssessmentEmailBody(assessmentLink));
     }
 
     /**
@@ -104,79 +109,59 @@ public class EmailService {
     }
 
 
-    /**
-     * Sends an HTML email to multiple recipients.
-     */
-    private void sendHtmlEmails(String[] recipients, String subject, String body) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+    private void sendHtmlEmails(List<String> recipients, String subject, String body) {
+        int batchSize = 10; // Adjust batch size as needed
 
-            helper.setTo(recipients);
-            helper.setSubject(subject);
-            helper.setText(body, true); // Enables HTML content
+        for (int i = 0; i < recipients.size(); i += batchSize) {
+            int end = Math.min(i + batchSize, recipients.size());
+            List<String> batch = recipients.subList(i, end);
 
-            mailSender.send(message);
-            System.out.println("Email sent to: " + String.join(", ", recipients));
-        } catch (MessagingException e) {
-            e.printStackTrace();
+            try {
+                // Send batch
+                sendBatch(batch, subject, body);
+                System.out.println("Batch sent successfully: " + batch);
+            } catch (MailSendException e) {
+                // Identify and retry only the valid emails
+                List<String> validEmails = extractValidEmails(batch, e);
+                if (!validEmails.isEmpty()) {
+                    retrySending(validEmails, subject, body);
+                }
+            } catch (MailException | MessagingException e) {
+                System.err.println("Batch failed: " + e.getMessage());
+            }
         }
     }
-    /**
-     * Sends an OTP verification email.
-     */
-    public void sendOtpEmail(String recipient, String otpCode) {
-        String subject = "Verify Your Account";
-        String body = generateOtpEmailBody(otpCode);
-        sendHtmlEmail(recipient, subject, body);
+
+    private void sendBatch(List<String> emails, String subject, String body) throws MessagingException {
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+        helper.setTo(emails.toArray(new String[0]));
+        helper.setSubject(subject);
+        helper.setText(body, true);
+
+        mailSender.send(message);
     }
 
-    /**
-     * Generates the OTP email body.
-     */
-    private String generateOtpEmailBody(String otpCode) {
-        return "<html>"
-                + "<head><style>"
-                + "body { font-family: Arial, sans-serif; background-color: #f9f9f9; margin: 0; padding: 0; }"
-                + ".email-container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border: 1px solid #dddddd; border-radius: 8px; overflow: hidden; }"
-                + ".header { background-color: #4CAF50; color: #ffffff; padding: 20px; text-align: center; }"
-                + ".content { padding: 20px; color: #333333; text-align: center; }"
-                + ".otp-code { font-size: 24px; font-weight: bold; color: #4CAF50; background-color: #f4f4f4; padding: 10px 20px; border-radius: 5px; display: inline-block; margin: 20px 0; }"
-                + ".footer { background-color: #f4f4f4; color: #888888; padding: 10px; text-align: center; font-size: 12px; }"
-                + "</style></head>"
-                + "<body><div class='email-container'>"
-                + "<div class='header'><h1>Verify Your Account</h1></div>"
-                + "<div class='content'>"
-                + "<p>Dear User,</p>"
-                + "<p>Thank you for signing up! To complete your registration, use the OTP code below:</p>"
-                + "<div class='otp-code'>" + otpCode + "</div>"
-                + "<p>This OTP code is valid for <strong>10 minutes</strong>. If you did not request this, please ignore this email.</p>"
-                + "<p>Best regards,<br>The Team</p>"
-                + "</div>"
-                + "<div class='footer'>&copy; 2025 Your Company. All rights reserved.</div>"
-                + "</div></body></html>";
+    private List<String> extractValidEmails(List<String> batch, MailSendException e) {
+        List<String> validEmails = new ArrayList<>(batch);
+
+        Exception[] messageExceptions = e.getMessageExceptions();
+        if (messageExceptions != null) {
+            for (Exception me : messageExceptions) {
+                System.err.println("Failed email: " + me.getMessage());
+                validEmails.remove(me.getMessage()); // Remove invalid emails from batch
+            }
+        }
+        return validEmails;
     }
 
-    /**
-     * Encrypts an email address using AES and encodes it in a URL-safe format.
-     */
-    public String encodeEmail(String email) throws Exception {
-        Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
-        cipher.init(Cipher.ENCRYPT_MODE, secretKey);
-        byte[] encrypted = cipher.doFinal(email.getBytes(StandardCharsets.UTF_8));
-
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(encrypted);
+    private void retrySending(List<String> validEmails, String subject, String body) {
+        try {
+            sendBatch(validEmails, subject, body);
+            System.out.println("Retry successful for: " + validEmails);
+        } catch (MessagingException ex) {
+            System.err.println("Retry failed: " + ex.getMessage());
+        }
     }
-
-    /**
-     * Decrypts an email address from its AES encrypted form.
-     */
-    public String decodeEmail(String encryptedEmail) throws Exception {
-        Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
-        cipher.init(Cipher.DECRYPT_MODE, secretKey);
-        byte[] decodedBytes = Base64.getUrlDecoder().decode(encryptedEmail);
-
-        return new String(cipher.doFinal(decodedBytes), StandardCharsets.UTF_8);
-    }
-
 }

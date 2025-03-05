@@ -4,6 +4,7 @@ import com.example.assessment.model.ProgrammingLanguage;
 import com.example.assessment.service.ProgrammingLanguageService;
 import com.example.testcase.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.*;
@@ -38,7 +39,6 @@ public class ExerciseController {
     private final ExerciseRepository exerciseRepository;
     private final ExerciseService exerciseService;
     private final TestCaseService testCaseService;
-
 
 
     // Common attributes for all views
@@ -133,105 +133,153 @@ public class ExerciseController {
     @ResponseBody
     public ResponseEntity<?> createExercise(
             @Valid @ModelAttribute Exercise exercise, BindingResult result,
-            @ModelAttribute TestCaseRequest request,
             @RequestParam("name") String name,
-            @RequestParam("language") Long language,
+            @RequestParam("language") Integer languageId,
+            @RequestParam(value = "setup_for_sql", required = false) String setupsql,
             @RequestParam("description") String description,
             @RequestParam("setup") String setup,
-            @RequestParam("level") String level, HttpServletRequest httpServletRequest) {
-
-        System.out.println("📩 New Request received: " + exercise.getName() + " | IP: " + httpServletRequest.getRemoteAddr());
+            @RequestParam("level") String level,
+            @RequestParam("testCaseMethod") String testCaseMethod,
+            @RequestParam(value = "testCasesJson", required = false) String testCasesJson,
+            @RequestParam Map<String, String> allParams,
+            HttpServletRequest httpServletRequest) {
 
         if (result.hasErrors()) {
             return ResponseEntity.badRequest().body("Validation error: " + result.getAllErrors());
         }
 
-        if (exercise == null) {
-            return ResponseEntity.badRequest().body("Exercise cannot be null");
+        Optional<ProgrammingLanguage> languageOpt = programmingLanguageService.getProgrammingLanguageById(languageId);
+        if (languageOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body("Invalid programming language");
         }
 
-        List<TestCase> testCasesFinal = new ArrayList<>();
-
-        if ("json".equalsIgnoreCase(request.getTestCaseMethod())) {
-            if (request.getTestCasesJson() == null || request.getTestCasesJson().trim().isEmpty()) {
-                return ResponseEntity.badRequest().body("TestCases JSON is EMPTY!");
-            }
-
-            ObjectMapper objectMapper = new ObjectMapper();
-            try {
-                List<TestCaseForm> testCaseForms = objectMapper.readValue(request.getTestCasesJson(), new TypeReference<List<TestCaseForm>>() {});
-                if (testCaseForms.isEmpty()) {
-                    return ResponseEntity.badRequest().body("No Test Cases in JSON!");
-                }
-                for (TestCaseForm tcForm : testCaseForms) {
-                    TestCase tc = new TestCase();
-                    tc.setInput(tcForm.getInput());
-                    tc.setExpectedOutput(tcForm.getExpectedOutput());
-                    tc.setExercise(exercise);
-                    testCasesFinal.add(tc);
-                }
-            } catch (Exception e) {
-                return ResponseEntity.badRequest().body("Invalid JSON format!");
-            }
-        } else if ("ui".equalsIgnoreCase(request.getTestCaseMethod())) {
-            if (request.getTestCaseFormList() == null || request.getTestCaseFormList().getTestCasesList() == null || request.getTestCaseFormList().getTestCasesList().isEmpty()) {
-                return ResponseEntity.badRequest().body("TestCasesList is NULL or EMPTY!");
-            }
-
-            for (TestCaseForm tcForm : request.getTestCaseFormList().getTestCasesList()) {
-                if (tcForm.getInput() == null || tcForm.getInput().trim().isEmpty()
-                        || tcForm.getExpectedOutput() == null || tcForm.getExpectedOutput().trim().isEmpty()) {
-                    return ResponseEntity.badRequest().body("One or more Test Cases are invalid!");
-                }
-                TestCase tc = new TestCase();
-                tc.setInput(tcForm.getInput());
-                tc.setExpectedOutput(tcForm.getExpectedOutput());
-                tc.setExercise(exercise);
-                testCasesFinal.add(tc);
-            }
-        } else {
-            return ResponseEntity.badRequest().body("Invalid Test Case Method!");
-        }
-
-        exercise.setTestCases(new ArrayList<>());
-        exercise.setTestCases(testCasesFinal);
+        ProgrammingLanguage language = languageOpt.get();
+        exercise.setLanguage(language);
         exercise.setName(name);
         exercise.setDescription(description);
         exercise.setSetup(setup);
         exercise.setLevel(Exercise.Level.valueOf(level));
 
-        exerciseService.saveExercise(exercise);
+        if ("SQL".equalsIgnoreCase(language.getLanguage())) {
+            exercise.setSetupsql(setupsql);
+        } else {
+            exercise.setSetupsql(null);
+        }
 
-        return ResponseEntity.ok("Exercise & Test Cases Saved!");
+        List<TestCase> testCasesFinal = new ArrayList<>();
+
+        if ("json".equalsIgnoreCase(testCaseMethod)) {
+            if (testCasesJson == null || testCasesJson.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("TestCases JSON is EMPTY!");
+            }
+
+            try {
+                ObjectMapper objectMapper = new ObjectMapper();
+                List<Map<String, Object>> testCaseJsonList = objectMapper.readValue(testCasesJson, new TypeReference<>() {});
+
+                for (Map<String, Object> tcMap : testCaseJsonList) {
+                    TestCase tc = new TestCase();
+                    tc.setInput((String) tcMap.get("input"));
+                    tc.setExpectedOutput((String) tcMap.get("expectedOutput"));
+                    tc.setHidden(Boolean.parseBoolean(String.valueOf(tcMap.getOrDefault("hidden", "false")))); // Dùng "hidden" thay vì "isHidden"
+                    tc.setExercise(exercise);
+
+                    if ("SQL".equalsIgnoreCase(language.getLanguage())) {
+                        tc.setSqlTagNumber((String) tcMap.get("sqlTagNumber"));
+                    } else {
+                        tc.setSqlTagNumber(null);
+                    }
+
+                    testCasesFinal.add(tc);
+                }
+            } catch (JsonProcessingException e) {
+                return ResponseEntity.badRequest().body("Invalid JSON format! Check console for details.");
+            }
+        } else if ("ui".equalsIgnoreCase(testCaseMethod)) {
+            int normalIndex = 0;
+            while (allParams.containsKey("testCaseFormList.testCasesList[" + normalIndex + "].input")) {
+                String input = allParams.get("testCaseFormList.testCasesList[" + normalIndex + "].input");
+                String expectedOutput = allParams.get("testCaseFormList.testCasesList[" + normalIndex + "].expectedOutput");
+                String sqlTagNumber = allParams.get("testCaseFormList.testCasesList[" + normalIndex + "].sqlTagNumber");
+
+                if (input != null && !input.trim().isEmpty() && expectedOutput != null && !expectedOutput.trim().isEmpty()) {
+                    TestCase tc = new TestCase();
+                    tc.setInput(input);
+                    tc.setExpectedOutput(expectedOutput);
+                    tc.setHidden(false);
+                    tc.setExercise(exercise);
+                    if ("SQL".equalsIgnoreCase(language.getLanguage())) {
+                        tc.setSqlTagNumber(sqlTagNumber);
+                    }
+                    testCasesFinal.add(tc);
+                }
+                normalIndex++;
+            }
+
+            int hiddenIndex = 0;
+            while (allParams.containsKey("hiddenTestCases[" + hiddenIndex + "].input")) {
+                String input = allParams.get("hiddenTestCases[" + hiddenIndex + "].input");
+                String expectedOutput = allParams.get("hiddenTestCases[" + hiddenIndex + "].expectedOutput");
+                String sqlTagNumber = allParams.get("hiddenTestCases[" + hiddenIndex + "].sqlTagNumber");
+
+                if (input != null && !input.trim().isEmpty() && expectedOutput != null && !expectedOutput.trim().isEmpty()) {
+                    TestCase tc = new TestCase();
+                    tc.setInput(input);
+                    tc.setExpectedOutput(expectedOutput);
+                    tc.setHidden(true);
+                    tc.setExercise(exercise);
+                    if ("SQL".equalsIgnoreCase(language.getLanguage())) {
+                        tc.setSqlTagNumber(sqlTagNumber);
+                    }
+                    testCasesFinal.add(tc);
+                }
+                hiddenIndex++;
+            }
+
+            if (testCasesFinal.isEmpty()) {
+                return ResponseEntity.badRequest().body("At least one valid test case is required!");
+            }
+        } else {
+            return ResponseEntity.badRequest().body("Invalid Test Case Method!");
+        }
+
+        exercise.setTestCases(testCasesFinal);
+
+        try {
+            exerciseService.saveExercise(exercise);
+            return ResponseEntity.ok("Exercise & Test Cases Saved!");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Error saving exercise: " + e.getMessage());
+        }
     }
-
-
-
     // Show the edit form for a specific exercise
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable Long id, Model model) {
         Exercise exercise = exerciseService.getExerciseById(id).orElse(null);
 
         if (exercise == null) {
-            return "redirect:/exercises"; // Redirect if the exercise doesn't exist
+            return "redirect:/exercises"; // Redirect nếu không tìm thấy
         }
 
-        // Fetch all programming languages for the dropdown
         List<ProgrammingLanguage> programmingLanguages = programmingLanguageService.getAllProgrammingLanguages();
-//        System.out.println("test case test"+exercise.getTestCases());
-        // Chuyển danh sách testCases thành chuỗi JSON
         ObjectMapper objectMapper = new ObjectMapper();
-        String testCasesJson = "[]"; // Mặc định nếu không có test case nào
-
+        String testCasesJson = "[]";
         try {
             testCasesJson = objectMapper.writeValueAsString(exercise.getTestCases());
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
-        model.addAttribute("exercise", exercise); // Add the current exercise to the model
-        model.addAttribute("programmingLanguages", programmingLanguages); // Add the languages to the model
-        model.addAttribute("testCasesJson", testCasesJson); // Thêm test case JSON vào model
-        model.addAttribute("testCases", exercise.getTestCases()); // Gửi danh sách test case dạng List
+
+        List<TestCase> normalTestCases = testCaseService.findVisibleTestCases(id);
+        List<TestCase> hiddenTestCases = testCaseService.findHiddenTestCases(id);
+
+        model.addAttribute("exercise", exercise);
+        model.addAttribute("programmingLanguages", programmingLanguages);
+        model.addAttribute("testCasesJson", testCasesJson);
+        model.addAttribute("testCases", exercise.getTestCases());
+        model.addAttribute("normalTestCases", normalTestCases);
+        model.addAttribute("hiddenTestCases", hiddenTestCases);
         model.addAttribute("content", "exercises/edit");
 
         return "layout";
@@ -241,7 +289,9 @@ public class ExerciseController {
     public String updateExercise(
             @PathVariable Long id,
             @ModelAttribute Exercise exercise,
+            @RequestParam(name = "testCaseMethod") String testCaseMethod, // Thêm để xác định phương thức
             @RequestParam(name = "testCasesJson", required = false) String testCasesJson,
+            @RequestParam Map<String, String> allParams, // Lấy dữ liệu từ UI
             Model model) {
 
         Exercise existingExercise = exerciseService.getExerciseById(id).orElse(null);
@@ -249,15 +299,15 @@ public class ExerciseController {
             return "redirect:/exercises"; // Nếu không tìm thấy thì redirect
         }
 
-        // 🟢 Kiểm tra nếu user không sửa title
+        // Kiểm tra và cập nhật tên bài tập
         if (!exercise.getName().equals(existingExercise.getName())) {
-            // 🟠 Chỉ kiểm tra trùng lặp nếu title thay đổi
             if (exerciseService.existsByTitleExcludingId(exercise.getName(), id)) {
                 model.addAttribute("error", "Exercise name already exists!");
+                model.addAttribute("programmingLanguages", programmingLanguageService.getAllProgrammingLanguages());
+                model.addAttribute("testCasesJson", testCasesJson);
                 model.addAttribute("content", "exercises/edit");
                 return "layout";
             }
-            // Cập nhật title nếu hợp lệ
             existingExercise.setName(exercise.getName());
         }
 
@@ -265,25 +315,92 @@ public class ExerciseController {
         existingExercise.setDescription(exercise.getDescription());
         existingExercise.setSetup(exercise.getSetup());
         existingExercise.setLevel(exercise.getLevel());
+        // existingExercise.setLanguage(exercise.getLanguage()); // Đảm bảo ánh xạ language từ form
 
-        // Xóa tất cả test cases cũ trước khi thêm mới
-        existingExercise.getTestCases().clear();
+        if (exercise.getLanguage().getLanguage().equals("SQL")) {
+            existingExercise.setSetupsql(exercise.getSetupsql());
+        } else {
+            existingExercise.setSetupsql(null);
+        }
 
-        // Xử lý test cases từ JSON
-        if (testCasesJson != null && !testCasesJson.isEmpty()) {
-            ObjectMapper objectMapper = new ObjectMapper();
-            try {
-                List<TestCase> testCases = objectMapper.readValue(testCasesJson, new TypeReference<List<TestCase>>() {});
-                for (TestCase testCase : testCases) {
-                    testCase.setExercise(existingExercise);
+        List<TestCase> normalTestCases = new ArrayList<>();
+        List<TestCase> hiddenTestCases = new ArrayList<>();
+
+        // Xử lý test cases dựa trên phương thức
+        if ("json".equalsIgnoreCase(testCaseMethod)) {
+            // Xử lý khi chọn "Enter as JSON"
+            if (testCasesJson != null && !testCasesJson.trim().isEmpty()) {
+                ObjectMapper objectMapper = new ObjectMapper();
+                try {
+                    List<TestCase> testCases = objectMapper.readValue(testCasesJson, new TypeReference<List<TestCase>>() {
+                    });
+                    for (TestCase testCase : testCases) {
+                        testCase.setExercise(existingExercise);
+                        if(testCase.isHidden()){
+                            hiddenTestCases.add(testCase);
+                        }
+                        else{
+                            normalTestCases.add(testCase);
+                        }
+                    }
+                    existingExercise.setTestCases(testCases);
+                } catch (JsonProcessingException e) {
+                    e.printStackTrace();
+                    model.addAttribute("error", "Invalid JSON format for test cases!");
+                    model.addAttribute("programmingLanguages", programmingLanguageService.getAllProgrammingLanguages());
+                    model.addAttribute("testCasesJson", testCasesJson);
+                    model.addAttribute("content", "exercises/edit");
+                    return "layout";
                 }
-                existingExercise.setTestCases(testCases);
-            } catch (JsonProcessingException e) {
-                e.printStackTrace();
+            }
+        } else if ("ui".equalsIgnoreCase(testCaseMethod)) {
+            // Xử lý khi nhập thủ công
+            int normalIndex = 0;
+            while (allParams.containsKey("normalTestCases[" + normalIndex + "].input")) {
+                String input = allParams.get("normalTestCases[" + normalIndex + "].input");
+                String expectedOutput = allParams.get("normalTestCases[" + normalIndex + "].expectedOutput");
+                String sqlTagNumber = allParams.get("normalTestCases[" + normalIndex + "].sqlTagNumber");
+
+                if (input != null && !input.trim().isEmpty() && expectedOutput != null && !expectedOutput.trim().isEmpty()) {
+                    TestCase testCase = new TestCase();
+                    testCase.setInput(input);
+                    testCase.setExpectedOutput(expectedOutput);
+                    testCase.setExercise(existingExercise);
+                    testCase.setSqlTagNumber(sqlTagNumber);
+                    testCase.setHidden(false);
+
+                    normalTestCases.add(testCase);
+                }
+                normalIndex++;
+            }
+
+// For hidden test cases
+            int hiddenIndex = 0;
+            while (allParams.containsKey("hiddenTestCases[" + hiddenIndex + "].input")) {
+                String input = allParams.get("hiddenTestCases[" + hiddenIndex + "].input");
+                String expectedOutput = allParams.get("hiddenTestCases[" + hiddenIndex + "].expectedOutput");
+                String sqlTagNumber = allParams.get("hiddenTestCases[" + hiddenIndex + "].sqlTagNumber");
+
+                if (input != null && !input.trim().isEmpty() && expectedOutput != null && !expectedOutput.trim().isEmpty()) {
+                    TestCase testCase = new TestCase();
+                    testCase.setInput(input);
+                    testCase.setExpectedOutput(expectedOutput);
+                    testCase.setExercise(existingExercise);
+                    testCase.setSqlTagNumber(sqlTagNumber);
+                    testCase.setHidden(true);
+
+                    hiddenTestCases.add(testCase);
+                }
+                hiddenIndex++;
             }
         }
 
         // Lưu bài tập đã cập nhật
+        List<TestCase> allTestCases = new ArrayList<>();
+        allTestCases.addAll(normalTestCases);
+        allTestCases.addAll(hiddenTestCases);
+        existingExercise.setTestCases(allTestCases);
+        exercise.setLanguage(existingExercise.getLanguage());
         exerciseService.saveExercise(existingExercise);
 
         return "redirect:/exercises";
@@ -296,6 +413,7 @@ public class ExerciseController {
         exerciseService.deleteExercise(id);
         return "redirect:/exercises";
     }
+
     @PostMapping("/delete-batch")
     public ResponseEntity<?> deleteExercises(@RequestBody Map<String, List<Long>> request) {
         List<Long> ids = request.get("ids");
@@ -319,6 +437,7 @@ public class ExerciseController {
 
         return "redirect:/exercises";
     }
+
     // Print roles page
     @GetMapping("/print")
     public String print(Model model) {
@@ -336,7 +455,7 @@ public class ExerciseController {
 
         // Tạo tiêu đề
         Row headerRow = sheet.createRow(0);
-        String[] columns = {"ID", "Title", "Language", "Level", "Description", "Set Up Code", "Test Case"};
+        String[] columns = {"ID", "Title", "Language", "Level", "Description", "Set Up Code", "Test Case", "Hidden Test Case"};
         for (int i = 0; i < columns.length; i++) {
             Cell cell = headerRow.createCell(i);
             cell.setCellValue(columns[i]);
@@ -358,16 +477,28 @@ public class ExerciseController {
             row.createCell(4).setCellValue(exercise.getDescription());
             row.createCell(5).setCellValue(exercise.getSetup());
 // Concatenate test cases
-            StringBuilder testCaseText = new StringBuilder();
+//            StringBuilder testCaseText = new StringBuilder();
+              StringBuilder visibleTestCases = new StringBuilder();
+              StringBuilder hiddenTestCases = new StringBuilder();
+
             for (TestCase testCase : exercise.getTestCases()) {
-                testCaseText.append("Input: ").append(testCase.getInput())
-                        .append(", Expected: ").append(testCase.getExpectedOutput())
-                        .append(";")
-                        .append("\n");
+//                testCaseText.append("Input: ").append(testCase.getInput())
+//                        .append(", Expected: ").append(testCase.getExpectedOutput())
+//                        .append(";")
+//                        .append("\n");
+                String testCaseEntry = "Input: " + testCase.getInput() +
+                        ", Expected: " + testCase.getExpectedOutput() + ";\n";
+
+                if (testCase.isHidden()) {
+                    hiddenTestCases.append(testCaseEntry);
+                } else {
+                    visibleTestCases.append(testCaseEntry);
+                }
             }
 
             // Set the concatenated string in the cell
-            row.createCell(6).setCellValue(testCaseText.toString().trim());
+            row.createCell(6).setCellValue(visibleTestCases.toString().trim());
+            row.createCell(7).setCellValue(hiddenTestCases.toString().trim());
         }
 
         // Xuất dữ liệu ra mảng byte
@@ -376,7 +507,7 @@ public class ExerciseController {
         workbook.close();
 
         byte[] excelBytes = outputStream.toByteArray();
-        String timeStamp = new SimpleDateFormat("dd_MM_yyyy").format(new Date());
+        String timeStamp = new SimpleDateFormat("dd_MM_yyyy hh-mm a").format(new Date());
         String fileName = "exercises_" + timeStamp + ".xlsx";
 
         // Trả về file Excel
@@ -387,9 +518,6 @@ public class ExerciseController {
                 .body(excelBytes);
 
     }
-
-
-
 
 
     // Export exercises to an Excel file

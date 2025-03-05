@@ -1,3 +1,17 @@
+<!-- Thông báo lỗi -->
+<div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <span th:text="${errorMessage}"></span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+
+<!-- Thông báo thành công -->
+<div th:if="${successMessage}" class="alert alert-primary alert-dismissible fade show" role="alert">
+    <i class="bi bi-info-circle-fill"></i>
+    <span th:text="${successMessage}"></span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+
 <div class="px-5 flex-grow-1">
     <h1 class="text-center">Quizes</h1>
     <div>
@@ -45,6 +59,9 @@
                     <th>Name</th>
                     <th>Description</th>
                     <th>Attempt</th>
+                    <th>Time Start</th>
+                    <th>Time End</th>
+                    <th>Status</th>
                     <th>Actions</th>
                 </tr>
                 </thead>
@@ -53,24 +70,43 @@
                     <td class="text-center" th:text="${iterStat.index + 1}"></td>
                     <td th:text="${quize.getName()}"></td>
                     <td th:text="${quize.getDescription()}"></td>
-                    <td>
-                        <!--                        <i th:class="${quize.getAttempt()}"></i>-->
-                    </td>
-                    <td>
-                        <a th:href="@{'/quizes/edit/' + ${quize.getId()}}" class="btn btn-outline-secondary btn-sm"
-                           title="Edit">
+                    <td th:text="${quize.getAttemptLimit()}"></td>
+                    <td th:text="${#temporals.format(quize.getStartTime(), 'dd-MM-yyyy HH:mm:ss')}"></td>
+                    <td th:text="${#temporals.format(quize.getEndTime(), 'dd-MM-yyyy HH:mm:ss')}"></td>
+
+                    <td th:text="${quize.getQuizType()}"></td>
+
+                    <td class="d-flex align-items-center gap-1">
+                        <a th:href="@{'/quizes/edit/' + ${quize.getId()}}" class="btn btn-outline-secondary btn-sm" title="Edit">
                             <i class="bi bi-pencil"></i>
                         </a>
-                        <a th:href="@{'/quizes/delete/' + ${quize.getId()}}" class="btn btn-outline-secondary btn-sm"
+                        <a th:href="@{'/quizes/participants/' + ${quize.getId()}}" class="btn btn-outline-secondary btn-sm" title="Participants">
+                            <i class="bi bi-person-circle"></i>
+                        </a>
+                        <a th:href="@{'/quizes/detail/' + ${quize.getId()}}" class="btn btn-outline-secondary btn-sm" title="Detail">
+                            <i class="bi bi-info-circle"></i>
+                        </a>
+                        <a th:href="@{'/quizes/delete/' + ${quize.getId()}}" class="btn btn-outline-danger btn-sm"
                            onclick="return confirm('Are you sure?')" title="Delete">
                             <i class="bi bi-trash"></i>
                         </a>
-                        <a th:href="@{'/quizes/detail/' + ${quize.getId()}}" class="btn btn-outline-secondary btn-sm"
-                           title="Detail">
-                            <i class="bi bi-body-text"></i>
-                        </a>
 
+                        <!-- Nút Apply khi QuizType là OPEN -->
+                        <form th:action="@{'/quizes/apply/' + ${quize.id}}" method="post"
+                              th:if="${quize.getQuizType().name() == 'OPEN'}"
+                              onsubmit="return confirm('Do you want to join this quiz?');">
+                            <button type="submit" class="btn btn-outline-primary btn-sm d-flex align-items-center" title="Apply">
+                                <i class="bi bi-caret-right-fill"></i> Apply
+                            </button>
+                        </form>
+
+                        <!-- Nút Closed khi QuizType là CLOSE -->
+                        <button type="button" class="btn btn-outline-secondary btn-sm d-flex align-items-center" title="Closed" disabled
+                                th:if="${quize.getQuizType().name() == 'CLOSE'}">
+                            <i class="bi bi-caret-right-fill"></i> Closed
+                        </button>
                     </td>
+
                 </tr>
                 </tbody>
             </table>
@@ -82,12 +118,12 @@
                 <ul class="pagination">
                     <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
                         <a class="page-link"
-                           th:href="@{/quizes(page=${0}, pageSize=${pageSize}, searchQuery=${searchQuery})}"><<<</a>
+                           th:href="@{/quizes(page=${0}, pageSize=${pageSize}, searchQuery=${searchQuery})}"><<</a>
                     </li>
 
                     <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
                         <a class="page-link"
-                           th:href="@{/quizes(page=${currentPage - 1}, pageSize=${pageSize}, searchQuery=${searchQuery})}"><<</a>
+                           th:href="@{/quizes(page=${currentPage - 1}, pageSize=${pageSize}, searchQuery=${searchQuery})}"><</a>
                     </li>
 
                     <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
@@ -99,12 +135,12 @@
 
                     <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
                         <a class="page-link"
-                           th:href="@{/quizes(page=${currentPage + 1}, pageSize=${pageSize}, searchQuery=${searchQuery})}">>></a>
+                           th:href="@{/quizes(page=${currentPage + 1}, pageSize=${pageSize}, searchQuery=${searchQuery})}">></a>
                     </li>
 
                     <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
                         <a class="page-link"
-                           th:href="@{/quizes(page=${totalPages - 1}, pageSize=${pageSize}, searchQuery=${searchQuery})}">>>></a>
+                           th:href="@{/quizes(page=${totalPages - 1}, pageSize=${pageSize}, searchQuery=${searchQuery})}">>></a>
                     </li>
                 </ul>
             </div>
@@ -127,7 +163,20 @@
                 <!--                        <a href="/templates/roles.xlsx" class="btn btn-link" download>Download Role Template</a>-->
                 <!--                    </div>-->
                 <!-- Import form -->
-                <form method="post" enctype="multipart/form-data" action="/quizes/import">
+                <form method="post" enctype="multipart/form-data" th:action="@{/quizes/import}">
+                    <div>
+                        <label for="course" class="form-label fw-bold ">Select Course</label>
+                        <select id="course" name="course" class="form-select" onchange="reloadPage()">
+                            <option value="">-- Select a Course --</option>
+                            <option
+                                    th:each="course : ${courses}"
+                                    th:value="${course.name}"
+                                    th:text="${course.name}"
+                            >
+                            </option>
+                        </select>
+                    </div>
+
                     <div class="mb-3">
                         <label for="file" class="form-label">Choose Excel File</label>
                         <input type="file" name="file" id="file" class="form-control" required>

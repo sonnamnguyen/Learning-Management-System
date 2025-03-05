@@ -1,6 +1,7 @@
 package com.example.quiz.controller;
 
 import com.example.exception.NotFoundException;
+
 import com.example.quiz.model.Question;
 import com.example.quiz.model.Quiz;
 import com.example.quiz.service.QuestionService;
@@ -8,19 +9,15 @@ import com.example.quiz.service.QuizService;
 import com.example.user.UserService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.ui.Model;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 import java.util.Set;
 
-@Controller
-@RequestMapping("/questions")
+@RestController
+@RequestMapping("questions")
 public class QuestionController {
 
     @Autowired
@@ -75,30 +72,26 @@ public class QuestionController {
     }
 
     @GetMapping("/create")
-    public String showCreateForm(Model model,
-                                 @RequestParam(name = "questionType", required = false) Question.QuestionType questionType,
-                                 @PathVariable Long quizId) { // Lấy quizId từ URL nếu có
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
+    public String showCreateForm(Model model) { // Lấy quizId từ URL nếu có
 
+        Question.QuestionType[] questionTypes = Question.QuestionType.values();
         Question question = new Question();
-        if (questionType != null) {
-            question.setQuestionType(questionType);
-        }
 
-        List<Question> questionsForQuiz = questionService.findQuestionsByQuizId(quizId);
-
-        model.addAttribute("questions", questionsForQuiz);
-        model.addAttribute("newQuestion", question);
-        model.addAttribute("content", "quizes/create");
+        model.addAttribute("questionType", questionTypes);
+        model.addAttribute("question", question);
+        model.addAttribute("content", "quizes/detail");
 
         return "layout";
     }
-    @PostMapping("/create")
-    public String createQuestion(@PathVariable Long quizId, @ModelAttribute Question question) {
-        questionService.create(quizId, question);
-        return "redirect:/questions";
-    }
+
+//    @PostMapping("/create")
+//    public String createQuestion(@ModelAttribute QuestionRequestDTO question,
+//                                 @PathVariable("quizId") Long quizId) {
+//        quizService.createQuestion(quizId, question);
+//        return "redirect:/quizes/detail/" + quizId;
+//    }
+
+
 
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable("id") Long id, Model model) {

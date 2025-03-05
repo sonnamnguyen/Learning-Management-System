@@ -992,32 +992,32 @@
                         </div>
 
                         <!-- Phần tìm kiếm Google -->
-                        <div class="search-container" style="border-bottom: none;">
-                            <div class="input-group">
-                                <input type="text" id="searchInput" class="form-control form-control-sm"
-                                       placeholder="Search on Google...">
-                                <button class="btn btn-primary" type="button" id="searchButton">
-                                    <i class="fas fa-search"></i>
-                                </button>
-                            </div>
-                        </div>
+<!--                        <div class="search-container" style="border-bottom: none;">-->
+<!--                            <div class="input-group">-->
+<!--                                <input type="text" id="searchInput" class="form-control form-control-sm"-->
+<!--                                       placeholder="Search on Google...">-->
+<!--                                <button class="btn btn-primary" type="button" id="searchButton">-->
+<!--                                    <i class="fas fa-search"></i>-->
+<!--                                </button>-->
+<!--                            </div>-->
+<!--                        </div>-->
 
                         <!-- Tab Navigation -->
-                        <ul class="nav nav-tabs nav-fill" style="border-bottom: none;" id="leftPanelTabs"
-                            role="tablist">
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link active" id="description-tab" data-bs-toggle="tab"
-                                        data-bs-target="#description" type="button" role="tab">
-                                    Description
-                                </button>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="search-tab" data-bs-toggle="tab"
-                                        data-bs-target="#searchResults" type="button" role="tab">
-                                    Search
-                                </button>
-                            </li>
-                        </ul>
+<!--                        <ul class="nav nav-tabs nav-fill" style="border-bottom: none;" id="leftPanelTabs"-->
+<!--                            role="tablist">-->
+<!--                            <li class="nav-item" role="presentation">-->
+<!--                                <button class="nav-link active" id="description-tab" data-bs-toggle="tab"-->
+<!--                                        data-bs-target="#description" type="button" role="tab">-->
+<!--                                    Description-->
+<!--                                </button>-->
+<!--                            </li>-->
+<!--                            <li class="nav-item" role="presentation">-->
+<!--                                <button class="nav-link" id="search-tab" data-bs-toggle="tab"-->
+<!--                                        data-bs-target="#searchResults" type="button" role="tab">-->
+<!--                                    Search-->
+<!--                                </button>-->
+<!--                            </li>-->
+<!--                        </ul>-->
                     </div>
                 </div>
 
@@ -1068,7 +1068,7 @@
 
                 <!-- Right Panel -->
                 <div class="col-md-3 p-3 text-white d-flex flex-column" id="rightPanel"
-                     style="overflow-y:auto; height:100%; padding: 16px 16px 0 16px !important;">
+                     style="height:100%; padding: 16px 16px 0 16px !important;">
                     <!-- Tab Content -->
                     <div class="tab-content flex-grow-1">
                         <!-- Output Tab -->
@@ -1087,30 +1087,7 @@
                             </div>
                             <div id="output" class="p-3 rounded" style="font-size:0.85em; flex-grow: 1;">
                                 <!-- Output content here -->
-                                <div class="result-container h-100">
-                                    <h5 class="mb-3 align-items-center" th:text="${type_check}"></h5>
 
-                                    <!-- Display grading results if available -->
-                                    <div th:if="${passed != null}">
-                                        <p>You passed <strong th:text="${passed}">0</strong> out of <strong>2</strong>
-                                            test cases.</p>
-                                        <ul class="list-unstyled">
-                                            <li th:each="testResult, iterStat : ${testResults}" class="mb-2  p-2 rounded">
-                                                <span th:text="'Test Case ' + (${iterStat.index} + 1) + ':'"></span>
-                                                <span th:text="${testResult.isCorrect ? 'Passed' : 'Failed'}"
-                                                      th:classappend="${testResult.isCorrect} ? 'test-case-pass' : 'test-case-fail'"></span>
-                                                <!--                                            <div th:if="${!testResult.isCorrect}" class="mt-1 ps-3">-->
-                                                <div class="mt-1 ps-3">
-                                                    <strong>Input:</strong> <span th:text="${testResult.testCase.input}"></span><br>
-                                                    <strong>Your Output:</strong> <span
-                                                        th:text="${testResult.userOutput}"></span><br>
-                                                    <strong>Expected Output:</strong> <span
-                                                        th:text="${testResult.testCase.expectedOutput}"></span>
-                                                </div>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
                             </div>
                         </div>
 
@@ -1204,7 +1181,7 @@
                 break;
         }
 
-         editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
+        editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
             mode: initialMode,
             lineNumbers: true,
             theme: "dracula",

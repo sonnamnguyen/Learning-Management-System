@@ -89,12 +89,13 @@ public class CodeExecutionService {
     }
 
     // calculate score for exercise
-    public double exerciseScore(int total, int passed) {
+    public double exerciseScore(int passed, int total) {
         try {
             if (total == 0) {
                 throw new ArithmeticException("TestCase is null");
             }
-            return (double) passed / total * 100;
+            double score = (double) passed / total * 100;
+            return Math.round(score * 10.0) / 10.0;
         } catch (ArithmeticException e) {
             System.err.println("Error: " + e.getMessage());
             return 0.0;
@@ -106,7 +107,7 @@ public class CodeExecutionService {
 //        ExecutionBasedLanguage executionBasedLanguage = initialLanguage(language);
         CompilationResult compilationResult = executionBasedLanguage.compileCode(code);
         if (!compilationResult.isSuccess()) {
-            throw new RuntimeException(compilationResult.getErrorMessage());
+            return new ExecutionResponse(code, 0, testCases.size(), 0, null, compilationResult.getErrorMessage());
         }
 
         // Sử dụng ExecutorService để chạy các test case song song
@@ -183,9 +184,8 @@ public class CodeExecutionService {
         }
 
         // Tính toán kết quả tổng quát
-        return new ExecutionResponse(code,passed,testCases.size(),score,testResults);
+        return new ExecutionResponse(code,passed,testCases.size(),score,testResults, null);
     }
-
 
     private void deleteDirectoryRecursively(Path path) throws IOException {
         if (Files.exists(path)) {

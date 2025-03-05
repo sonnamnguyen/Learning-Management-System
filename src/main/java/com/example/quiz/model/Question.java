@@ -1,7 +1,6 @@
 package com.example.quiz.model;
 
-import com.example.course.Course;
-import jakarta.activation.DataHandler;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Entity;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,6 +8,7 @@ import lombok.Setter;
 
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -22,36 +22,58 @@ public class Question {
 
 
     public enum QuestionType {
-        MCQ, TF, TEXT
+        MCQ, SCQ, TEXT
     }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToMany(mappedBy = "questions")
-    private Set<Quiz> quizzes = new HashSet<>();
+//    @ManyToMany
+//    @JoinTable(
+//            name = "quiz_question",
+//            joinColumns = @JoinColumn(name = "question_id"),
+//            inverseJoinColumns = @JoinColumn(name = "quiz_id")
+//    )
+//    private Set<Quiz> quizzes = new HashSet<>();
 
-    @Column(name = "question_text", nullable = false)
+    public void addAnswerOption(AnswerOption answerOption) {
+        answerOptions.add(answerOption);
+        answerOption.setQuestion(this);
+    }
+
+//    @ManyToMany(mappedBy = "questions")
+//    private Set<Quiz> quizzes = new HashSet<>();
+
+    @ManyToOne
+    @JoinColumn(name = "quiz_id")
+    @JsonIgnore
+    private Quiz quizzes;
+
+    @Column(name = "question_no")
+    private Integer questionNo;
+
+    @Column(name = "question_text", nullable = false, columnDefinition = "TEXT")
     private String questionText;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "question_type", length = 50, nullable = false)
     private QuestionType questionType;
 
-    @Column(name = "points")
-    private Integer points;
+    @Column(name = "points", nullable = false)
+    private Integer points = 0;
 
-    public void addQuiz(Quiz quiz) {
-        this.quizzes.add(quiz);
-        quiz.getQuestions().add(this);
-    }
 
-    @OneToMany(mappedBy = "question", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<AnswerOption> answerOptions;
+//    public void addQuiz(Quiz quiz) {
+//        this.quizzes.add(quiz);
+//        quiz.getQuestions().add(this);
+//    }
 
     @OneToMany(mappedBy = "question", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Answer> answers;
+    private List<Answer> answers = new ArrayList<>();
+
+    @OneToMany(mappedBy = "question", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<AnswerOption> answerOptions = new ArrayList<>();
 
     // Getters and Setters
     // Omitted for brevity
