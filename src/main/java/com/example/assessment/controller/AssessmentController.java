@@ -1,22 +1,19 @@
 package com.example.assessment.controller;
 
-
 import com.example.assessment.model.*;
 import com.example.assessment.repository.AssessmentRepository;
-import com.example.assessment.model.*;
 import com.example.assessment.repository.InvitedCandidateRepository;
 import com.example.assessment.service.*;
-import com.example.course.Course;
 import com.example.course.CourseService;
 import com.example.email.EmailService;
 import com.example.student_exercise_attemp.model.Exercise;
+import com.example.assessment.model.Assessment;
 import com.example.assessment.service.AssessmentService;
 import com.example.assessment.service.AssessmentTypeService;
 import com.example.assessment.service.StudentAssessmentAttemptService;
 import com.example.assessment.service.InvitedCandidateService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.hashids.Hashids;
 import com.example.student_exercise_attemp.service.ExerciseService;
@@ -24,18 +21,15 @@ import com.example.quiz.model.AnswerOption;
 import com.example.quiz.model.Question;
 import com.example.quiz.model.Quiz;
 import com.example.quiz.service.AnswerOptionService;
-import com.example.quiz.model.Question;
 import com.example.quiz.service.QuestionService;
 import com.example.quiz.service.QuizService;
 import com.example.user.User;
 import com.example.user.UserRepository;
 import com.example.user.UserService;
-import com.example.student_exercise_attemp.model.Exercise;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
@@ -43,17 +37,17 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.format.annotation.DateTimeFormat;
-
-import java.time.LocalDate;
+import java.lang.reflect.Field;
 import java.time.LocalDateTime;
-
 import java.io.ByteArrayInputStream;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 @Controller
 @RequestMapping("/assessments")
@@ -92,6 +86,9 @@ public class AssessmentController {
     private AnswerOptionService answerOptionService;
 
     @Autowired
+    private AnswerOptionService AnswerOptionService;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -103,6 +100,10 @@ public class AssessmentController {
     @Autowired
     private InvitedCandidateRepository invitedCandidateRepository;
 
+    //Hashids to hash the assessment id
+    private Hashids hashids = new Hashids("BaTramBaiCodeThieuNhi", 32);
+    @Autowired
+    private EmailService emailService;
     @Autowired
     private StudentAssessmentAttemptService studentAssessmentAttemptService;
     @Autowired
@@ -113,7 +114,6 @@ public class AssessmentController {
     @GetMapping("/create")
     public String createAssessment(Model model) {
         Assessment assessment = new Assessment();
-        assessment.setTotalScore(100);
         assessment.setTimeLimit(30);
         assessment.setQualifyScore(60);
         assessment.setQuizScoreRatio(50);
@@ -140,7 +140,6 @@ public class AssessmentController {
         model.addAttribute("exercises", exerciseService.findAllExercises());
         model.addAttribute("languages", programmingLanguageService.getAllProgrammingLanguages());
         model.addAttribute("assessment", assessment);
-
         model.addAttribute("courses", courseService.getAllCourses());
         model.addAttribute("assessmentTypes", assessmentTypeService.getAllAssessmentTypes());
         model.addAttribute("currentUser", userService.getCurrentUser());
@@ -149,38 +148,8 @@ public class AssessmentController {
 
     @PostMapping("/create")
     public String createAssessment(@ModelAttribute Assessment assessment, @RequestParam(value = "exercises-ids", required = false) List<String> exerciseIdsStr, @RequestParam(value = "questions-ids", required = false) List<String> questionIdsStr, Model model) {
-        if (assessmentService.duplicateAss(assessment.getTitle())) {
-            List<Quiz> allQuizzes = quizService.findAll();
-            model.addAttribute("allQuizzes", allQuizzes);
-            // Fetch questions for each quiz and store in a Map
-            Map<Long, List<Question>> quizQuestionsMap = new LinkedHashMap<>();
-            for (Quiz quiz : allQuizzes) {
-                List<Question> questionsForQuiz = questionService.findQuestionsByQuizId(quiz.getId());
-                quizQuestionsMap.put(quiz.getId(), questionsForQuiz); // CORRECTED LINE
-            }
-            // Fetch answer options for ALL questions
-            Map<Long, List<AnswerOption>> questionAnswerOptionsMap = new LinkedHashMap<>();
-            List<Question> allQuestions = questionService.findAll();
-            for (Question question : allQuestions) {
-                List<AnswerOption> answerOptions = answerOptionService.getAnswerOptionByid(question.getId()); // **Potential Issue Here**
-                questionAnswerOptionsMap.put(question.getId(), answerOptions);
-            }
-            model.addAttribute("questionAnswerOptionsMap", questionAnswerOptionsMap); // Add to the model
-            model.addAttribute("quizQuestionsMap", quizQuestionsMap); // Add the map to the model
-            model.addAttribute("questions", questionService.findAll());
-            // Add other attributes
-            model.addAttribute("exercises", exerciseService.findAllExercises());
-            model.addAttribute("languages", programmingLanguageService.getAllProgrammingLanguages());
-            model.addAttribute("assessment", assessment);
 
-            model.addAttribute("courses", courseService.getAllCourses());
-            model.addAttribute("assessmentTypes", assessmentTypeService.getAllAssessmentTypes());
-            model.addAttribute("currentUser", userService.getCurrentUser());
-            model.addAttribute("duplicateTitleError", "Assessment title already exists."); // **Updated line with English message**
-//        model.addAttribute("content", "assessments/create");
-//        return "layout";
-            return "assessments/create2";
-        }
+
         Set<Exercise> selectedExercisesSet = new LinkedHashSet<>();
         Set<Question> selectedQuestionsSet = new LinkedHashSet<>();
         // Get the current user
@@ -188,7 +157,7 @@ public class AssessmentController {
         assessment.setCreatedBy(currentUser);
         if (exerciseIdsStr != null && !exerciseIdsStr.isEmpty()) {
             for (String exerciseIdStr : exerciseIdsStr) { // <--- LOOPING THROUGH THE LIST
-                Long exerciseId = Long.parseLong(exerciseIdStr);
+                Long exerciseId = Long.parseLong(exerciseIdStr); // <--- **CORRECTED LINE: CONVERT STRING TO LONG**
                 Optional<Exercise> exerciseOptional = exerciseService.getExerciseById(exerciseId);
                 Exercise exercise = exerciseOptional.orElse(null); // Handle Optional and get Exercise or null
                 if (exercise != null) {
@@ -198,7 +167,7 @@ public class AssessmentController {
         }
         if (questionIdsStr != null && !questionIdsStr.isEmpty()) {
             for (String questionIdStr : questionIdsStr) { // <--- LOOPING THROUGH THE LIST
-                Long questionId = Long.parseLong(questionIdStr);
+                Long questionId = Long.parseLong(questionIdStr); // <--- **CORRECTED LINE: CONVERT STRING TO LONG**
                 Optional<Question> exerciseOptional = questionService.findById(questionId);
                 Question question = exerciseOptional.orElse(null); // Handle Optional and get Exercise or null
                 if (question != null) {
@@ -215,51 +184,20 @@ public class AssessmentController {
             AssessmentQuestion aq = new AssessmentQuestion();
             aq.setAssessment(assessment);
             aq.setQuestion(question);
-            aq.setOrderIndex(orderIndex);
+            aq.setOrderIndex(orderIndex); // Set the order index HERE!
             assessmentQuestions.add(aq);
             orderIndex++; // Increment for the next question
         }
         assessmentService.alignSequenceForAssessmentQuestion(); // align the sequence of the increment id
-         assessment.setAssessmentQuestions(assessmentQuestions);
-         assessment.setUpdatedBy(currentUser);
+        assessment.setAssessmentQuestions(assessmentQuestions);// <--- SETTING THE ENTIRE LIST AFTER THE LOOP
+//        assessment.setUpdatedBy(currentUser);
         assessmentService.createAssessment(assessment);
         model.addAttribute("message", "Assessment created successfully!");
-
         return "redirect:/assessments";
     }
 
-    @GetMapping("/get-exercise-content/{exerciseId}")
-    public ResponseEntity<?> getExerciseContent(@PathVariable Long exerciseId) {
-        Optional<Exercise> exercise = exerciseService.getExerciseById(exerciseId);
-
-        if (exercise.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("title", exercise.get().getName());
-        response.put("content", exercise.get().getDescription());
-        response.put("language", exercise.get().getLanguage());
-
-        return ResponseEntity.ok(response); // Returns the data as JSON
-    }
-
-    //Cai nay de copy link invite
-    @GetMapping("/{id}/copy_invite_link/")
-    public ResponseEntity<Map<String, String>> copyInviteLink(@PathVariable("id") Long assessmentId) {
-        String inviteLink = assessmentService.generateInviteLink(assessmentId); // Generate the invite link
-
-        if (inviteLink != null) {
-            Map<String, String> response = new HashMap<>();
-            response.put("invite_link", inviteLink);  // Send back the invite link as JSON
-            return ResponseEntity.ok(response);
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);  // Return 404 if link is not found
-        }
-    }
 
 
-    /// / code cũ
     @ModelAttribute
     public void addCommonAttributes(Model model) {
         model.addAttribute("title", "Assessments");
@@ -287,9 +225,42 @@ public class AssessmentController {
         return "layout";
     }
 
+    @GetMapping("/get-exercise-content/{exerciseId}")
+    public ResponseEntity<?> getExerciseContent(@PathVariable Long exerciseId) {
+        Optional<Exercise> exercise = exerciseService.getExerciseById(exerciseId);
+
+        if (exercise.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("title", exercise.get().getName());
+        response.put("content", exercise.get().getDescription());
+        response.put("language", exercise.get().getLanguage());
+
+        return ResponseEntity.ok(response); // Returns the data as JSON
+    }
+
+
+
+
+    @GetMapping("/create/check-duplicate")
+    public ResponseEntity<Map<String, Boolean>> checkDuplicateTitle(
+            @RequestParam String title,
+            @RequestParam Long assessmentTypeId
+    ) { // Make id optional
+        System.out.println("Received checkDuplicateTitleForEdit request:"); // Basic console log
+
+        boolean exists = assessmentService.existsByTitleAndAssessmentTypeId(title, assessmentTypeId);
+        Map<String, Boolean> response = new HashMap<>();
+        response.put("isDuplicate", exists);
+        System.out.println(exists);
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/invite/{id}")
     public String inviteCandidate(@PathVariable int id, Model model) {
-        List<User> usersWithRole5 = userRepository.findByRoles_Id(5L);
+        List<User> usersWithRole5 = userRepository.findByRoles_Id(2L);
         System.out.println("Users found: " + usersWithRole5.size()); // Debugging print
 
         model.addAttribute("assessmentId", id);
@@ -299,81 +270,142 @@ public class AssessmentController {
 
     @GetMapping("/detail/{id}")
     @Transactional(readOnly = true)
-    public String showDetail(@PathVariable("id") Long id, @RequestParam(value = "pageReg", defaultValue = "0") int pageReg, @RequestParam(value = "pageInv", defaultValue = "0") int pageInv, @RequestParam(value = "searchEmail", required = false) String searchEmail, Model model) {
+    public String showDetail(
+            @PathVariable("id") Long id,
+            @RequestParam(value = "pageReg", defaultValue = "0") int pageReg,
+            @RequestParam(value = "pageInv", defaultValue = "0") int pageInv,
+            @RequestParam(value = "searchEmail", required = false) String searchEmail,
+            Model model) {
+
+        Logger logger = LoggerFactory.getLogger(this.getClass());
+        List<String> errorMessages = new ArrayList<>();
+
+        // 1. Retrieve the assessment
+        Assessment assessment = null;
         try {
-            // Lấy assessment; nếu không tìm thấy, ném ngoại lệ
-            Assessment assessment = assessmentService.findById(id).orElseThrow(() -> new Exception("Assessment not found with id: " + id));
-            model.addAttribute("assessment", assessment);
+            assessment = assessmentService.findById(id)
+                    .orElseThrow(() -> new Exception("Assessment not found with id: " + id));
+        } catch (Exception e) {
+            logger.error("Error retrieving assessment with id: " + id, e);
+            errorMessages.add("Error retrieving assessment: " + e.getMessage());
+            // Fallback: create an empty Assessment
+            assessment = new Assessment();
+        }
+        model.addAttribute("assessment", assessment);
 
-            // PHÂN TRANG REGISTERED ATTEMPTS
+        // 2. Retrieve registered attempts with pagination
+        Page<StudentAssessmentAttempt> registeredAttemptsPage;
+        try {
             Pageable pageableReg = PageRequest.of(pageReg, 10);
-            Page<StudentAssessmentAttempt> registeredAttemptsPage = assessmentAttemptService.findByAssessment_Id(id, pageableReg);
+            registeredAttemptsPage = assessmentAttemptService.findByAssessment_Id(id, pageableReg);
+        } catch (Exception e) {
+            logger.error("Error retrieving registered attempts for assessment id: " + id, e);
+            errorMessages.add("Error retrieving registered attempts: " + e.getMessage());
+            registeredAttemptsPage = Page.empty();
+        }
 
-            // Chuyển danh sách attempt sang danh sách DTO (Map) với trường candidateUsername
-            List<java.util.Map<String, Object>> attemptViewList = registeredAttemptsPage.getContent().stream().map(attempt -> {
-                java.util.Map<String, Object> map = new java.util.HashMap<>();
-                map.put("id", attempt.getId());
-                map.put("email", attempt.getEmail());
-                map.put("attemptDate", attempt.getAttemptDate());
-                map.put("scoreQuiz", attempt.getScoreQuiz());
-                map.put("scoreAss", attempt.getScoreAss());
-                // Lấy username từ trường user qua reflection (do không có getter)
-                String candidateUsername = "N/A";
+        // 3. Process registered attempts into a list of maps, including candidate username via reflection
+        List<Map<String, Object>> attemptViewList = new ArrayList<>();
+        try {
+            attemptViewList = registeredAttemptsPage.getContent().stream().map(attempt -> {
+                Map<String, Object> map = new HashMap<>();
                 try {
-                    java.lang.reflect.Field field = attempt.getClass().getDeclaredField("user");
-                    field.setAccessible(true);
-                    Object userObj = field.get(attempt);
-                    if (userObj != null) {
-                        // Gọi phương thức getUsername() của đối tượng user
-                        candidateUsername = (String) userObj.getClass().getMethod("getUsername").invoke(userObj);
+                    map.put("id", attempt.getId());
+                    map.put("email", attempt.getEmail());
+                    map.put("attemptDate", attempt.getAttemptDate());
+                    map.put("scoreQuiz", attempt.getScoreQuiz());
+                    map.put("scoreAss", attempt.getScoreAss());
+                    String candidateUsername = "N/A";
+                    try {
+                        Field field = attempt.getClass().getDeclaredField("user");
+                        field.setAccessible(true);
+                        Object userObj = field.get(attempt);
+                        if (userObj != null) {
+                            candidateUsername = (String) userObj.getClass().getMethod("getUsername").invoke(userObj);
+                        }
+                    } catch (Exception ex) {
+                        logger.error("Error retrieving candidate username for attempt id " + attempt.getId(), ex);
+                        errorMessages.add("Error retrieving candidate username for attempt id " + attempt.getId() + ": " + ex.getMessage());
                     }
+                    map.put("candidateUsername", candidateUsername);
                 } catch (Exception ex) {
-                    // Nếu có lỗi, giữ giá trị mặc định "N/A"
+                    logger.error("Error processing attempt id " + attempt.getId(), ex);
+                    errorMessages.add("Error processing attempt id " + attempt.getId() + ": " + ex.getMessage());
                 }
-                map.put("candidateUsername", candidateUsername);
                 return map;
             }).collect(Collectors.toList());
-            model.addAttribute("registeredAttempts", attemptViewList);
-            model.addAttribute("registeredAttemptsPage", registeredAttemptsPage);
+        } catch (Exception e) {
+            logger.error("Error processing registered attempts", e);
+            errorMessages.add("Error processing registered attempts: " + e.getMessage());
+        }
+        model.addAttribute("registeredAttempts", attemptViewList);
+        model.addAttribute("registeredAttemptsPage", registeredAttemptsPage);
 
-            // PHÂN TRANG & TÌM KIẾM INVITED CANDIDATES
+        // 4. Retrieve invited candidates with pagination and search
+        Page<?> invitedCandidatesPage;
+        try {
             Pageable pageableInv = PageRequest.of(pageInv, 10);
-            Page<?> invitedCandidatesPage;
             if (searchEmail != null && !searchEmail.isEmpty()) {
                 invitedCandidatesPage = candidateService.findByAssessmentIdAndEmailContaining(id, searchEmail, pageableInv);
             } else {
                 invitedCandidatesPage = candidateService.findByAssessmentId(id, pageableInv);
             }
-            model.addAttribute("invitedCandidates", invitedCandidatesPage.getContent());
-            model.addAttribute("invitedCandidatesPage", invitedCandidatesPage);
-            model.addAttribute("searchEmail", searchEmail);
+        } catch (Exception e) {
+            logger.error("Error retrieving invited candidates for assessment id: " + id, e);
+            errorMessages.add("Error retrieving invited candidates: " + e.getMessage());
+            invitedCandidatesPage = Page.empty();
+        }
+        model.addAttribute("invitedCandidates", invitedCandidatesPage.getContent());
+        model.addAttribute("invitedCandidatesPage", invitedCandidatesPage);
+        model.addAttribute("searchEmail", searchEmail);
 
-            //SUA CHO NAY NE HIHI
-            List<Question> orderedQuestions = assessment.getAssessmentQuestions()
+        // 5. Retrieve and sort questions from the assessment
+        List<Question> orderedQuestions = new ArrayList<>();
+        try {
+            orderedQuestions = assessment.getAssessmentQuestions()
                     .stream()
+                    .sorted(Comparator.comparingInt(AssessmentQuestion::getOrderIndex))
                     .map(AssessmentQuestion::getQuestion)
                     .collect(Collectors.toList());
-
-            // Thêm Exercises & Questions
-            model.addAttribute("exercises", assessment.getExercises());
-            model.addAttribute("questions", orderedQuestions);
-            //HET SUA ROI NHEN
-
-            // Thêm thông tin current user
-            model.addAttribute("currentUser", userService.getCurrentUser());
-
-            // Gán template con cho layout
-            model.addAttribute("content", "assessments/detail");
-            return "layout";
         } catch (Exception e) {
-            model.addAttribute("errorMessage", e.getMessage());
-            return "error"; // Phải có file error.html để hiển thị thông báo lỗi
+            logger.error("Error retrieving questions for assessment id: " + id, e);
+            errorMessages.add("Error retrieving questions: " + e.getMessage());
         }
+        model.addAttribute("questions", orderedQuestions);
+
+        // 6. Retrieve exercises from the assessment
+        try {
+            model.addAttribute("exercises", assessment.getExercises());
+        } catch (Exception e) {
+            logger.error("Error retrieving exercises for assessment id: " + id, e);
+            errorMessages.add("Error retrieving exercises: " + e.getMessage());
+            model.addAttribute("exercises", new ArrayList<>());
+        }
+
+        // 7. Retrieve current user information for display
+        try {
+            model.addAttribute("currentUser", userService.getCurrentUser());
+        } catch (Exception e) {
+            logger.error("Error retrieving current user", e);
+            errorMessages.add("Error retrieving current user: " + e.getMessage());
+        }
+
+        // 8. Add collected error messages to model, if any
+        if (!errorMessages.isEmpty()) {
+            model.addAttribute("errorMessage", String.join(" | ", errorMessages));
+        }
+
+        // 9. Set the content template for the common layout and return the view
+        model.addAttribute("content", "assessments/detail");
+        return "layout";
     }
-//
+
+
+
+
 //    @GetMapping("/invite/{id}")
 //    public String inviteCandidate(@PathVariable int id, Model model) {
-//        List<User> usersWithRole5 = userRepository.findByRoles_Id(5L);
+//        List<User> usersWithRole5 = userRepository.findByRoles_Id(2L);
 //        System.out.println("Users found: " + usersWithRole5.size()); // Debugging print
 //
 //        model.addAttribute("assessmentId", id);
@@ -504,7 +536,7 @@ public class AssessmentController {
             throw new RuntimeException("Assessment not found!");
         }
         // Get list question and exercise
-        List<Question> questions = questionService.getQuestionsByAssessmentId(id);
+        List<Question> questions = questionService.findQuestionsByAssessmentId(id);
         List<Exercise> exercises = exerciseService.getExercisesByAssessmentId(id);
         // Add to model
         model.addAttribute("assessment", assessment);
@@ -529,7 +561,7 @@ public class AssessmentController {
         // Decode the ID (but don't overwrite rawId)
         System.out.println("");
         System.out.println("");
-        System.out.println("Take exam get id: " + rawId);
+        System.out.println("Take exam get id: "+ rawId);
         long id;
         try {
             long[] temp = assessmentService.decodeId(rawId);
@@ -600,8 +632,8 @@ public class AssessmentController {
         assessmentService.createAssessmentAttempt(id, email);
 
         // Fetch questions
-        List<Question> questions = questionService.getQuestionsByAssessmentId(id);
-        List<Exercise> exercises = exerciseService.getExercisesByAssessmentId(id);
+        List<Question> questions = questionService.findQuestionsByAssessmentId(id);
+//        List<Exercise> exercises = exerciseService.getExercisesByAssessmentId(id);
         //Create attempt
         StudentAssessmentAttempt attempt = studentAssessmentAttemptService.createTestAttempt(id, email);
         // Add to model
@@ -618,43 +650,83 @@ public class AssessmentController {
         return "assessments/expiredLink"; // Return the correct view instead of redirecting
     }
 
-    @GetMapping("/viewGrade/{assessmentId}")
+    @GetMapping("/view_score/{assessmentId}")
     public String viewGrade(@PathVariable Long assessmentId, Model model) {
+        try {
+            // 1. Get Assessment with error catching
+            Assessment assessment = null;
+            try {
+                assessment = assessmentService.findById(assessmentId)
+                        .orElseThrow(() -> new RuntimeException("Assessment not found with id: " + assessmentId));
+            } catch (Exception e) {
+                model.addAttribute("errorMessage", "Error retrieving assessment: " + e.getMessage());
+                assessment = new Assessment(); // Fallback to an empty Assessment
+            }
+            model.addAttribute("assessment", assessment);
 
-        // 1. Get Assessment
-        Assessment assessment = assessmentService.findById(assessmentId).orElseThrow(() -> new RuntimeException("Assessment not found with id: " + assessmentId));
+            // 2. Get current user
+            User currentUser = null;
+            try {
+                currentUser = userService.getCurrentUser();
+                model.addAttribute("currentUser", currentUser);
+            } catch (Exception e) {
+                model.addAttribute("errorMessage", "Error retrieving current user: " + e.getMessage());
+                // Depending on your needs, you might choose to stop processing here.
+            }
 
-        // 2. Get current user
-        User currentUser = userService.getCurrentUser();
+            // 3. Retrieve student's attempt to obtain scoreQuiz and duration
+            int duration = 0;
+            int scoreQuiz = 0;
+            try {
+                List<StudentAssessmentAttempt> userAttempts = studentAssessmentAttemptService.findByUserId(currentUser.getId());
+                Optional<StudentAssessmentAttempt> currentAttempt = userAttempts.stream()
+                        .filter(a -> a.getAssessment().getId().equals(assessmentId))
+                        .findFirst();
+                if (currentAttempt.isPresent()) {
+                    duration = currentAttempt.get().getDuration();
+                    scoreQuiz = currentAttempt.get().getScoreQuiz();
+                }
+            } catch (Exception e) {
+                model.addAttribute("errorMessage", "Error retrieving student attempts: " + e.getMessage());
+            }
+            model.addAttribute("duration", duration);
+            model.addAttribute("scoreQuiz", scoreQuiz);
 
-        // 3. Get finalScore
-        Optional<AssessmentFinalScore> optionalFinalScore = assessmentFinalScoreService.findByAssessmentIdAndUserId(assessmentId, currentUser.getId());
+            // 4. Get list of Questions for the assessment
+            List<Question> questions = new ArrayList<>();
+            try {
+                questions = questionService.findQuestionsByAssessmentId(assessmentId);
+            } catch (Exception e) {
+                model.addAttribute("errorMessage", "Error retrieving questions: " + e.getMessage());
+            }
+            model.addAttribute("questions", questions);
 
-        float finalScore = 0f;
-        if (optionalFinalScore.isPresent()) {
-            finalScore = optionalFinalScore.get().getFinalScore();
+            // 5. Map each question to its answer options
+            Map<Long, List<AnswerOption>> questionAnswerOptionsMap = new HashMap<>();
+            for (Question q : questions) {
+                try {
+                    List<AnswerOption> answerOptions = answerOptionService.getAnswerOptionByid(q.getId());
+                    questionAnswerOptionsMap.put(q.getId(), answerOptions);
+                } catch (Exception e) {
+                    model.addAttribute("errorMessage", "Error retrieving answer options for question id "
+                            + q.getId() + ": " + e.getMessage());
+                    questionAnswerOptionsMap.put(q.getId(), new ArrayList<>());
+                }
+            }
+            model.addAttribute("questionAnswerOptionsMap", questionAnswerOptionsMap);
+
+
+            // 6. Return the view; errors (if any) will be displayed in the page via errorMessage
+            return "assessments/view_score";
+        } catch (Exception e) {
+            model.addAttribute("errorMessage", "Unexpected error occurred: " + e.getMessage());
+            return "error"; // Fallback error page if something catastrophic happens
         }
-
-        // 4. Get list of Questions
-        List<Question> questions = questionService.findQuestionsByAssessmentId(assessmentId);
-
-        // 5. Map question -> answer options
-        Map<Long, List<AnswerOption>> questionAnswerOptionsMap = new HashMap<>();
-        for (Question q : questions) {
-            List<AnswerOption> answerOptions = answerOptionService.getAnswerOptionByid(q.getId());
-            questionAnswerOptionsMap.put(q.getId(), answerOptions);
-        }
-
-        // 6. Add data to model
-        model.addAttribute("assessment", assessment);
-        model.addAttribute("finalScore", finalScore);
-        model.addAttribute("questions", questions);
-        model.addAttribute("questionAnswerOptionsMap", questionAnswerOptionsMap);
-        model.addAttribute("exercises", assessment.getExercises());
-
-        // 7. Return view
-        return "assessments/view_grade";
     }
+
+
+
+
 
     @GetMapping("/viewReport/{assessmentId}")
     public String viewReport(@PathVariable Long assessmentId, @RequestParam("attempt-id") Long attemptId, Model model) {

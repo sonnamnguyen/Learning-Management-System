@@ -1,17 +1,93 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8"/>
     <title>Assessment Detail</title>
-    <link rel="stylesheet" href="/style.css" />
+    <link rel="stylesheet" href="/style.css"/>
 </head>
 <body>
+
+<style>
+
+    /* Breadcrumb styling */
+    .breadcrumb {
+        display: flex;
+        flex-wrap: wrap;
+        padding: 0.75rem 1rem;
+        margin-bottom: 1rem;
+        list-style: none;
+        background-color: transparent;
+        border-radius: 0.25rem;
+    }
+
+    .breadcrumb-item + .breadcrumb-item::before {
+        content: ">";
+        padding: 0 0.5rem;
+        color: #6c757d; /* Light gray color for ">" */
+    }
+
+    /* Scrollable container if needed */
+    .scrollable-table {
+        overflow: auto;
+        max-height: 650px; /* Default for large screens */
+    }
+
+    /* Scroll-to-top button */
+    #scrollToTopButton {
+        position: fixed;
+        bottom: 3vh;
+        right: 20px;
+        display: none; /* Initially hidden */
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(45deg, #6a11cb, #2575fc);
+        color: white;
+        border: none;
+        outline: none;
+        border-radius: 50%;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+        justify-content: center;
+        align-items: center;
+        opacity: 0.8;
+        transition: transform 0.3s ease, opacity 0.3s ease;
+        z-index: 80;
+    }
+
+    #scrollToTopButton:hover {
+        transform: scale(1.2); /* Slight zoom on hover */
+        opacity: 1; /* Increase clarity */
+        background: linear-gradient(45deg, #2575fc, #6a11cb); /* Reverse gradient on hover */
+    }
+
+    /* Adjust max-height for medium screens */
+    @media (max-width: 1200px) {
+        .scrollable-table {
+            max-height: 500px;
+        }
+    }
+
+    /* Adjust max-height for small screens */
+    @media (max-width: 768px) {
+        .scrollable-table {
+            max-height: 400px;
+        }
+    }
+
+    /* Adjust max-height for extra-small screens */
+    @media (max-width: 576px) {
+        .scrollable-table {
+            max-height: 300px;
+        }
+    }
+</style>
+
+
 <div class="container mt-4">
     <div class="d-flex justify-content-center">
         <h1>Assessment</h1>
     </div>
 
-    <!-- Hiển thị thông báo lỗi nếu có -->
+    <!-- Display error message if exists -->
     <div th:if="${errorMessage != null}" class="alert alert-danger" role="alert">
         <p th:text="${errorMessage}"></p>
     </div>
@@ -32,7 +108,7 @@
                 <div class="col-md-6">
                     <p>
                         <strong>Course:</strong>
-                        <span th:text="${assessment.course.name}"></span><br />
+                        <span th:text="${assessment.course.name}"></span><br/>
                         <strong>Assessment Type:</strong>
                         <span th:text="${assessment.assessmentType.name}"></span>
                     </p>
@@ -41,10 +117,10 @@
                 <!-- Right Column -->
                 <div class="col-md-6">
                     <p>
-                        <strong>Due Date:</strong>
-                        <span th:text="${assessment.timeLimit}"></span><br />
-                        <strong>Total Score:</strong>
-                        <span th:text="${assessment.totalScore}"></span>
+                        <strong>Duration:</strong>
+                        <span th:text="${assessment.timeLimit}"></span> Minutes<br/>
+                        <strong>Minimum Passing Score:</strong>
+                        <span th:text="${assessment.qualifyScore}">0</span>%
                     </p>
                 </div>
             </div>
@@ -110,25 +186,23 @@
                     <th>Candidate</th>
                     <th>Email</th>
                     <th>Invitation Date</th>
-                    <th>Expiration Date</th>
                     <th>Quiz Score</th>
                     <th>Assignment Score</th>
                     <th>Action</th>
                 </tr>
                 </thead>
                 <tbody>
-                <!-- Lưu ý: Đối tượng attempt giờ là Map chứa candidateUsername -->
+                <!-- Note: 'attempt' is now a Map containing candidateUsername -->
                 <tr th:each="attempt, iterStat : ${registeredAttempts}">
                     <td th:text="${iterStat.count}"></td>
                     <td th:text="${attempt.candidateUsername}"></td>
                     <td th:text="${attempt.email}"></td>
                     <td th:text="${#temporals.format(attempt.attemptDate, 'yyyy-MM-dd HH:mm')}"></td>
-                    <td><!-- Hiển thị ngày hết hạn nếu có --></td>
                     <td th:text="${attempt.scoreQuiz}"></td>
                     <td th:text="${attempt.scoreAss}"></td>
                     <td>
-                        <a  th:href="@{/assessments/viewReport/{assessmentId}(assessmentId=${assessment.id}, attempt-id=${attempt.id})}"
-                            class="btn btn-sm btn-outline-primary">View</a>
+                        <a th:href="@{/assessments/viewReport/{assessmentId}(assessmentId=${assessment.id}, attempt-id=${attempt.id})}"
+                           class="btn btn-sm btn-outline-primary">View</a>
                     </td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(registeredAttempts)}">
@@ -139,98 +213,197 @@
                 </tbody>
             </table>
 
-            <!-- PHÂN TRANG Registered Attempts -->
-            <div class="pagination float-end" th:if="${registeredAttemptsPage.totalPages > 0}">
-                <ul class="pagination">
+            <!-- Centered Pagination for Registered Attempts -->
+            <nav aria-label="Registered Attempts Pagination" th:if="${registeredAttemptsPage.totalPages > 0}">
+                <ul class="pagination justify-content-center">
+                    <!-- First Page -->
+                    <li class="page-item" th:classappend="${registeredAttemptsPage.number == 0} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/assessments/detail/{id}(id=${assessment.id}, pageReg=0, pageInv=${invitedCandidatesPage.number}, searchEmail=${searchEmail})}">
+                            First
+                        </a>
+                    </li>
+                    <!-- Previous Page -->
                     <li class="page-item" th:classappend="${registeredAttemptsPage.number == 0} ? 'disabled'">
                         <a class="page-link"
                            th:href="@{/assessments/detail/{id}(id=${assessment.id}, pageReg=${registeredAttemptsPage.number - 1}, pageInv=${invitedCandidatesPage.number}, searchEmail=${searchEmail})}">
                             Previous
                         </a>
                     </li>
-                    <li class="page-item"
-                        th:each="i : ${#numbers.sequence(0, registeredAttemptsPage.totalPages - 1)}"
+                    <!-- Page Numbers -->
+                    <li class="page-item" th:each="i : ${#numbers.sequence(0, registeredAttemptsPage.totalPages - 1)}"
                         th:classappend="${registeredAttemptsPage.number == i} ? 'active'">
                         <a class="page-link"
                            th:href="@{/assessments/detail/{id}(id=${assessment.id}, pageReg=${i}, pageInv=${invitedCandidatesPage.number}, searchEmail=${searchEmail})}"
                            th:text="${i + 1}">
                         </a>
                     </li>
+                    <!-- Next Page -->
                     <li class="page-item" th:classappend="${registeredAttemptsPage.number == registeredAttemptsPage.totalPages - 1} ? 'disabled'">
                         <a class="page-link"
                            th:href="@{/assessments/detail/{id}(id=${assessment.id}, pageReg=${registeredAttemptsPage.number + 1}, pageInv=${invitedCandidatesPage.number}, searchEmail=${searchEmail})}">
                             Next
                         </a>
                     </li>
+                    <!-- Last Page -->
+                    <li class="page-item" th:classappend="${registeredAttemptsPage.number == (registeredAttemptsPage.totalPages - 1)} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/assessments/detail/{id}(id=${assessment.id}, pageReg=${registeredAttemptsPage.totalPages - 1}, pageInv=${invitedCandidatesPage.number}, searchEmail=${searchEmail})}"
+                           th:text="'Last'">
+                        </a>
+                    </li>
                 </ul>
-            </div>
+            </nav>
         </div>
     </div>
-    <!-- All Invited Candidates Section - chỉ hiển thị khi currentUser có role id=1 hoặc role name là "SUPERADMIN" -->
+
+
+    <!-- All Invited Candidates Section - only visible for currentUser with role id=1 or role name "SUPERADMIN" -->
     <div class="card mt-4"
          th:if="${currentUser != null and (currentUser.roles.?[id == 1].size() > 0 or currentUser.roles.?[name=='SUPERADMIN'].size() > 0)}">
-        <div class="card-header">
+        <div class="card-header d-flex justify-content-between align-items-center">
             <h3>All Invited Candidates</h3>
-        </div>
-        <div class="card-body">
-            <!-- Search Bar -->
-            <form th:action="@{/assessments/detail/{id}(id=${assessment.id})}" method="get" class="mb-2 d-flex">
-                <input type="hidden" name="pageReg" th:value="${registeredAttemptsPage.number}" />
-                <input type="hidden" name="pageInv" value="0" />
-                <input type="text" name="searchEmail" th:value="${searchEmail}"
+            <!-- Search Bar on the right with a magnifying glass icon -->
+            <form id="searchCandidatesForm" th:action="@{/assessments/detail/{id}(id=${assessment.id})}" method="get" class="d-flex">
+                <input type="hidden" name="pageReg" th:value="${registeredAttemptsPage.number}"/>
+                <input type="hidden" name="pageInv" id="pageInvInput" value="0"/>
+                <input type="text" name="searchEmail" id="searchEmailInput" th:value="${searchEmail}"
                        placeholder="Search email..."
                        class="form-control"
-                       style="max-width: 200px; margin-right: 10px;" />
-                <button class="btn btn-primary" type="submit">Search</button>
+                       style="max-width: 200px; margin-right: 10px;"/>
+                <button class="btn btn-primary" type="submit">
+                    <i class="fa fa-search"></i>
+                </button>
             </form>
+        </div>
 
-            <table class="table table-sm table-bordered">
-                <thead class="thead-light">
-                <tr>
-                    <th>#</th>
-                    <th>Email</th>
-                    <th>Invitation Date</th>
-                    <th>Expiration Date</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:each="candidate, stat : ${invitedCandidates}">
-                    <td th:text="${stat.count}"></td>
-                    <td th:text="${candidate.email}"></td>
-                    <td th:text="${candidate.invitationDate}"></td>
-                    <td th:text="${candidate.expirationDate}"></td>
-                </tr>
-                <tr th:if="${#lists.isEmpty(invitedCandidates)}">
-                    <td colspan="4" class="text-center text-muted">
-                        No invited candidates yet.
-                    </td>
-                </tr>
-                </tbody>
-            </table>
+        <div class="card-body">
 
-            <!-- Pagination for Invited Candidates -->
-            <div class="d-flex justify-content-between align-items-center mt-2">
-                <div>
-                    <span th:text="'Page ' + (${invitedCandidatesPage.number} + 1) + ' of ' + ${invitedCandidatesPage.totalPages}"></span>
-                </div>
-                <div>
-                    <a th:if="${!invitedCandidatesPage.first}"
-                       th:href="@{/assessments/detail/{id}(id=${assessment.id}, pageInv=${invitedCandidatesPage.number - 1}, pageReg=${registeredAttemptsPage.number}, searchEmail=${searchEmail})}"
-                       class="btn btn-outline-secondary btn-sm">
-                        Previous
-                    </a>
-                    <a th:if="${!invitedCandidatesPage.last}"
-                       th:href="@{/assessments/detail/{id}(id=${assessment.id}, pageInv=${invitedCandidatesPage.number + 1}, pageReg=${registeredAttemptsPage.number}, searchEmail=${searchEmail})}"
-                       class="btn btn-outline-secondary btn-sm">
-                        Next
-                    </a>
-                </div>
+            <!-- Container for Invited Candidates list and pagination -->
+            <div id="invitedCandidatesContainer">
+                <table class="table table-sm table-bordered">
+                    <thead class="thead-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Email</th>
+                        <th>Invitation Date</th>
+                        <th>Expiration Date</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="candidate, stat : ${invitedCandidates}">
+                        <td th:text="${stat.count}"></td>
+                        <td th:text="${candidate.email}"></td>
+                        <td th:text="${candidate.invitationDate}"></td>
+                        <td th:text="${candidate.expirationDate}"></td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(invitedCandidates)}">
+                        <td colspan="4" class="text-center text-muted">
+                            No invited candidates yet.
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+
+                <!-- Pagination for Invited Candidates -->
+                <nav aria-label="Invited Candidates Pagination">
+                    <ul class="pagination justify-content-center">
+                        <!-- First Page -->
+                        <li class="page-item" th:classappend="${invitedCandidatesPage.number == 0} ? 'disabled'">
+                            <a class="page-link candidate-page-link" href="#" data-page="0">First</a>
+                        </li>
+                        <!-- Previous Page -->
+                        <li class="page-item" th:classappend="${invitedCandidatesPage.number == 0} ? 'disabled'">
+                            <a class="page-link candidate-page-link" href="#"
+                               data-page="${invitedCandidatesPage.number - 1}">Previous</a>
+                        </li>
+                        <!-- Page Numbers -->
+                        <li class="page-item"
+                            th:each="i : ${#numbers.sequence(0, invitedCandidatesPage.totalPages - 1)}"
+                            th:classappend="${invitedCandidatesPage.number == i} ? 'active'">
+                            <a class="page-link candidate-page-link" href="#" th:data-page="${i}"
+                               th:text="${i + 1}">1</a>
+                        </li>
+                        <!-- Next Page -->
+                        <li class="page-item"
+                            th:classappend="${invitedCandidatesPage.number == invitedCandidatesPage.totalPages - 1} ? 'disabled'">
+                            <a class="page-link candidate-page-link" href="#"
+                               data-page="${invitedCandidatesPage.number + 1}">Next</a>
+                        </li>
+                        <!-- Last Page -->
+                        <li class="page-item"
+                            th:classappend="${invitedCandidatesPage.number == (invitedCandidatesPage.totalPages - 1)} ? 'disabled'">
+                            <a class="page-link candidate-page-link" href="#"
+                               th:data-page="${(invitedCandidatesPage.totalPages - 1)}" th:text="'Last'">Last</a>
+                        </li>
+                    </ul>
+                </nav>
             </div>
         </div>
     </div>
 
+    <!-- jQuery (if not already loaded) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Use Thymeleaf inline JavaScript to build URL -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        $(document).ready(function () {
+            // Intercept the search form submission to load invited candidates via AJAX
+            $('#searchCandidatesForm').submit(function (e) {
+                e.preventDefault(); // Prevent full page reload
+                loadInvitedCandidates(0); // Reset to first page on new search
+            });
+
+            // Intercept pagination link clicks for invited candidates
+            $(document).on('click', '.candidate-page-link', function (e) {
+                e.preventDefault();
+                var page = $(this).data('page');
+                loadInvitedCandidates(page);
+            });
+
+            function loadInvitedCandidates(page) {
+                // Update the hidden input for current invited candidates page
+                $('#pageInvInput').val(page);
+                // Gather current search and pagination parameters
+                var searchEmail = $('#searchEmailInput').val();
+                var pageReg = $('[name=pageReg]').val();
+                // Build the URL using Thymeleaf's inline URL expression
+                var baseUrl = /*[[@{/assessments/detail/{id}(id=${assessment.id})}]]*/ "";
+                var url = baseUrl + '?pageInv=' + page + '&pageReg=' + pageReg + '&searchEmail=' + encodeURIComponent(searchEmail);
+
+                // Use AJAX to load the updated invited candidates fragment
+                $.get(url, function (data) {
+                    // Update only the invitedCandidatesContainer content
+                    var newContent = $(data).find('#invitedCandidatesContainer').html();
+                    $('#invitedCandidatesContainer').html(newContent);
+                });
+            }
+        });
+        /*]]>*/
+    </script>
+
+    <!-- Scroll to top button (initially hidden) -->
+    <button onclick="scrollToTop()" id="scrollToTopButton" title="Go to top">
+        <i class="fas fa-arrow-up"></i>
+    </button>
 
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+    <script>
+        // Show/hide scrollToTopButton when scrolling
+        window.onscroll = function () {
+            const scrollToTopButton = document.getElementById("scrollToTopButton");
+            if (document.body.scrollTop > 50 || document.documentElement.scrollTop > 50) {
+                scrollToTopButton.style.display = "flex";
+            } else {
+                scrollToTopButton.style.display = "none";
+            }
+        };
+
+        function scrollToTop() {
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+    </script>
 </div>
 </body>
 </html>

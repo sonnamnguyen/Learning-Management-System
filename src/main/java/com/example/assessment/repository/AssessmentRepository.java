@@ -45,5 +45,8 @@ public interface AssessmentRepository extends PagingAndSortingRepository<Assessm
     // ✅ New method: Refresh entity to avoid Hibernate caching issues
     @Query("SELECT a FROM Assessment a WHERE a.id = :id")
     Optional<Assessment> refresh(@Param("id") Long id);
+
+    boolean existsByTitleAndAssessmentTypeId(String title, Long assessmentTypeId);
+
 }
 
