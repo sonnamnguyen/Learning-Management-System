@@ -62,8 +62,7 @@ public class Assessment {
     @Min(0)
     private int qualifyScore;
 
-    @Min(0)
-    private int totalScore;
+    private boolean shuffled ;
 
     @Min(0)
     private int quizScoreRatio;
@@ -74,8 +73,9 @@ public class Assessment {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    @Column(nullable = false)
+    @Column(nullable = false, name = "updatedAt")
     private LocalDateTime updatedAt = LocalDateTime.now();
+
     @PreUpdate
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();

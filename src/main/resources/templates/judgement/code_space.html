@@ -474,21 +474,53 @@
         }
 
         .btn-success {
-            background-color: #98c379 !important;
-            border-color: #7cb36a !important;
-            color: #282c34 !important;
+            background: linear-gradient(135deg, #34c759, #28a745) !important;
+            border: none !important;
+            color: #ffffff !important;
+            box-shadow: 0 2px 4px rgba(52, 199, 89, 0.2) !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(135deg, #30b850, #259b3e) !important;
+            box-shadow: 0 4px 8px rgba(52, 199, 89, 0.3) !important;
+            transform: translateY(-1px);
         }
 
         .btn-danger {
-            background-color: #e06c75 !important;
-            border-color: #be5046 !important;
-            color: #fff !important;
+            background: linear-gradient(135deg, #ff3b30, #dc3545) !important;
+            border: none !important;
+            color: #ffffff !important;
+            box-shadow: 0 2px 4px rgba(255, 59, 48, 0.2) !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #ff2d22, #cd2f3d) !important;
+            box-shadow: 0 4px 8px rgba(255, 59, 48, 0.3) !important;
+            transform: translateY(-1px);
         }
 
         .btn-primary {
-            background-color: #61afef !important;
-            border-color: #4fa6ed !important;
-            color: #fff !important;
+            background: linear-gradient(135deg, #007aff, #0056b3) !important;
+            border: none !important;
+            color: #ffffff !important;
+            box-shadow: 0 2px 4px rgba(0, 122, 255, 0.2) !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #0066d6, #004494) !important;
+            box-shadow: 0 4px 8px rgba(0, 122, 255, 0.3) !important;
+            transform: translateY(-1px);
+        }
+
+        /* Active states */
+        .btn-success:active,
+        .btn-danger:active,
+        .btn-primary:active {
+            transform: translateY(0) !important;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
         }
 
         .description,
@@ -519,21 +551,53 @@
         }
 
         body.light-theme .btn-success {
-            background-color: #28a745 !important;
-            border-color: #28a745 !important;
-            color: #fff !important;
+            background: linear-gradient(135deg, #2ecc71, #27ae60) !important;
+            border: none !important;
+            color: #ffffff !important;
+            box-shadow: 0 2px 4px rgba(46, 204, 113, 0.2) !important;
+            transition: all 0.3s ease !important;
+        }
+
+        body.light-theme .btn-success:hover {
+            background: linear-gradient(135deg, #27ae60, #219a52) !important;
+            box-shadow: 0 4px 8px rgba(46, 204, 113, 0.3) !important;
+            transform: translateY(-1px);
         }
 
         body.light-theme .btn-danger {
-            background-color: #dc3545 !important;
-            border-color: #dc3545 !important;
-            color: #fff !important;
+            background: linear-gradient(135deg, #e74c3c, #c0392b) !important;
+            border: none !important;
+            color: #ffffff !important;
+            box-shadow: 0 2px 4px rgba(231, 76, 60, 0.2) !important;
+            transition: all 0.3s ease !important;
+        }
+
+        body.light-theme .btn-danger:hover {
+            background: linear-gradient(135deg, #d44637, #b33528) !important;
+            box-shadow: 0 4px 8px rgba(231, 76, 60, 0.3) !important;
+            transform: translateY(-1px);
         }
 
         body.light-theme .btn-primary {
-            background-color: #007bff !important;
-            border-color: #007bff !important;
-            color: #fff !important;
+            background: linear-gradient(135deg, #3498db, #2980b9) !important;
+            border: none !important;
+            color: #ffffff !important;
+            box-shadow: 0 2px 4px rgba(52, 152, 219, 0.2) !important;
+            transition: all 0.3s ease !important;
+        }
+
+        body.light-theme .btn-primary:hover {
+            background: linear-gradient(135deg, #2980b9, #2472a4) !important;
+            box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3) !important;
+            transform: translateY(-1px);
+        }
+
+        /* Active states cho light theme */
+        body.light-theme .btn-success:active,
+        body.light-theme .btn-danger:active,
+        body.light-theme .btn-primary:active {
+            transform: translateY(0) !important;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
         }
 
         body.light-theme .description,
@@ -907,7 +971,7 @@
 <div class="container-fluid" style="display: flex; flex-direction: column;">
     <div class="row mt-5" style="flex-grow: 1;">
         <!-- <h1 class="text-center mt-2">
-    Exercises
+Exercises
 </h1> -->
         <!-- CodeMirror CSS -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
@@ -992,37 +1056,37 @@
                         </div>
 
                         <!-- Phần tìm kiếm Google -->
-<!--                        <div class="search-container" style="border-bottom: none;">-->
-<!--                            <div class="input-group">-->
-<!--                                <input type="text" id="searchInput" class="form-control form-control-sm"-->
-<!--                                       placeholder="Search on Google...">-->
-<!--                                <button class="btn btn-primary" type="button" id="searchButton">-->
-<!--                                    <i class="fas fa-search"></i>-->
-<!--                                </button>-->
-<!--                            </div>-->
-<!--                        </div>-->
+                        <!-- <div class="search-container" style="border-bottom: none;">
+                        <div class="input-group">
+                            <input type="text" id="searchInput" class="form-control form-control-sm"
+                                   placeholder="Search on Google...">
+                            <button class="btn btn-primary" type="button" id="searchButton">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div> -->
 
                         <!-- Tab Navigation -->
-<!--                        <ul class="nav nav-tabs nav-fill" style="border-bottom: none;" id="leftPanelTabs"-->
-<!--                            role="tablist">-->
-<!--                            <li class="nav-item" role="presentation">-->
-<!--                                <button class="nav-link active" id="description-tab" data-bs-toggle="tab"-->
-<!--                                        data-bs-target="#description" type="button" role="tab">-->
-<!--                                    Description-->
-<!--                                </button>-->
-<!--                            </li>-->
-<!--                            <li class="nav-item" role="presentation">-->
-<!--                                <button class="nav-link" id="search-tab" data-bs-toggle="tab"-->
-<!--                                        data-bs-target="#searchResults" type="button" role="tab">-->
-<!--                                    Search-->
-<!--                                </button>-->
-<!--                            </li>-->
-<!--                        </ul>-->
+                        <!-- <ul class="nav nav-tabs nav-fill" style="border-bottom: none;" id="leftPanelTabs"
+                        role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="description-tab" data-bs-toggle="tab"
+                                    data-bs-target="#description" type="button" role="tab">
+                                Description
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="search-tab" data-bs-toggle="tab"
+                                    data-bs-target="#searchResults" type="button" role="tab">
+                                Search
+                            </button>
+                        </li>
+                    </ul> -->
                     </div>
                 </div>
 
                 <!-- Center Panel -->
-                <div class="col-md-6 p-0 bg-dark text-white d-flex flex-column" id="centerPanel"
+                <div class="col-md-6 p-0 bg-dark text-white flex-column" id="centerPanel"
                      style="overflow-y:auto; flex: 1;">
                     <form id="code-form" method="POST" action="/exercises/submit/120/0/0/"
                           class="h-100 d-flex flex-column">
@@ -1073,9 +1137,9 @@
                     <div class="tab-content flex-grow-1">
                         <!-- Output Tab -->
                         <div class="tab-pane fade show active" id="outputContent" role="tabpanel">
-                            <div class="btn-group mb-3" role="group">
+                            <div class="btn-group" style="margin-left: 10px;" role="group">
                                 <button type="button" id="precheck-button" class="btn btn-success btn-lg">
-                                    <i class="fa fa-terminal"></i> Pre-check
+                                    <i class="fa fa-check-circle"></i> Pre-check
                                 </button>
                                 <button type="button" id="clear-button" class="btn btn-danger btn-lg ">
                                     <i class="fa fa-eraser"></i> Clear
@@ -1088,27 +1152,6 @@
                             <div id="output" class="p-3 rounded" style="font-size:0.85em; flex-grow: 1;">
                                 <!-- Output content here -->
 
-                                    <!-- Display grading results if available -->
-                                    <div th:if="${passed != null}">
-                                        <p>You passed <strong th:text="${passed}">0</strong> out of <strong th:text="${total}">0</strong>
-                                            test cases.</p>
-                                        <ul class="list-unstyled">
-                                            <li th:each="testResult, iterStat : ${testResults}" class="mb-2  p-2 rounded">
-                                                <span th:text="'Test Case ' + (${iterStat.index} + 1) + ':'"></span>
-                                                <span th:text="${testResult.isCorrect ? 'Passed' : 'Failed'}"
-                                                      th:classappend="${testResult.isCorrect} ? 'test-case-pass' : 'test-case-fail'"></span>
-                                                <!--                                            <div th:if="${!testResult.isCorrect}" class="mt-1 ps-3">-->
-                                                <div class="mt-1 ps-3">
-                                                    <strong>Input:</strong> <span th:text="${testResult.testCase.input}"></span><br>
-                                                    <strong>Your Output:</strong> <span
-                                                        th:text="${testResult.userOutput}"></span><br>
-                                                    <strong>Expected Output:</strong> <span
-                                                        th:text="${testResult.testCase.expectedOutput}"></span>
-                                                </div>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
                             </div>
                         </div>
 
@@ -1116,8 +1159,8 @@
                         <div class="tab-pane fade" id="inputContent" role="tabpanel">
                             <div class="form-group">
                                 <label for="customInput" class="mb-2">Input:</label>
-                                <textarea th:value="${customInput}" class="form-control mb-3" id="customInput" rows="6"
-                                          th:placeholder="${exercise.testCases.get(0).getInput()}"></textarea>
+                                <textarea class="form-control mb-3" id="customInput"
+                                          rows="6" th:utext="${exercise.getTestCases().get(0).getInput()}"></textarea>
 
                                 <label for="customOutput" class="mb-2">Output:</label>
                                 <div id="customOutput" class="custom-output p-3 rounded mb-3">
@@ -1732,10 +1775,10 @@
                 code: code,
                 customInput: customInput
             },
-            success: function(response) {
+            success: function (response) {
                 document.getElementById("customOutput").innerHTML = `<span>${response}</span>`;
             },
-            error: function(xhr) {
+            error: function (xhr) {
                 let errorMessage = xhr.responseText ? xhr.responseText : "Something went wrong!";
                 document.getElementById("customOutput").innerHTML = `<span style='color: red;'>${errorMessage}</span>`;
             }
