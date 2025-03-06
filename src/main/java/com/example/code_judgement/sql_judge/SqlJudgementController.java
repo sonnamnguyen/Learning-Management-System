@@ -42,7 +42,7 @@ public class SqlJudgementController {
             ExecutionResponse response;
             // Nếu ngôn ngữ là SQL, chuyển qua xử lý SQL tại tầng service
             if ("sql".equalsIgnoreCase(exercise.getLanguage().getLanguage())) {
-                response = sqlJudgementService.executeSQLCode(exercise, code, testCases);
+                response = sqlJudgementService.executeSQLCode(false, exercise, code, testCases);
             } else {
                 model.addAttribute("output", "No test cases defined for this exercise.");
                 model.addAttribute("exercise", exercise);
@@ -80,7 +80,7 @@ public class SqlJudgementController {
             ExecutionResponse response;
             // Nếu ngôn ngữ là SQL, chuyển qua xử lý SQL tại tầng service
             if ("sql".equalsIgnoreCase(exercise.getLanguage().getLanguage())) {
-                response = sqlJudgementService.executeSQLCode(exercise, code, testCases);
+                response = sqlJudgementService.executeSQLCode(true, exercise, code, testCases);
             } else {
                 model.addAttribute("output", "No test cases defined for this exercise.");
                 model.addAttribute("exercise", exercise);
