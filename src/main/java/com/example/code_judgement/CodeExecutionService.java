@@ -105,9 +105,15 @@ public class CodeExecutionService {
     public ExecutionResponse executeCodeOptimized(boolean submitExercise, String code, List<TestCase> testCases, ExecutionBasedLanguage executionBasedLanguage, Exercise exercise) {
         // Biên dịch mã nguồn một lần
 //        ExecutionBasedLanguage executionBasedLanguage = initialLanguage(language);
+        long startCompileTime = System.nanoTime();
         CompilationResult compilationResult = executionBasedLanguage.compileCode(code);
+        long endCompileTime = System.nanoTime();
+
+        long compileTime = (endCompileTime - startCompileTime)/1_000_000;
+
+
         if (!compilationResult.isSuccess()) {
-            return new ExecutionResponse(code, 0, testCases.size(), 0, null, compilationResult.getErrorMessage());
+            return new ExecutionResponse(code, 0, testCases.size(), 0, null, compilationResult.getErrorMessage(), compileTime);
         }
 
         // Sử dụng ExecutorService để chạy các test case song song
@@ -184,7 +190,7 @@ public class CodeExecutionService {
         }
 
         // Tính toán kết quả tổng quát
-        return new ExecutionResponse(code,passed,testCases.size(),score,testResults, null);
+        return new ExecutionResponse(code,passed,testCases.size(),score,testResults, null, compileTime);
     }
 
     private void deleteDirectoryRecursively(Path path) throws IOException {
