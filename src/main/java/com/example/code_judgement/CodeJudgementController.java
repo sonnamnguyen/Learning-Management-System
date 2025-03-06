@@ -1,7 +1,7 @@
 package com.example.code_judgement;
 
-import com.example.exercise.Exercise;
-import com.example.exercise.ExerciseService;
+import com.example.student_exercise_attemp.model.Exercise;
+import com.example.student_exercise_attemp.service.ExerciseService;
 import com.example.testcase.TestCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -64,7 +64,7 @@ public class CodeJudgementController {
         // Lấy bài tập và test cases tương ứng
         Exercise exercise = exerciseService.getExerciseById(exerciseId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));
-        List<TestCase> testCases = exercise.getTestCases();
+        List<TestCase> testCases = exercise.getTestCases().stream().filter(testCase -> !testCase.isHidden()).toList();
 
         if (testCases == null || testCases.isEmpty()) {
             model.addAttribute("output", "No test cases defined for this exercise.");

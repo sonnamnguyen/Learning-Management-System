@@ -6,9 +6,9 @@ import com.example.assessment.repository.AssessmentRepository;
 import com.example.assessment.repository.StudentAssessmentAttemptRepository;
 import com.example.course.Course;
 import com.example.course.CourseService;
-import com.example.exercise.Exercise;
-import com.example.exercise.ExerciseRepository;
-import com.example.exercise.ExerciseService;
+import com.example.student_exercise_attemp.model.Exercise;
+import com.example.student_exercise_attemp.repository.ExerciseRepository;
+import com.example.student_exercise_attemp.service.ExerciseService;
 import com.example.user.User;
 import com.example.user.UserRepository;
 import com.example.user.UserService;
@@ -89,6 +89,10 @@ public class AssessmentService {
     public Assessment createAssessment(Assessment assessment) {
 
         return assessmentRepository.save(assessment);
+    }
+
+    public boolean existsByTitleAndAssessmentTypeId(String title, Long assessmentTypeId) {
+        return assessmentRepository.existsByTitleAndAssessmentTypeId(title, assessmentTypeId);
     }
 
     public boolean duplicateAss(String name) {

@@ -462,24 +462,25 @@ public class QuizService {
         long totalSeconds = numberOfQuestions * 90;
         return Duration.of(totalSeconds, ChronoUnit.SECONDS);
     }
-    @PostConstruct
-    public void updateQuizStatusOnStartup(){
-        updateQuizStatuses();
-    }
-    @Scheduled(fixedRate = 60000)
-    public void updateQuizStatuses() {
-        List<Quiz> quizzes = quizRepository.findAll();
-        LocalDateTime now = LocalDateTime.now();
-
-        for (Quiz quiz : quizzes) {
-            if (now.isAfter(quiz.getStartTime()) && now.isBefore(quiz.getEndTime())) {
-                quiz.setQuizType(Quiz.QuizType.OPEN);
-            } else {
-                quiz.setQuizType(Quiz.QuizType.CLOSE);
-            }
-            quizRepository.save(quiz);
-        }
-    }
+//
+//    @PostConstruct
+//    public void updateQuizStatusOnStartup(){
+//        updateQuizStatuses();
+//    }
+//    @Scheduled(fixedRate = 60000)
+//    public void updateQuizStatuses() {
+//        List<Quiz> quizzes = quizRepository.findAll();
+//        LocalDateTime now = LocalDateTime.now();
+//
+//        for (Quiz quiz : quizzes) {
+//            if (now.isAfter(quiz.getStartTime()) && now.isBefore(quiz.getEndTime())) {
+//                quiz.setQuizType(Quiz.QuizType.OPEN);
+//            } else {
+//                quiz.setQuizType(Quiz.QuizType.CLOSE);
+//            }
+//            quizRepository.save(quiz);
+//        }
+//    }
 
     @Transactional
     public Set<Question> getQuestionsOfQuiz(String quizName){

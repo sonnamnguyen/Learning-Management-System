@@ -2,7 +2,6 @@ package com.example.student_exercise_attemp.model;
 
 
 import com.example.assessment.model.Assessment;
-import com.example.student_exercise_attemp.StudentExerciseAttempt;
 import jakarta.persistence.*;
 import lombok.*;
 

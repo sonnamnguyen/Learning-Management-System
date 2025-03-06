@@ -155,10 +155,13 @@
             <input type="hidden" th:field="*{createdBy}" th:value="${currentUser.username}" />
             <!-- Title -->
 
-            <div class="col-md-4 mt-4 d-flex align-items-center m-0">
-                <label for="id_title" class="form-label me-2">Title:</label>
-                <input th:field="*{title}" type="text" name="title" class="form-control" placeholder="Enter assessment title" maxlength="255" required id="id_title">
-                <div class="text-danger" th:if="${duplicateTitleError}" th:text="${duplicateTitleError}"></div>
+            <div class="col-md-4 mt-4 m-0">
+                <div class="d-flex align-items-center">  <!-- Flex container cho label và input -->
+                    <label for="title-input" class=" me-2">Title:</label>
+                    <input id="title-input" th:field="*{title}" type="text" name="title" class="form-control" placeholder="Enter assessment title" maxlength="255" required >
+                </div>
+                <input type="hidden" id="assessmentId" th:value="${assessment.id}">
+                <div id="duplicateTitleError" class="alert alert-danger mt-2 d-none"></div>
             </div>
 
             <div class="d-flex justify-content-end mb-2">  <!-- Thay đổi class thành 'd-flex justify-content-between' và thêm 'mb-3' -->
@@ -364,7 +367,11 @@
                                     <div class="card shadow-sm hover-shadow">
                                         <div class="card-header d-flex justify-content-between align-items-center"> <!-- ADDED d-flex justify-content-between align-items-center -->
                                             <h5 class="mb-0">Selected Questions</h5>
-                                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-randomize-order"> <i class="fas fa-random me-2"></i> Randomize Order</button>                                     </div>
+                                            <div class="form-check form-switch d-flex align-items-center" style="margin-bottom: 0;">
+                                                <input class="form-check-input" type="checkbox" id="bootstrapSwitch" th:field="*{shuffled}" style="margin-right: 0.5rem;">
+                                                <label class="form-check-label" for="bootstrapSwitch" style="margin-bottom: 0;">Shuffle Questions</label>
+                                            </div>
+                                        </div>
                                         <div class="card-body" style="max-height: 800px; overflow-y: auto;">
                                             <ul class="list-group" id="selected-questions">
                                                 <!-- Selected questions will be added here -->
@@ -378,10 +385,6 @@
                         <!-- Settings Tab -->
                         <div class="tab-pane fade p-3" id="settings" role="tabpanel" aria-labelledby="settings-tab">
                             <div class="row g-3">
-                                <div class="col-md-4">
-                                    <label for="id_total_score" class="form-label">Total Score:</label>
-                                    <input th:value="100" th:field="*{totalScore}" type="number"  class="form-control" placeholder="Enter total score" required id="id_total_score">
-                                </div>
                                 <div class="col-md-4">
                                     <label for="id_qualify_score" class="form-label">Minimum Score:</label>
                                     <input th:value="60" th:field="*{qualifyScore}" type="number"  class="form-control" placeholder="Enter minimum score to qualify" required id="id_qualify_score">
@@ -423,7 +426,7 @@
 
             const addQuestionButtons = document.querySelectorAll('.add-question');
             const selectedQuestionsList = document.getElementById('selected-questions');
-            const randomizeOrderButton = document.getElementById('btn-randomize-order'); // Get the randomize button
+            // const randomizeOrderButton = document.getElementById('btn-randomize-order'); // Get the randomize button
 
             const buttonContainer = document.createElement('div');
             // buttonContainer.className = 'd-flex justify-content-end mt-3';
@@ -468,29 +471,29 @@
 
             const questionMap = new Map();
 
+            //
+            // function randomizeQuestionOrder() {
+            //     const list = selectedQuestionsList;
+            //     const items = Array.from(list.children); // Get list items and convert to array
+            //
+            //     if (items.length <= 1) {
+            //         return; // No need to randomize if 0 or 1 item
+            //     }
+            //
+            //     // Fisher-Yates (Knuth) Shuffle Algorithm
+            //     for (let i = items.length - 1; i > 0; i--) {
+            //         const j = Math.floor(Math.random() * (i + 1));
+            //         [items[i], items[j]] = [items[j], items[i]]; // Swap elements
+            //     }
+            //
+            //     // Re-append shuffled items to the list
+            //     list.innerHTML = ''; // Clear the list
+            //     items.forEach(item => list.appendChild(item)); // Append in new order
+            //
+            //     updateQuestionNumbers(); // Re-number the questions
+            // }
 
-            function randomizeQuestionOrder() {
-                const list = selectedQuestionsList;
-                const items = Array.from(list.children); // Get list items and convert to array
-
-                if (items.length <= 1) {
-                    return; // No need to randomize if 0 or 1 item
-                }
-
-                // Fisher-Yates (Knuth) Shuffle Algorithm
-                for (let i = items.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [items[i], items[j]] = [items[j], items[i]]; // Swap elements
-                }
-
-                // Re-append shuffled items to the list
-                list.innerHTML = ''; // Clear the list
-                items.forEach(item => list.appendChild(item)); // Append in new order
-
-                updateQuestionNumbers(); // Re-number the questions
-            }
-
-            randomizeOrderButton.addEventListener('click', randomizeQuestionOrder); // Event listener for randomize button
+            // randomizeOrderButton.addEventListener('click', randomizeQuestionOrder); // Event listener for randomize button
 
 
             const quizDropdowns = document.querySelectorAll('.quiz-dropdown');
@@ -667,8 +670,46 @@
             }
 
             const assessmentForm = document.getElementById('assessment-form');
+            const duplicateTitleErrorDiv = document.getElementById('duplicateTitleError'); // Get the error div
+            const assessmentTypeSelect = document.getElementById("id_assessment_type");
+            const titleInput = document.getElementById("title-input"); // Get title input
+
+            function showError(message) { // Keep showError function
+                duplicateTitleErrorDiv.textContent = message;
+                duplicateTitleErrorDiv.classList.remove("d-none");
+                duplicateTitleErrorDiv.style.opacity = "0";
+
+                setTimeout(() => {
+                    duplicateTitleErrorDiv.style.transition = "opacity 0.5s ease-in-out";
+                    duplicateTitleErrorDiv.style.opacity = "1";
+                }, 10);
+
+                setTimeout(() => {
+                    duplicateTitleErrorDiv.style.opacity = "0";
+                    setTimeout(() => duplicateTitleErrorDiv.classList.add("d-none"), 500);
+                }, 5000);
+            }
+
+            function hideError() { // Keep hideError function
+                duplicateTitleErrorDiv.style.opacity = "0";
+                setTimeout(() => duplicateTitleErrorDiv.classList.add("d-none"), 500);
+            }
+
+
             assessmentForm.addEventListener('submit', function (event) {
                 event.preventDefault();
+
+                const newTitle = titleInput.value.trim();
+                const assessmentTypeId = assessmentTypeSelect.value;
+                let id = document.getElementById("assessmentId").value;
+                console.log("Giá trị assessmentId:", id); // Kiểm tra giá trị trong console
+
+
+                if (newTitle === "") {
+                    showError("The title cannot be empty!");
+                    return;
+                }
+
 
                 // **1. Collect Selected Exercise IDs**
                 window.selectedExerciseIds = []; // Clear previous selections
@@ -712,7 +753,26 @@
                     assessmentForm.appendChild(hiddenInput); // Append to the form
                 });
 
-                assessmentForm.submit(); // **Programmatically submit the form after adding hidden inputs**
+
+
+                $.get(`/assessments/create/check-duplicate`, { title: newTitle, assessmentTypeId: assessmentTypeId, id: id }) // Correct URL, **removed id parameter**
+                    .done(function (response) {
+                        if (response.isDuplicate) {
+                            showError("Assessment title of this assessment type already exists!");
+                            // Do NOT submit the form here if it's a duplicate
+                        } else {
+
+                            hideError(); // Hide any previous error
+                            assessmentForm.submit(); // **Submit the form ONLY if no duplicate**
+                        }
+                    })
+                    .fail(function () {
+                        showError("Error when checking for duplicate title!");
+                        // Optionally handle failure to check duplicate (e.g., still submit or prevent submission)
+                    });
+
+
+
 
 
             });

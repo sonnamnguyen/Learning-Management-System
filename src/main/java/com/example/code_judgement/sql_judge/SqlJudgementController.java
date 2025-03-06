@@ -2,8 +2,8 @@ package com.example.code_judgement.sql_judge;
 
 import com.example.code_judgement.CodeExecutionService;
 import com.example.code_judgement.ExecutionResponse;
-import com.example.exercise.Exercise;
-import com.example.exercise.ExerciseService;
+import com.example.student_exercise_attemp.model.Exercise;
+import com.example.student_exercise_attemp.service.ExerciseService;
 import com.example.testcase.TestCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -29,7 +29,9 @@ public class SqlJudgementController {
                                Model model) {
         Exercise exercise = exerciseService.getExerciseById(exerciseId)
                 .orElseThrow(()-> new IllegalArgumentException("Invalid exercise ID"));
-        List<TestCase> testCases = exercise.getTestCases();
+        List<TestCase> testCases = exercise.getTestCases().stream().filter(testCase -> !testCase.isHidden()).toList();
+
+
         if(testCases.isEmpty()) {
             model.addAttribute("exercise", exercise);
             model.addAttribute("code", code);
@@ -56,11 +58,7 @@ public class SqlJudgementController {
             model.addAttribute("output", response.getPassed() + "/" + response.getTotal() + " test cases passed.");
             return "judgement/precheck_judge/precheck_code";
         } catch (Exception e) {
-            System.out.println(e.getMessage());
-            model.addAttribute("output", e.getMessage());
-            model.addAttribute("exercise", exercise);
-            model.addAttribute("code", code);
-            model.addAttribute("language", exercise.getLanguage().getLanguage());
+            model.addAttribute("error", e.getMessage());
             return "judgement/precheck_judge/precheck_code";
         }
     }
