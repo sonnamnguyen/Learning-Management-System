@@ -1,10 +1,10 @@
 package com.example.student_exercise_attemp.controller;
 
+import com.example.assessment.model.ProgrammingLanguage;
+import com.example.assessment.service.ProgrammingLanguageService;
 import com.example.student_exercise_attemp.model.Exercise;
 import com.example.student_exercise_attemp.repository.ExerciseRepository;
 import com.example.student_exercise_attemp.service.ExerciseService;
-import com.example.assessment.model.ProgrammingLanguage;
-import com.example.assessment.service.ProgrammingLanguageService;
 import com.example.testcase.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -132,7 +132,7 @@ public class ExerciseController {
         List<ProgrammingLanguage> programmingLanguages = programmingLanguageService.getAllProgrammingLanguages();
         model.addAttribute("programmingLanguages", programmingLanguages);
         model.addAttribute("content", "exercises/create");
-        return "exercises/create";
+        return "layout";
     }
 
     @PostMapping("/create")
@@ -298,7 +298,8 @@ public class ExerciseController {
             @RequestParam(name = "testCaseMethod") String testCaseMethod, // Thêm để xác định phương thức
             @RequestParam(name = "testCasesJson", required = false) String testCasesJson,
             @RequestParam Map<String, String> allParams, // Lấy dữ liệu từ UI
-            Model model, RedirectAttributes redirectAttributes) {
+            Model model,
+            RedirectAttributes redirectAttributes) {
 
         Exercise existingExercise = exerciseService.getExerciseById(id).orElse(null);
         if (existingExercise == null) {
@@ -410,7 +411,7 @@ public class ExerciseController {
         exerciseService.saveExercise(existingExercise);
 
         try {
-            redirectAttributes.addFlashAttribute("success", "Edit successful!");
+            redirectAttributes.addFlashAttribute("successMessage", "Edit successful!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Edit failed: " + e.getMessage());
         }
@@ -421,8 +422,13 @@ public class ExerciseController {
 
     // Delete a specific exercise
     @GetMapping("/delete/{id}")
-    public String deleteExercise(@PathVariable Long id) {
-        exerciseService.deleteExercise(id);
+    public String deleteExercise(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            exerciseService.deleteExercise(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Delete successful!");
+        }catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Delete failed: " + e.getMessage());
+        }
         return "redirect:/exercises";
     }
 
@@ -441,8 +447,19 @@ public class ExerciseController {
     @PostMapping("/import")
     public String uploadExercisesData(@RequestParam("file") MultipartFile file, RedirectAttributes redirectAttributes) {
         try {
-            exerciseService.saveExercisesToDatabase(file);
+            if (file.isEmpty()) {
+                redirectAttributes.addFlashAttribute("error", "Please upload a valid Excel file.");
+                return "redirect:/exercises";
+            }
+
+            List<String> warnings = new ArrayList<>();
+            exerciseService.saveExercisesToDatabase(file, warnings); // Cập nhật phương thức để truyền warnings
+
             redirectAttributes.addFlashAttribute("success", "Import successful!");
+
+            if (!warnings.isEmpty()) {
+                redirectAttributes.addFlashAttribute("warningList", warnings);
+            }
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Import failed: " + e.getMessage());
         }
