@@ -32,5 +32,4 @@ public class ExerciseSession {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assessment_id", referencedColumnName = "id")
     private Assessment assessment;
-
 }

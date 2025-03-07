@@ -46,6 +46,10 @@ public class SqlJudgementService {
     }
 
     public ExecutionResponse executeSQLCode(boolean isSubmit, Exercise exercise, String userCode, List<TestCase> testCases) {
+        if(!isSubmit && userCode.trim().equals(exercise.getSetup().trim())){
+            throw new RuntimeException("You have not done this exercise yet!");
+        }
+
         userCode = removeCommentsFromSQL(userCode);
 
         // Sinh suffix duy nhất (8 ký tự)
@@ -170,7 +174,7 @@ public class SqlJudgementService {
                             passedTestCases++;
                             resultsList.add(new TestCaseResult(tc, "Query successfully!", testPassed));
                         } else {
-                            resultsList.add(new TestCaseResult(tc, output, testPassed));
+                            resultsList.add(new TestCaseResult(tc, "The expected output and your output are not similar!", testPassed));
                         }
                     }
                 } else {

@@ -55,8 +55,9 @@ public class SqlJudgementController {
             model.addAttribute("passed", response.getPassed());
             model.addAttribute("total", response.getTotal());
             model.addAttribute("testResults", response.getTestCasesResults());
-            model.addAttribute("output", "<p>You passed <strong th:text=\"${passed}\">0</strong> out of <strong th:text=\"${total}\">0</strong>\n" +
-                    "test cases.</p>");
+            String outputMessage = String.format("<p>You passed <strong>%d</strong> out of <strong>%d</strong> test cases.</p>",
+                    response.getPassed(), response.getTotal());
+            model.addAttribute("output", outputMessage);
             return "judgement/precheck_judge/precheck_code";
         } catch (Exception e) {
             model.addAttribute("error", e.getMessage());
