@@ -1,6 +1,7 @@
 package com.example.student_exercise_attemp.repository;
 
 import com.example.student_exercise_attemp.model.Exercise;
+import com.example.testcase.TestCase;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -29,6 +30,7 @@ public interface ExerciseRepository extends PagingAndSortingRepository<Exercise,
     Page<Exercise> findByFilters(@Param("languageId") Long languageId,
                                  @Param("level") Exercise.Level level,
                                  Pageable pageable);
+
     Optional<Exercise> findByName(String name);
 
     boolean existsByName(String name);
@@ -45,10 +47,13 @@ public interface ExerciseRepository extends PagingAndSortingRepository<Exercise,
     Exercise save(Exercise exercise);
 
     void deleteById(Long id);
+
     void deleteAllByIdIn(List<Long> ids);
+
     @Query("SELECT e FROM Assessment a JOIN a.exercises e WHERE a.id = :assessmentId")
     List<Exercise> findExercisesByAssessmentId(@Param("assessmentId") Long assessmentId);
 
 
-
+    @Query("SELECT e.name FROM Exercise e")
+    List<String> findAllName();
 }

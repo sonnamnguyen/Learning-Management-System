@@ -1,8 +1,8 @@
 package com.example.student_exercise_attemp.service;
 
-import com.example.student_exercise_attemp.model.Exercise;
 import com.example.assessment.model.ProgrammingLanguage;
 import com.example.assessment.repository.ProgrammingLanguageRepository;
+import com.example.student_exercise_attemp.model.Exercise;
 import com.example.student_exercise_attemp.repository.ExerciseRepository;
 import com.example.testcase.TestCase;
 import com.example.testcase.TestCaseRepository;
@@ -21,6 +21,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
+
+import static com.example.utils.Helper.getCellValueAsString;
 
 @Service
 public class ExerciseService {
@@ -128,8 +130,11 @@ public class ExerciseService {
         return file.getContentType().equals("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     }
 
-    public List<Exercise> getExerciseDataFromExcel(InputStream inputStream) {
+    public Map<String, Object> getExerciseDataFromExcel(InputStream inputStream) {
         List<Exercise> exercises = new ArrayList<>();
+        List<String> warnings = new ArrayList<>();
+        Set<String> existingTitles = new HashSet<>();
+        Set<String> existingTitlesInDB = new HashSet<>(exerciseRepository.findAllName());
 
         try {
             Workbook workbook = new XSSFWorkbook(inputStream);
@@ -158,15 +163,18 @@ public class ExerciseService {
                 }
             }
 
-
+            int rowIndex = 1; // Bắt đầu từ dòng thứ 2 (dòng 1 là header)
             while (rowIterator.hasNext()) {
                 Row row = rowIterator.next();
+                rowIndex++;
 
-                if (row.getCell(0) == null || row.getCell(0).getCellType() == CellType.BLANK) {
-                    continue;  // Bỏ qua dòng trống
-                }
+//                if (row.getCell(0) == null || row.getCell(0).getCellType() == CellType.BLANK) {
+//                    warnings.add("Row " + rowIndex + " is empty and was skipped.");
+//                    continue;
+//                }
 
                 Exercise exercise = new Exercise();
+                boolean isValidRow = true;
 
                 if (columnIndexMap.containsKey("ID")) {
                     Cell idCell = row.getCell(columnIndexMap.get("ID"));
@@ -175,23 +183,56 @@ public class ExerciseService {
                     }
                 }
 
+
+//              ************  Xử lý Title ***************
                 if (columnIndexMap.containsKey("Title")) {
                     Cell cell = row.getCell(columnIndexMap.get("Title"));
-                    exercise.setName((cell != null) ? cell.getStringCellValue().trim() : "");
+                    if (cell != null) {
+                        String title = cell.getStringCellValue().trim();
+
+
+                        if (existingTitlesInDB.contains(title)) {
+                            warnings.add("Row " + rowIndex + " has a title that already exists: " + title);
+                            isValidRow = false;
+                        }
+
+                        if (existingTitles.contains(title)) {
+                            warnings.add("Row " + rowIndex + " has a duplicate Title in the file: " + title);
+                            isValidRow = false;
+                        } else {
+                            existingTitles.add(title);
+                            exercise.setName(title);
+                        }
+
+
+                    } else {
+                        warnings.add("Row " + rowIndex + " is missing a Title.");
+                        isValidRow = false;
+                    }
                 }
 
+//              ************  Xử lý Language ***************
                 if (columnIndexMap.containsKey("Language")) {
                     Cell cell = row.getCell(columnIndexMap.get("Language"));
-                    String languageName = (cell != null) ? cell.getStringCellValue().trim() : "Unknown";
-                    ProgrammingLanguage language = programmingLanguageRepository.findByLanguage(languageName).orElse(null);
-                    if (language == null) {
-                        language = new ProgrammingLanguage();
-                        language.setLanguage(languageName);
-                        programmingLanguageRepository.save(language);
+                    if (cell != null) {
+                        String languageName = cell.getStringCellValue().trim();
+
+                        Optional<ProgrammingLanguage> optionalLanguage = programmingLanguageRepository.findByLanguage(languageName);
+                        if (optionalLanguage.isPresent()) {
+                            exercise.setLanguage(optionalLanguage.get());
+                        } else {
+                            warnings.add("Row " + rowIndex + " contains an unknown Language: " + languageName +". List available language: " + programmingLanguageRepository.findAllLanguages());
+
+                            isValidRow = false;
+                        }
+                    } else {
+                        warnings.add("Row " + rowIndex + " is missing Language.");
+                        isValidRow = false;
                     }
-                    exercise.setLanguage(language);
+
                 }
 
+//              ************  Xử lý Level ***************
                 if (columnIndexMap.containsKey("Level")) {
                     Cell cell = row.getCell(columnIndexMap.get("Level"));
                     if (cell != null) {
@@ -200,75 +241,157 @@ public class ExerciseService {
                             Exercise.Level level = Exercise.Level.valueOf(levelText);
                             exercise.setLevel(level);
                         } catch (IllegalArgumentException e) {
-                            throw new RuntimeException("Invalid exercise level: " + cell.getStringCellValue());
+                            warnings.add("Row " + rowIndex + " has an invalid Level: " + cell.getStringCellValue());
+                            isValidRow = false;
                         }
+                    } else {
+                        warnings.add("Row " + rowIndex + " is missing Level.");
+                        isValidRow = false;
                     }
                 }
 
+//              ************  Xử lý Description ***************
                 if (columnIndexMap.containsKey("Description")) {
                     Cell cell = row.getCell(columnIndexMap.get("Description"));
                     exercise.setDescription((cell != null) ? cell.getStringCellValue().trim() : "");
                 }
 
+//              ************  Xử lý Set Up Code ***************
                 if (columnIndexMap.containsKey("Set Up Code")) {
                     Cell cell = row.getCell(columnIndexMap.get("Set Up Code"));
                     exercise.setSetup((cell != null) ? cell.getStringCellValue().trim() : "");
                 }
 
+
+//              ************  Xử lý Test Case ***************
                 if (columnIndexMap.containsKey("Test Case")) {
                     Cell cell = row.getCell(columnIndexMap.get("Test Case"));
                     String testCaseText = (cell != null) ? cell.getStringCellValue().trim() : "";
                     List<TestCase> testCases = new ArrayList<>();
+                    boolean hasInvalidTestCase = false; // Biến để kiểm tra nếu có test case sai
+
                     if (!testCaseText.isEmpty()) {
-                        String[] testCaseArray = testCaseText.split(";");
+                        String[] testCaseArray = testCaseText.split(";"); // Mỗi test case phải kết thúc bằng dấu ";"
                         for (String testCaseStr : testCaseArray) {
                             testCaseStr = testCaseStr.trim();
                             if (!testCaseStr.isEmpty()) {
-                                String[] parts = testCaseStr.split(",");
-                                if (parts.length >= 2) {
-                                    String input = parts[0].replace("Input:", "").trim();
-                                    String expected = parts[1].replace("Expected:", "").trim();
-                                    boolean isHidden = false;
-
-                                    if(parts.length == 3) {
-                                        String hiddenPart = parts[2].replace("Hidden:", "").trim();
-                                        isHidden = Boolean.parseBoolean(hiddenPart);
-                                    }
-
-                                    TestCase testCase = new TestCase();
-                                    testCase.setInput(input);
-                                    testCase.setExpectedOutput(expected);
-                                    testCase.setHidden(isHidden);
-                                    testCases.add(testCase);
+                                // Kiểm tra dấu phẩy (,)
+                                if (!testCaseStr.contains(",")) {
+                                    warnings.add("Row " + rowIndex + " is missing a comma (',') in test case: '" + testCaseStr + "'.");
+                                    hasInvalidTestCase = true;
+                                    continue;
                                 }
+
+                                String[] parts = testCaseStr.split(",");
+                                if (parts.length < 2 || parts.length > 3) {
+                                    warnings.add("Row " + rowIndex + " has an invalid test case format: '" + testCaseStr + "'. Expected format: 'Input:<value>, Expected:<value>[, Hidden:true/false]'.");
+                                    hasInvalidTestCase = true;
+                                    continue;
+                                }
+
+                                // Kiểm tra từng phần tử có đúng tiền tố không
+                                if (!parts[0].trim().matches("^Input:\\s*.+")) {
+                                    warnings.add("Row " + rowIndex + " is missing or has incorrect 'Input:' format in test case: '" + testCaseStr + "'.");
+                                    hasInvalidTestCase = true;
+                                    continue;
+                                }
+                                if (!parts[1].trim().matches("^Expected:\\s*.+")) {
+                                    warnings.add("Row " + rowIndex + " is missing or has incorrect 'Expected:' format in test case: '" + testCaseStr + "'.");
+                                    hasInvalidTestCase = true;
+                                    continue;
+                                }
+
+                                String input = parts[0].replace("Input:", "").trim();
+                                String expected = parts[1].replace("Expected:", "").trim();
+                                boolean isHidden = false;
+
+                                if (parts.length == 3) {
+                                    if (!parts[2].trim().matches("^Hidden:\\s*(true|false)")) {
+                                        warnings.add("Row " + rowIndex + " has an invalid 'Hidden:' value (must be 'true' or 'false') in test case: '" + testCaseStr + "'.");
+                                        hasInvalidTestCase = true;
+                                        continue;
+                                    }
+                                    isHidden = Boolean.parseBoolean(parts[2].replace("Hidden:", "").trim());
+                                }
+
+                                // Nếu test case hợp lệ, thêm vào danh sách tạm thời
+                                TestCase testCase = new TestCase();
+                                testCase.setInput(input);
+                                testCase.setExpectedOutput(expected);
+                                testCase.setHidden(isHidden);
+                                testCases.add(testCase);
+                            } else {
+                                warnings.add("Row " + rowIndex + " is empty and was skipped.");
+                                hasInvalidTestCase = true;
                             }
                         }
                     }
-                    exercise.setTestCases(testCases);
+
+
+                    if (hasInvalidTestCase) {
+                        warnings.add("Row " + rowIndex + " has invalid test cases and was not saved.");
+                        isValidRow = false;
+                    } else {
+                        exercise.setTestCases(testCases);
+                    }
                 }
 
-                exercises.add(exercise);
+                if (isValidRow) {
+                    exercises.add(exercise);
+                }
+
+            }
+
+
+            workbook.close();
+
+            // Nếu tất cả dữ liệu đều bị trùng, không thêm file vào hệ thống
+            if (exercises.isEmpty()) {
+                throw new RuntimeException("All data in the file already exists. Import is canceled.");
             }
         } catch (IOException e) {
             throw new RuntimeException("Error reading Excel file: " + e.getMessage(), e);
         }
 
-        return exercises;
+        // Trả về cả danh sách bài tập hợp lệ và danh sách cảnh báo
+        Map<String, Object> result = new HashMap<>();
+        result.put("exercises", exercises);
+        result.put("warnings", warnings);
+        return result;
     }
 
 
-
-    public void saveExercisesToDatabase(MultipartFile file) {
+    public void saveExercisesToDatabase(MultipartFile file, List<String> warnings) {
         if (hasExcelFormat(file)) {
             try (InputStream inputStream = file.getInputStream()) {
-                List<Exercise> exercises = getExerciseDataFromExcel(inputStream);
-                exerciseRepository.saveAll(exercises);
+                // Lấy dữ liệu từ file Excel
+                Map<String, Object> result = getExerciseDataFromExcel(inputStream);
+
+                // Lấy danh sách bài tập hợp lệ
+                List<Exercise> exercises = (List<Exercise>) result.get("exercises");
+
+                // Lưu vào database nếu danh sách không rỗng
+                if (!exercises.isEmpty()) {
+                    exerciseRepository.saveAll(exercises);
+                }
+
+
+                // Log cảnh báo nếu có
+//                List<String> warnings = (List<String>) result.get("warnings");
+//                if (!warnings.isEmpty()) {
+//                    warnings.forEach(System.out::println); // Hoặc log ra file, hệ thống logging
+//                }
+                List<String> extractedWarnings = (List<String>) result.get("warnings");
+                if (extractedWarnings != null && !extractedWarnings.isEmpty()) {
+                    warnings.addAll(extractedWarnings); // Thêm cảnh báo vào danh sách
+                }
             } catch (IOException e) {
-                throw new IllegalArgumentException("The file is not a valid excel file");
+                throw new IllegalArgumentException("The file is not a valid Excel file: " + e.getMessage(), e);
             }
+        } else {
+            throw new IllegalArgumentException("Invalid file format. Please upload an Excel file.");
         }
     }
-
     public Page<Exercise> getExercisesByLanguageAndLevel(Long languageId, String level, Pageable pageable) {
         Exercise.Level exerciseLevel = (level == null || level.trim().isEmpty())
                 ? null

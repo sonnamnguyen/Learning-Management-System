@@ -14,7 +14,7 @@
             <h3 class="card-title mb-0">Update Exercise</h3>
         </div>
         <div class="card-body">
-            <form th:action="@{/exercises/edit/{id}(id=${exercise.id})}" th:object="${exercise}" method="post" class="needs-validation" novalidate>
+            <form th:action="@{/exercises/edit/{id}(id=${exercise.id})}" th:object="${exercise}" method="post" class="needs-validation" novalidate id="edit-ex-form">
                 <!-- Name -->
                 <div class="mb-3">
                     <label for="name" class="form-label">Name:</label>
@@ -76,13 +76,12 @@
                 <!-- JSON Input Method -->
                 <div id="jsonInputDiv">
                     <label for="testCases" class="form-label">Test Cases (JSON Format)</label>
-                    <textarea th:text="${testCasesJson}" class="form-control" id="testCases" name="testCasesJson" placeholder='[{"input": "", "expectedOutput": ""}]'></textarea>
+                    <textarea th:text="${testCasesJson}" class="form-control" id="testCases" name="testCasesJson" placeholder='[{"input": "", "expectedOutput": ""}]' required></textarea>
                 </div>
 
                 <!-- Manual UI Input Method with Tabs -->
                 <div id="uiInputDiv" style="display: none;">
                     <label class="form-label">Test Cases</label>
-
                     <!-- Tabs Navigation -->
                     <ul class="nav nav-tabs" id="testCaseTabs" role="tablist">
                         <li class="nav-item">
@@ -92,7 +91,6 @@
                             <a class="nav-link" id="hidden-tab" data-bs-toggle="tab" href="#hiddenTestCases" role="tab">Hidden Test Cases</a>
                         </li>
                     </ul>
-
                     <!-- Tab Content -->
                     <div class="tab-content mt-2" id="testCaseTabContent">
                         <!-- Normal Test Cases Tab -->
@@ -119,7 +117,6 @@
                             </table>
                             <button type="button" class="btn btn-success btn-sm" onclick="addTestCase('normalTestCasesContainer')"><i class="bi bi-plus-circle"></i></button>
                         </div>
-
                         <!-- Hidden Test Cases Tab -->
                         <div class="tab-pane fade" id="hiddenTestCases" role="tabpanel">
                             <table class="table table-bordered">
@@ -140,8 +137,7 @@
                                     </td>
                                     <td><button type="button" class="btn btn-danger btn-sm" onclick="removeTestCase(this)">
                                         <i class="bi bi-trash"></i>
-                                    </button>
-                                    </td>
+                                    </button></td>
                                 </tr>
                                 </tbody>
                             </table>
@@ -161,6 +157,7 @@
 </div>
 
 <script src="https://cdn.ckeditor.com/4.20.2/standard/ckeditor.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     CKEDITOR.replace('description', {
         removePlugins: 'easyimage, cloudservices, toolbar, format, styles, link',
@@ -175,13 +172,13 @@
         tempDiv.innerHTML = editorData;
         return tempDiv.textContent || tempDiv.innerText || '';
     }
-</script>
-<script>
+
     document.addEventListener("DOMContentLoaded", function () {
         let testCases = JSON.parse(document.getElementById("testCases").textContent || "[]");
         let jsonInputDiv = document.getElementById("jsonInputDiv");
         let uiInputDiv = document.getElementById("uiInputDiv");
         let jsonOption = document.getElementById("jsonOption");
+        let uiOption = document.getElementById("uiOption");
         let normalTestCasesContainer = document.getElementById("normalTestCasesContainer");
         let hiddenTestCasesContainer = document.getElementById("hiddenTestCasesContainer");
         let languageSelect = document.getElementById("language");
@@ -197,13 +194,16 @@
                 renderNormalTestCases();
                 renderHiddenTestCases();
             }
+
+            // Cập nhật required dựa trên lựa chọn
+            document.getElementById("testCases").required = isJsonSelected;
+            const normalInputs = normalTestCasesContainer.querySelectorAll("input[type='text']");
+            normalInputs.forEach(input => input.required = !isJsonSelected);
         }
 
         function toggleSqlFields() {
-            // Lấy text của option được chọn thay vì dựa vào value
             const selectedOption = languageSelect.options[languageSelect.selectedIndex];
             const isSqlSelected = selectedOption.textContent.trim().toUpperCase() === "SQL";
-
             sqlFieldsDiv.style.display = isSqlSelected ? "block" : "none";
             sqlTagHeaderNormal.style.display = isSqlSelected ? "table-cell" : "none";
             sqlTagHeaderHidden.style.display = isSqlSelected ? "table-cell" : "none";
@@ -213,9 +213,6 @@
                 input.style.display = isSqlSelected ? "table-cell" : "none";
             });
 
-            console.log("All Test Cases:", testCases);
-            console.log("Normal Test Cases:", testCases.filter(testCase => !testCase.isHidden));
-            console.log("Hidden Test Cases:", testCases.filter(testCase => testCase.isHidden));
             renderNormalTestCases();
             renderHiddenTestCases();
         }
@@ -229,17 +226,14 @@
                     const selectedOption = languageSelect.options[languageSelect.selectedIndex];
                     const isSqlSelected = selectedOption.textContent.trim().toUpperCase() === "SQL";
                     newRow.innerHTML = `
-                <td><input type="text" class="form-control" name="normalTestCases[${index}].input" value="${testCase.input || ''}" placeholder="Input"></td>
-                <td><input type="text" class="form-control" name="normalTestCases[${index}].expectedOutput" value="${testCase.expectedOutput || ''}" placeholder="Expected Output"></td>
-                <td class="sqlTagInput" style="display: ${isSqlSelected ? 'table-cell' : 'none'};">
-                    <input type="text" class="form-control" name="normalTestCases[${index}].sqlTagNumber" value="${testCase.sqlTagNumber || ''}" placeholder="SQL Tag Number">
-                </td>
-                <td><button type="button" class="btn btn-danger btn-sm" onclick="removeTestCase(this)">
-                            <i class="bi bi-trash"></i>
-                    </button>
-                </td>
-                <td><input type="hidden" name="normalTestCases[${index}].hidden" value="false"></td>
-            `;
+                        <td><input type="text" class="form-control" name="normalTestCases[${index}].input" value="${testCase.input || ''}" placeholder="Input" ${uiOption.checked ? 'required' : ''}></td>
+                        <td><input type="text" class="form-control" name="normalTestCases[${index}].expectedOutput" value="${testCase.expectedOutput || ''}" placeholder="Expected Output" ${uiOption.checked ? 'required' : ''}></td>
+                        <td class="sqlTagInput" style="display: ${isSqlSelected ? 'table-cell' : 'none'};">
+                            <input type="text" class="form-control" name="normalTestCases[${index}].sqlTagNumber" value="${testCase.sqlTagNumber || ''}" placeholder="SQL Tag Number">
+                        </td>
+                        <td><button type="button" class="btn btn-danger btn-sm" onclick="removeTestCase(this)"><i class="bi bi-trash"></i></button></td>
+                        <td><input type="hidden" name="normalTestCases[${index}].hidden" value="false"></td>
+                    `;
                     normalTestCasesContainer.appendChild(newRow);
                 });
         }
@@ -253,17 +247,14 @@
                     const selectedOption = languageSelect.options[languageSelect.selectedIndex];
                     const isSqlSelected = selectedOption.textContent.trim().toUpperCase() === "SQL";
                     newRow.innerHTML = `
-                <td><input type="text" class="form-control" name="hiddenTestCases[${index}].input" value="${testCase.input || ''}" placeholder="Hidden Input"></td>
-                <td><input type="text" class="form-control" name="hiddenTestCases[${index}].expectedOutput" value="${testCase.expectedOutput || ''}" placeholder="Hidden Expected Output"></td>
-                <td class="sqlTagInput" style="display: ${isSqlSelected ? 'table-cell' : 'none'};">
-                    <input type="text" class="form-control" name="hiddenTestCases[${index}].sqlTagNumber" value="${testCase.sqlTagNumber || ''}" placeholder="SQL Tag Number">
-                </td>
-                <td><button type="button" class="btn btn-danger btn-sm" onclick="removeTestCase(this)">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </td>
-                <td><input type="hidden" name="hiddenTestCases[${index}].hidden" value="true"></td>
-            `;
+                        <td><input type="text" class="form-control" name="hiddenTestCases[${index}].input" value="${testCase.input || ''}" placeholder="Hidden Input"></td>
+                        <td><input type="text" class="form-control" name="hiddenTestCases[${index}].expectedOutput" value="${testCase.expectedOutput || ''}" placeholder="Hidden Expected Output"></td>
+                        <td class="sqlTagInput" style="display: ${isSqlSelected ? 'table-cell' : 'none'};">
+                            <input type="text" class="form-control" name="hiddenTestCases[${index}].sqlTagNumber" value="${testCase.sqlTagNumber || ''}" placeholder="SQL Tag Number">
+                        </td>
+                        <td><button type="button" class="btn btn-danger btn-sm" onclick="removeTestCase(this)"><i class="bi bi-trash"></i></button></td>
+                        <td><input type="hidden" name="hiddenTestCases[${index}].hidden" value="true"></td>
+                    `;
                     hiddenTestCasesContainer.appendChild(newRow);
                 });
         }
@@ -277,28 +268,66 @@
             const isSqlSelected = selectedOption.textContent.trim().toUpperCase() === "SQL";
             let newRow = document.createElement("tr");
             newRow.innerHTML = `
-        <td><input type="text" class="form-control" name="${prefix}[${rowCount}].input" placeholder="${isHidden ? 'Hidden ' : ''}Input"></td>
-        <td><input type="text" class="form-control" name="${prefix}[${rowCount}].expectedOutput" placeholder="${isHidden ? 'Hidden ' : ''}Expected Output"></td>
-        <td class="sqlTagInput" style="display: ${isSqlSelected ? 'table-cell' : 'none'};">
-            <input type="text" class="form-control" name="${prefix}[${rowCount}].sqlTagNumber" placeholder="SQL Tag Number">
-        </td>
-        <td><button type="button" class="btn btn-danger btn-sm" onclick="removeTestCase(this)">
-                            <i class="bi bi-trash"></i>
-                    </button>
+                <td><input type="text" class="form-control" name="${prefix}[${rowCount}].input" placeholder="${isHidden ? 'Hidden ' : ''}Input" ${!isHidden && uiOption.checked ? 'required' : ''}></td>
+                <td><input type="text" class="form-control" name="${prefix}[${rowCount}].expectedOutput" placeholder="${isHidden ? 'Hidden ' : ''}Expected Output" ${!isHidden && uiOption.checked ? 'required' : ''}></td>
+                <td class="sqlTagInput" style="display: ${isSqlSelected ? 'table-cell' : 'none'};">
+                    <input type="text" class="form-control" name="${prefix}[${rowCount}].sqlTagNumber" placeholder="SQL Tag Number">
                 </td>
-        ${isHidden ? `<td><input type="hidden" name="${prefix}[${rowCount}].hidden" value="true"></td>` :
+                <td><button type="button" class="btn btn-danger btn-sm" onclick="removeTestCase(this)"><i class="bi bi-trash"></i></button></td>
+                ${isHidden ? `<td><input type="hidden" name="${prefix}[${rowCount}].hidden" value="true"></td>` :
                 `<td><input type="hidden" name="${prefix}[${rowCount}].hidden" value="false"></td>`}
-    `;
+            `;
             container.appendChild(newRow);
         };
 
         window.removeTestCase = function(button) {
             let row = button.closest('tr');
-            row.parentNode.removeChild(row);
+            let tbody = row.parentNode;
+            if (tbody.children.length <= 1) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Delete Failed!',
+                    text: 'Needs at least one test case',
+                    confirmButtonColor: '#3085d6',
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
+            tbody.removeChild(row);
+            let rows = tbody.querySelectorAll('tr');
+            rows.forEach((tr, index) => {
+                tr.querySelectorAll('input').forEach(input => {
+                    let name = input.getAttribute('name');
+                    if (name) {
+                        name = name.replace(/\[\d+\]/, `[${index}]`);
+                        input.setAttribute('name', name);
+                    }
+                });
+            });
         };
 
-        document.getElementById("jsonOption").addEventListener("change", toggleTestCaseMethod);
-        document.getElementById("uiOption").addEventListener("change", toggleTestCaseMethod);
+        // Kiểm tra định dạng JSON khi submit
+        document.getElementById("edit-ex-form").addEventListener('submit', function (event) {
+            const isJsonSelected = jsonOption.checked;
+            if (isJsonSelected) {
+                const testCases = document.getElementById('testCases').value;
+                try {
+                    JSON.parse(testCases);
+                } catch (e) {
+                    event.preventDefault();
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Invalid JSON',
+                        text: 'Invalid JSON format. Please correct it before submitting.',
+                        confirmButtonColor: '#3085d6',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            }
+        });
+
+        jsonOption.addEventListener("change", toggleTestCaseMethod);
+        uiOption.addEventListener("change", toggleTestCaseMethod);
         languageSelect.addEventListener("change", toggleSqlFields);
 
         toggleTestCaseMethod();
