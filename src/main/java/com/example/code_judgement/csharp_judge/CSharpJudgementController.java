@@ -85,6 +85,7 @@ public class CSharpJudgementController {
             model.addAttribute("code", code);
             model.addAttribute("failed", response.getTotal() - response.getPassed());
             model.addAttribute("score", response.getScore());
+            model.addAttribute("compileTime", response.getCompileTimeMillis());
 
             if(response.getErrorMessage()!=null){
                 model.addAttribute("error", response.getErrorMessage());

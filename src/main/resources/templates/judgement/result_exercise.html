@@ -5,7 +5,7 @@
     <!-- Keep all your existing head content -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code Submission UI</title>
+    <title>Exercise Result</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
@@ -506,8 +506,7 @@
             </button>
         </div>
     </div>
-    <p style="font-size: 14px; color: #6c757d; margin-left: 10px;">Viewing <a href="#"
-                                                                              style="color: #1a73e8; text-decoration: none;">user's </a>solution</p>
+    <p style="font-size: 14px; color: #6c757d; margin-left: 10px;">Viewing <a href="#" style="color: #1a73e8; text-decoration: none;">user's </a>solution</p>
 
     <div class="score-container">
         <div class="score" onclick="toggleTestCases()">
@@ -540,6 +539,14 @@
         <div class="score" style="margin-bottom: 30px;">
             <div class="score-left-2">
                 <span class="score-number-2" th:text="${score}"></span> TOTAL SCORE
+            </div>
+        </div>
+
+        <div style="margin-bottom: 15px; ">
+            <div class="score-left-2">
+                Compline Time:
+                &ensp;
+                <span style="font-weight: normal; font-size: 20px; color: #3d75ea;" th:text="${compileTime} + ' ms'"></span>
             </div>
         </div>
     </div>
