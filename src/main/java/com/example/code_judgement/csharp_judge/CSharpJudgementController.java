@@ -33,7 +33,7 @@ public class CSharpJudgementController {
                 .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));
         List<TestCase> testCases = exercise.getTestCases().stream().filter(testCase -> !testCase.isHidden()).toList();
         if (testCases == null || testCases.isEmpty()) {
-            model.addAttribute("output", "No test cases defined for this exercise.");
+            model.addAttribute("output", "<strong>No test case defined for this exercise</strong>");
             model.addAttribute("exercise", exercise);
             model.addAttribute("code", code);
             return "judgement/precheck_judge/precheck_code";
@@ -51,8 +51,8 @@ public class CSharpJudgementController {
             model.addAttribute("passed", response.getPassed());
             model.addAttribute("total", response.getTotal());
             model.addAttribute("testResults", response.getTestCasesResults());
-            model.addAttribute("output", response.getPassed() + "/" + response.getTotal() + " test cases passed.");
-
+            model.addAttribute("output", "<p>You passed <strong th:text=\"${passed}\">0</strong> out of <strong th:text=\"${total}\">0</strong>\n" +
+                    "test cases.</p>");
             return "judgement/precheck_judge/precheck_code";
         } catch (Exception e) {
             model.addAttribute("output", e.getMessage());

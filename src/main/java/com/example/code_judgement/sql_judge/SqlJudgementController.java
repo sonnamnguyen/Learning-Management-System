@@ -35,7 +35,7 @@ public class SqlJudgementController {
         if(testCases.isEmpty()) {
             model.addAttribute("exercise", exercise);
             model.addAttribute("code", code);
-            model.addAttribute("output", "No test case defined for this exercise");
+            model.addAttribute("output", "<strong>No test case defined for this exercise</strong>");
             return "judgement/precheck_judge/precheck_code";
         }
         try {
@@ -44,7 +44,7 @@ public class SqlJudgementController {
             if ("sql".equalsIgnoreCase(exercise.getLanguage().getLanguage())) {
                 response = sqlJudgementService.executeSQLCode(false, exercise, code, testCases);
             } else {
-                model.addAttribute("output", "No test cases defined for this exercise.");
+                model.addAttribute("output", "<strong>No test case defined for this exercise</strong>");
                 model.addAttribute("exercise", exercise);
                 model.addAttribute("code", code);
                 return "judgement/precheck_judge/precheck_code";
@@ -55,7 +55,8 @@ public class SqlJudgementController {
             model.addAttribute("passed", response.getPassed());
             model.addAttribute("total", response.getTotal());
             model.addAttribute("testResults", response.getTestCasesResults());
-            model.addAttribute("output", response.getPassed() + "/" + response.getTotal() + " test cases passed.");
+            model.addAttribute("output", "<p>You passed <strong th:text=\"${passed}\">0</strong> out of <strong th:text=\"${total}\">0</strong>\n" +
+                    "test cases.</p>");
             return "judgement/precheck_judge/precheck_code";
         } catch (Exception e) {
             model.addAttribute("error", e.getMessage());
@@ -73,7 +74,7 @@ public class SqlJudgementController {
         if(testCases.isEmpty()) {
             model.addAttribute("exercise", exercise);
             model.addAttribute("code", code);
-            model.addAttribute("output", "No test case defined for this exercise");
+            model.addAttribute("output", "<strong>No test case defined for this exercise</strong>");
             return "judgement/code_space";
         }
         try {
@@ -82,7 +83,7 @@ public class SqlJudgementController {
             if ("sql".equalsIgnoreCase(exercise.getLanguage().getLanguage())) {
                 response = sqlJudgementService.executeSQLCode(true, exercise, code, testCases);
             } else {
-                model.addAttribute("output", "No test cases defined for this exercise.");
+                model.addAttribute("output", "<strong>No test case defined for this exercise</strong>");
                 model.addAttribute("exercise", exercise);
                 model.addAttribute("code", code);
                 return "judgement/code_space";
@@ -93,6 +94,8 @@ public class SqlJudgementController {
             model.addAttribute("testResults", response.getTestCasesResults());
             model.addAttribute("failed", response.getTotal() - response.getPassed());
             model.addAttribute("score", response.getScore());
+            model.addAttribute("output", "<p>You passed <strong th:text=\"${passed}\">0</strong> out of <strong th:text=\"${total}\">0</strong>\n" +
+                                                                "test cases.</p>");
             return "judgement/result_exercise";
         } catch (Exception e) {
             System.out.println(e.getMessage());

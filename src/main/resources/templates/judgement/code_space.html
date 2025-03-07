@@ -183,7 +183,7 @@
         /* Style cho tab content */
         #leftPanelTabContent {
             flex-grow: 1;
-            overflow-y: hidden;
+            overflow-y: auto;
             /* Ẩn thanh cuộn */
             overflow-x: hidden;
         }
@@ -1163,7 +1163,6 @@
     document.addEventListener("DOMContentLoaded", function () {
         // Lấy ngôn ngữ ban đầu từ select box
         const initialLanguage = document.getElementById("language-select").value.toLowerCase();
-
         let initialMode = "text/x-java"; // mặc định
 
         // Xác định mode dựa trên ngôn ngữ ban đầu

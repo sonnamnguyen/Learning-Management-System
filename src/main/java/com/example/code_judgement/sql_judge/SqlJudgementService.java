@@ -168,8 +168,10 @@ public class SqlJudgementService {
                         }
                         if (testPassed) {
                             passedTestCases++;
+                            resultsList.add(new TestCaseResult(tc, "Query successfully!", testPassed));
+                        } else {
+                            resultsList.add(new TestCaseResult(tc, output, testPassed));
                         }
-                        resultsList.add(new TestCaseResult(tc, output, testPassed));
                     }
                 } else {
                     // Nếu segment chứa nhiều câu lệnh (không chỉ SELECT)
@@ -209,8 +211,14 @@ public class SqlJudgementService {
                         }
                         if (testPassed) {
                             passedTestCases++;
+                            resultsList.add(new TestCaseResult(tc, "Query successfully!", testPassed));
+                        } else {
+                            if(output.contains("Execution error: ")) {
+                                resultsList.add(new TestCaseResult(tc, output, testPassed));
+                            } else {
+                                resultsList.add(new TestCaseResult(tc, "The expected output and your output are not similar!", testPassed));
+                            }
                         }
-                        resultsList.add(new TestCaseResult(tc, output, testPassed));
                     }
                 }
             }
@@ -222,7 +230,7 @@ public class SqlJudgementService {
 
         double score = 0;
         if(isSubmit){
-            score = exerciseScore(passedTestCases, totalTestCases);
+            score = exerciseScore(passedTestCases, testCases.size());
             StudentExerciseAttempt studentExerciseAttempt = new StudentExerciseAttempt();
             studentExerciseAttempt.setAttemptDate(LocalDateTime.now());
             studentExerciseAttempt.setSubmitted_code(userCode);
