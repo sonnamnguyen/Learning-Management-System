@@ -197,6 +197,12 @@ public class AssessmentController {
     }
 
 
+    @GetMapping("/duplicate/{id}")
+    public String duplicateAssessment(@PathVariable("id") Long id) {
+        System.out.println("duplicateAssessment");
+        assessmentService.duplicateAssessment(id);
+        return "redirect:/assessments";
+    }
 
     @ModelAttribute
     public void addCommonAttributes(Model model) {

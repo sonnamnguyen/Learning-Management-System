@@ -1,7 +1,11 @@
 <div class="container-fluid px-5 mb-4">
 
-    <h1 class="text-center m-3">Quiz</h1>
-
+    <div class="m-3">
+        <a th:href="@{/quizes}" class="btn btn-outline-primary btn-sm position-absolute">
+            <i class="bi bi-arrow-left-short"></i> Back
+        </a>
+        <h1 class="text-center">Quiz</h1>
+    </div>
     <!-- Course Selection -->
     <div class="row mb-4">
 
@@ -90,6 +94,7 @@
                     </h5>
                 </div>
                 <div class="card-body card-body-height-2">
+                    <!-- Popup form thêm question -->
                     <div class="d-flex justify-content-center position-sticky z-3 top-0">
                         <a id="addQuestionBtn" class="add-area w-100 btn btn-outline-primary py-2 mb-3">
                             + Add a new question
@@ -105,13 +110,13 @@
                                 </div>
 
                                 <!-- Form get Question data to Create -->
-                                <form th:action="@{'/quizes/detail/'+ ${quiz.id} +'/questions/create'}"
-                                      th:object="${question}" method="post" class="needs-validation" novalidate>
+                                <form id="addQuestionForm"
+                                      th:action="@{'/quizes/detail/'+ ${quiz.id} +'/questions/create'}"
+                                      th:object="${question}" method="post" class="needs-validation">
                                     <label for="questionDescription" class="form-label fw-bold mb-3">Question</label>
 
                                     <!-- Get data from CKEditor -->
-                                    <textarea id="questionDescription" class="form-control cke_notification"
-                                              style="visibility: hidden; display: none;"
+                                    <textarea id="questionDescription" class="form-control cke_notification d-none"
                                               th:field="*{questionText}"></textarea>
 
                                     <!-- Choose questionType -->
@@ -125,7 +130,7 @@
                                                     th:value="${type}"
                                                     th:text="${type}"></option>
                                         </select>
-                                        <div class="invalid-feedback">Question Type is required.</div>
+                                        <div id="invalid-question-type" class="invalid"></div>
                                     </div>
 
                                     <!-- Answer Options -->
@@ -153,76 +158,89 @@
                         </div>
                     </div>
 
+                    <!-- List danh sách câu hỏi -->
                     <div>
                         <ul class="list-group accordion-body">
-                            <div class="accordion">
+                            <div id="quiz-question-container" class="accordion">
 
                                 <!-- Show question here -->
 
-                                <div class="accordion-item position-relative" th:each=" question : ${quiz.questions}">
+                                <div class="accordion-item row mx-0 py-1" th:each=" question : ${quiz.questions}" th:data-order="${question.questionNo}">
 
-                                    <div class="accordion-header d-flex align-items-center">
-                                        <div class="accordion-button collapsed position-relative z-0"
-                                             data-bs-toggle="collapse"
-                                             th:data-bs-target="'#question' + ${question.id}"
-                                             aria-expanded="false"
-                                             th:utext="${question.questionText}">
+                                    <div class="col-md-11 pe-4">
+                                        <div class="accordion-header d-flex align-items-center">
+                                            <div class="accordion-button collapsed position-relative z-0"
+                                                 data-bs-toggle="collapse"
+                                                 th:data-bs-target="'#question' + ${question.id}"
+                                                 aria-expanded="false"
+                                                 th:utext="${question.questionText}">
+                                            </div>
+
                                         </div>
-                                        <div class="position-absolute z-2 end-0 me-3
-                                        d-flex gap-2 justify-content-between align-items-center">
+
+                                        <div th:id="'question' + ${question.id}" class="accordion-collapse collapse">
+
+                                            <div class="accordion-body">
+                                                <ul class="list-group">
+
+                                                    <li th:each="answerOption : ${question.answerOptions}"
+                                                        th:class="${answerOption.isCorrect} ?
+                                                    'list-group-item d-flex justify-content-between align-items-center hover-effect c-correct' :
+                                                    'list-group-item d-flex justify-content-between align-items-center hover-effect'">
+                                                        <span th:text="${answerOption.optionLabel} + '. ' + ${answerOption.optionText}">Question Text</span>
+                                                    </li>
+
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Chức năng vị trí câu hỏi -->
+                                    <div class="col-md-1 d-flex justify-content-end align-items-center gap-2">
+                                        <div class="d-flex flex-column align-items-center gap-1">
                                             <a href="" class="btn btn-edit btn-sm">
                                                 <i class="bi bi-pencil"></i>
                                             </a>
-                                            <a href="" class="btn btn-clear btn-sm"
+                                            <a th:href="'/quizes/detail/' + ${quiz.id} + '/questions/delete/' + ${question.id}"
+                                               class="btn btn-clear btn-sm" methods="post"
                                                onclick="confirmNavigation(event,'Are you sure you want to delete this question?')">
                                                 <i class="bi bi-trash"></i>
                                             </a>
                                         </div>
+                                        <div class="d-flex flex-column align-items-center gap-1">
+                                            <button id="moveFirst" class="question-no btn btn-edit btn-sm rounded-circle
+                                                d-flex justify-content-center align-items-center fs-6"
+                                                    th:onclick="|moveQuestion(${question.id}, 1)|"
+                                                    th:disabled="${question.questionNo == 1}">
+                                                <i class="fas fa-angle-double-up"></i>
+                                            </button>
+
+                                            <button id="moveUp" class="question-no btn btn-edit btn-sm rounded-circle
+                                                d-flex justify-content-center align-items-center fs-6"
+                                                    th:onclick="|moveQuestion(${question.id}, ${question.questionNo - 1})|"
+                                                    th:disabled="${question.questionNo == 1}">
+                                                <i class="fas fa-angle-up"></i>
+                                            </button>
+
+                                            <input id="questionNo" class="question-no text-center"
+                                                   th:value="${question.questionNo}" th:onchange="|changeSortOrder(this, ${quiz.id})|">
+
+                                            <button id="moveDown" class="question-no btn btn-edit btn-sm rounded-circle
+                                                d-flex justify-content-center align-items-center fs-6"
+                                                    th:onclick="|moveQuestion(${question.id}, ${question.questionNo + 1})|"
+                                                    th:disabled="${question.questionNo == totalQuestions}">
+                                                <i class="fas fa-angle-down"></i>
+                                            </button>
+
+                                            <button id="moveLast" class="question-no btn btn-edit btn-sm rounded-circle
+                                                d-flex justify-content-center align-items-center fs-6"
+                                                    th:onclick="|moveQuestion(${question.id}, ${totalQuestions})|"
+                                                    th:disabled="${question.questionNo == totalQuestions}">
+                                                <i class="fas fa-angle-double-down"></i>
+                                            </button>
+                                        </div>
                                     </div>
 
-                                    <div th:id="'question' + ${question.id}" class="accordion-collapse collapse">
-
-                                        <div class="accordion-body">
-                                            <ul class="list-group">
-
-                                                <li th:each="answerOption : ${question.answerOptions}"
-                                                    th:class="${answerOption.isCorrect} ?
-                                                    'list-group-item d-flex justify-content-between align-items-center hover-effect c-correct' :
-                                                    'list-group-item d-flex justify-content-between align-items-center hover-effect'">
-                                                    <span th:text="${answerOption.optionLabel} + '. ' + ${answerOption.optionText}">Question Text</span>
-                                                </li>
-
-                                            </ul>
-                                        </div>
-
-                                        <div class="position-absolute z-3 start-100 top-0 translate-middle-x
-                                            d-flex gap-2 justify-content-between align-items-center h-100 my-auto ps-5">
-                                            <div class="d-flex flex-column align-items-center gap-1">
-                                                <button id="moveFirst" class="question-no btn btn-edit btn-sm rounded-circle
-                                                d-flex justify-content-center align-items-center fs-6">
-                                                    <i class="fas fa-angle-double-up"></i>
-                                                </button>
-
-                                                <button id="moveUp" class="question-no btn btn-edit btn-sm rounded-circle
-                                                d-flex justify-content-center align-items-center fs-6">
-                                                    <i class="fas fa-angle-up"></i>
-                                                </button>
-
-                                                <input id="questionNo" class="question-no text-center">
-
-                                                <button id="moveDown" class="question-no btn btn-edit btn-sm rounded-circle
-                                                d-flex justify-content-center align-items-center fs-6">
-                                                    <i class="fas fa-angle-down"></i>
-                                                </button>
-
-                                                <button id="moveLast" class="question-no btn btn-edit btn-sm rounded-circle
-                                                d-flex justify-content-center align-items-center fs-6">
-                                                    <i class="fas fa-angle-double-down"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                    </div>
                                 </div>
 
                             </div>
@@ -232,12 +250,8 @@
                 </div>
                 <div class="card-footer">
                     <div class="d-flex gap-2">
-                        <a href="#" class="btn btn-edit btn-sm me-auto">
+                        <a th:href="'/quizes/detail/'+${quiz.id}+'/view-all'" class="btn btn-edit btn-sm me-auto">
                             <i class="bi bi-eye bi-lg me-1"></i> View All
-                        </a>
-                        <a href="#" class="btn btn-save btn-sm"
-                           onclick="return confirmNavigation(event,'Are you sure?')">
-                            <i class="bi bi-floppy bi-lg me-1"></i> Save
                         </a>
                         <a href="#" class="btn btn-clear btn-sm"
                            onclick="return confirmNavigation(event,'Are you sure?')">
@@ -275,25 +289,32 @@
 
     // check type of question to hidden/show answer option
     function checkType() {
-        if (questionType.value === "TEXT") {
-            answerOption.style.display = 'none';
-            var answer = document.getElementsByClassName('answer-option');
-            if (answer.length > 0) {
-                var answerArray = Array.from(answer);
-                for (var answerKey of answerArray) {
-                    answerKey.remove();
+        switch (questionType.value) {
+            case "TEXT":
+                answerOption.style.display = 'none';
+                var answer = document.getElementsByClassName('answer-option');
+                if (answer.length > 0) {
+                    var answerArray = Array.from(answer);
+                    for (var answerKey of answerArray) {
+                        answerKey.remove();
+                    }
                 }
-            }
-        } else {
-            answerOption.style.display = 'block';
-            var correctInput = document.getElementsByClassName("form-check-input");
-            for (var correctKey of correctInput) {
-                if (questionType.value === "MCQ") {
-                    correctKey.setAttribute("onchange", "");
-                } else {
-                    correctKey.setAttribute("onchange", "ensureSingleSelection(this)");
+                break;
+            case "MCQ":
+                answerOption.style.display = 'block';
+                var checkInput1 = document.getElementsByClassName("form-check-input");
+                for (var mKey of checkInput1) {
+                    mKey.setAttribute("onchange", "");
                 }
-            }
+                break;
+            case "SCQ":
+                answerOption.style.display = 'block';
+                var checkInput2 = document.getElementsByClassName("form-check-input");
+                for (var cKey of checkInput2) {
+                    cKey.setAttribute("onchange", "ensureSingleSelection(this)");
+                    cKey.checked = false;
+                }
+                break;
         }
     }
 
@@ -314,7 +335,7 @@
                 <input type="text" class="form-control me-2"
                 name="answerOptions[${index}].optionText" placeholder="Enter an answer">
                 <input type="checkbox" name="answerOptions[${index}].correct"
-                class="form-check-input"> <i class="bi bi-check"></i>
+                class="form-check-input" onchange="${questionType.value === "MCQ" ? "" : "ensureSingleSelection(this)"}"> <i class="bi bi-check"></i>
                 <button type="button" class="remove-answer text-danger btn btn-remove btn-sm ms-2">
                     <i class="bi bi-x"></i>
                 </button>
@@ -416,6 +437,64 @@
         }
     }
 
+    // validate add question form
+    document.getElementById("addQuestionForm").addEventListener("submit", function (event) {
+        const select = document.getElementById("questionType");
+        const errorDiv = document.getElementById("invalid-question-type");
+
+        // Kiểm tra xem giá trị đã chọn có phải là giá trị mặc định hay không
+        if (select.value === "") {
+            event.preventDefault();  // Ngăn chặn form submit
+            errorDiv.textContent = "Vui lòng chọn một mục khác!";
+        } else {
+            errorDiv.textContent = "";  // Xóa thông báo lỗi nếu chọn hợp lệ
+        }
+    });
+
+    // Chức năng thay đổi vị trí
+    const quizId = [[${quiz.id}]];
+    function moveQuestion(questionId, newPosition) {
+        fetch(`/quizes/detail/${quizId}/questions/${questionId}/move?newPosition=${newPosition}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        })
+            .then(response => {
+                if (response.ok) {
+                    return response.text();
+                }
+                throw new Error("Error updating question position");
+            })
+            .then(data => {
+                console.log(data);
+                location.reload(); // Reload để cập nhật danh sách câu hỏi
+            })
+            .catch(error => console.error(`Error updating question position for Question ID ${questionId}:`, error));
+    }
+
+    // sắp xếp các phần tử accordition-item
+    function sortOrderQuestions() {
+        var container = document.getElementById("quiz-question-container");
+        var items = Array.from(container.querySelectorAll(".accordion-item"));
+        items.sort(function(a, b) {
+            return a.getAttribute("data-order") - b.getAttribute("data-order");
+        });
+        items.forEach(function(item) {
+            container.appendChild(item);
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", sortOrderQuestions);
+
+    function changeSortOrder(element, questionId) {
+        var newOrder = element.value;
+        if (newOrder === "") {
+            return; // Nếu giá trị rỗng, không làm gì cả
+        }
+        moveQuestion(questionId, newOrder);
+    }
+
 </script>
 <style>
 
@@ -496,7 +575,7 @@
 
     .c-correct {
         background-color: #d9f7d9;
-         color: #1cbba9;
+        color: #1cbba9;
     }
 
     /*clear button*/
@@ -555,7 +634,7 @@
         --bs-btn-color: #000;
         --bs-btn-bg: #fff;
         --bs-btn-border-color: #000;
-        --bs-btn-hover-color: #fff;sh
+        --bs-btn-hover-color: #fff;
         --bs-btn-hover-bg: #6c757d;
         --bs-btn-hover-border-color: #6c757d;
         --bs-btn-focus-shadow-rgb: 108, 117, 125;
@@ -573,6 +652,10 @@
         font-size: 10px;
         width: 20px;
         height: 20px;
+    }
+
+    .invalid {
+        color: red;
     }
 
 </style>

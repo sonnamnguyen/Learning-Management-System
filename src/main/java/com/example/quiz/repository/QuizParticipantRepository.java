@@ -17,6 +17,8 @@ public interface QuizParticipantRepository extends JpaRepository<QuizParticipant
     List<QuizParticipant> findAllByQuizAndUser(Quiz quiz, User user);
 
     List<QuizParticipant> findAllByQuizId(Long quizId);
+    QuizParticipant findByQuizIdAndUserId(Long quizId, Long userId);
+
 
 //    @Query("SELECT qp FROM quiz_participants qp WHERE " +
 //            "(:firstName IS NULL OR LOWER(qp.app_user.firstName) LIKE LOWER(CONCAT('%', :firstName, '%'))) AND " +

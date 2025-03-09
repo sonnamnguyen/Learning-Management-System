@@ -1,6 +1,11 @@
 <div class="px-5 flex-grow-1">
   <h1 class="text-center">Participants</h1>
   <div>
+    <div>
+      <a th:href="@{/quizes}" class="btn btn-outline-primary btn-sm" style="margin-bottom: 15px;">
+        <i class="bi bi-arrow-left-short"></i> Back
+      </a>
+    </div>
     <div class="d-flex align-items-center mb-3">
       <div class="flex-fill">
         <!-- Search Form -->
@@ -30,7 +35,10 @@
         <tr>
           <th class="text-center">#</th>
           <th>Name</th>
-          <th>Time Apply and Record</th> <!-- Time join and time do -->
+          <th>Time Start</th>
+          <th>Time End</th>
+<!--          <th>Duration</th>-->
+          <th>Score</th>
           <th>Attempt Used</th>
           <th>Actions</th>
         </tr>
@@ -39,7 +47,9 @@
         <tr th:each="participant, iterStat : ${participants}">
           <td class="text-center" th:text="${iterStat.index + 1}"></td>
           <td th:text="${participant.getUser.getFirstName() + ' ' +participant.getUser.getLastName()}"></td>
-          <td></td>
+          <td th:text="${participant.getTestSession() != null ? participant.getTestSession().getStartTime().format(formatter) : ''}"></td>
+          <td th:text="${participant.getTestSession() != null ? participant.getTestSession().getEndTime().format(formatter) : ''}"></td>
+          <td th:text="${participant.getTestSession() != null && participant.getTestSession().getResults() != null && !participant.getTestSession().getResults().isEmpty() ? participant.getTestSession().getResults().get(0).getScore() : ''}"></td>
           <td th:text="${participant.getAttemptUsed()}"></td>
           <td>
             <a th:href="@{/test-sessions/participant/{id}(id=${participant.id})}"

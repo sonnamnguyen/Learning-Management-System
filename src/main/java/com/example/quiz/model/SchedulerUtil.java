@@ -4,12 +4,17 @@ import org.quartz.Scheduler;
 import org.quartz.impl.StdSchedulerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
+
+@Component
 public class SchedulerUtil {
 
     private static final Logger logger = LoggerFactory.getLogger(SchedulerUtil.class);
     private static Scheduler scheduler;
 
+    @PostConstruct
     public static void startScheduler() {
         try {
             if (scheduler == null || !scheduler.isStarted()) {
