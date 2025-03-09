@@ -177,18 +177,7 @@
             padding-bottom: 10px; /* Cách viền dưới */
             padding-right: 10px; /* Cách viền phải */
         }
-        .card-title{
-            display: -webkit-box;
-            -webkit-line-clamp: 2; /* Hiển thị tối đa 1 dòng */
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: normal;
-            word-break: break-word;
-            overflow-wrap: break-word;
-            line-height: 1.4em; /* Cố định chiều cao dòng */
-            max-height: calc(1.4em * 2); /* Đảm bảo chỉ hiển thị 2 dòng */
-        }
+
         .description {
             display: -webkit-box;
             -webkit-line-clamp: 1; /* Hiển thị tối đa 1 dòng */
@@ -203,7 +192,7 @@
         }
 
         table {
-            table-layout: auto !important; /* Giúp các cột có kích thước đồng đều */
+            table-layout: fixed; /* Giúp các cột có kích thước đồng đều */
             width: 100%;
             border-collapse: collapse; /* Giảm khoảng cách giữa các dòng */
         }
@@ -212,12 +201,7 @@
             vertical-align: middle; /* Căn giữa nội dung */
             height: auto;
             padding: 8px; /* Giữ khoảng cách giữa nội dung và ô */
-            word-break: normal !important; /* Đảm bảo nội dung không tràn */
-            white-space: nowrap !important;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            word-wrap: break-word;
-            max-width: 300px; /* Điều chỉnh max-width theo nhu cầu */
+            word-break: break-word; /* Đảm bảo nội dung không tràn */
         }
 
         tr {
@@ -231,38 +215,9 @@
 
         /* Title */
         th:nth-child(3), td:nth-child(3) {
-            width: auto !important; /* Cho phép mở rộng theo nội dung */
-            min-width: 20%; /* Đảm bảo không quá nhỏ */
-            max-width: 40%; /* Giới hạn độ rộng tối đa */
-            white-space: normal; /* Cho phép xuống dòng */
-            word-break: break-word; /* Chia từ nếu quá dài */
-            overflow-wrap: anywhere; /* Đảm bảo hiển thị đầy đủ */
+            width: 10%;
         }
-        <!--.table-title {-->
-            <!--    position: relative;-->
-            <!--    white-space: nowrap;-->
-            <!--    overflow: hidden;-->
-            <!--    text-overflow: ellipsis;-->
-            <!--    max-width: 200px;-->
-            <!--    display: inline-block;-->
-            <!--    vertical-align: middle;-->
-            <!--}-->
 
-        .table-title:hover::after {
-            content: attr(data-fulltext); /* Hiển thị nội dung đầy đủ */
-            position: absolute;
-            background-color: rgba(0, 0, 0, 0.8);
-            color: #fff;
-            padding: 8px;
-            border-radius: 5px;
-            white-space: normal;
-            max-width: 400px;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 100;
-            text-align: center;
-        }
         /* Language */
         th:nth-child(4), td:nth-child(4) {
             width: 10%;
@@ -827,7 +782,7 @@
                         <td class="text-center">
                             <input type="checkbox" class="selectItem"/>
                         </td>
-                        <td class="table-title" th:text="${exercise.name}"th:attr="data-fulltext=${exercise.name}"></td>
+                        <td th:text="${exercise.name}"></td>
                         <td class="text-center" th:text="${exercise.language.language}">Language</td>
                         <td class="text-center">
                 <span th:class="${'badge ' + (exercise.level.name() == 'HARD' ? 'bg-danger' :
@@ -839,7 +794,7 @@
                             <div class="description" th:utext="${exercise.description}"></div>
                         </td>
                         <td class="text-center">
-                            <a th:href="@{'/judgement/code_space/' + ${exercise.id}}"
+                            <a th:href="@{'/judgement/practice/code_space/' + ${exercise.id}}"
                                class="btn btn-outline-primary btn-sm">
                                 <i class="bi bi-info-circle"></i>
                             </a>
@@ -860,7 +815,7 @@
             </div>
 
             <!-- Card View -->
-            <div id="cardView" class="row row-cols-1 row-cols-md-3 g-3 mt-3" style="display: block;">
+            <div id="cardView" class="row row-cols-1 row-cols-md-3 g-3 mt-3" style="display: flex;">
                 <div class="col" th:each="exercise : ${exercises}">
                     <div class="card h-100 border-secondary shadow-sm d-flex flex-column">
                         <div class="card-body flex-grow-1">
@@ -873,7 +828,7 @@
                                 <span th:class="${'badge ' + (exercise.level.name() == 'HARD' ? 'bg-danger' :
                          (exercise.level.name() == 'MEDIUM' ? 'bg-warning' : 'bg-success'))}"
                                       th:text="${exercise.level}">
-                                </span>
+                </span>
                             </p>
                             <p class="mb-2"><strong>Description:</strong>
                                 <span class="description" th:utext="${exercise.description}"></span>
@@ -896,11 +851,6 @@
                             </a>
                         </div>
                     </div>
-                </div>
-                <div th:if="${#lists.isEmpty(exercises)}"
-                     class="d-flex justify-content-center align-items-center"
-                     style="height: 50px; width: 100%;">
-                    <p>No exercises found.</p>
                 </div>
 
             </div>

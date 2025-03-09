@@ -85,7 +85,7 @@
                     </div>
                 </div>
                 <!-- List of Questions as Buttons -->
-                <div class="card-footer">
+                <div class="card-footer" th:if="${questions != null and not #lists.isEmpty(questions)}">
                     <div class="text-center">
                         <h5>Questions</h5>
                         <div class="row">
@@ -101,7 +101,7 @@
                     </div>
                 </div>
                 <!-- List of Exercises as Buttons -->
-                <div class="card-footer">
+                <div class="card-footer" th:if="${exercises != null and not #lists.isEmpty(exercises)}">
                     <div class="text-center">
                         <h5>Exercises</h5>
                         <div class="row">
@@ -125,7 +125,8 @@
             <div class="flex-grow-1">
                 <div style="height: 100%;">
                     <!-- Display Questions -->
-                    <div class="mb-4">
+
+                        <div class="mb-4" th:if="${questions != null and not #lists.isEmpty(questions)}">
                         <h3 style="margin-top: 10px">Questions</h3>
                         <div class="border rounded p-3"
                              style="max-height: 80vh; overflow-y: auto;">
@@ -137,7 +138,7 @@
                                         <h5 class="me-2 question-number">
                                             <strong th:text="${iterStat.index + 1}"></strong>
                                         </h5>
-                                        <p class="question-text" th:text="${question.questionText}"></p>
+                                        <p class="question-text" th:utext="${question.questionText}"></p>
                                         <input type="checkbox" class="form-check-input me-2"
                                                th:attr="id='check_' + ${question.id}">
                                         <i class="bi bi-flag"></i>
@@ -160,7 +161,7 @@
                         </div>
                     </div>
                     <!-- Display Exercises -->
-                    <div class="mb-4">
+                    <div class="mb-4" th:if="${exercises != null and not #lists.isEmpty(exercises)}">
                         <h3>Exercises</h3>
                         <div class="border rounded p-3"
                              style="max-height: 50vh; overflow-y: auto;">
@@ -172,7 +173,8 @@
                                         <!-- Hiển thị số thứ tự bắt đầu từ 1 -->
                                         <span th:text="'Exercise ' + (${stat.index} + 1) + ': '"></span>
                                         <!--redirect to coding site-->
-                                        <a href="#" th:text="${exercise.name}"></a>
+                                        <a th:href="@{/judgement/{type}/code_space/{id}(type='preview', id=${exercise.id})}"
+                                           th:text="${exercise.name}" target="_blank"></a>
                                     </h6>
                                     <input type="checkbox" class="form-check-input me-2"
                                            th:attr="id='check_' + ${exercise.id}">

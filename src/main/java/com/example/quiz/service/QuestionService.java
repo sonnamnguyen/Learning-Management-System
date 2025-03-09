@@ -1,5 +1,7 @@
 package com.example.quiz.service;
 
+import com.example.assessment.model.AssessmentQuestion;
+import com.example.assessment.repository.AssessmentQuestionRepository;
 import com.example.course.Course;
 import com.example.course.CourseRepository;
 import com.example.course.CourseService;
@@ -30,6 +32,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -57,6 +60,10 @@ public class QuestionService {
     private AnswerOptionRepository answerOptionRepository;
     @Autowired
     private QuizService quizService;
+
+    private final AssessmentQuestionRepository assessmentQuestionRepository;
+
+
 
     public Optional<Question> findById(Long id) {
         return questionRepository.findById(id);
@@ -471,11 +478,23 @@ public class QuestionService {
 
         return questionRepository.save(clonedQuestion);
     }
-    public List<Question> getQuestionsByAssessmentId(Long assessmentId) {
-        return questionRepository.findQuestionsWithAnswersByAssessmentId(assessmentId);
+
+
+
+    @Autowired
+    public QuestionService(AssessmentQuestionRepository assessmentQuestionRepository) {
+        this.assessmentQuestionRepository = assessmentQuestionRepository;
     }
+    @Transactional
     public List<Question> findQuestionsByAssessmentId(Long assessmentId) {
-        return questionRepository.findQuestionsWithAnswersByAssessmentId(assessmentId);
+        List<AssessmentQuestion> assessmentQuestions =
+                assessmentQuestionRepository.findByAssessmentIdOrderByOrderIndex(assessmentId);
+
+        // Chuyển đổi danh sách AssessmentQuestion -> danh sách Question
+        return assessmentQuestions.stream()
+                .map(AssessmentQuestion::getQuestion)
+                .collect(Collectors.toList());
     }
+
 }
 

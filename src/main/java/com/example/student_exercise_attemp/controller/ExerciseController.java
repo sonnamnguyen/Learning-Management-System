@@ -45,7 +45,6 @@ public class ExerciseController {
 
 
     // Common attributes for all views
-
     @ModelAttribute
     public void addCommonAttributes(Model model) {
         model.addAttribute("title", "Exercises");

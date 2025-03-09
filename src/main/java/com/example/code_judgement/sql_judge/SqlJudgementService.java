@@ -2,6 +2,7 @@ package com.example.code_judgement.sql_judge;
 
 import com.example.code_judgement.ExecutionResponse;
 import com.example.student_exercise_attemp.model.Exercise;
+import com.example.student_exercise_attemp.model.ExerciseSession;
 import com.example.student_exercise_attemp.model.StudentExerciseAttempt;
 import com.example.student_exercise_attemp.service.StudentExerciseAttemptService;
 import com.example.testcase.TestCase;
@@ -45,9 +46,31 @@ public class SqlJudgementService {
         }
     }
 
-    public ExecutionResponse executeSQLCode(boolean isSubmit, Exercise exercise, String userCode, List<TestCase> testCases) {
-        if(!isSubmit && userCode.trim().equals(exercise.getSetup().trim())){
+    public ExecutionResponse executeSQLCode(String type, Exercise exercise, String userCode, List<TestCase> testCases, ExerciseSession exerciseSession) {
+        if(type.equalsIgnoreCase("precheck") && userCode.trim().equals(exercise.getSetup().trim())){
             throw new RuntimeException("You have not done this exercise yet!");
+        }
+
+        StudentExerciseAttempt studentExerciseAttempt = new StudentExerciseAttempt();
+        if(type.equalsIgnoreCase("practice")){
+            studentExerciseAttempt.setAttemptDate(LocalDateTime.now());
+            studentExerciseAttempt.setSubmitted_code(userCode);
+            studentExerciseAttempt.setSubmitted_exercise(exercise);
+            studentExerciseAttempt.setAttendant_user(userService.getCurrentUser());
+            studentExerciseAttempt.setSubmitted(true);
+            studentExerciseAttemptService.save(studentExerciseAttempt);
+        } else if(type.equalsIgnoreCase("assessment")){
+            Optional<StudentExerciseAttempt> optStudentExerciseAttempt = studentExerciseAttemptService.getStudentExerciseAttemptBySessionAndExercise(exerciseSession, exercise);
+            if(optStudentExerciseAttempt.isPresent()){
+                studentExerciseAttempt = optStudentExerciseAttempt.get();
+                studentExerciseAttempt.setSubmitted_code(userCode);
+                studentExerciseAttempt.setSubmitted(true);
+                studentExerciseAttemptService.save(studentExerciseAttempt);
+            } else {
+                String error = "Can not take Student Exercise Attempt";
+                System.out.println(error);
+                throw new RuntimeException(error);
+            }
         }
 
         userCode = removeCommentsFromSQL(userCode);
@@ -233,14 +256,8 @@ public class SqlJudgementService {
         }
 
         double score = 0;
-        if(isSubmit){
+        if(type.equalsIgnoreCase("practice") || type.equalsIgnoreCase("assessment")){
             score = exerciseScore(passedTestCases, testCases.size());
-            StudentExerciseAttempt studentExerciseAttempt = new StudentExerciseAttempt();
-            studentExerciseAttempt.setAttemptDate(LocalDateTime.now());
-            studentExerciseAttempt.setSubmitted_code(userCode);
-            studentExerciseAttempt.setSubmitted_exercise(exercise);
-            studentExerciseAttempt.setAttendant_user(userService.getCurrentUser());
-            studentExerciseAttempt.setSubmitted(true);
             studentExerciseAttempt.setScore_exercise(score);
             studentExerciseAttemptService.save(studentExerciseAttempt);
         }

@@ -2,8 +2,10 @@ package com.example.assessment.service;
 
 import com.example.assessment.model.Assessment;
 import com.example.assessment.model.AssessmentQuestion;
+import com.example.assessment.model.InvitedCandidate;
 import com.example.assessment.model.StudentAssessmentAttempt;
 import com.example.assessment.repository.AssessmentRepository;
+import com.example.assessment.repository.InvitedCandidateRepository;
 import com.example.assessment.repository.StudentAssessmentAttemptRepository;
 import com.example.course.Course;
 import com.example.course.CourseService;
@@ -14,6 +16,7 @@ import com.example.user.User;
 import com.example.user.UserRepository;
 import com.example.user.UserService;
 import com.google.gson.Gson;
+import jakarta.transaction.Transactional;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
@@ -24,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -36,8 +40,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static com.example.utils.Helper.getCellValueAsString;
 
@@ -46,6 +48,8 @@ public class AssessmentService {
 
     @Autowired
     private AssessmentRepository assessmentRepository;
+
+    private Assessment assessment;
     @Autowired
     private ExerciseRepository exerciseRepository;
     @Autowired
@@ -62,14 +66,19 @@ public class AssessmentService {
 
     @Autowired
     private final Gson gson = new Gson();
-
     //Hashids to hash the assessment id
     private Hashids hashids = new Hashids("BaTramBaiCodeThieuNhi", 32);
+    @Autowired
+    private InvitedCandidateRepository invitedCandidateRepository;
+
     @Autowired
     private UserRepository userRepository;
 
     @PersistenceContext
     private EntityManager entityManager;
+
+    @Autowired
+    private NotificationService notificationService;
 
     @Transactional
     public void alignSequence() {
@@ -229,15 +238,6 @@ public class AssessmentService {
         return new ByteArrayInputStream(out.toByteArray());
     }
 
-    public void increaseInvitedCount(long assessmentId, int count) {
-        Optional<Assessment> assessmentOpt = assessmentRepository.findById(assessmentId);
-        if (assessmentOpt.isPresent()) {
-            Assessment assessment = assessmentOpt.get();
-            assessment.setInvitedCount(assessment.getInvitedCount() + count); // Increase by batch size
-            assessmentRepository.save(assessment);
-        }
-    }
-
     /**
      * Stores or updates the invited emails in the PostgreSQL LOB column and inserts into the invited_candidate table.
      * This method appends new emails to the existing ones instead of overwriting.
@@ -268,17 +268,20 @@ public class AssessmentService {
 
             if (count != null && count > 0) {
                 jdbcTemplate.update(
-                        "UPDATE invited_candidate SET invitation_date = ?, expiration_date = ? WHERE email = ? AND assessment_id = ?",
+                        "UPDATE invited_candidate " +
+                                "SET invitation_date = ?, expiration_date = ?, has_assessed = false " + // Reset has_assessed to false
+                                "WHERE email = ? AND assessment_id = ?",
                         invitationTimestamp, expirationTimestamp, email, assessmentId
                 );
             } else {
                 jdbcTemplate.update(
-                        "INSERT INTO invited_candidate (email, invitation_date, expiration_date, assessment_id) VALUES (?, ?, ?, ?)",
+                        "INSERT INTO invited_candidate (email, invitation_date, expiration_date, assessment_id, has_assessed) " +
+                                "VALUES (?, ?, ?, ?, false)",
                         email, invitationTimestamp, expirationTimestamp, assessmentId
                 );
             }
         }
-    }
+}
 
 
     /**
@@ -343,9 +346,16 @@ public class AssessmentService {
 
         attemptRepository.save(attempt);
     }
+    @Scheduled(fixedRate = 3600000) // Runs every hour
+    public void checkExpiringAssessments() {
+        LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Bangkok")); // GMT+7
+        LocalDateTime targetTime = now.plusHours(24); // Looking for expiration in exactly 24 hours
 
-    public long countAttemptsByAssessmentId(Long assessmentId) {
-        return attemptRepository.countByAssessmentId(assessmentId);
+        List<InvitedCandidate> expiringCandidates = invitedCandidateRepository.findCandidatesExpiringAt(targetTime);
+
+        for (InvitedCandidate candidate : expiringCandidates) {
+            notificationService.sendReminderEmail(candidate.getEmail(), assessment.getId(), candidate.getExpirationDate());
+        }
     }
 
 
@@ -356,73 +366,35 @@ public class AssessmentService {
 
         Assessment duplicatedAssessment = new Assessment();
 
-        // Copy basic properties
+        // Copy basic properties (excluding ID and audit fields that should be new)
         duplicatedAssessment.setCourse(originalAssessment.getCourse());
-        String originalTitle = originalAssessment.getTitle();
-        String baseTitle = originalTitle;
-        int copyNumber = 1;
-
-        // Regex to extract base title and existing copy number (if any)
-        Pattern pattern = Pattern.compile("\\(copy (\\d+)\\) (.+)");
-        Matcher matcher = pattern.matcher(originalTitle);
-
-        if (matcher.matches()) {
-            baseTitle = matcher.group(2).trim(); // Extract base title (group 2)
-        } else {
-            baseTitle = originalTitle; // Original title is the base title
-        }
-
-
-        // Find existing copies based on the BASE title
-        List<Assessment> existingCopies = assessmentRepository.findByTitleContaining(baseTitle);
-        int maxCopyNumber = 0;
-
-
-        for (Assessment existingCopy : existingCopies) {
-            Matcher existingMatcher = pattern.matcher(existingCopy.getTitle());
-            if (existingMatcher.matches()) {
-                String group1 = existingMatcher.group(1);
-                String existingBaseTitle = existingMatcher.group(2).trim(); // Extract base title from existing copy
-
-                try {
-                    int existingCopyNum = Integer.parseInt(group1);
-                    if (existingBaseTitle.equals(baseTitle)) { // Check if base titles match
-                        maxCopyNumber = Math.max(maxCopyNumber, existingCopyNum);
-                    }
-                } catch (NumberFormatException e) {
-                    // Ignore if the copy number is not a valid integer
-                }
-            } else if (existingCopy.getTitle().equals(baseTitle)) { // Check for original base title
-                maxCopyNumber = Math.max(maxCopyNumber, 0);
-            }
-        }
-        copyNumber = maxCopyNumber + 1;
-        duplicatedAssessment.setTitle("(copy " + copyNumber + ") " + baseTitle); // Set title with new copy number and BASE title
-
-
+        duplicatedAssessment.setTitle("Copy of " + originalAssessment.getTitle()); // Modify title to indicate copy
         duplicatedAssessment.setAssessmentType(originalAssessment.getAssessmentType());
         duplicatedAssessment.setTimeLimit(originalAssessment.getTimeLimit());
         duplicatedAssessment.setQualifyScore(originalAssessment.getQualifyScore());
         duplicatedAssessment.setQuizScoreRatio(originalAssessment.getQuizScoreRatio());
         duplicatedAssessment.setExerciseScoreRatio(originalAssessment.getExerciseScoreRatio());
         duplicatedAssessment.setShuffled(originalAssessment.isShuffled());
-        duplicatedAssessment.setInvitedEmails(originalAssessment.getInvitedEmails());
-        duplicatedAssessment.setCreatedBy(userService.getCurrentUser());
-        duplicatedAssessment.setCreatedAt(LocalDateTime.now());
-        duplicatedAssessment.setInvitedCount(0);
+        duplicatedAssessment.setInvitedEmails(originalAssessment.getInvitedEmails()); // Decide if you want to copy this
+        duplicatedAssessment.setCreatedBy(userService.getCurrentUser()); // Set current user as creator
+        duplicatedAssessment.setUpdatedBy(userService.getCurrentUser()); // Set current user as updater
+        duplicatedAssessment.setCreatedAt(LocalDateTime.now()); //New created time
+        duplicatedAssessment.setUpdatedAt(LocalDateTime.now()); //New updated time
+        duplicatedAssessment.setInvitedCount(0); // Reset counters for the new assessment
         duplicatedAssessment.setAssessedCount(0);
         duplicatedAssessment.setQualifiedCount(0);
 
 
-        // Copy Exercises and AssessmentQuestions (same as before)
+        // Copy Exercises (linking to existing exercises)
         Set<Exercise> duplicatedExercises = new HashSet<>(originalAssessment.getExercises());
         duplicatedAssessment.setExercises(duplicatedExercises);
+        // Duplicate AssessmentQuestions (linking to existing questions, creating new AssessmentQuestion entities)
         List<AssessmentQuestion> duplicatedAssessmentQuestions = new ArrayList<>();
         for (AssessmentQuestion originalAq : originalAssessment.getAssessmentQuestions()) {
             AssessmentQuestion duplicatedAq = new AssessmentQuestion();
             duplicatedAq.setAssessment(duplicatedAssessment);
-            duplicatedAq.setQuestion(originalAq.getQuestion());
-            duplicatedAq.setOrderIndex(originalAq.getOrderIndex());
+            duplicatedAq.setQuestion(originalAq.getQuestion()); // Link to the same Question
+            duplicatedAq.setOrderIndex(originalAq.getOrderIndex()); // Copy order index
             duplicatedAssessmentQuestions.add(duplicatedAq);
         }
         duplicatedAssessment.setAssessmentQuestions(duplicatedAssessmentQuestions);

@@ -5,7 +5,7 @@
     <!-- Keep all your existing head content -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exercise Result</title>
+    <title>Code Submission UI</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
@@ -500,13 +500,14 @@
     <div class="justify-content-between align-items-center" style="display: flex;">
         <h1 style="font-weight: bold;" class="title">RESULT</h1>
 
-        <div class="action-buttons" style="margin-left: auto; margin-top: 7px;   ">
+        <div th:if="${type}!='assessment'" class="action-buttons" style="margin-left: auto; margin-top: 7px;   ">
             <button class="btn btn-success" onclick="backToExercises()">
                 <i class="fas fa-backward"></i> BACK TO EXERCISES
             </button>
         </div>
     </div>
-    <p style="font-size: 14px; color: #6c757d; margin-left: 10px;">Viewing <a href="#" style="color: #1a73e8; text-decoration: none;">user's </a>solution</p>
+    <p style="font-size: 14px; color: #6c757d; margin-left: 10px;">Viewing <a href="#"
+                                                                              style="color: #1a73e8; text-decoration: none;">user's </a>solution</p>
 
     <div class="score-container">
         <div class="score" onclick="toggleTestCases()">
@@ -541,19 +542,11 @@
                 <span class="score-number-2" th:text="${score}"></span> TOTAL SCORE
             </div>
         </div>
-
-        <div style="margin-bottom: 15px; ">
-            <div class="score-left-2">
-                Compline Time:
-                &ensp;
-                <span style="font-weight: normal; font-size: 20px; color: #3d75ea;" th:text="${compileTime} + ' ms'"></span>
-            </div>
-        </div>
     </div>
     <input id="exerciseId" type="hidden" th:value="${exercise.id}" />
     <textarea id="codeEditor" th:text="${code}" style=""></textarea>
 
-    <div class="input-area">
+    <div th:if="${type}!='assessment'" class="input-area">
         <input type="text" id="inputText" placeholder='Enter input here...' th:value="${exercise.getTestCases().get(0).getInput()}">
         <select id="languageSelect" class="language-select">
             <option value="en">English</option>
@@ -568,7 +561,7 @@
             <i class="fas fa-download"></i>
         </button>
     </div>
-    <div class="output" id="output">Output logs will appear here</div>
+    <div th:if="${type}!='assessment'" class="output" id="output">Output logs will appear here</div>
 </div>
 
 <script>

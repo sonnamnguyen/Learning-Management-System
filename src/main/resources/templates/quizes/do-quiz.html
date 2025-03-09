@@ -10,51 +10,51 @@
   <style>
     /* Smooth scrolling */
     html {
-        scroll-behavior: smooth;
+      scroll-behavior: smooth;
     }
 
-        .sidebar {
-            position: fixed;
-            right: 0;
-            height: 90%;
-            overflow-y: auto;
-            margin-top: 14px;
-            width: 25%;
-        }
+    .sidebar {
+      position: fixed;
+      right: 0;
+      height: 90%;
+      overflow-y: auto;
+      margin-top: 14px;
+      width: 25%;
+    }
 
-        .main-content {
-            margin-right: 25%;
-        }
+    .main-content {
+      margin-right: 25%;
+    }
 
-        @media (max-width: 768px) {
-            #sidebar {
-                position: fixed;
-                left: -250px;
-                bottom: 10px;
-                width: auto;
-                background: white;
-                transition: left 0.3s ease-in-out;
-                box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
-                z-index: 1049;
-            }
+    @media (max-width: 768px) {
+      #sidebar {
+        position: fixed;
+        left: -250px;
+        bottom: 10px;
+        width: auto;
+        background: white;
+        transition: left 0.3s ease-in-out;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+        z-index: 1049;
+      }
 
-            #sidebar.active {
-                left: 0;
-            }
-        }
+      #sidebar.active {
+        left: 0;
+      }
+    }
 
-        .answered {
-            background-color: #d4edda;
-        }
+    .answered {
+      background-color: #d4edda;
+    }
 
     #time-warning-message {
-            display: none; /* Hidden by default */
-            position: fixed;
-            bottom: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1051;
-        }
+      display: none; /* Hidden by default */
+      position: fixed;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1051;
+    }
   </style>
 </head>
 <body>
@@ -80,17 +80,17 @@
         </div>
 
         <!-- Question List -->
-<!--        <div class="card-footer" th:if="${questions != null and not #lists.isEmpty(questions)}">-->
-<!--          <h5 class="text-center">Questions</h5>-->
-<!--          <div class="row text-center">-->
-<!--            <div th:each="question, iterStat : ${questions}" class="col-3 col-md-3 col-xl-2 mb-2">-->
-<!--              <button type="button" class="btn btn-outline-primary" style="min-width: 40px"-->
-<!--                      th:attr="onclick='document.getElementById(\'question_' + ${question.id} + '\').scrollIntoView({behavior: \'smooth\'})'">-->
-<!--                <span th:text="${iterStat.count}"></span>-->
-<!--              </button>-->
-<!--            </div>-->
-<!--          </div>-->
-<!--        </div>-->
+        <!--        <div class="card-footer" th:if="${questions != null and not #lists.isEmpty(questions)}">-->
+        <!--          <h5 class="text-center">Questions</h5>-->
+        <!--          <div class="row text-center">-->
+        <!--            <div th:each="question, iterStat : ${questions}" class="col-3 col-md-3 col-xl-2 mb-2">-->
+        <!--              <button type="button" class="btn btn-outline-primary" style="min-width: 40px"-->
+        <!--                      th:attr="onclick='document.getElementById(\'question_' + ${question.id} + '\').scrollIntoView({behavior: \'smooth\'})'">-->
+        <!--                <span th:text="${iterStat.count}"></span>-->
+        <!--              </button>-->
+        <!--            </div>-->
+        <!--          </div>-->
+        <!--        </div>-->
 
         <div class="card-footer" th:if="${questions != null and not #lists.isEmpty(questions)}">
           <h5 class="text-center">Questions</h5>
@@ -98,8 +98,8 @@
             <div class="col-12 mb-2 d-flex justify-content-left"> <div th:each="question, iterStat : ${questions}" class="mx-1">
               <button type="button" class="btn btn-outline-primary" style="min-width: 40px"
                       th:attr="onclick='document.getElementById(\'question_' + ${question.id} + '\').scrollIntoView({behavior: \'smooth\'})'">
-              <span th:text="${iterStat.count}"></span>
-            </button>
+                <span th:text="${iterStat.count}"></span>
+              </button>
             </div>
             </div>
           </div>
@@ -151,43 +151,43 @@
 
   document.getElementById("quiz-form").addEventListener("submit", function () {
     document.getElementById("elapsedTime").value = (durationInMinutes * 60) - durationInSeconds;
-});
+  });
 
   var durationInMinutes = /*[[${timeLimit}]]*/ 60;
   var durationInSeconds = durationInMinutes * 60;
 
   function updateTime() {
-        var hours = Math.floor(durationInSeconds / 3600);
-        var minutes = Math.floor((durationInSeconds % 3600) / 60);
-        var seconds = durationInSeconds % 60;
-        var timeFormatted = hours.toString().padStart(2, '0') + ':' +
+    var hours = Math.floor(durationInSeconds / 3600);
+    var minutes = Math.floor((durationInSeconds % 3600) / 60);
+    var seconds = durationInSeconds % 60;
+    var timeFormatted = hours.toString().padStart(2, '0') + ':' +
             minutes.toString().padStart(2, '0') + ':' +
             seconds.toString().padStart(2, '0');
 
-        var timeDisplay = document.getElementById('time_display');
-        timeDisplay.textContent = timeFormatted;
+    var timeDisplay = document.getElementById('time_display');
+    timeDisplay.textContent = timeFormatted;
 
-        var warningMessage = document.getElementById('time-warning-message');
+    var warningMessage = document.getElementById('time-warning-message');
 
-        if (durationInSeconds <= 300 && durationInSeconds > 0) { // 5 minutes left
-            warningMessage.style.display = 'block';
-            timeDisplay.style.color = durationInSeconds % 2 === 0 ? "red" : "black";
-        } else {
-            warningMessage.style.display = 'none';
-            timeDisplay.style.color = '';
-        }
-
-        if (durationInSeconds > 0) {
-            durationInSeconds--;
-        } else {
-            clearInterval(timerInterval);
-            document.getElementById("elapsedTime").value = (durationInMinutes * 60);
-            document.getElementById("quiz-form").submit();
-        }
+    if (durationInSeconds <= 300 && durationInSeconds > 0) { // 5 minutes left
+      warningMessage.style.display = 'block';
+      timeDisplay.style.color = durationInSeconds % 2 === 0 ? "red" : "black";
+    } else {
+      warningMessage.style.display = 'none';
+      timeDisplay.style.color = '';
     }
 
+    if (durationInSeconds > 0) {
+      durationInSeconds--;
+    } else {
+      clearInterval(timerInterval);
+      document.getElementById("elapsedTime").value = (durationInMinutes * 60);
+      document.getElementById("quiz-form").submit();
+    }
+  }
+
   document.getElementById("quiz-form").addEventListener("submit", function () {
-      document.getElementById("elapsedTime").value = (durationInMinutes * 60) - durationInSeconds;
+    document.getElementById("elapsedTime").value = (durationInMinutes * 60) - durationInSeconds;
   });
 
   var timerInterval = setInterval(updateTime, 1000);
@@ -197,13 +197,13 @@
 <!-- Sidebar Toggle Script -->
 <script>
   function toggleSidebar() {
-      var sidebar = document.getElementById("sidebar");
-      sidebar.classList.toggle("active");
-      if (sidebar.classList.contains("active")) {
-          sidebar.classList.remove("d-none");
-      } else {
-          setTimeout(() => sidebar.classList.add("d-none"), 300);
-      }
+    var sidebar = document.getElementById("sidebar");
+    sidebar.classList.toggle("active");
+    if (sidebar.classList.contains("active")) {
+      sidebar.classList.remove("d-none");
+    } else {
+      setTimeout(() => sidebar.classList.add("d-none"), 300);
+    }
   }
 </script>
 

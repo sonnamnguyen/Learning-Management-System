@@ -41,7 +41,8 @@ public class SecurityConfig {
                                 "/verify-otp",
                                 "/materials/**",
                                 "assessments/expired-link", // Allow expired link page
-                                "assessments/invite/**"     // Allow all invite-related links (Take Assessment)
+                                "assessments/invite/**",   // Allow all invite-related links (Take Assessment)
+                                "/already-assessed"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

@@ -451,6 +451,7 @@ public class QuizController {
             }
         }
 
+        // Lấy TestSession vừa tạo
         TestSession testSession = testSessionRepository.findTopByUserOrderByStartTimeDesc(user);
         if(testSession==null){
             throw new NotFoundException("TestSession not found");
@@ -460,6 +461,7 @@ public class QuizController {
         testSession.setEndTime(LocalDateTime.now());
         testSessionRepository.save(testSession);
 
+        // Cập nhật QuizParticipant
         QuizParticipant participant = quizParticipantRepository.findByQuizIdAndUserId(quizId, user.getId());
         if (participant == null) {
             participant = new QuizParticipant();

@@ -1001,10 +1001,7 @@ Exercises
               href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/show-hint.min.css">
         <script
                 src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/anyword-hint.min.js"></script>
-        <script
-                src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/edit/closebrackets.min.js"></script>
-        <script
-                src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/edit/matchbrackets.min.js"></script>
+
         <!-- Body -->
         <div class="container-fluid" style="height: 85vh;">
             <div class="row" style="height: 100%; display: flex; flex-wrap: nowrap;">
@@ -1017,6 +1014,7 @@ Exercises
                         <div class="tab-content" id="leftPanelTabContent">
                             <div class="tab-pane fade show active" id="description" role="tabpanel">
                                 <input type="hidden" id="exerciseId" th:value="${exercise.id}" />
+                                <input type="hidden" id="typeExercise" th:value="${type}"/>
                                 <div class="border-bottom border-secondary" style="padding-bottom: 10px;">
                                         <span class="badge rounded-pill difficulty-badge"
                                               th:attr="data-difficulty=${exercise.level}"
@@ -1103,7 +1101,7 @@ Exercises
                                         </option>
                                     </select>
                                 </div>
-                                <a th:href="@{/exercises}" class="btn btn-sm"
+                                <a th:if="${type}=='practice'" th:href="@{/exercises}" class="btn btn-sm"
                                    style="background-color: #3e4451; color: #abb2bf; border-color: #181a1f; margin-right: 10px; padding: 8px; font-size: 0.9rem">
                                     <i class="fa fa-arrow-left"></i> Back to exercise list
                                 </a>
@@ -1140,7 +1138,7 @@ Exercises
                     <div class="tab-content flex-grow-1">
                         <!-- Output Tab -->
                         <div class="tab-pane fade show active" id="outputContent" role="tabpanel">
-                            <div class="btn-group" role="group" style="text-align: center">
+                            <div class="btn-group" style="margin-left: 10px;" role="group">
                                 <button type="button" id="precheck-button" class="btn btn-success btn-lg">
                                     <i class="fa fa-check-circle"></i> Pre-check
                                 </button>
@@ -1162,8 +1160,8 @@ Exercises
                         <div class="tab-pane fade" id="inputContent" role="tabpanel">
                             <div class="form-group">
                                 <label for="customInput" class="mb-2">Input:</label>
-                                <textarea th:utext="${exercise.getTestCases().get(0).getInput()}" class="form-control mb-3" id="customInput"
-                                          rows="6"></textarea>
+                                <textarea class="form-control mb-3" id="customInput"
+                                          rows="6" th:utext="${exercise.getTestCases().get(0).getInput()}"></textarea>
 
                                 <label for="customOutput" class="mb-2">Output:</label>
                                 <div id="customOutput" class="custom-output p-3 rounded mb-3">
@@ -1178,14 +1176,14 @@ Exercises
                     </div>
 
                     <!-- Tab Navigation - Moved to bottom -->
-                    <ul class="nav nav-tabs nav-fill mt-auto container" id="rightPanelTabs" role="tablist">
-                        <li class="nav-item col-md-6" role="presentation" style="overflow-y: hidden">
+                    <ul class="nav nav-tabs nav-fill mt-auto" id="rightPanelTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
                             <button class="nav-link active" id="output-tab" data-bs-toggle="tab"
                                     data-bs-target="#outputContent" type="button" role="tab">
                                 Output
                             </button>
                         </li>
-                        <li class="nav-item col-md-6" role="presentation" style="overflow-y: hidden">
+                        <li class="nav-item" role="presentation">
                             <button class="nav-link" id="input-tab" data-bs-toggle="tab"
                                     data-bs-target="#inputContent" type="button" role="tab">
                                 Custom input
@@ -1600,6 +1598,7 @@ Exercises
         function submitExercise() {
             const exerciseId = document.getElementById("exerciseId").value;
             const code = editor.getValue();
+            const typeExercise = document.getElementById('typeExercise').value;
             let form = document.createElement('form');
             form.method = 'POST';
             form.action = "/judgement/run_test_case";
@@ -1607,6 +1606,7 @@ Exercises
             let params = {
                 exerciseId: exerciseId,
                 code: code,
+                type: typeExercise
             };
 
             for (let key in params) {

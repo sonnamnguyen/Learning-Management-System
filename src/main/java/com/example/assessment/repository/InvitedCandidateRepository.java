@@ -54,4 +54,12 @@ public interface InvitedCandidateRepository extends JpaRepository<InvitedCandida
     Optional<LocalDateTime> findExpireDateByAssessmentIdAndEmail(@Param("assessmentId") Long assessmentId,
                                                                  @Param("email") String email);
 
+    @Query("SELECT ic FROM InvitedCandidate ic WHERE ic.expirationDate = :targetTime")
+    List<InvitedCandidate> findCandidatesExpiringAt(LocalDateTime targetTime);
+
+    @Query("SELECT ic FROM InvitedCandidate ic " +
+            "WHERE ic.assessment.id = :assessmentId " +
+            "AND ic.email = :email")
+    Optional<InvitedCandidate> findByAssessmentIdAndEmail(@Param("assessmentId") Long assessmentId,
+                                                          @Param("email") String email);
 }

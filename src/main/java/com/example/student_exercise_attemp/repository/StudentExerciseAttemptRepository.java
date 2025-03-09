@@ -1,8 +1,23 @@
 package com.example.student_exercise_attemp.repository;
 
+import com.example.student_exercise_attemp.model.Exercise;
+import com.example.student_exercise_attemp.model.ExerciseSession;
 import com.example.student_exercise_attemp.model.StudentExerciseAttempt;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import java.util.List;
+import java.util.Optional;
 
 public interface StudentExerciseAttemptRepository extends JpaRepository<StudentExerciseAttempt, Integer> {
     StudentExerciseAttempt save(StudentExerciseAttempt studentExerciseAttempt);
+
+    @Query("SELECT s FROM StudentExerciseAttempt s WHERE s.exercise_session = :exerciseSession")
+    List<StudentExerciseAttempt> findByExerciseSession(@Param("exerciseSession") ExerciseSession exerciseSession);
+
+    @Query("SELECT s FROM StudentExerciseAttempt s WHERE s.exercise_session = :exerciseSession AND s.submitted_exercise = :submittedExercise")
+    Optional<StudentExerciseAttempt> findByExerciseSessionAndSubmittedExercise(
+            @Param("exerciseSession") ExerciseSession exerciseSession,
+            @Param("submittedExercise") Exercise submittedExercise);
 }
