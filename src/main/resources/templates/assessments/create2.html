@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create New Assessment</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+</head>
+<style>
+    html {
+        font-size: 85%;
+
+        .breadcrumb {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            list-style: none;
+            background-color: transparent;
+            border-radius: 0.25rem;
+        }
+
+        .breadcrumb-item + .breadcrumb-item::before {
+            content: ">";
+            padding: 0 0.5rem;
+            color: #6c757d; /* Màu xám nhẹ cho dấu ">" */
+        }
+
+        .scrollable-table {
+            overflow: auto;
+            max-height: 650px; /* Default for larger screens */
+        }
+
+        #scrollToTopButton {
+            position: fixed;
+            bottom: 3vh;
+            right: 10px;
+            display: none; /* Bắt đầu ẩn */
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(45deg, #6a11cb, #2575fc);
+            color: white;
+            border: none;
+            outline: none;
+            border-radius: 50%;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+            justify-content: center;
+            align-items: center;
+            opacity: 0.8;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        #scrollToTopButton:hover {
+            transform: scale(1.2); /* Phóng to nhẹ khi hover */
+            opacity: 1; /* Tăng độ rõ */
+            background: linear-gradient(45deg, #2575fc, #6a11cb); /* Đảo gradient khi hover */
+        }
+        .select-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .select-wrapper select {
+            width: 100%;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            padding-right: 30px; /* Adjust as needed */
+        }
+
+        .select-wrapper .select-arrow {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+
+
+        .no-wrap-label {
+            white-space: nowrap;
+        }
+
+        .btn.saved { /* Class 'saved' áp dụng cho bất kỳ nút nào có class 'btn' */
+            background-color: #5cb85c; /* Màu nền xanh lá cây cho trạng thái đã lưu */
+            border-color: #4cae4c;
+            color: white;
+        }
+
+        .btn-primary:hover:not(.saved) { /* Hover cho nút btn-primary khi KHÔNG ở trạng thái 'saved' */
+            background-color: #0b5ed7; /* Màu hover xanh dương đậm hơn một chút, ví dụ */
+            border-color: #0a58ca;
+            color: white;
+        }
+
+        .btn.saved:hover { /* Hover cho nút khi ở trạng thái 'saved' (màu xanh lá cây) */
+            background-color: #4cae4c; /* Màu hover xanh lá cây đậm hơn nữa */
+            border-color: #3d8b3d;
+            color: white;
+        }
+        /* Adjust max-height for medium-sized screens */
+        @media (max-width: 1200px) {
+            .scrollable-table {
+                max-height: 500px;
+            }
+        }
+
+        /* Adjust max-height for small screens */
+        @media (max-width: 768px) {
+            .scrollable-table {
+                max-height: 400px;
+            }
+        }
+
+        /* Adjust max-height for extra small screens */
+        @media (max-width: 576px) {
+            .scrollable-table {
+                max-height: 300px;
+            }
+        }
+
+    }
+</style>
+
+<body>
+<div th:replace="~{fragments :: header}" class="sticky-top"></div> <!-- Header always on top -->
+
+
+
+<div class="mt-3" id="mainContentArea">
+
+
+    <a href="/assessments" class=" btn-outline-secondary btn-sm rounded mx-2" style="padding: 0.5rem 1rem; border-width: 1px; font-size: 0.9rem; color: #777; border-color: #ccc; transition: all 0.3s ease; /* Thêm transition cho hiệu ứng mượt */"
+       onmouseover="this.style.backgroundColor='#f8f9fa'; this.style.borderColor='#bbb'; this.style.color='#555';"
+       onmouseout="this.style.backgroundColor='transparent'; this.style.borderColor='#ccc'; this.style.color='#777';">
+        <i class="fas fa-arrow-left" style="margin-right: 0.5rem;"></i> Back to List
+    </a>
+
+
+    <head>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/5.1.3/css/bootstrap.min.css">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    </head>
+
+    <div class="container mt-1">
+        <form method="POST" th:action="@{/assessments/create}" th:object="${assessment}" id="assessment-form" >
+
+            <input type="hidden" name="csrfmiddlewaretoken" value="GIF6HSeEVpwBn48uJuRZ00xfC9yYxY6L3rEFxKHZoLVncpHCyfwfsOKrOyYPlSzx">
+            <input type="hidden" th:field="*{createdBy}" th:value="${currentUser.username}" />
+            <!-- Title -->
+
+            <div class="col-md-4 mt-4 m-0">
+                <div class="d-flex align-items-center">  <!-- Flex container cho label và input -->
+                    <label for="title-input" class=" me-2">Title:</label>
+                    <input id="title-input" th:field="*{title}" type="text" name="title" class="form-control" placeholder="Enter assessment title" maxlength="255" required >
+                </div>
+                <input type="hidden" id="assessmentId" th:value="${assessment.id}">
+                <div id="duplicateTitleError" class="alert alert-danger mt-2 d-none"></div>
+            </div>
+
+            <div class="d-flex justify-content-end mb-2">  <!-- Thay đổi class thành 'd-flex justify-content-between' và thêm 'mb-3' -->
+
+                <button type="submit" class="btn btn-outline-success btn-sm rounded mx-2" style="padding: 0.5rem 1rem; border-width: 1px; font-size: 0.9rem; color: #5cb85c; border-color: #5cb85c; transition: all 0.3s ease; /* Thêm transition cho hiệu ứng mượt */"
+                        onmouseover="this.style.backgroundColor='#e2f0e2'; this.style.borderColor='#4cae4c'; this.style.color='#3d8b3d';"
+                        onmouseout="this.style.backgroundColor='transparent'; this.style.borderColor='#5cb85c'; this.style.color='#5cb85c';">
+                    <i class="fas fa-save" style="margin-right: 0.5rem;"></i> Save Assessment
+                </button>
+            </div>
+            <div class="card mb-1 shadow">
+                <div class="card-header
+                 text-black">
+                    <h4>Create Assessment</h4>
+                </div>
+
+                <div class="card-body">
+                    <div class="row justify-content-around">
+                        <div class="col-md-4  d-flex align-items-center m-0">
+                            <label for="id_assessment_type" class="form-label me-2 no-wrap-label">Assessment Type: </label>
+                            <div class="select-wrapper">  <!-- Add this wrapper -->
+                                <select th:field="*{assessmentType}" name="assessment_type" class="form-control" placeholder="Select assessment type" required id="id_assessment_type">
+                                    <th:block th:each="assessmentType : ${assessmentTypes}">
+                                        <option th:value="${assessmentType.id}" th:text="${assessmentType.name}"
+                                                th:selected="${assessmentType.name == 'Quiz'}"></option>
+                                    </th:block>
+                                </select>
+                                <i class="bi bi-chevron-down select-arrow"></i> <!-- Bootstrap Icon -->
+                            </div>
+                        </div>
+
+
+                        <div class="col-md-4  d-flex align-items-center m-0">
+                            <label for="id_course" class="form-label me-2">Course: </label>
+                            <div class="select-wrapper">  <!-- Add this wrapper -->
+                                <select th:field="*{course}" name="course" class="form-control" style="width: 100%;" required id="id_course">
+                                    <option value="" selected>All Course</option>
+
+                                    <th:block  th:each= "course : ${courses}" >
+                                        <option th:value="${course.id}" th:text="${course.name}"></option>
+                                    </th:block>
+
+                                </select>
+                                <i class="bi bi-chevron-down select-arrow"></i> <!-- Bootstrap Icon -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--cudamsamset-->
+            <div class="card mb-4 shadow">
+
+                <div class="card-body">
+                    <ul class="nav nav-tabs" id="myTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="exercises-tab" data-bs-toggle="tab" data-bs-target="#exercises" type="button" role="tab" aria-controls="exercises" aria-selected="true">Exercises</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="questions-tab" data-bs-toggle="tab" data-bs-target="#questions" type="button" role="tab" aria-controls="questions" aria-selected="false">Questions</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab" aria-controls="settings" aria-selected="false">Settings</button>
+                        </li>
+
+
+                    </ul>
+
+
+
+                    <div class="tab-content mt-3" id="myTabContent">
+                        <!-- Exercises Tab -->
+                        <div class="tab-pane fade show active p-3" id="exercises" role="tabpanel" aria-labelledby="exercises-tab">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="mb-3 d-flex align-items-center">
+                                        <div style="max-width: 110px; margin-right: 10px; position: relative;">
+                                            <i class="fas fa-filter" style="position: absolute; top: 50%; left: 5px; transform: translateY(-50%);"></i>
+                                            <select name="language" id="id_language" class="form-select" style="padding-left: 18px; text-indent: 5px;"    onchange="filterExercises()">
+                                                <option value="">   All</option>
+                                                <th:block th:each="language : ${languages}">
+                                                    <option th:value="${language.language.toLowerCase()}"
+                                                            th:text="${#strings.capitalize(language.language)}"
+                                                    >
+                                                    </option>
+                                                </th:block>
+                                            </select>
+                                        </div>
+                                        <div class="flex-grow-1 d-flex align-items-center">
+                                            <input type="text" id="search-exercises" class="form-control" placeholder="Search for exercises..." onkeyup="filterExercises()">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h5 class="fw-bold text-dark border-bottom pb-1 mb-2">Exercises</h5>
+                                    <div id="exercise-list" class="list-group overflow-auto border" style="max-height: 300px;">
+                                        <th:block th:each="exercise : ${exercises}">
+                                            <div class="list-group-item exercise-item d-flex align-items-center" th:data-exercise-id="${exercise.id}">
+                                                <input class="form-check-input me-2" type="checkbox" name="exercises" th:value="${exercise.id}" th:id="'exercise-' + ${exercise.id}" onclick="/*updateSaveButtonState()*/" >                                                <label class="form-check-label" th:for="'exercise-' + ${exercise.id}" th:text="${exercise.name}"></label>
+                                                <span class="badge rounded-pill bg-light text-dark small ms-auto border border-primary" th:text="${exercise.language}"></span>
+                                                <button type="button" class="btn btn-link text-secondary view-button ms-2" th:onclick="'toggleViewButton(this, ' + ${exercise.id} + ')'">
+                                                    <i class="bi bi-eye-slash"></i>
+                                                </button>
+                                            </div>
+                                        </th:block>
+                                    </div>
+                                    <div id="filtered-exercises" class="list-group overflow-auto border" style="max-height: 300px; display: none;"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h5 class="fw-bold text-dark border-bottom pb-1 mb-2">Preview Selected Exercise</h5>
+                                    <div id="exercise-content" class="border p-2 overflow-auto" style="max-height: 300px;">
+                                        <p>Select an exercise from the list to preview its content here.</p>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <!-- Questions Tab -->
+                        <div class="tab-pane fade" id="questions" role="tabpanel" aria-labelledby="questions-tab">
+                            <div class="row">
+                                <!-- Search Bar -->
+                                <div class="col-md-12">
+                                    <div class="mb-3">
+                                        <div class="input-group">
+                                            <span class="input-group-text">🔍</span>
+                                            <input type="text" id="search-questions" class="form-control" placeholder="Search for questions..." onkeyup="filterQuestions()">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Multiple Choice Library -->
+                                <div class="col-md-5">
+                                    <div class="card shadow-sm hover-shadow">
+                                        <div class="card-header">
+                                            <h5 class="mb-0">Multiple Choice Library</h5>
+                                        </div>
+                                        <div class="card-body question-library" style="max-height: 400px; overflow-y: auto; scrollbar-width: thin;">
+                                            <div class="accordion" id="quizAccordion">
+                                                <!-- Thymeleaf loop to iterate through allQuizzes -->
+                                                <div class="accordion-item" th:each="quiz : ${allQuizzes}">
+                                                    <h2 class="accordion-header" th:id="'heading' + ${quiz.id}">
+                                                        <div class="quiz-dropdown border rounded p-2 mb-2 bg-light" th:id="'quizDropdown' + ${quiz.id}" style="cursor: pointer;">
+                                                            <div class="quiz-header d-flex justify-content-between align-items-center border-bottom pb-1 mb-1" style="font-size: 0.8rem;">
+                                                                <div class="position-relative">
+                                                                    <!-- Dynamic quiz title using Thymeleaf -->
+                                                                    <span class="quiz-title h6 fw-bold" style="font-size: 16px; margin-right: 10px;" th:text="${quiz.name}">
+                                        Quiz Title (will be replaced by dynamic data)
+                                    </span>
+                                                                    <!-- Dynamic question count for each quiz -->
+                                                                    <span class="badge bg-success" style="font-size: 0.7rem; padding: 0.2rem 0.5rem;"
+                                                                          th:text="${#lists.size(quizQuestionsMap.get(quiz.id))} + ' questions'">
+                                        0 questions
+                                    </span>
+                                                                </div>
+                                                                <button type="button" class="btn btn-primary d-flex align-items-center justify-content-center position-relative btn-add-question add-questions"
+                                                                        th:data-quiz-id="${quiz.id}"
+                                                                        data-question-id=""
+                                                                        style="width: 35px; height: 35px; border-radius: 50%; transition: width 0.3s ease; overflow: hidden;"
+                                                                        onmouseover="this.style.width='70px'; this.style.borderRadius='5px'; this.querySelector('.add-all-text').style.opacity='1'; this.querySelector('.add-all-text').style.transform='translateY(0)'; this.querySelector('.plus-sign').style.opacity='0';"
+                                                                        onmouseout="this.style.width='35px'; this.style.borderRadius='50%'; this.querySelector('.add-all-text').style.opacity='0'; this.querySelector('.add-all-text').style.transform='translateY(-10px)'; this.querySelector('.plus-sign').style.opacity='1';">
+                                                                    <span class="plus-sign" style="font-size: 1.3rem; transition: opacity 0.3s ease;">+</span>
+                                                                    <span class="add-all-text position-absolute" style="opacity: 0; left: 20%; transform: translateX(-50%) translateY(-10px); font-size: 0.8rem; transition: opacity 0.3s ease, transform 0.3s ease;">Add All</span>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </h2>
+                                                    <!-- Dynamic collapse ID based on quiz ID -->
+                                                    <div th:id="'collapse' + ${quiz.id}" class="accordion-collapse collapse" th:attr="aria-labelledby='heading' + ${quiz.id}" data-bs-parent="#quizAccordion">
+                                                        <div class="accordion-body">
+                                                            <ul class="list-group" style="max-height: 400px; overflow-y: auto; scrollbar-width: thin;">
+                                                                <!-- Thymeleaf loop to iterate through questions within each quiz -->
+                                                                <li class="list-group-item d-flex align-items-start justify-content-between shadow-sm"
+                                                                    th:each="question : ${quizQuestionsMap.get(quiz.id)}">
+                                                                    <div class="d-flex flex-row  justify-content-between align-items-center" style="width: 100%;"> <!- - ADDED this div with flex-column -->
+                                                                        <!-- Dynamic question text using Thymeleaf -->
+                                                                        <span class="question-text" th:utext="${question.questionText}">
+                                            Question Text (will be replaced by dynamic data)
+                                        </span>
+                                                                        <div class="answer-options bg-success-subtle d-none">  <!-- ADDED d-none CLASS HERE -->
+
+                                                                            <div th:each="answerOption : ${questionAnswerOptionsMap.get(question.id)}" class="answer-option">
+                                                                              <span th:text="${answerOption.optionText}"
+                                                                                    th:class="${answerOption.isCorrect ? 'text-success' : 'text-dark'}">  <!-- Conditional class here -->
+        </span>
+                                                                            </div>
+
+                                                                        </div> <!- - END of ADDED div -->
+                                                                        <!-- Add question button with dynamic question ID -->
+                                                                        <button class="btn btn-sm btn-primary add-question align-self-center" th:data-question-id="${question.id}">+</button>
+                                                                        <!-- Answer options are hidden in library -->
+                                                                    </div>
+                                                                </li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-7">
+                                    <div class="card shadow-sm hover-shadow">
+                                        <div class="card-header d-flex justify-content-between align-items-center"> <!-- ADDED d-flex justify-content-between align-items-center -->
+                                            <h5 class="mb-0">Selected Questions</h5>
+                                            <div class="form-check form-switch d-flex align-items-center" style="margin-bottom: 0;">
+                                                <input class="form-check-input" type="checkbox" id="bootstrapSwitch" th:field="*{shuffled}" style="margin-right: 0.5rem;">
+                                                <label class="form-check-label" for="bootstrapSwitch" style="margin-bottom: 0;">Shuffle Questions</label>
+                                            </div>
+                                        </div>
+                                        <div class="card-body" style="max-height: 800px; overflow-y: auto;">
+                                            <ul class="list-group" id="selected-questions">
+                                                <!-- Selected questions will be added here -->
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Settings Tab -->
+                        <div class="tab-pane fade p-3" id="settings" role="tabpanel" aria-labelledby="settings-tab">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label for="id_qualify_score" class="form-label">Minimum Score:</label>
+                                    <input th:value="60" th:field="*{qualifyScore}" type="number"  class="form-control" placeholder="Enter minimum score to qualify" required id="id_qualify_score">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="id_time_limit" class="form-label">Time Limit (minutes):</label>
+                                    <input  th:field="*{timeLimit}"   type="number"  class="form-control" placeholder="Enter time limit for assessment" required id="id_time_limit">
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label  class="form-label">Exercise Score Ratio:</label>
+                                    <input  th:field="*{exerciseScoreRatio}"   type="number"  class="form-control" placeholder="Enter time limit for assessment" required >
+                                </div>
+                                <div class="col-md-4">
+                                    <label  class="form-label">Quiz Score Ratio:</label>
+                                    <input  th:field="*{quizScoreRatio}"   type="number"  class="form-control" placeholder="Enter time limit for assessment" required >
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+
+
+        </form>
+    </div>
+
+    <div id="fullscreen-preview" class="d-none position-fixed top-0 start-0 w-100 h-100 bg-white" style="z-index: 1050;">
+        <!-- Nội dung sẽ được chèn vào đây -->
+    </div>
+
+    <script>
+
+
+        document.addEventListener('DOMContentLoaded', function () {
+
+
+            const addQuestionButtons = document.querySelectorAll('.add-question');
+            const selectedQuestionsList = document.getElementById('selected-questions');
+            // const randomizeOrderButton = document.getElementById('btn-randomize-order'); // Get the randomize button
+
+            const buttonContainer = document.createElement('div');
+            // buttonContainer.className = 'd-flex justify-content-end mt-3';
+
+            const saveButton = document.createElement('button');
+            // saveButton.className = 'btn btn-success btn-sm';
+            // saveButton.innerText = 'Save Selections';
+            // saveButton.style.display = 'none';
+            // buttonContainer.appendChild(saveButton);
+            selectedQuestionsList.parentElement.appendChild(buttonContainer);
+            const exerciseCheckboxes = document.querySelectorAll('input[name="exercises"]:checked');
+
+            // **Variables to store selected exercises and questions in JavaScript**
+            window.selectedExerciseIds = [];
+            window.selectedQuestionIds = [];
+
+            console.log("Exercise Checkboxes Selected (querySelectorAll result):", exerciseCheckboxes); // Log the NodeList
+            exerciseCheckboxes.forEach(checkbox => {
+                console.log("Exercise Checkbox Element:", checkbox); // Log each checkbox element
+                console.log("Exercise Checkbox Value:", checkbox.value); // Log the value of each checkbox
+                window.selectedExerciseIds.push(checkbox.value);
+            });
+            // Add event listener to each remove button (delegated event listener on selectedQuestionsList)
+            selectedQuestionsList.addEventListener('click', function (event) {
+                if (event.target.classList.contains('remove-question')) {
+                    const button = event.target;
+                    const questionId = button.getAttribute('data-question-id');
+                    const questionItem = button.closest('li');
+                    if (questionItem) {
+                        questionItem.remove();
+                        questionMap.delete(questionId); // Remove from map as well
+                        updateQuestionNumbers();
+                        if (selectedQuestionsList.children.length === 0) {
+                            saveButton.style.display = 'none'; // Hide save button if no questions left
+                        }
+                        // updateSaveButtonState(); //NO NEED
+                    }
+                }
+            });
+
+
+
+            const questionMap = new Map();
+
+            //
+            // function randomizeQuestionOrder() {
+            //     const list = selectedQuestionsList;
+            //     const items = Array.from(list.children); // Get list items and convert to array
+            //
+            //     if (items.length <= 1) {
+            //         return; // No need to randomize if 0 or 1 item
+            //     }
+            //
+            //     // Fisher-Yates (Knuth) Shuffle Algorithm
+            //     for (let i = items.length - 1; i > 0; i--) {
+            //         const j = Math.floor(Math.random() * (i + 1));
+            //         [items[i], items[j]] = [items[j], items[i]]; // Swap elements
+            //     }
+            //
+            //     // Re-append shuffled items to the list
+            //     list.innerHTML = ''; // Clear the list
+            //     items.forEach(item => list.appendChild(item)); // Append in new order
+            //
+            //     updateQuestionNumbers(); // Re-number the questions
+            // }
+
+            // randomizeOrderButton.addEventListener('click', randomizeQuestionOrder); // Event listener for randomize button
+
+
+            const quizDropdowns = document.querySelectorAll('.quiz-dropdown');
+            quizDropdowns.forEach(dropdown => {
+                dropdown.addEventListener('click', function (event) {
+                    // Check if the click target is NOT the `+` button or `Add All` text
+                    if (!event.target.classList.contains('btn-add-question') && !event.target.classList.contains('add-all-text')) {
+                        const quizId = dropdown.getAttribute('id').replace('quizDropdown', 'collapse');
+                        const targetCollapse = document.getElementById(quizId);
+
+                        // Toggle the collapse state
+                        const isCollapsed = targetCollapse.classList.contains('show');
+                        if (isCollapsed) {
+                            targetCollapse.classList.remove('show');
+                        } else {
+                            targetCollapse.classList.add('show');
+                        }
+                    }
+                });
+
+
+                // Optional: Add functionality to the Add All button
+                const addAllButton = dropdown.querySelector('.btn-add-question');
+            });
+
+
+            addQuestionButtons.forEach(button => {
+                button.addEventListener('click', function (event) {
+                    try {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        // updateSaveButtonState();//NO NEED
+
+                        const questionId = this.dataset.questionId;
+                        const questionTextElement = this.parentElement.querySelector('.question-text');
+                        questionTextElement.classList.add('fw-normal');
+                        const questionText = questionTextElement.innerHTML;
+
+                        // **Correctly select answer options by finding the hidden container first**
+                        const hiddenAnswerOptionsContainer = this.parentElement.querySelector('.answer-options');
+                        const answerOptions = Array.from(hiddenAnswerOptionsContainer.querySelectorAll('.answer-option'));
+
+                        // Kiểm tra nếu câu hỏi đã có trong danh sách
+                        if (questionMap.has(questionId)) {
+                            return;
+                        } else {
+                            // Tạo mục mới cho câu hỏi đã chọn
+                            const listItem = document.createElement('li');
+                            listItem.dataset.order = selectedQuestionsList.children.length + 1;
+                            listItem.className = 'list-group-item d-flex align-items-center justify-content-between';
+                            // Thêm style trực tiếp vào listItem.style
+                            listItem.style.border = '2px solid #ced4da'; // Thêm viền solid, màu xám nhạt
+                            listItem.style.borderRadius = '0.25rem'; // Thêm bo tròn góc nhẹ (tùy chọn)
+                            listItem.innerHTML = `
+                    <div class="question-content flex-grow-1">
+                        <div class="question-input" style="padding: 8px; font-size: 1.1rem; border: 1px solid #ced4da; border-radius: 0.25rem; font-weight: 800;">
+                            ${questionText}
+                        </div>
+                        <div id="answerOptionsContainer" class="mt-2"></div>
+                    </div>
+                    <div class="actions d-flex flex-column align-items-center" style="margin-left: 10px; gap: 5px;">
+                        <i class="fas fa-trash-alt remove-question text-danger" data-question-id="${questionId}" title="Remove question" style="cursor: pointer; font-size: 1.1rem;"></i>
+                        <button type="button"  class="move-up btn btn-light btn-sm d-flex justify-content-center align-items-center rounded-circle" style="width: 30px; height: 30px; font-size: 0.9rem;">
+                            <i class="fas fa-arrow-up" style="font-size: 0.8rem;"></i>
+                        </button>
+                        <span class="question-number d-flex justify-content-center align-items-center" style="font-size: 0.9rem; width: 30px; height: 30px; border-radius: 50%; background-color: #f8f9fa; color: #6c757d; font-weight: bold;">
+                            ${listItem.dataset.order}
+                        </span>
+                        <button type="button" class="move-down btn btn-light btn-sm d-flex justify-content-center align-items-center rounded-circle" style="width: 30px; height: 30px; font-size: 0.9rem;">
+                            <i class="fas fa-arrow-down" style="font-size: 0.8rem;"></i>
+                        </button>
+                    </div>
+                `;
+
+                            selectedQuestionsList.appendChild(listItem);
+                            questionMap.set(questionId, listItem);
+
+                            // **ADD ANSWER OPTIONS TO SELECTED QUESTION**
+                            const answerOptionsContainer = listItem.querySelector('#answerOptionsContainer');
+                            answerOptions.forEach(optionElement => {
+                                const optionText = optionElement.querySelector('span:first-child').textContent;
+
+                                // **CORRECTED LINE: Select the FIRST span and check its classList directly**
+                                const correctnessSpan = optionElement.querySelector('span:first-child'); // Select the first (and only) span
+                                let correctnessClass = '';
+
+                                if (correctnessSpan) {
+                                    if (correctnessSpan.classList.contains('text-success')) { // Check classList of the span directly
+                                        correctnessClass = 'text-success';
+                                    } else if (correctnessSpan.classList.contains('text-dark')) {
+                                        correctnessClass = 'text-dark';
+                                    } else {
+                                        correctnessClass = 'text-dark'; // Default if no correctness class found
+                                    }
+                                } else {
+                                    correctnessClass = 'text-dark'; // Default if no span found (shouldn't happen based on HTML)
+                                }
+
+                                const optionDiv = document.createElement('div');
+                                optionDiv.className = 'answer-option p-2 mb-1 rounded shadow-sm'; // KEEP THESE CLASSES
+
+                                // **ADD CLASS FOR CORRECT ANSWER OPTION DIV**
+                                if (correctnessClass === 'text-success') {
+                                    optionDiv.classList.add('correct-answer-option'); // Add the new class
+                                }
+
+                                optionDiv.innerHTML = `
+                        <span class="${correctnessClass}">${optionText}</span>
+                        ${correctnessClass === 'text-success' ? '<span class="text-success">     (is correct)</span>' : ''}
+                    `;
+                                answerOptionsContainer.appendChild(optionDiv);
+                            });
+
+
+
+
+
+
+                            // NOW add the event listeners:
+                            const moveUpButton = listItem.querySelector('.move-up');
+                            const moveDownButton = listItem.querySelector('.move-down');
+                            moveUpButton.addEventListener('click', () => moveQuestion(listItem, 'up'));
+                            moveDownButton.addEventListener('click', () => moveQuestion(listItem, 'down'));
+
+                            saveButton.style.display = 'block'; // Show save button when question is added
+
+                            updateQuestionNumbers();
+                        }
+                        updateQuestionNumbers();
+                    } catch (error) { // <--- ADD THIS CATCH BLOCK
+                        console.error("Error adding question:", error); // <--- LOG ERROR TO CONSOLE
+                    }
+                });
+            });
+
+
+
+
+
+
+
+            function updateQuestionNumbers() {
+                const listItems = selectedQuestionsList.children;
+                for (let i = 0; i < listItems.length; i++) {
+                    const listItem = listItems[i];
+                    listItem.dataset.order = i + 1;
+                    const numberSpan = listItem.querySelector('.question-number');
+                    if (numberSpan) {
+                        numberSpan.textContent = i + 1;
+                    }
+                }
+            }
+
+
+            function moveQuestion(listItem, direction) {
+                const currentOrder = parseInt(listItem.dataset.order);
+                const newIndex = direction === 'up' ? currentOrder - 2 : currentOrder; // Adjust index for 'up'
+                if (newIndex < 0 || newIndex >= selectedQuestionsList.children.length) {
+                    return; // Stay within bounds
+                }
+
+                const elementToMove = selectedQuestionsList.children[currentOrder - 1]; // Get current element
+                const targetElement = selectedQuestionsList.children[newIndex]; // Get element to swap with
+                if (elementToMove && targetElement) {
+                    // Determine where to insert the element
+                    if (direction === 'up') {
+                        selectedQuestionsList.insertBefore(elementToMove, targetElement); // Insert before for 'up'
+                    } else {
+                        selectedQuestionsList.insertBefore(targetElement, elementToMove); // Insert before original for 'down' (swaps effectively)
+                    }
+                    // updateSaveButtonState(); //NO NEED
+                    updateQuestionNumbers(); // Re-number the questions
+                }
+            }
+
+            const assessmentForm = document.getElementById('assessment-form');
+            const duplicateTitleErrorDiv = document.getElementById('duplicateTitleError'); // Get the error div
+            const assessmentTypeSelect = document.getElementById("id_assessment_type");
+            const titleInput = document.getElementById("title-input"); // Get title input
+
+            function showError(message) { // Keep showError function
+                duplicateTitleErrorDiv.textContent = message;
+                duplicateTitleErrorDiv.classList.remove("d-none");
+                duplicateTitleErrorDiv.style.opacity = "0";
+
+                setTimeout(() => {
+                    duplicateTitleErrorDiv.style.transition = "opacity 0.5s ease-in-out";
+                    duplicateTitleErrorDiv.style.opacity = "1";
+                }, 10);
+
+                setTimeout(() => {
+                    duplicateTitleErrorDiv.style.opacity = "0";
+                    setTimeout(() => duplicateTitleErrorDiv.classList.add("d-none"), 500);
+                }, 5000);
+            }
+
+            function hideError() { // Keep hideError function
+                duplicateTitleErrorDiv.style.opacity = "0";
+                setTimeout(() => duplicateTitleErrorDiv.classList.add("d-none"), 500);
+            }
+
+
+            assessmentForm.addEventListener('submit', function (event) {
+                event.preventDefault();
+
+                const newTitle = titleInput.value.trim();
+                const assessmentTypeId = assessmentTypeSelect.value;
+                let id = document.getElementById("assessmentId").value;
+                console.log("Giá trị assessmentId:", id); // Kiểm tra giá trị trong console
+
+
+                if (newTitle === "") {
+                    showError("The title cannot be empty!");
+                    return;
+                }
+
+
+                // **1. Collect Selected Exercise IDs**
+                window.selectedExerciseIds = []; // Clear previous selections
+                const exerciseCheckboxes = document.querySelectorAll('input[name="exercises"]:checked');
+                exerciseCheckboxes.forEach(checkbox => {
+                    window.selectedExerciseIds.push(checkbox.value); // Store exercise IDs in the global variable
+                });
+
+                // **2. Collect Selected Question IDs**
+                window.selectedQuestionIds = []; // Clear previous selections
+                const selectedQuestionItems = selectedQuestionsList.children; // Get list items in current order
+                for (let i = 0; i < selectedQuestionItems.length; i++) {
+                    const listItem = selectedQuestionItems[i];
+                    const questionId = listItem.querySelector('.remove-question').getAttribute('data-question-id'); // Get questionId from the remove button
+                    window.selectedQuestionIds.push(questionId); // Store question IDs in the global variable in the current order
+                }
+
+                console.log("Exercises IDs saved in JavaScript variable:", window.selectedExerciseIds);
+                console.log("Question IDs saved in JavaScript variable:", window.selectedQuestionIds);
+
+
+                // Remove existing hidden inputs for exercises and questions (to avoid duplicates)
+                document.querySelectorAll('input[name="exercises-ids"], input[name="questions-ids"]').forEach(input => input.remove());
+
+
+                // **2. Add hidden input fields for selected exercise IDs**
+                window.selectedExerciseIds.forEach(exerciseId => {
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = 'exercises-ids'; // **Correct name: exercises-ids**
+                    hiddenInput.value = exerciseId;
+                    assessmentForm.appendChild(hiddenInput); // Append to the form
+                });
+
+                // **3. Add hidden input fields for selected question IDs**
+                window.selectedQuestionIds.forEach(questionId => {
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = 'questions-ids'; // **Correct name: questions-ids**
+                    hiddenInput.value = questionId;
+                    assessmentForm.appendChild(hiddenInput); // Append to the form
+                });
+
+
+
+                $.get(`/assessments/create/check-duplicate`, { title: newTitle, assessmentTypeId: assessmentTypeId, id: id }) // Correct URL, **removed id parameter**
+                    .done(function (response) {
+                        if (response.isDuplicate) {
+                            showError("Assessment title of this assessment type already exists!");
+                            // Do NOT submit the form here if it's a duplicate
+                        } else {
+
+                            hideError(); // Hide any previous error
+                            assessmentForm.submit(); // **Submit the form ONLY if no duplicate**
+                        }
+                    })
+                    .fail(function () {
+                        showError("Error when checking for duplicate title!");
+                        // Optionally handle failure to check duplicate (e.g., still submit or prevent submission)
+                    });
+
+
+
+
+
+            });
+
+
+            const addQuizButtons = document.querySelectorAll('.add-questions');
+            addQuizButtons.forEach(button => {
+                button.addEventListener('click', function () {
+                    const questions = this.closest('.accordion-header').nextElementSibling.querySelectorAll('.add-question');
+                    // **REMOVED the IF/ELSE condition - Always add questions**
+                    questions.forEach(question => {
+                        if (!questionMap.has(question.dataset.questionId)) { // Still check for duplicates
+                            question.click();
+                            // updateSaveButtonState();//NO NEED
+
+                        }
+                    });
+                });
+            });
+        });
+
+        function filterQuestions() {
+            const input = document.getElementById('search-questions').value.toLowerCase();
+            const quizAccordion = document.getElementById('quizAccordion');
+            const accordionItems = quizAccordion.querySelectorAll('.accordion-item');
+
+            accordionItems.forEach(item => {
+                const questionsList = item.querySelector('.list-group');
+                const accordionCollapse = item.querySelector('.accordion-collapse');
+                let anyMatchInQuiz = false;
+
+                if (questionsList) {
+                    const questions = questionsList.querySelectorAll('.list-group-item');
+
+                    // Hide all questions initially
+                    questions.forEach(question => {
+                        question.style.display = 'none';
+                    });
+
+                    // Loop through each question to check if it matches the search term
+                    questions.forEach(question => {
+                        const questionText = question.querySelector('.question-text').textContent.toLowerCase();
+                        const isMatch = questionText.includes(input);
+
+                        if (isMatch) {
+                            question.style.display = 'block'; // Show only the matching question
+                            anyMatchInQuiz = true;
+                        }
+                    });
+
+                    // Show only quizzes that contain a matching question
+                    const quizHeader = item.querySelector('.quiz-dropdown');
+                    if (input === "") {
+                        // Show all quizzes and questions if input is empty
+                        item.style.display = 'block';
+                        quizHeader.style.display = 'block';
+                        accordionCollapse.classList.remove('show'); // Collapse quiz if input is empty
+                        questions.forEach(question => {
+                            question.style.display = 'block'; // Show all questions
+                        });
+                    } else {
+                        // Show only quizzes with at least one matching question
+                        item.style.display = anyMatchInQuiz ? 'block' : 'none';
+                        quizHeader.style.display = anyMatchInQuiz ? 'block' : 'none';
+                        accordionCollapse.classList.toggle('show', anyMatchInQuiz); // Expand quiz only if it has a matching question
+                    }
+                }
+            });
+        }
+
+        // Function to filter exercises in the list
+        function filterExercises() {
+            const input = document.getElementById('search-exercises').value.toLowerCase();
+            const selectedLanguage = document.getElementById('id_language').value.toLowerCase();
+            const exercises = document.querySelectorAll('#exercise-list .exercise-item'); // Select exercises from the original list
+            const filteredExercisesContainer = document.getElementById('filtered-exercises');
+            const exerciseListContainer = document.getElementById('exercise-list');
+
+            filteredExercisesContainer.innerHTML = ''; // Clear previous filtered results
+
+            let hasFilteredResults = false;
+
+            exercises.forEach(exercise => {
+                const title = exercise.querySelector('label').textContent.toLowerCase();
+                const exerciseLanguageElement = exercise.querySelector('.badge');
+                const exerciseLanguage = exerciseLanguageElement ? exerciseLanguageElement.textContent.trim().toLowerCase() : '';
+
+                const titleMatches = input.trim() === "" || title.includes(input);
+                const languageMatches = selectedLanguage === "" || exerciseLanguage === selectedLanguage;
+
+                if (titleMatches && languageMatches) {
+                    const clonedExercise = exercise.cloneNode(true); // Clone the exercise item
+                    filteredExercisesContainer.appendChild(clonedExercise); // Append the clone to filtered container
+                    hasFilteredResults = true;
+                }
+            });
+
+            if (input.trim() !== "" || selectedLanguage !== "") { // Apply filter logic only when there is a filter
+                exerciseListContainer.style.display = 'none';
+                filteredExercisesContainer.style.display = 'block';
+                if (!hasFilteredResults) {
+                    filteredExercisesContainer.innerHTML = '<li class="list-group-item">No exercises found matching your criteria.</li>';
+                }
+            } else { // No filters applied: Show all exercises.
+                exerciseListContainer.style.display = 'block';
+                filteredExercisesContainer.style.display = 'none';
+            }
+        }
+
+        fullscreenPreview.appendChild(closeFullscreenButton);
+
+        function viewExercise(exerciseId) {
+            const exerciseContent = document.getElementById('exercise-content');
+            const fullscreenPreview = document.getElementById('fullscreen-preview');
+
+            // Use a data attribute to track the currently displayed exercise ID
+            const displayedExerciseId = exerciseContent.dataset.exerciseId;
+
+            if (displayedExerciseId == exerciseId) {
+                exerciseContent.innerHTML = '<p>Select an exercise from the list to preview its content here.</p>';
+                delete exerciseContent.dataset.exerciseId; // Clear the data attribute
+                return;
+            }
+
+            fetch("/assessments/get-exercise-content/" + exerciseId)  // Correct way to build the URL
+                .then(response => {
+                    if (!response.ok) {
+                        console.error("Fetch error:", response.status, response.statusText);
+                        exerciseContent.innerHTML = `<p>Error loading exercise ${exerciseId}: ${response.status} ${response.statusText}</p>`;
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    exerciseContent.innerHTML = `
+                <div class="d-flex align-items-start">
+                    <h3 style="font-size: 1.2rem; margin-bottom: 0;">Exercise ${exerciseId}: ${data.title}</h3>
+                    <span id="extend-button" class="ms-auto" style="display: inline-block; transform: rotate(135deg);">↔</span>
+                </div>
+                <p>${data.content}</p>
+                `;
+
+                    exerciseContent.dataset.exerciseId = exerciseId; // Set the data attribute
+                    const extendButton = document.getElementById('extend-button');
+
+                    extendButton.addEventListener('click', (event) => {
+                        event.preventDefault();
+
+                        fullscreenPreview.innerHTML = `
+                    <div class="d-flex justify-content-center align-items-center w-100 h-100 bg-light" style="opacity: 0.8;">
+                    <div class="fullscreen-preview-content p-4 bg-white" style="border-radius: 5px; position: relative; max-width: 80%; max-height: 80%; overflow-y: auto;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h3 style="margin-bottom: 0; font-size: 1.2rem;">Exercise ${exerciseId}: ${data.title}</h3> <!-- Điều chỉnh kích thước ở đây -->
+                            <span id="close-fullscreen" aria-label="Close" style="cursor: pointer; font-size: 1.5rem;">×</span>
+                        </div>
+                        <p>${data.content}</p>
+                    </div>
+                </div>
+                `;
+                        fullscreenPreview.classList.remove('d-none');
+                        const closeBtn = document.getElementById('close-fullscreen');
+                        closeBtn.addEventListener('click', (event) => {
+                            event.stopPropagation();
+                            fullscreenPreview.classList.add('d-none');
+                        });
+                        fullscreenPreview.addEventListener('click', (event) => {
+                            if (event.target === fullscreenPreview) {
+                                fullscreenPreview.classList.add('d-none');
+                            }
+                        });
+                        fullscreenPreview.classList.remove('d-none');
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching exercise content:', error);
+                    exerciseContent.innerHTML = `<p>Select an exercise from the list to preview its content here.
+
+</p>`;
+                    delete exerciseContent.dataset.exerciseId; // Clear in case of error
+                });
+        }
+
+
+        // Hàm để chuyển đổi trạng thái nút và gọi viewExercise
+        function toggleViewButton(button, exerciseId) {
+            const icon = button.querySelector('i');
+            const isActive = button.classList.contains("active");
+
+            if (isActive) {
+                // Nếu đã active, thì reset về trạng thái ban đầu
+                button.classList.remove("active", "text-primary");
+                button.classList.add("text-secondary");
+                icon.classList.remove("bi-eye");
+                icon.classList.add("bi-eye-slash");
+                viewExercise(null); // Đóng nội dung
+            } else {
+                // Nếu chưa active, thì hiển thị nội dung
+                button.classList.add("active", "text-primary");
+                button.classList.remove("text-secondary");
+                icon.classList.remove("bi-eye-slash");
+                icon.classList.add("bi-eye");
+                viewExercise(exerciseId); // Hiển thị nội dung
+            }
+        }
+        // Add active class to exercise-item (No changes needed here)
+        const exerciseItems = document.querySelectorAll('.exercise-item');
+        exerciseItems.forEach(item => {
+            item.addEventListener('click', function(event) {
+                if (event.target.tagName !== 'BUTTON' ) {
+                    exerciseItems.forEach(otherItem => otherItem.classList.remove('selected'));
+                    this.classList.add('selected');
+                }
+            });
+        });
+
+
+
+    </script>
+
+
+</div>
+</div>
+</div>
+
+<button onclick="scrollToTop()" id="scrollToTopButton" title="Go to top">
+    <i class="fas fa-arrow-up"></i>
+</button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+
+<script>
+    window.onscroll = function () {
+        const scrollToTopButton = document.getElementById("scrollToTopButton");
+        if (document.body.scrollTop > 100 || document.documentElement.scrollTop > 100) {
+            scrollToTopButton.style.display = "flex"; // Hiển thị nút
+        } else {
+            scrollToTopButton.style.display = "none"; // Ẩn nút
+        }
+    };
+
+    function scrollToTop() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const dropdownLinks = document.querySelectorAll('[data-bs-toggle="dropdown"], [data-bs-toggle="collapse"]');
+        dropdownLinks.forEach(link => {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+            });
+        });
+    });
+</script>
+
+</body>
+</html>

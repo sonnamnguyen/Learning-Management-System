@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface ProgrammingLanguageRepository extends JpaRepository<ProgrammingLanguage, Integer> {
@@ -19,6 +20,9 @@ public interface ProgrammingLanguageRepository extends JpaRepository<Programming
     Page<ProgrammingLanguage> findByLanguageContainingIgnoreCase(String name, Pageable pageable);
     Optional<ProgrammingLanguage> findByLanguage(String name);
     ProgrammingLanguage save(ProgrammingLanguage programmingLanguage);
+
+    @Query("SELECT l.language FROM ProgrammingLanguage l")
+    List<String> findAllLanguages();
 }
 
 

@@ -1,6 +1,8 @@
 package com.example.testcase;
 
-import com.example.exercise.Exercise;
+import com.example.assessment.model.ProgrammingLanguage;
+import com.example.student_exercise_attemp.model.Exercise;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,14 +22,24 @@ public class TestCase {
 
     private String expectedOutput;
 
+    @Column(columnDefinition = "TEXT") // Thêm tagSQL vào database
     private String sqlTagNumber;
+    @Column(columnDefinition = "boolean")
+    private boolean isHidden;
+
+
 
     @ManyToOne
     @JoinColumn(name = "exercise_id" ,referencedColumnName = "id", nullable = false)
+    @JsonIgnore
     private Exercise exercise;
 
     @Override
     public String toString() {
         return "TestCase " + id + ": Input: " + input + " | Expected Output: " + expectedOutput;
     }
+
+
+
+
 }

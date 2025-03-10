@@ -1,0 +1,408 @@
+<div class="main-container px-5 flex-grow-1">
+    <h1 class="text-center">Assessments</h1>
+
+    <div>
+        <!-- Header Section -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <!-- Reduced bottom margin -->
+            <div class="mb-3">
+                <h1 class="text-center mb-1">Assessment Report</h1>
+                <!--                Reduced font size-->
+                <span class="text-primary" style="font-size: 1rem;">
+                    <i class="bi bi-box-arrow-up-right"></i>
+                    ASM
+                </span>
+
+            </div>
+            <a href="/assessments" class="btn btn-outline-secondary" style="font-size: 0.875rem;">
+                Back to List
+            </a>
+        </div>
+
+        <hr>
+
+        <div class="row">
+            <!--            Use Information on the left, using sticky positioning-->
+            <div class="col-md-3" style="padding-right: 0; position: sticky; top: 0; height: 100vh; overflow-y: auto;">
+                <h6 style="font-size: 0.875rem;" th:text="${attemptInfo.email}"></h6>
+                <!--                Reduced font size-->
+                <p style="font-size: 0.875rem; margin-bottom: 0;">
+                    Joined on: <span th:text="${#temporals.format(attemptInfo.attemptDate, 'dd-MM-yyyy, hh:mm a')}"></span>
+                </p>
+                <!--                No margin-bottom-->
+                <p style="font-size: 0.875rem; margin-top: 0;">
+                    Invite by: <span th:text="${attemptInfo.assessment.createdBy}"></span>
+                </p>
+
+                <!--                Links container-->
+                <nav class="nav flex-column">
+                    <a href="#score-point" class="fw-bold text-secondary text-decoration-none mb-2 link-hover"
+                       style="border-left: 4px solid gray; padding-left: 10px; font-size: 0.875rem; height: 100% !important;">
+                        Score
+                    </a>
+                    <a href="#score-card" class="fw-bold text-secondary text-decoration-none mb-2 link-hover"
+                       style="border-left: 4px solid gray; padding-left: 10px; font-size: 0.875rem; height: 100% !important;">
+                        Score Card
+                    </a>
+                    <a href="#quiz-result" class="fw-bold text-secondary text-decoration-none mb-2 link-hover"
+                       style="border-left: 4px solid gray; padding-left: 10px; font-size: 0.875rem; height: 100% !important;">
+                        Quiz Result
+                    </a>
+                </nav>
+            </div>
+
+            <!--            Report-->
+            <div class="col-md-9">
+                <!--                Score section-->
+                <h4 id="score-point" style="margin-left: -10px; font-size: 1.25rem; margin-bottom: 2rem;">
+                    Score
+                </h4>
+                <div class="row">
+                    <!--                    Score card-->
+                    <div class="col-md-12">
+                        <div class="card shadow-sm h-100">
+                            <!--                            Card header-->
+                            <div class="card-header d-flex justify-content-between align-items-center"
+                                 style="background-color: #20c997; color: white; font-weight: bold; text-align: center; padding: 10px;">
+                                <span>Scores</span>
+                                <span style="width: 20%">Average 2.0%</span>
+                                <span style="width: 20%">Qualifying 60%</span>
+                                <span style="width: 20%; font-weight: bold;">Final Score 68%</span>
+                            </div>
+
+                            <!--                            Card body-->
+                            <div class="card-body" style="background-color: #e8f5f4; display: flex; flex-direction: column; justify-content: space-evenly; align-items: center; height: 100%;">
+                                <!--                                Challenges percent-->
+                                <div class="d-flex justify-content-between align-items-center w-100" style="text-align: center">
+                                    <span>Challenges</span>
+                                    <span style="font-weight: bold;">68%</span>
+                                </div>
+
+                                <hr class="w-100 my-1">
+
+                                <!--                                Score Quiz percent-->
+                                <div class="d-flex justify-content-between align-items-center w-100" style="text-align: center;">
+                                    <span>Score Quiz</span>
+                                    <span style="color: #6c757d; font-size: 0.9rem;" th:text="${attemptInfo.scoreQuiz}"></span>
+                                </div>
+
+                                <hr class="w-100 my-1">
+
+                                <!--                                Score code percent-->
+                                <div class="d-flex justify-content-between align-items-center w-100" style="text-align: center;">
+                                    <span>Score Code</span>
+                                    <span style="color: #6c757d; font-size: 0.9rem;" th:text="${attemptInfo.scoreAss}"></span>
+                                </div>
+
+                                <hr class="w-100 my-1">
+
+                                <!--                                Personality test-->
+                                <div class="d-flex justify-content-between align-items-center w-100" style="text-align: center;">
+                                    <span>
+                                        Personality
+                                        <i class="fas fa-into-circle" style="color: #6c757d;"></i>
+                                    </span>
+                                    <span style="color: #6c757d; font-size: 0.9rem;">N/A</span>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <hr style="margin-top: 2rem; margin-bottom: 3rem;">
+                <!--                Score card section-->
+                <div class="score-card-section mt-3">
+                    <div>
+                        <h4 style="font-size: 1.25rem; margin-bottom: 2rem;" id="score-card">
+                            Score card
+                        </h4>
+                    </div>
+
+                    <div class="col-md-12">
+                        <div class="card" style="max-width: 100%; margin: 0 auto; padding: 0;">
+                            <div class="card-header d-flex justify-content-around" style="padding: 10px;">
+                                <!--                                Algorithm section-->
+                                <div class="text-center" id="algorithm-skill">
+                                    <h6 class="mb-1 bg-light fw-bold small-title">Algorithm skill</h6>
+                                    <div class="d-flex justify-content-center">
+                                        <!--                                        Stars for rating-->
+                                        <button type="button" class="btn btn-link star" data-value="1">
+                                            <i class="bi bi-star" style="font-size: 13px;"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-link star" data-value="2">
+                                            <i class="bi bi-star" style="font-size: 13px;"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-link star" data-value="3">
+                                            <i class="bi bi-star" style="font-size: 13px;"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-link star" data-value="4">
+                                            <i class="bi bi-star" style="font-size: 13px;"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-link star" data-value="5">
+                                            <i class="bi bi-star" style="font-size: 13px;"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <!--                                Vertical Separator-->
+                                <div class="vr" style="height: 50px; width: 2px;"></div>
+                                <!--                                Code Quality section-->
+                                <div class="text-center" id="code-quality">
+                                    <h6 class="mb-1 bg-light fw-bold small-title">Code Quality</h6>
+                                    <div class="d-flex justify-content-center">
+                                        <!--                                        Stars for rating-->
+                                        <button type="button" class="btn btn-link star" data-value="1">
+                                            <i class="bi bi-star" style="font-size: 13px;"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-link star" data-value="2">
+                                            <i class="bi bi-star" style="font-size: 13px;"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-link star" data-value="3">
+                                            <i class="bi bi-star" style="font-size: 13px;"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-link star" data-value="4">
+                                            <i class="bi bi-star" style="font-size: 13px;"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-link star" data-value="5">
+                                            <i class="bi bi-star" style="font-size: 13px;"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <!--                                Vertical Separator-->
+                                <div class="vr" style="height: 50px; width: 2px;"></div>
+                                <!--                                TypeScript Skill section-->
+                                <div class="text-center" id="typescript-skill">
+                                    <h6 class="mb-1 bg-light fw-bold small-title">TypeScript skills</h6>
+                                    <div class="d-flex justify-content-center">
+                                        <!--                                        Stars for rating-->
+                                        <button type="button" class="btn btn-link star" data-value="1">
+                                            <i class="bi bi-star" style="font-size: 13px;"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-link star" data-value="2">
+                                            <i class="bi bi-star" style="font-size: 13px;"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-link star" data-value="3">
+                                            <i class="bi bi-star" style="font-size: 13px;"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-link star" data-value="4">
+                                            <i class="bi bi-star" style="font-size: 13px;"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-link star" data-value="5">
+                                            <i class="bi bi-star" style="font-size: 13px;"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--                            Private Note section-->
+                            <div class="card-body p-2">
+                                <div class="card">
+                                    <div class="card-header d-flex align-items-center p-2">
+                                        <h5 class="mb-0 small-title">Private Notes</h5>
+                                        <div class="vr mx-3" style="height: 30px; width: 2px;"></div>
+                                        <!--                                        Text Formatting Buttons-->
+                                        <div class="ml-auto" style="font-size: 12px;">
+                                            <button class="btn btn-secondary btn-sm" onclick="document.execCommand('bold')">
+                                                <b>B</b>
+                                            </button>
+                                            <button class="btn btn-secondary btn-sm" onclick="document.execCommand('italic')">
+                                                <i>I</i>
+                                            </button>
+                                            <button class="btn btn-secondary btn-sm" onclick="document.execCommand('underline')">
+                                                <u>U</u>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="card-body p-2">
+                                        <div id="editor" class="form-control" contenteditable="true" style="min-height: 100px; border: 1px solid #ccc; padding: 1px;"
+                                             aria-placeholder="Private notes to share with your team...">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--                            Save button-->
+                            <div class="card-footer text-center">
+                                <button id="saveRatings" class="btn btn-primary">Save Ratings</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <hr style="margin-top: 3rem; margin-bottom: 3rem;">
+                <!--                Quiz Result section-->
+                <h4 style="font-size: 1.25rem; margin-bottom: 2rem;" id="quiz-result">
+                    Quiz Results
+                </h4>
+                <!--                Quiz Result Card-->
+                <div class="col-md-12 mb-4">
+                    <div class="card card-body d-flex align-items-left mb-4">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <!--                            Quiz Title and Details-->
+                            <div>
+                                <p class="mb-0">
+                                    <b>QUIZ</b>
+                                    <i class="bi bi-box-arrow-up-right"></i>
+                                </p>
+                                <div class="d-flex align-items-center">
+                                    <a href="#" class="btn btn-link p-0">
+                                        View Details
+                                    </a>
+                                    <span class="mx-2">|</span>
+                                    <span>12 seconds</span>
+                                    <span class="mx-2">|</span>
+                                </div>
+                            </div>
+                            <!--                            Score Box-->
+                            <div class="d-flex align-items-center ms-auto">
+                                <div class="bg-success text-white rounded d-flex justify-content-center align-items-center"
+                                     style="width: 60px; height: 50px;">
+                                    <span th:text="${attemptInfo.scoreQuiz}"></span>
+                                </div>
+                                <div class="vr mx-3" style="height: 60px;"></div>
+                                <div>
+                                    <div>
+                                        <span>
+                                            <b></b>
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <span>
+                                            <i class="bi bi-ui-checks"></i>
+                                            <b>Multiple choice</b>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<button onclick="scrollToTop()" id="scrollToTopButton" title="Go to top">
+    <i class="fas fa-arrow-up"></i>
+</button>
+
+<script>
+    // Show/hide scrollToTopButton
+    window.onscroll = function() {
+        const scrollToTopButton = document.getElementById("scrollToTopButton");
+        if (document.body.scrollTop > 50 || document.documentElement.scrollTop > 50) {
+            scrollToTopButton.style.display = "flex";
+        } else {
+            scrollToTopButton.style.display = "none";
+        }
+    };
+
+    function scrollToTop() {
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+
+    // Rating star Algorithm skill
+    document.addEventListener("DOMContentLoaded", function() {
+        const algorithmStars = document.querySelectorAll("#algorithm-skill .star");
+        algorithmStars.forEach(star => {
+            star.addEventListener("click", function () {
+                const rating = this.getAttribute("data-value");
+                algorithmStars.forEach(s => s.querySelector("i").classList.remove("text-warning")); // Delete the yellow
+                for (let i = 0; i < rating; i++) {
+                    algorithmStars[i].querySelector("i").classList.add("text-warning"); // Add yellow
+                }
+            });
+        });
+    });
+
+    // Rating star Code quality
+    document.addEventListener("DOMContentLoaded", function() {
+        const codeQualityStars = document.querySelectorAll("#code-quality .star");
+        codeQualityStars.forEach(star => {
+            star.addEventListener("click", function() {
+                const rating = this.getAttribute("data-value");
+                codeQualityStars.forEach(s => s.querySelector("i").classList.remove("text-warning")); // Delete the yellow
+                for (let i = 0; i < rating; i++) {
+                    codeQualityStars[i].querySelector("i").classList.add("text-warning"); // Add yellow
+                }
+            });
+        });
+    });
+
+    // Rating star TypeScript skill
+    document.addEventListener("DOMContentLoaded", function() {
+        const typeScriptStars = document.querySelectorAll("#typescript-skill .star");
+        typeScriptStars.forEach(star => {
+            star.addEventListener("click", function() {
+                const rating = this.getAttribute("data-value");
+                typeScriptStars.forEach(s => s.querySelector("i").classList.remove("text-warning")); // Delete the yellow
+                for (let i = 0; i < rating; i++) {
+                    typeScriptStars[i].querySelector("i").classList.add("text-warning"); // Add yellow
+                }
+            });
+        });
+    });
+
+    document.querySelectorAll('.link-hover').forEach(link => {
+        link.addEventListener("click", function(event) {
+            event.preventDefault();
+
+            // Reset color, font-weight, border color, and padding for all links
+            document.querySelectorAll(".link-hover").forEach(item => {
+                item.style.color = '';
+                item.style.fontWeight = '';
+                item.style.setProperty('border-left', '4px solid gray');
+                item.style.setProperty('padding-left', '10px');
+            });
+
+            // Set the clicked link's color to blue, font-weight to bold, and border color to blue
+            this.style.setProperty('color', 'blue', 'important');
+            this.style.setProperty('font-weight', 'bold', 'important');
+            this.style.setProperty('border-left', '4px solid blue', 'important');
+            this.style.setProperty('padding-left', '15px', 'important');
+            this.style.setProperty('height', '100%', 'important');
+
+            const targetId = this.getAttribute('href').substring(1);
+            const targetElement = document.getElementById(targetId);
+
+            if (targetElement) {
+                // Get the target position and screen height
+                const targetPosition = targetElement.getBoundingClientRect().top + window.scrollY;
+                const offsetPosition = targetPosition - (window.innerHeight / 2) + (targetElement.offsetHeight / 2);
+
+                // Smooth scroll to the target element
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: "smooth"
+                });
+            }
+        });
+    });
+
+
+</script>
+
+<style>
+    /* Scroll-to-top button */
+    #scrollToTopButton {
+        position: fixed;
+        bottom: 3vh;
+        right: 20px;
+        display: none; /* Initially hidden */
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(45deg, #6a11cb, #2575fc);
+        color: white;
+        border: none;
+        outline: none;
+        border-radius: 50%;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+        justify-content: center;
+        align-items: center;
+        opacity: 0.8;
+        transition: transform 0.3s ease, opacity 0.3s ease;
+        z-index: 80;
+    }
+
+    #scrollToTopButton:hover {
+        transform: scale(1.2); /* Slight zoom on hover */
+        opacity: 1; /* Increase clarity */
+        background: linear-gradient(45deg, #2575fc, #6a11cb); /* Reverse gradient on hover */
+    }
+</style>

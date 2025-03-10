@@ -155,5 +155,9 @@ public class CourseService {
     public void saveAll(List<Course> courses) {
         courseRepository.saveAll(courses);  // Save all roles at once
     }
+
+    public Course save(Course course){
+        return courseRepository.save(course);
+    }
 }
 

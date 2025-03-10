@@ -1,30 +1,21 @@
 package com.example.assessment.repository;
 
-
-import com.example.assessment.model.ProgrammingLanguage;
 import com.example.assessment.model.StudentAssessmentAttempt;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.util.List;
-import java.util.Optional;
 
-public interface StudentAssessmentAttemptRepository extends JpaRepository<StudentAssessmentAttempt, Integer> {
+public interface StudentAssessmentAttemptRepository extends JpaRepository<StudentAssessmentAttempt, Long> {
 
-    // Create or update a student assessment attempt
-    StudentAssessmentAttempt save(StudentAssessmentAttempt attempt);
+    // Lấy danh sách attempts theo assessment (không phân trang)
+    List<StudentAssessmentAttempt> findByAssessment_Id(Long assessmentId);
 
-    // Find an attempt by its ID
-    Optional<StudentAssessmentAttempt> findById(Long id);
+    // Lấy danh sách attempts theo assessment với phân trang
+    Page<StudentAssessmentAttempt> findByAssessment_Id(Long assessmentId, Pageable pageable);
 
-    // Find all attempts for a specific assessment
-    List<StudentAssessmentAttempt> findByAssessmentId(Long assessmentId);
-
-    // Find all attempts by a specific user
+    // Lấy danh sách attempts theo user id
     List<StudentAssessmentAttempt> findByUserId(Long userId);
+    long countByAssessmentId(Long assessmentId);
 
-    // Delete an attempt by its ID
-    void deleteById(Long id);
-
-    // Find all attempts
-    List<StudentAssessmentAttempt> findAll();
 }

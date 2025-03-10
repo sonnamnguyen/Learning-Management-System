@@ -1,0 +1,24 @@
+<div class="result-container">
+    <p th:if="${error}!=null" class="align-items-center alert alert-danger" style="color: red; white-space:break-spaces; word-wrap: break-word;" th:text="${error}"></p>
+    <!-- Display grading results if available -->
+    <div th:if="${passed != null}">
+        <p>You passed <strong th:text="${passed}">0</strong> out of <strong th:text="${total}">0</strong>
+            test cases.</p>
+        <ul class="list-unstyled">
+            <li th:each="testResult, iterStat : ${testResults}"
+                class="mb-2 p-2 rounded"
+                th:classappend="${testResult.isCorrect} ? 'alert alert-success' : 'alert alert-danger'">
+
+                <span th:text="'Test Case ' + ${iterStat.count} + ':'"></span>
+                <span th:text="${testResult.isCorrect ? 'Passed' : 'Failed'}"
+                      th:classappend="${testResult.isCorrect} ? 'test-case-pass' : 'test-case-fail'"></span>
+
+                <div class="mt-1 ps-3">
+                    <strong>Input:</strong> <span th:text="${testResult.testCase.input}"></span><br>
+                    <strong>Your Output:</strong> <span th:text="${testResult.userOutput}"></span><br>
+                    <strong>Expected Output:</strong> <span th:text="${testResult.testCase.expectedOutput}"></span>
+                </div>
+            </li>
+        </ul>
+    </div>
+</div>

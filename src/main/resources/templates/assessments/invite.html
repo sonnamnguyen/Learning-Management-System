@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: common_header(~{::title}, ~{::link})}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <meta charset="UTF-8">
+    <title>Invite</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="d-flex flex-column min-vh-100">
+    <div th:replace="~{fragments :: header}" class="sticky-top"></div>
+
+    <main class="flex-grow-1 py-4">
+        <div class="ml-2 col-md-12" id="mainContentArea">
+            <nav aria-label="breadcrumb">
+                <ol class="ml-2 breadcrumb" style="padding-left: 32px;">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item"><a href="/assessments">Assessment List</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Invite candidates</li>
+                </ol>
+            </nav>
+
+            <h1 class="text-center mt-2">Assessment</h1>
+
+            <div class="container mt-4">
+                <h2 class="text-center mb-4">Invite Candidates for <span class="text-primary">ASM</span></h2>
+                <!-- Email Invitation Form -->
+                <div class="card shadow mt-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Send Invitations</h5>
+                    </div>
+                    <div class="card-body">
+                        <form action="/send-invitations" method="POST">
+                            <input type="hidden" name="assessmentId" th:value="${assessmentId}">
+                            <div class="form-group">
+                                <label for="id_emails">Emails:</label>
+                                <textarea name="emails" cols="40" rows="5" class="form-control w-100"
+                                          placeholder="Enter email addresses separated by commas..."
+                                          required id="id_emails"></textarea>
+                                <span class="helptext">Enter email addresses separated by commas.</span>
+                            </div>
+                            <div class="form-group mt-3">
+                                <label for="expirationDate">Expiration Date & Time:</label>
+                                <input type="datetime-local" name="expirationDate" id="expirationDate" class="form-control" required>
+                            </div>
+                            <!-- Nút Import từ Excel -->
+                            <div class="form-group mt-3 d-flex align-items-center">
+                                <label for="fileUpload" class="me-2">Import from Excel:</label>
+                                <input type="file" id="fileUpload" class="form-control-file d-none" accept=".xls,.xlsx">
+                                <label for="fileUpload" class="btn btn-outline-secondary me-2">Choose File</label>
+                                <button id="downloadExcelButton" class="btn btn-primary">Download Form Excel</button>
+                            </div>
+
+                            <div class="text-end mt-3">
+                                <button type="submit" class="btn btn-success">Send Invitations</button>
+                                <button type="button" class="btn btn-primary me-2" onclick="importEmails()">Import</button>
+                                <a href="/assessments" class="btn btn-secondary">Back to List</a>
+                            </div>
+
+
+                        </form>
+                    </div>
+                </div>
+                <!-- Candidate Selection Table -->
+                <div class="card shadow mt-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Select Candidates</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="candidateSearch">Search Candidates:</label>
+                            <input type="text" id="candidateSearch" class="form-control" placeholder="Search by name or email..." onkeyup="filterCandidates()">
+                        </div>
+                        <table class="table table-bordered mt-3" id="candidateTable">
+                            <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th class="text-center">
+                                    Select <input type="checkbox" id="selectAll">
+                                </th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="user : ${candidate}">
+                                <td th:text="${user.username}"></td>
+                                <td th:text="${user.email}"></td>
+                                <td class="text-center">
+                                    <input type="checkbox" class="email-checkbox" th:value="${user.email}">
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <script>
+                    function filterCandidates() {
+                        let input = document.getElementById("candidateSearch").value.toLowerCase();
+                        let table = document.getElementById("candidateTable");
+                        let rows = table.getElementsByTagName("tr");
+
+                        for (let i = 1; i < rows.length; i++) {
+                            let nameCell = rows[i].getElementsByTagName("td")[0];
+                            let emailCell = rows[i].getElementsByTagName("td")[1];
+
+                            if (nameCell || emailCell) {
+                                let nameText = nameCell.textContent.toLowerCase();
+                                let emailText = emailCell.textContent.toLowerCase();
+
+                                if (nameText.includes(input) || emailText.includes(input)) {
+                                    rows[i].style.display = "";
+                                } else {
+                                    rows[i].style.display = "none";
+                                }
+                            }
+                        }
+                    }
+                </script>
+            </div>
+        </div>
+    </main>
+
+    <div th:replace="~{fragments :: footer}" class="mt-auto"></div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const selectAllCheckbox = document.getElementById("selectAll");
+        const emailCheckboxes = document.querySelectorAll(".email-checkbox");
+        const emailTextarea = document.getElementById("id_emails");
+        const searchInput = document.getElementById("candidateSearch");
+
+        function updateSelectAllState() {
+            const visibleCheckboxes = document.querySelectorAll("#candidateTable tbody tr:not([style*='display: none']) .email-checkbox");
+            selectAllCheckbox.checked = visibleCheckboxes.length > 0 && Array.from(visibleCheckboxes).every(cb => cb.checked);
+        }
+
+        selectAllCheckbox.addEventListener("change", function () {
+            let emails = new Set(emailTextarea.value.split(",").map(e => e.trim()).filter(e => e !== ""));
+            const visibleCheckboxes = document.querySelectorAll("#candidateTable tbody tr:not([style*='display: none']) .email-checkbox");
+
+            visibleCheckboxes.forEach(checkbox => {
+                checkbox.checked = selectAllCheckbox.checked;
+                if (checkbox.checked) {
+                    emails.add(checkbox.value);
+                } else {
+                    emails.delete(checkbox.value);
+                }
+            });
+
+            emailTextarea.value = Array.from(emails).join(", ");
+        });
+
+        emailCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener("change", function () {
+                let emails = new Set(emailTextarea.value.split(",").map(e => e.trim()).filter(e => e !== ""));
+
+                if (this.checked) {
+                    emails.add(this.value);
+                } else {
+                    emails.delete(this.value);
+                }
+
+                emailTextarea.value = Array.from(emails).join(", ");
+                updateSelectAllState();
+            });
+        });
+
+        searchInput.addEventListener("keyup", function () {
+            let input = this.value.toLowerCase();
+            let rows = document.querySelectorAll("#candidateTable tbody tr");
+
+            rows.forEach(row => {
+                let nameCell = row.getElementsByTagName("td")[0];
+                let emailCell = row.getElementsByTagName("td")[1];
+
+                if (nameCell || emailCell) {
+                    let nameText = nameCell.textContent.toLowerCase();
+                    let emailText = emailCell.textContent.toLowerCase();
+
+                    if (nameText.includes(input) || emailText.includes(input)) {
+                        row.style.display = "";
+                    } else {
+                        row.style.display = "none";
+                    }
+                }
+            });
+
+            updateSelectAllState(); // Recalculate "Select All" state after filtering
+        });
+    });
+</script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.2/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.full.min.js"></script>
+
+
+<script>
+    function importEmails() {
+        const fileInput = document.getElementById('fileUpload');
+        const emailTextArea = document.getElementById('id_emails');
+
+        if (fileInput.files.length === 0) {
+            alert("Please select an Excel file!");
+            return;
+        }
+
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+
+        reader.onload = function (event) {
+            const data = new Uint8Array(event.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+            let emails = new Set(emailTextArea.value.split(",").map(e => e.trim()).filter(e => e !== ""));
+
+            rows.forEach(row => {
+                if (row[0] && typeof row[0] === 'string' && row[0].includes('@')) {
+                    emails.add(row[0].trim());
+                }
+            });
+
+            if (emails.size > 0) {
+                emailTextArea.value = Array.from(emails).join(", ");
+            } else {
+                alert("No valid emails found in the file.");
+            }
+        };
+
+        reader.readAsArrayBuffer(file);
+    }
+</script>
+<script>
+    document.getElementById('downloadExcelButton').addEventListener('click', function() {
+        // Tạo một workbook mới
+        var workbook = XLSX.utils.book_new();
+
+        // Dữ liệu mẫu
+        var data = [
+            ["Email", "Chỉ cần nhập vào cột A những email cần gửi là được"],
+            [ "nva@example.com"],
+            [ "ttb@example.com"]
+        ];
+
+        // Tạo một worksheet từ dữ liệu
+        var worksheet = XLSX.utils.aoa_to_sheet(data);
+
+        // Thêm worksheet vào workbook
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+
+        // Tạo một buffer và tải xuống tệp Excel
+        var excelBuffer = XLSX.write(workbook, {
+            bookType: 'xlsx',
+            type: 'array'
+        });
+
+        // Convert the buffer to a Blob and create a download link
+        var blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
+        var url = window.URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'Mau_Emails.xlsx';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+    });
+</script>
+
+</body>
+</html>

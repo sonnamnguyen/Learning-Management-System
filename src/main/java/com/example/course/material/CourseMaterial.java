@@ -22,10 +22,6 @@ public class CourseMaterial {
         ASSIGNMENTS, LABS, LECTURES, REFERENCES, ASSESSMENTS
     }
 
-    public enum CourseMaterialType {
-        DOCUMENT, TEXT, VIDEO, AUDIO
-    }
-
     @ManyToOne
     @JoinColumn(name = "section_id", nullable = true)
     @JsonBackReference
@@ -46,13 +42,6 @@ public class CourseMaterial {
     private Float expectDuration;
 
     private int wordCount;
-
-    @Enumerated(EnumType.STRING)
-    private CourseMaterialType courseMaterialType;
-
-    // content of ckeditor
-    @Column(columnDefinition = "TEXT")
-    private String content;
 
     @Override
     public String toString() {
