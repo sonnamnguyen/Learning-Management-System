@@ -24,7 +24,7 @@ public class ExerciseSession {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
 
-    private double averageScore;
+    private double averageScore = 0;
 
     @OneToMany(mappedBy = "exercise_session", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<StudentExerciseAttempt> studentExerciseAttempts;
