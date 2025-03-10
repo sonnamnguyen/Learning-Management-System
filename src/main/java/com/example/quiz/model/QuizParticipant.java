@@ -44,4 +44,8 @@ public class QuizParticipant {
     protected void onCreate(){
         createdAt = LocalDateTime.now();
     }
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "test_session_id")
+    private TestSession testSession;
 }

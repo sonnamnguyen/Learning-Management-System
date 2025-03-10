@@ -17,4 +17,5 @@ public class ExecutionResponse {
     double score;
     List<TestCaseResult> testCasesResults;
     String errorMessage;
+    long compileTimeMillis;
 }

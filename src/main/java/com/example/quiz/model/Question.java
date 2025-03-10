@@ -1,17 +1,13 @@
 package com.example.quiz.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.Entity;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import jakarta.persistence.*;
-
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @NoArgsConstructor
 @Getter
@@ -29,28 +25,18 @@ public class Question {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-//    @ManyToMany
-//    @JoinTable(
-//            name = "quiz_question",
-//            joinColumns = @JoinColumn(name = "question_id"),
-//            inverseJoinColumns = @JoinColumn(name = "quiz_id")
-//    )
-//    private Set<Quiz> quizzes = new HashSet<>();
 
     public void addAnswerOption(AnswerOption answerOption) {
         answerOptions.add(answerOption);
         answerOption.setQuestion(this);
     }
 
-//    @ManyToMany(mappedBy = "questions")
-//    private Set<Quiz> quizzes = new HashSet<>();
-
     @ManyToOne
     @JoinColumn(name = "quiz_id")
     @JsonIgnore
     private Quiz quizzes;
 
-    @Column(name = "question_no")
+    @Column(name = "question_no", nullable = false)
     private Integer questionNo;
 
     @Column(name = "question_text", nullable = false, columnDefinition = "TEXT")
@@ -62,12 +48,6 @@ public class Question {
 
     @Column(name = "points", nullable = false)
     private Integer points = 0;
-
-
-//    public void addQuiz(Quiz quiz) {
-//        this.quizzes.add(quiz);
-//        quiz.getQuestions().add(this);
-//    }
 
     @OneToMany(mappedBy = "question", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Answer> answers = new ArrayList<>();

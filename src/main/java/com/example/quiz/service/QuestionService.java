@@ -27,8 +27,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -36,7 +34,6 @@ import java.util.*;
 
 @Service
 public class QuestionService {
-
     @Autowired
     private QuizRepository quizRepository;
     @Autowired
@@ -308,15 +305,13 @@ public class QuestionService {
 
             Quiz quiz = new Quiz();
 
-//            try{
-//                Set<Quiz> quizzes = showAllQuizzesWithQuestions(courseName);
-//                quiz.setName(generateRandomService.generateRandomName(quizzes));
-//            } catch (Exception e) {
-//                quiz.setName(generateRandomService.generateRandomName(null));
-//            }
+            try{
+                Set<Quiz> quizzes = showAllQuizzesWithQuestions(courseName);
+                quiz.setName(generateRandomService.generateRandomName(quizzes));
+            } catch (Exception e) {
+                quiz.setName(generateRandomService.generateRandomName(null));
+            }
 
-            Set<Quiz> quizzes = quizRepository.findQuizByCourseName(courseName);
-            quiz.setName(generateRandomService.generateRandomName(quizzes));
             quiz.setDescription("This is an auto-created quiz!");
             quiz.setUpdatedAt(LocalDateTime.now());
             quiz.setStartTime(LocalDateTime.now().plusSeconds(1));
@@ -449,6 +444,33 @@ public class QuestionService {
         return createdQuizzes;
     }
 
+    public Question cloneQuestion(Long questionId, Quiz targetQuiz) {
+        Question originalQuestion = questionRepository.findById(questionId)
+                .orElseThrow(() -> new NotFoundException("Question not found"));
+
+        // Tạo bản sao của câu hỏi
+        Question clonedQuestion = new Question();
+        clonedQuestion.setQuestionNo(originalQuestion.getQuestionNo());
+        clonedQuestion.setQuestionText(originalQuestion.getQuestionText());
+        clonedQuestion.setQuestionType(originalQuestion.getQuestionType());
+        clonedQuestion.setPoints(originalQuestion.getPoints());
+        clonedQuestion.setQuizzes(targetQuiz); // Gán vào quiz mới
+
+        // Tạo bản sao của AnswerOption (nếu có)
+        List<AnswerOption> clonedOptions = new ArrayList<>();
+        for (AnswerOption option : originalQuestion.getAnswerOptions()) {
+            AnswerOption clonedOption = new AnswerOption();
+            clonedOption.setOptionText(option.getOptionText()); // Đổi từ setText() -> setOptionText()
+            clonedOption.setIsCorrect(option.getIsCorrect());
+            clonedOption.setQuestion(clonedQuestion);
+            clonedOption.setOptionLabel(option.getOptionLabel());
+
+            clonedOptions.add(clonedOption);
+        }
+        clonedQuestion.setAnswerOptions(clonedOptions);
+
+        return questionRepository.save(clonedQuestion);
+    }
     public List<Question> getQuestionsByAssessmentId(Long assessmentId) {
         return questionRepository.findQuestionsWithAnswersByAssessmentId(assessmentId);
     }

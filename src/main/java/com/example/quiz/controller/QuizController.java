@@ -2,15 +2,16 @@ package com.example.quiz.controller;
 
 import com.example.course.Course;
 import com.example.course.CourseService;
+import com.example.exception.NotFoundException;
 import com.example.quiz.Request.QuestionRequestDTO;
 import com.example.quiz.model.*;
-import com.example.quiz.repository.AnswerOptionRepository;
-import com.example.quiz.repository.QuizParticipantRepository;
+import com.example.quiz.repository.*;
 import com.example.quiz.service.QuestionService;
 import com.example.quiz.service.QuizParticipantService;
 import com.example.quiz.service.QuizService;
 import com.example.user.User;
 import com.example.user.UserService;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
@@ -20,23 +21,23 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.ByteArrayInputStream;
 import java.security.Principal;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
-
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import java.util.stream.Collectors;
 
 
 @Controller
@@ -51,7 +52,11 @@ public class QuizController {
     private QuizService quizService;
 
     @Autowired
-    private AnswerOptionRepository answerOptionRepository;
+    private TestSessionRepository testSessionRepository;
+
+    @Autowired
+    private ResultRepository resultRepository;
+
     @Autowired
     private QuestionService questionService;
 
@@ -59,7 +64,16 @@ public class QuizController {
     private CourseService courseService;
 
     @Autowired
+    private AnswerOptionRepository answerOptionRepository;
+
+    @Autowired
+    private AnswerRepository answerRepository;
+
+    @Autowired
     private UserService userService;
+
+    @Autowired
+    private QuestionRepository questionRepository;
 
     // Thêm model attribute chung cho tất cả các phương thức
     @ModelAttribute
@@ -231,11 +245,18 @@ public class QuizController {
         List<Quiz> quizes = quizService.findQuizzesIgnoreId(courseId, quiz.getId());
         List<Course> courses = courseService.getAllCourses();
 
+        List<Question> sortedQuestions = new ArrayList<>(quiz.getQuestions());
+        sortedQuestions.sort(Comparator.comparingInt(Question::getQuestionNo));
+        List<Question> questions = questionRepository.findByQuizzesOrderByQuestionNo(quiz);
+
+        model.addAttribute("questions", questions);
+        model.addAttribute("totalQuestions", questions.size());
         model.addAttribute("types", Question.QuestionType.values());
         model.addAttribute("question", new Question());
         model.addAttribute("quiz", quiz);
         model.addAttribute("quizes", quizes);
         model.addAttribute("courses", courses);
+        model.addAttribute("questions", sortedQuestions);
         model.addAttribute("content", "quizes/detail");
 
         return "layout";
@@ -259,7 +280,11 @@ public class QuizController {
     @GetMapping("/participants/{quizId}")
     public String getQuizParticipants(@PathVariable Long quizId, Model model) {
         List<QuizParticipant> participants = quizParticipantService.getParticipantsByQuiz(quizId);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+
+
         model.addAttribute("participants", participants);
+        model.addAttribute("formatter", formatter);
         model.addAttribute("content", "quizes/participants");
         return "layout";
     }
@@ -348,24 +373,54 @@ public class QuizController {
         return "layout";
     }
 
+    @GetMapping("/detail/{quizId}/view")
+    public String viewQuiz(@PathVariable("quizId") Long quizId, Principal principal, RedirectAttributes redirectAttributes, Model model) {
+        Quiz quiz = quizService.getQuizById(quizId);
+        User user = userService.findByUsername(principal.getName());
+//        return "redirect:/quizes";
+        Set<Question> questions = quiz.getQuestions(); // Lấy danh sách câu hỏi của Quiz
+        model.addAttribute("quizes", quiz);
+        model.addAttribute("questions", questions);
+        model.addAttribute("quizId", quizId);
+        model.addAttribute("content", "quizes/view-quiz");
+        return "layout";
+    }
+
     @PostMapping("/apply/{quizId}/submit")
-    public String submitQuiz(@PathVariable("quizId") Long quizId,
-                             @RequestParam Map<String, String> responses,
-                             Model model) {
+    public String submitQuiz(
+            @PathVariable("quizId") Long quizId,
+            @RequestParam(required = false) Long assessmentId,
+            @RequestParam Map<String, String> responses,
+            @RequestParam("elapsedTime") int elapsedTime,
+            @RequestParam("questionIds") List<String> questionId, // Thêm danh sách questionId từ form
+            Model model) {
+
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
         User user = userService.findByUsername(username);
 
-        // Tính điểm của người dùng
-        double score = quizService.calculateScore(quizId, responses);
+        Quiz quiz = quizService.findById(quizId)
+                .orElseThrow(() -> new IllegalArgumentException("Quiz not found!"));
 
-        List<Question> questions = quizService.totalQuestions(quizId);
+        if (quiz.getQuizCategory() != Quiz.QuizCategory.PRACTICE && assessmentId == null) {
+            throw new IllegalArgumentException("Assessment ID is required for EXAM quiz type");
+        }
+
+        int totalTime = quiz.getDuration();
+        int remainingTime = (totalTime * 60) - elapsedTime;
+
+        // Tính điểm với danh sách questionId
+        double score = quizService.calculateScore(questionId, assessmentId, responses, user);
+
+        List<Question> questions = questionRepository.findAllById(
+                questionId.stream().map(Long::parseLong).collect(Collectors.toList())
+        );
         int correctCount = 0;
-
         Map<Long, Long> selectedAnswers = new HashMap<>();
         Map<Long, Long> correctAnswers = new HashMap<>();
+        List<Answer> answerList = new ArrayList<>();
 
-        System.out.println("Dữ liệu nhận được từ form: " + responses); // Kiểm tra log
+        System.out.println("Dữ liệu nhận được từ form: " + responses);
 
         for (Question question : questions) {
             String selectedOptionId = responses.get("answers[" + question.getId() + "]");
@@ -390,13 +445,32 @@ public class QuizController {
                     answer.setQuestion(question);
                     answer.setAnswerText(selectedOption.getOptionText());
                     answer.setIsCorrect(selectedOption.getIsCorrect());
-
-                    // answerRepository.save(answer);
+                    answerList.add(answer);
+                    answerRepository.save(answer);
                 }
             }
         }
 
-        score = (double) correctCount / questions.size() * 10; // Thang điểm 10
+        TestSession testSession = testSessionRepository.findTopByUserOrderByStartTimeDesc(user);
+        if(testSession==null){
+            throw new NotFoundException("TestSession not found");
+        }
+
+        testSession.setAnswers(answerList);
+        testSession.setEndTime(LocalDateTime.now());
+        testSessionRepository.save(testSession);
+
+        QuizParticipant participant = quizParticipantRepository.findByQuizIdAndUserId(quizId, user.getId());
+        if (participant == null) {
+            participant = new QuizParticipant();
+            participant.setQuiz(quiz);
+            participant.setUser(user);
+        }
+        participant.setTestSession(testSession);
+        participant.setAttemptUsed(participant.getAttemptUsed() + 1);
+        participant.setTimeStart(testSession.getStartTime());
+        participant.setTimeEnd(testSession.getEndTime());
+        quizParticipantRepository.save(participant);
 
         model.addAttribute("correctAnswers", correctCount);
         model.addAttribute("selectedAnswers", selectedAnswers);
@@ -405,6 +479,7 @@ public class QuizController {
         model.addAttribute("score", score);
         model.addAttribute("user", user);
         model.addAttribute("totalQuestions", questions.size());
+        model.addAttribute("remainingTime", remainingTime);
         model.addAttribute("content", "quizes/result");
 
         return "layout";
@@ -426,6 +501,24 @@ public class QuizController {
         model.addAttribute("content", "quizes/do-quiz");
 
         return "layout";
+    }
+
+    @PutMapping("/detail/{quizId}/questions/{questionId}/move")
+    public ResponseEntity<String> moveQuestion(
+            @PathVariable Long quizId,
+            @PathVariable Long questionId,
+            @RequestParam int newPosition) {
+
+        try {
+            quizService.moveQuestion(quizId, questionId, newPosition);
+            return ResponseEntity.ok("Question position updated successfully");
+        } catch (IllegalArgumentException | EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while updating question position.");
+        }
+
     }
 
 }

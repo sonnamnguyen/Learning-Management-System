@@ -48,5 +48,7 @@ public interface AssessmentRepository extends PagingAndSortingRepository<Assessm
 
     boolean existsByTitleAndAssessmentTypeId(String title, Long assessmentTypeId);
 
+    List<Assessment> findByTitleContaining(String title); // Removed Course parameter
+
 }
 
