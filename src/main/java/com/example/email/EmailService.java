@@ -1,35 +1,35 @@
 package com.example.email;
 
+import com.example.assessment.model.Assessment;
+import com.example.assessment.repository.AssessmentRepository;
 import com.example.assessment.service.AssessmentService;
-import com.google.common.hash.Hashing;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import org.hashids.Hashids;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.MailException;
 import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.List;
-import java.util.concurrent.ConcurrentLinkedDeque;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 public class EmailService {
     private final JavaMailSender mailSender;
-    private final AssessmentService assessmentService;
+
+    @Autowired
+    AssessmentRepository assessmentRepository;
 
     // Declaration of email hasher
     private final String EMAIL_SECRET_KEY = "SuGiaBienGioi123";
@@ -44,15 +44,34 @@ public class EmailService {
     public String abc(){
         return "abc";
     }
+
+    private Hashids hashids = new Hashids("BaTramBaiCodeThieuNhi", 32);
+
+    public void increaseInvitedCount(long assessmentId, int count) {
+        Optional<Assessment> assessmentOpt = assessmentRepository.findById(assessmentId);
+        if (assessmentOpt.isPresent()) {
+            Assessment assessment = assessmentOpt.get();
+            assessment.setInvitedCount(assessment.getInvitedCount() + count); // Increase by batch size
+            assessmentRepository.save(assessment);
+        }
+    }
+    public String encodeId(long id) {
+        return hashids.encode(id);
+    }
     /**
      * Sends a single invitation email to multiple recipients.
      */
     @Async
-    public void sendAssessmentInvite(List<String> emailList, long assessmentId) {
+    public void sendAssessmentInvite(List<String> emailList, long assessmentId, LocalDateTime expirationDate) {
         if (emailList.isEmpty()) return;
 
-        String encodedId = assessmentService.encodeId(assessmentId);
-        assessmentService.increaseInvitedCount(assessmentId, emailList.size());
+        String encodedId = encodeId(assessmentId);
+        increaseInvitedCount(assessmentId, emailList.size());
+
+        // Convert expiration date to GMT+7
+        ZoneId gmtPlus7 = ZoneId.of("Asia/Ho_Chi_Minh");
+        ZonedDateTime nowGmt7 = ZonedDateTime.now(gmtPlus7);
+        ZonedDateTime expirationGmt7 = expirationDate.atZone(gmtPlus7);
 
         // Generate assessment link
         String assessmentLink = inviteUrlHeader + encodedId + "/verify-email";
@@ -61,33 +80,178 @@ public class EmailService {
         String[] recipients = emailList.toArray(new String[0]);
         List<String> recipientList = Arrays.asList(recipients);
 
-        // Send the email
-        sendHtmlEmails(recipientList, "Assessment Invitation", generateAssessmentEmailBody(assessmentLink));
+        // Check if the expiration is in less than 24 hours
+        long hoursUntilExpiration = Duration.between(nowGmt7, expirationGmt7).toHours();
+
+        if (hoursUntilExpiration < 24) {
+            // Send reminder email
+            sendHtmlEmails(recipientList, "Assessment Reminder", generateUrgentAssessmentEmailBody(assessmentLink, expirationDate));
+        } else {
+            // Send normal invitation email
+            sendHtmlEmails(recipientList, "Assessment Invitation", generateAssessmentEmailBody(assessmentLink, expirationDate));
+        }
+    }
+
+    @Async
+    public void sendReminderEmail(String email, long assessmentId, LocalDateTime expirationDate) {
+        if (email == null || email.isEmpty()) return;
+
+        String encodedId = encodeId(assessmentId);
+        String assessmentLink = inviteUrlHeader + encodedId + "/verify-email";
+
+        sendHtmlEmails(Collections.singletonList(email), "Assessment Reminder",
+                generateReminderEmailBody(assessmentLink, expirationDate));
+    }
+    @Async
+    public void sendUrgentAssessmentInvite(List<String> emailList, long assessmentId, LocalDateTime expirationDate) {
+        if (emailList.isEmpty()) return;
+
+        String encodedId = encodeId(assessmentId);
+        increaseInvitedCount(assessmentId, emailList.size());
+
+        // Convert expiration date to GMT+7
+        ZoneId gmtPlus7 = ZoneId.of("Asia/Ho_Chi_Minh");
+        ZonedDateTime expirationGmt7 = expirationDate.atZone(gmtPlus7);
+
+        // Generate assessment link
+        String assessmentLink = inviteUrlHeader + encodedId + "/verify-email";
+
+        // Convert list to array for sending
+        List<String> recipientList = new ArrayList<>(emailList);
+
+        // Send urgent assessment invitation
+        sendHtmlEmails(recipientList, "⚠️ Urgent: Complete Your Assessment Now",
+                generateUrgentAssessmentEmailBody(assessmentLink, expirationDate));
     }
 
     /**
+     * Generates an urgent assessment email when the expiration is under 24 hours.
+     */
+    private String generateUrgentAssessmentEmailBody(String assessmentLink, LocalDateTime expirationGmt7) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String formattedExpirationDate = expirationGmt7.format(formatter);
+
+        return "<html>"
+                + "<head>"
+                + "<style>"
+                + "body { font-family: Arial, sans-serif; background-color: #fff3cd; color: #856404; padding: 20px; }"
+                + ".container { width: 100%; max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 8px; padding: 20px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }"
+                + ".header { text-align: center; color: #d9534f; font-size: 22px; font-weight: bold; }"
+                + ".content { margin-top: 20px; font-size: 16px; color: #000000; text-align: center; }"
+                + ".button-container { margin-top: 20px; text-align: center; }"
+                + ".invite-button { background-color: #d9534f; color: white; padding: 12px 20px; text-decoration: none; font-size: 16px; font-weight: bold; border-radius: 6px; display: inline-block; }"
+                + ".invite-button:hover { background-color: #c9302c; }"
+                + ".footer { margin-top: 30px; text-align: left; font-size: 14px; color: #888; }"
+                + "</style>"
+                + "</head>"
+                + "<body>"
+                + "<div class='container'>"
+                + "<div class='header'>⚠️ Urgent: Assessment Closing Soon!</div>"
+                + "<div class='content'>"
+                + "<p>Hello,</p>"
+                + "<p>You have less than 24 hours left to complete your assessment.</p>"
+                + "<p><strong>Expiration Time: " + formattedExpirationDate + " (GMT+7)</strong></p>"
+                + "<p>Click below to take the assessment before it's too late!</p>"
+                + "<div class='button-container'>"
+                + "<a href='" + assessmentLink + "' class='invite-button'>Complete Now</a>"
+                + "</div>"
+                + "<p>If you have already completed this assessment, you may ignore this message.</p>"
+                + "</div>"
+                + "<div class='footer'>"
+                + "<p>If you have any questions, feel free to contact our support team.</p>"
+                + "<p>PhucTH50@fpt.com - Senior IT</p>"
+                + "<p>Thank you!</p>"
+                + "</div>"
+                + "</div>"
+                + "</body>"
+                + "</html>";
+    }
+
+    /**
+     * Generates a reminder email if the assessment expires in less than 24 hours.
+     */
+    private String generateReminderEmailBody(String assessmentLink, LocalDateTime expirationGmt7) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String formattedExpirationDate = expirationGmt7.format(formatter);
+
+        return "<html>"
+                + "<head>"
+                + "<style>"
+                + "body { font-family: Arial, sans-serif; background-color: #fff3cd; color: #856404; padding: 20px; }"
+                + ".container { width: 100%; max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 8px; padding: 20px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }"
+                + ".header { text-align: center; color: #d9534f; font-size: 22px; font-weight: bold; }"
+                + ".content { margin-top: 20px; font-size: 16px; color: #000000; text-align: center; }"
+                + ".button-container { margin-top: 20px; text-align: center; }"
+                + ".invite-button { background-color: #d9534f; color: white; padding: 12px 20px; text-decoration: none; font-size: 16px; font-weight: bold; border-radius: 6px; display: inline-block; }"
+                + ".invite-button:hover { background-color: #c9302c; }"
+                + ".footer { margin-top: 30px; text-align: left; font-size: 14px; color: #888; }"
+                + "</style>"
+                + "</head>"
+                + "<body>"
+                + "<div class='container'>"
+                + "<div class='header'>⚠️ Assessment Expiry Reminder</div>"
+                + "<div class='content'>"
+                + "<p>Hello,</p>"
+                + "<p>Your assessment is about to expire soon!</p>"
+                + "<p><strong>Expiration Time: " + formattedExpirationDate + " (GMT+7)</strong></p>"
+                + "<p>Please complete it as soon as possible.</p>"
+                + "<div class='button-container'>"
+                + "<a href='" + assessmentLink + "' class='invite-button'>Complete Now</a>"
+                + "</div>"
+                + "<p>If you have already completed this assessment, you may ignore this message.</p>"
+                + "</div>"
+                + "<div class='footer'>"
+                + "<p>If you have any questions, feel free to contact our support team.</p>"
+                + "<p>PhucTH50@fpt.com - Senior IT</p>"
+                + "<p>Thank you!</p>"
+                + "</div>"
+                + "</div>"
+                + "</body>"
+                + "</html>";
+    }
+    /**
      * Generates the assessment invitation email body with HTML.
      */
-    private String generateAssessmentEmailBody(String assessmentLink) {
+    private String generateAssessmentEmailBody(String assessmentLink, LocalDateTime expirationDate) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String formattedExpirationDate = expirationDate.format(formatter);
+
         return "<html>"
-                + "<head><style>"
-                + "body { font-family: Arial, sans-serif; color: #333; background-color: #f4f4f4; padding: 0; margin: 0; }"
-                + ".email-container { background-color: white; padding: 30px; border-radius: 8px; max-width: 480px; margin: 20px auto; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }"
-                + ".email-header { background-color: #007bff; color: white; padding: 15px; text-align: center; font-size: 18px; font-weight: bold; border-radius: 8px 8px 0 0; }"
-                + ".email-body { padding: 20px; text-align: center; }"
-                + ".invite-button { background-color: #007bff; color: white; padding: 12px 18px; text-decoration: none; font-size: 16px; font-weight: bold; border-radius: 6px; display: inline-block; }"
+                + "<head>"
+                + "<style>"
+                + "body { font-family: Arial, sans-serif; background-color: #f4f4f9; color: #333; padding: 20px; }"
+                + ".container { width: 100%; max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 8px; padding: 20px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }"
+                + ".header { text-align: center; color: #007bff; font-size: 22px; font-weight: bold; }"
+                + ".content { margin-top: 20px; font-size: 16px; color: #000000; text-align: center; }"
+                + ".button-container { margin-top: 20px; text-align: center; }"
+                + ".invite-button { background-color: #007bff; color: white; padding: 12px 20px; text-decoration: none; font-size: 16px; font-weight: bold; border-radius: 6px; display: inline-block; }"
                 + ".invite-button:hover { background-color: #0056b3; }"
-                + "</style></head>"
-                + "<body><div class='email-container'>"
-                + "<div class='email-header'>Assessment Invitation</div>"
-                + "<div class='email-body'>"
+                + ".footer { margin-top: 30px; text-align: left; font-size: 14px; color: #888; }"
+                + "</style>"
+                + "</head>"
+                + "<body>"
+                + "<div class='container'>"
+                + "<div class='header'>Assessment Invitation</div>"
+                + "<div class='content'>"
                 + "<p>Hello,</p>"
                 + "<p>You have been invited to participate in an assessment.</p>"
                 + "<p>Click the button below to start:</p>"
-                + "<p><a href='" + assessmentLink + "' class='invite-button'>Start Assessment</a></p>"
+                + "<div class='button-container'>"
+                + "<a href='" + assessmentLink + "' class='invite-button'>Start Assessment</a>"
+                + "</div>"
+                + "<p><strong>Note:</strong> This invitation will expire on <strong>" + formattedExpirationDate + " (GMT 7+) </strong>.</p>"
                 + "<p>If you were not expecting this invitation, please ignore this email.</p>"
-                + "</div></div></body></html>";
+                + "</div>"
+                + "<div class='footer'>"
+                + "<p>If you have any questions, feel free to contact our support team.</p>"
+                + "<p>PhucTH50@fpt.com - Senior IT</p>"
+                + "<p>Thank you!</p>"
+                + "</div>"
+                + "</div>"
+                + "</body>"
+                + "</html>";
     }
+
 
     /**
      * Sends an HTML email to a recipient.

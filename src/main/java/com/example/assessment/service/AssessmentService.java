@@ -239,6 +239,14 @@ public class AssessmentService {
 
         return new ByteArrayInputStream(out.toByteArray());
     }
+    public void increaseInvitedCount(long assessmentId, int count) {
+        Optional<Assessment> assessmentOpt = assessmentRepository.findById(assessmentId);
+        if (assessmentOpt.isPresent()) {
+            Assessment assessment = assessmentOpt.get();
+            assessment.setInvitedCount(assessment.getInvitedCount() + count); // Increase by batch size
+            assessmentRepository.save(assessment);
+        }
+    }
 
     /**
      * Stores or updates the invited emails in the PostgreSQL LOB column and inserts into the invited_candidate table.

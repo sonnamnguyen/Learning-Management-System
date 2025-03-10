@@ -795,7 +795,7 @@ public class AssessmentController {
         int scoreExercise = (int) Math.round(rawScoreExercises);
         session.removeAttribute("exerciseSession");
         // Lưu kết quả attempt
-        StudentAssessmentAttempt attempt = studentAssessmentAttemptService.saveTestAttempt(attemptId, elapsedTime, quizScore, scoreExercise);
+        StudentAssessmentAttempt attempt = studentAssessmentAttemptService.saveTestAttempt(attemptId, elapsedTime, quizScore, scoreExercise, proctoringData);
         model.addAttribute("timeTaken", elapsedTime);
         return "assessments/submitAssessment";
     }
