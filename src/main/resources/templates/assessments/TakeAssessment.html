@@ -155,10 +155,7 @@
                                                 <div class="form-check">
                                                     <input class="form-check-input" type="radio"
                                                            th:name="'answers[' + ${question.id} + ']'"
-                                                           th:value="${option.id}"
-                                                           th:id="'option_' + ${question.id} + '_' + ${option.id}">
                                                     <label class="form-check-label"
-                                                           th:for="'option_' + ${question.id} + '_' + ${option.id}"
                                                            th:text="${option.optionText}"></label>
                                                 </div>
                                             </li>
@@ -180,7 +177,6 @@
                                             <!-- Hiển thị số thứ tự bắt đầu từ 1 -->
                                             <span th:text="'Exercise ' + (${stat.index} + 1) + ': '"></span>
                                             <!--redirect to coding site-->
-                                            <a th:href="@{/judgement/code_space/{id}(id=${exercise.id})}"
                                                th:text="${exercise.name}" target="_blank"></a>
                                         </h6>
                                         <input type="checkbox" class="form-check-input me-2"

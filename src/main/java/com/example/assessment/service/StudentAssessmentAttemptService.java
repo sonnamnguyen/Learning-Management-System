@@ -77,8 +77,7 @@ public class StudentAssessmentAttemptService {
         return savedAttempt;
     }
 
-
-    public StudentAssessmentAttempt saveTestAttempt(Long attemptId, int timeTaken, int quizScore, int exerciseScore, JsonNode proctoringData) {
+    public StudentAssessmentAttempt saveTestAttempt(Long attemptId, int timeTaken, int quizScore,int scoreEx, int exerciseScore, JsonNode proctoringData) {
         StudentAssessmentAttempt testAttempt = repository.findById(attemptId).orElseThrow(()
                 -> new RuntimeException("Attempt not found!"));
         Assessment assessment = assessmentRepository.findById(testAttempt.getAssessment().getId())
@@ -88,7 +87,7 @@ public class StudentAssessmentAttemptService {
         double scoreAss = (quizScore * quizRatio / 100.0) + (exerciseScore * exerciseRatio / 100.0);
         testAttempt.setDuration(timeTaken);
         testAttempt.setScoreQuiz(quizScore);
-        testAttempt.setScoreEx(0);
+        testAttempt.setScoreEx(scoreEx);
         testAttempt.setScoreAss((int) Math.round(scoreAss));
         testAttempt.setSubmitted(true);
         testAttempt.setProctoringData(proctoringData);

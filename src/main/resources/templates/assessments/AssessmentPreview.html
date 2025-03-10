@@ -125,7 +125,8 @@
             <div class="flex-grow-1">
                 <div style="height: 100%;">
                     <!-- Display Questions -->
-                    <div class="mb-4" th:if="${questions != null and not #lists.isEmpty(questions)}">
+
+                        <div class="mb-4" th:if="${questions != null and not #lists.isEmpty(questions)}">
                         <h3 style="margin-top: 10px">Questions</h3>
                         <div class="border rounded p-3"
                              style="max-height: 80vh; overflow-y: auto;">
@@ -172,7 +173,7 @@
                                         <!-- Hiển thị số thứ tự bắt đầu từ 1 -->
                                         <span th:text="'Exercise ' + (${stat.index} + 1) + ': '"></span>
                                         <!--redirect to coding site-->
-                                        <a th:href="@{/judgement/code_space/{id}(id=${exercise.id})}"
+                                        <a th:href="@{/judgement/{type}/code_space/{id}(type='preview', id=${exercise.id})}"
                                            th:text="${exercise.name}" target="_blank"></a>
                                     </h6>
                                     <input type="checkbox" class="form-check-input me-2"

@@ -3,12 +3,6 @@ FROM openjdk:21-jdk-slim
 
 # Cập nhật danh sách gói và cài đặt các dependencies
 RUN apt-get update && apt-get install -y \
-    libssl-dev \
-    libbz2-dev \
-    libreadline-dev \
-    libsqlite3-dev \
-    libffi-dev \
-    zlib1g-dev \
     build-essential \
     gcc \
     wget \
@@ -28,15 +22,6 @@ RUN wget https://dotnetcli.azureedge.net/dotnet/Sdk/9.0.200/dotnet-sdk-9.0.200-l
     ln -s /usr/share/dotnet/dotnet /usr/local/bin/dotnet && \
     rm dotnet-sdk-9.0.200-linux-x64.tar.gz
 
-# Tải xuống, biên dịch và cài đặt Python 3.13
-#RUN wget https://www.python.org/ftp/python/3.13.1/Python-3.13.1.tar.xz && \
-#    tar -xf Python-3.13.1.tar.xz && \
-#    cd Python-3.13.1 && \
-#    ./configure --enable-optimizations && \
-#    make -j$(nproc) && \
-#    make altinstall && \
-#    cd .. && \
-#    rm -rf Python-3.13.1 Python-3.13.1.tar.xz
 # Chỉ định thư mục làm việc trong container
 WORKDIR /app
 

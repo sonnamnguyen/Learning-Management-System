@@ -3,8 +3,10 @@ package com.example.code_judgement.c_judge;
 import com.example.code_judgement.CodeExecutionService;
 import com.example.code_judgement.ExecutionResponse;
 import com.example.student_exercise_attemp.model.Exercise;
+import com.example.student_exercise_attemp.model.ExerciseSession;
 import com.example.student_exercise_attemp.service.ExerciseService;
 import com.example.testcase.TestCase;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -40,7 +42,7 @@ public class CJudgementController {
             return "judgement/precheck_judge/precheck_code";
         }
         try{
-            ExecutionResponse response = codeExecutionService.executeCodeOptimized(false, code,testCases,new CJudgementService(), exercise);
+            ExecutionResponse response = codeExecutionService.executeCodeOptimized("precheck", code,testCases,new CJudgementService(), exercise, null);
             if(response.getErrorMessage()!=null){
                 model.addAttribute("error", response.getErrorMessage());
                 return "judgement/precheck_judge/precheck_code";
@@ -69,6 +71,8 @@ public class CJudgementController {
     @PostMapping("/submit_exercise")
     public String submitExercise(@RequestParam("exerciseId") Long exerciseId,
                                  @RequestParam("code") String code,
+                                 @RequestParam("type") String type,
+                                 HttpSession session,
                                  Model model) {
         // Lấy bài tập và test cases
         Exercise exercise = exerciseService.getExerciseById(exerciseId)
@@ -82,7 +86,8 @@ public class CJudgementController {
             return "judgement/code_space";
         }
         try{
-            ExecutionResponse response = codeExecutionService.executeCodeOptimized(true, code,testCases,new CJudgementService(), exercise);
+            ExerciseSession exerciseSession = (ExerciseSession) session.getAttribute("exerciseSession");
+            ExecutionResponse response = codeExecutionService.executeCodeOptimized(type, code,testCases,new CJudgementService(), exercise, exerciseSession);
             // Đưa kết quả vào model để hiển thị trong view
             model.addAttribute("exercise", exercise);
             model.addAttribute("code", code);
@@ -95,6 +100,7 @@ public class CJudgementController {
                 return "judgement/result_exercise";
             }
             model.addAttribute("testResults", response.getTestCasesResults());
+            model.addAttribute("type", type);
             return "judgement/result_exercise";
         }
         catch (Exception e){

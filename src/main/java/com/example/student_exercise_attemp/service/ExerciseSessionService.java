@@ -48,7 +48,7 @@ public class ExerciseSessionService {
         for(StudentExerciseAttempt studentExerciseAttempt : studentExerciseAttempts){
             sum += studentExerciseAttempt.getScore_exercise();
         }
-        averageScore = sum / studentExerciseAttempts.size();    
+        averageScore = sum / studentExerciseAttempts.size();
         exerciseSession.setAverageScore(averageScore);
         exerciseSessionRepository.save(exerciseSession);
         return averageScore;

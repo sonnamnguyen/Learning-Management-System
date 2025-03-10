@@ -42,3 +42,5 @@ logs/**
 
 *.mv.db
 logs/*.log
+
+lms_project/nginx/
