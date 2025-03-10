@@ -3,10 +3,8 @@ package com.example.code_judgement.sql_judge;
 import com.example.code_judgement.CodeExecutionService;
 import com.example.code_judgement.ExecutionResponse;
 import com.example.student_exercise_attemp.model.Exercise;
-import com.example.student_exercise_attemp.model.ExerciseSession;
 import com.example.student_exercise_attemp.service.ExerciseService;
 import com.example.testcase.TestCase;
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -44,7 +42,7 @@ public class SqlJudgementController {
             ExecutionResponse response;
             // Nếu ngôn ngữ là SQL, chuyển qua xử lý SQL tại tầng service
             if ("sql".equalsIgnoreCase(exercise.getLanguage().getLanguage())) {
-                response = sqlJudgementService.executeSQLCode("precheck", exercise, code, testCases, null);
+                response = sqlJudgementService.executeSQLCode(false, exercise, code, testCases);
             } else {
                 model.addAttribute("output", "<strong>No test case defined for this exercise</strong>");
                 model.addAttribute("exercise", exercise);
@@ -70,8 +68,6 @@ public class SqlJudgementController {
     @PostMapping("/submit_exercise")
     public String submitExercise(@RequestParam("exerciseId") Long exerciseId,
                                  @RequestParam("code") String code,
-                                 @RequestParam("type") String type,
-                                 HttpSession session,
                                  Model model) {
         Exercise exercise = exerciseService.getExerciseById(exerciseId)
                 .orElseThrow(()-> new IllegalArgumentException("Invalid exercise ID"));
@@ -86,8 +82,7 @@ public class SqlJudgementController {
             ExecutionResponse response;
             // Nếu ngôn ngữ là SQL, chuyển qua xử lý SQL tại tầng service
             if ("sql".equalsIgnoreCase(exercise.getLanguage().getLanguage())) {
-                ExerciseSession exerciseSession = (ExerciseSession) session.getAttribute("exerciseSession");
-                response = sqlJudgementService.executeSQLCode(type, exercise, code, testCases, exerciseSession);
+                response = sqlJudgementService.executeSQLCode(true, exercise, code, testCases);
             } else {
                 model.addAttribute("output", "<strong>No test case defined for this exercise</strong>");
                 model.addAttribute("exercise", exercise);
@@ -100,8 +95,8 @@ public class SqlJudgementController {
             model.addAttribute("testResults", response.getTestCasesResults());
             model.addAttribute("failed", response.getTotal() - response.getPassed());
             model.addAttribute("score", response.getScore());
-            model.addAttribute("type", type);
-
+            model.addAttribute("output", "<p>You passed <strong th:text=\"${passed}\">0</strong> out of <strong th:text=\"${total}\">0</strong>\n" +
+                                                                "test cases.</p>");
             return "judgement/result_exercise";
         } catch (Exception e) {
             System.out.println(e.getMessage());

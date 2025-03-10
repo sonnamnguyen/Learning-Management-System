@@ -59,6 +59,11 @@
             }
         }
 
+        /* Prevent COPY action */
+        .question-text, .form-check-label {
+            user-select: none;
+        }
+
     </style>
 </head>
 <body>
@@ -150,8 +155,10 @@
                                                 <div class="form-check">
                                                     <input class="form-check-input" type="radio"
                                                            th:name="'answers[' + ${question.id} + ']'"
-                                                           th:value="${option.id}">
+                                                           th:value="${option.id}"
+                                                           th:id="'option_' + ${question.id} + '_' + ${option.id}">
                                                     <label class="form-check-label"
+                                                           th:for="'option_' + ${question.id} + '_' + ${option.id}"
                                                            th:text="${option.optionText}"></label>
                                                 </div>
                                             </li>
@@ -173,7 +180,7 @@
                                             <!-- Hiển thị số thứ tự bắt đầu từ 1 -->
                                             <span th:text="'Exercise ' + (${stat.index} + 1) + ': '"></span>
                                             <!--redirect to coding site-->
-                                            <a th:href="@{/judgement/{type}/code_space/{id}(type='assessment', id=${exercise.id})}"
+                                            <a th:href="@{/judgement/code_space/{id}(id=${exercise.id})}"
                                                th:text="${exercise.name}" target="_blank"></a>
                                         </h6>
                                         <input type="checkbox" class="form-check-input me-2"
@@ -185,7 +192,6 @@
                         </div>
                     </div>
                 </div>
-
                 <!-- Hidden input để gửi attemptId và elapsedTime -->
                 <input type="hidden" name="attemptId" th:value="${attempt.id}">
                 <input type="hidden" name="elapsedTime" id="elapsedTime">
@@ -262,6 +268,59 @@
             }
         });
     });
+</script>
+
+
+<!--Cheating check-->
+<script>
+    // Initial tabLeaveCount from sessionStorage
+    let tabLeaveCount = sessionStorage.getItem("tabLeaveCount")
+        ? parseInt(sessionStorage.getItem("tabLeaveCount"), 10)
+        : 0;
+
+    // Detect when user leaves/switches tab
+    document.addEventListener("visibilitychange", function() {
+        if (document.hidden) {
+            tabLeaveCount++;
+            sessionStorage.setItem("tabLeaveCount", tabLeaveCount.toString());
+        }
+    })
+
+    // Prevent copy question or answer action
+    document.addEventListener("DOMContentLoaded", function() {
+        let elements = document.querySelectorAll(".question-text, .form-check-label");
+
+        elements.forEach(element => {
+            element.addEventListener("copy", function(e) {
+                e.preventDefault();
+                alert('Copying is not allowed!');
+            })
+
+            element.addEventListener("contextmenu", function(e) {
+                e.preventDefault();
+            })
+
+            element.addEventListener("selectstart", function(e) {
+                e.preventDefault();
+            })
+        })
+
+        document.addEventListener("keydown", function (e) {
+            if ((e.ctrlKey || e.metaKey) && (e.key === "c" || e.key === "x" || e.key === "a")) {
+                e.preventDefault();
+                alert("Copying is not allowed!");
+            }
+        });
+    })
+
+    // Attach tabLeaveCount to form before submission
+    document.getElementById("form-assessment").addEventListener("submit", function() {
+        let input = document.createElement("input");
+        input.type = "hidden";
+        input.name = "tabLeaveCount";
+        input.value = tabLeaveCount.toString();
+        this.appendChild(input);
+    })
 </script>
 </body>
 </html>

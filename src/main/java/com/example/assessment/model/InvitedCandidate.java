@@ -36,9 +36,6 @@ public class InvitedCandidate {
         this.expirationDate = this.invitationDate.plusDays(days);
     }
 
-    @Column(nullable = false)
-    private boolean hasAssessed = false; // New attribute to track completion
-
     // Getters and Setters
     // Omitted for brevity
 }

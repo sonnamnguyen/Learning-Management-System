@@ -45,12 +45,12 @@ public class EmailController {
             return "invite";  // Return back to the invite page with error
         }
 
-        // Store invited emails with full date-time values
-        assessmentService.storeInvitedEmail(assessmentId, emailList, invitationDate, expirationDate);
 
         // Send invitations
         String assessmentLink = inviteUrlHeader + assessmentService.encodeId(assessmentId) + "/take";
-        emailService.sendAssessmentInvite(emailList, assessmentId, expirationDate);
+        emailService.sendAssessmentInvite(emailList, assessmentId);
+        // Store invited emails with full date-time values
+        assessmentService.storeInvitedEmail(assessmentId, emailList, invitationDate, expirationDate);
 
         model.addAttribute("message", "Invitations sent successfully!");
         return "redirect:/assessments";

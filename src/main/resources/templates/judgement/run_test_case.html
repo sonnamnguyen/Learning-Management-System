@@ -95,7 +95,6 @@
     <div class="container">
         <input type="hidden" id="exerciseId" th:value="${exerciseId}">
         <input type="hidden" id="code" th:value="${code}">
-        <input type="hidden" id="type" th:value="${type}">
         <h1>Solution is being evaluated, please stay on this page.</h1>
         <div id="testCases"></div>
         <div class="status-box" id="statusMessage">
@@ -150,7 +149,6 @@
         setTimeout(function () {
             const exerciseId = document.getElementById("exerciseId").value;
             const code = document.getElementById("code").value;
-            const type = document.getElementById('type').value;
             let form = document.createElement('form');
             form.method = 'POST';
             form.action = "/judgement/submit_exercise";
@@ -158,7 +156,6 @@
             let params = {
                 exerciseId: exerciseId,
                 code: code,
-                type: type
             };
 
             for (let key in params) {

@@ -53,13 +53,13 @@
 
             <!--            Report-->
             <div class="col-md-9">
-                <!--                Score section-->
+                <!--                Score and Cheating section-->
                 <h4 id="score-point" style="margin-left: -10px; font-size: 1.25rem; margin-bottom: 2rem;">
                     Score
                 </h4>
                 <div class="row">
                     <!--                    Score card-->
-                    <div class="col-md-12">
+                    <div class="col-md-6">
                         <div class="card shadow-sm h-100">
                             <!--                            Card header-->
                             <div class="card-header d-flex justify-content-between align-items-center"
@@ -105,6 +105,71 @@
                                     <span style="color: #6c757d; font-size: 0.9rem;">N/A</span>
                                 </div>
 
+                            </div>
+                        </div>
+                    </div>
+                    <!--                    Cheating card-->
+                    <div class="col-md-6">
+                        <div class="card shadow-sm">
+                            <div class="card-header d-flex justify-content-between align-items-center"
+                                 style="background-color: #6c757d; color: white; font-weight: bold; text-align: center; padding: 10px;">
+                                <span style="width: 20%;">Cheating</span>
+                                <span style="width: 20%; font-weight: bold;">
+                                    Overall
+                                    <br>
+                                    No issues
+                                </span>
+                            </div>
+                            <div class="card-body">
+                                <!--                                Leaving tab-->
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span>
+                                        <i class="fas fa-external-link-alt me-2"></i>
+                                        Leaving tab
+                                    </span>
+                                    <span style="color: #6c757d; font-size: 0.9rem;" >
+                                        <span th:text="${tabLeaveCount}"></span> times
+                                    </span>
+                                </div>
+                                <hr class="my-1">
+                                <!--                                Pasted check-->
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span>
+                                        <i class="fas fa-cut me-2"></i>
+                                        Pasted
+                                        <span style="font-style: italic; color: #6c757d;">from external sources</span>
+                                    </span>
+                                    <span style="color: #6c757d; font-size: 0.9rem;">Not detected</span>
+                                </div>
+                                <hr class="my-1">
+                                <!--                                Copied check-->
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span>
+                                        <i class="bi bi-clipboard-check-fill"></i>
+                                        Copied
+                                        <span style="font-style: italic; color: #6c757d;">from internal sources</span>
+                                    </span>
+                                    <span style="color: #6c757d; font-size: 0.9rem;">Not detected</span>
+                                </div>
+                                <hr class="my-1">
+                                <!--                                AI usage-->
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span>
+                                        <i class="fas fa-robot me-2"></i>
+                                        AI usage
+                                    </span>
+                                    <span style="color: #6c757d; font-size: 0.9rem;">Not detected</span>
+                                </div>
+                                <hr class="my-1">
+                                <!--                                Suspicious activity-->
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span>
+                                        <i class="fas fa-user-secret me-2"></i>
+                                        Suspicious activity
+                                        <i class="fas fa-info-circle" style="color: #6c757d;"></i>
+                                    </span>
+                                    <span style="color: #6c757d; font-size: 0.9rem;">Not detected</span>
+                                </div>
                             </div>
                         </div>
                     </div>

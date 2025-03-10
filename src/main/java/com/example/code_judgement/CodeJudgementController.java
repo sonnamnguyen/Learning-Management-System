@@ -17,19 +17,17 @@ public class CodeJudgementController {
     private final ExerciseService exerciseService;
 
     // Hiển thị giao diện code space cho một bài tập
-    // Hiển thị giao diện code space cho một bài tập
-    @GetMapping("/{type}/code_space/{id}")
+    @GetMapping("/code_space/{id}")
     public String showExercisePlayground(@PathVariable Long id,
-                                         @PathVariable String type,
                                          Model model) {
         Exercise exercise = exerciseService.getExerciseById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));
         model.addAttribute("exercise", exercise);
         model.addAttribute("code", exercise.getSetup() );
         model.addAttribute("output", "");
-        model.addAttribute("type", type);
         return "judgement/code_space";
     }
+
     // Chạy code khi user nhập custom input và trả lại output
     @PostMapping("/run-custom-code")
     public String runCustomCode(@RequestParam("exerciseId") Long exerciseId,
@@ -84,18 +82,15 @@ public class CodeJudgementController {
     @PostMapping("/run_test_case")
     public String runTestCase(@RequestParam("exerciseId") Long exerciseId,
                               @RequestParam("code") String code,
-                              @RequestParam("type") String type,
                               Model model) {
         model.addAttribute("exerciseId", exerciseId);
         model.addAttribute("code", code);
-        model.addAttribute("type", type);
         return "judgement/run_test_case";
     }
 
     @PostMapping("/submit_exercise")
     public String submitExercise(@RequestParam("exerciseId") Long exerciseId,
                                  @RequestParam("code") String code,
-                                 @RequestParam("type") String type,
                                  Model model){
         Exercise exercise = exerciseService.getExerciseById(exerciseId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));

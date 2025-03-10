@@ -33,6 +33,7 @@ public class GlobalAttributesController {
         String username = authentication.getName();
         //String roles = authentication.getAuthorities().toString();
 
+
         String roles = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
 
         List<Role> list = roleService.getAllRoles().stream().filter(role -> !roles.equals(role.getName())).toList(); // Trả về danh sách `Role`

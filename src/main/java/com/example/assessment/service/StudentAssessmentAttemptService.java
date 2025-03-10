@@ -4,6 +4,7 @@ import com.example.assessment.model.Assessment;
 import com.example.assessment.model.StudentAssessmentAttempt;
 import com.example.assessment.repository.AssessmentRepository;
 import com.example.assessment.repository.StudentAssessmentAttemptRepository;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.example.user.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -77,15 +78,20 @@ public class StudentAssessmentAttemptService {
     }
 
 
-    public StudentAssessmentAttempt saveTestAttempt(Long attemptId, int timeTaken, int score, int scoreEx) {
+    public StudentAssessmentAttempt saveTestAttempt(Long attemptId, int timeTaken, int quizScore, int exerciseScore, JsonNode proctoringData) {
         StudentAssessmentAttempt testAttempt = repository.findById(attemptId).orElseThrow(()
                 -> new RuntimeException("Attempt not found!"));
-        // sample; check if the assessment has reached the qualify or not here later
+        Assessment assessment = assessmentRepository.findById(testAttempt.getAssessment().getId())
+                .orElseThrow(() -> new RuntimeException("Assessment not found!"));
+        double quizRatio = assessment.getQuizScoreRatio();
+        double exerciseRatio = assessment.getExerciseScoreRatio();
+        double scoreAss = (quizScore * quizRatio / 100.0) + (exerciseScore * exerciseRatio / 100.0);
         testAttempt.setDuration(timeTaken);
-        testAttempt.setScoreQuiz(score);
-        testAttempt.setScoreEx(scoreEx);
+        testAttempt.setScoreQuiz(quizScore);
+        testAttempt.setScoreEx(0);
+        testAttempt.setScoreAss((int) Math.round(scoreAss));
         testAttempt.setSubmitted(true);
-        testAttempt.setProctoringData(null);
+        testAttempt.setProctoringData(proctoringData);
         return repository.save(testAttempt);
     }
 }

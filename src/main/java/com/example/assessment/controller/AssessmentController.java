@@ -12,11 +12,9 @@ import com.example.assessment.service.AssessmentService;
 import com.example.assessment.service.AssessmentTypeService;
 import com.example.assessment.service.StudentAssessmentAttemptService;
 import com.example.assessment.service.InvitedCandidateService;
-import com.example.student_exercise_attemp.model.ExerciseSession;
-import com.example.student_exercise_attemp.service.ExerciseSessionService;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.http.HttpSession;
 import org.springframework.http.ResponseEntity;
 import org.hashids.Hashids;
 import com.example.student_exercise_attemp.service.ExerciseService;
@@ -42,6 +40,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.lang.reflect.Field;
+import org.springframework.format.annotation.DateTimeFormat;
+import java.time.LocalDate;
 import java.security.Principal;
 import java.time.LocalDateTime;
 import java.io.ByteArrayInputStream;
@@ -53,7 +53,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 
 @Controller
@@ -61,6 +60,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class AssessmentController {
     @Autowired
     private AssessmentService assessmentService;
+
     @Autowired
     private CourseService courseService;
 
@@ -115,11 +115,11 @@ public class AssessmentController {
     @Autowired
     private AssessmentRepository assessmentRepository;
 
-    @Autowired
-    private ExerciseSessionService exerciseSessionService;
 
     // code mới
     @GetMapping("/create")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPERADMIN')")
+
     public String createAssessment(Model model) {
         Assessment assessment = new Assessment();
         assessment.setTimeLimit(30);
@@ -167,7 +167,7 @@ public class AssessmentController {
             for (String exerciseIdStr : exerciseIdsStr) {
                 Long exerciseId = Long.parseLong(exerciseIdStr);
                 Optional<Exercise> exerciseOptional = exerciseService.getExerciseById(exerciseId);
-                Exercise exercise = exerciseOptional.orElse(null); // Handle Optional and get Exercise or null
+                Exercise exercise = exerciseOptional.orElse(null);
                 if (exercise != null) {
                     selectedExercisesSet.add(exercise);
                 }
@@ -177,25 +177,25 @@ public class AssessmentController {
             for (String questionIdStr : questionIdsStr) {
                 Long questionId = Long.parseLong(questionIdStr);
                 Optional<Question> exerciseOptional = questionService.findById(questionId);
-                Question question = exerciseOptional.orElse(null); // Handle Optional and get Exercise or null
+                Question question = exerciseOptional.orElse(null);
                 if (question != null) {
                     selectedQuestionsSet.add(question);
                 }
             }
         }
         assessment.setExercises(selectedExercisesSet);
-        List<AssessmentQuestion> assessmentQuestions = new ArrayList<>(); // Use ArrayList to maintain order
+        List<AssessmentQuestion> assessmentQuestions = new ArrayList<>();
         int orderIndex = 1; // Initialize order index
 
-        for (Question question : selectedQuestionsSet) { // Iterate through the selected questions
+        for (Question question : selectedQuestionsSet) {
             AssessmentQuestion aq = new AssessmentQuestion();
             aq.setAssessment(assessment);
             aq.setQuestion(question);
-            aq.setOrderIndex(orderIndex); // Set the order index HERE!
+            aq.setOrderIndex(orderIndex);
             assessmentQuestions.add(aq);
-            orderIndex++; // Increment for the next question
+            orderIndex++;
         }
-        assessmentService.alignSequenceForAssessmentQuestion(); // align the sequence of the increment id
+        assessmentService.alignSequenceForAssessmentQuestion();
         assessment.setAssessmentQuestions(assessmentQuestions);
 //        assessment.setUpdatedBy(currentUser);
         assessmentService.createAssessment(assessment);
@@ -205,11 +205,10 @@ public class AssessmentController {
 
 
     @GetMapping("/duplicate/{id}")
-    public String duplicateAssessment(@PathVariable("id") Long id, Model model) {
+    public String duplicateAssessment(@PathVariable("id") Long id) {
         System.out.println("duplicateAssessment");
-        Assessment duplicatedAssessment = assessmentService.duplicateAssessment(id);
-        return "redirect:/assessments" + duplicatedAssessment.getId(); // Redirect to edit the duplicated assessment
-
+        assessmentService.duplicateAssessment(id);
+        return "redirect:/assessments";
     }
 
     @ModelAttribute
@@ -254,6 +253,8 @@ public class AssessmentController {
 
         return ResponseEntity.ok(response); // Returns the data as JSON
     }
+
+
 
 
     @GetMapping("/create/check-duplicate")
@@ -413,6 +414,8 @@ public class AssessmentController {
     }
 
 
+
+
 //    @GetMapping("/invite/{id}")
 //    public String inviteCandidate(@PathVariable int id, Model model) {
 //        List<User> usersWithRole5 = userRepository.findByRoles_Id(2L);
@@ -566,9 +569,7 @@ public class AssessmentController {
     }
 
     @PostMapping("/invite/{id}/take-exam")
-    public String verifyEmail(@PathVariable("id") String rawId, @RequestParam("email") String email, Model model,
-                              RedirectAttributes redirectAttributes,
-                              HttpSession session) {
+    public String verifyEmail(@PathVariable("id") String rawId, @RequestParam("email") String email, Model model) {
         email = email.toLowerCase();
         // Decode the ID (but don't overwrite rawId)
         System.out.println("");
@@ -640,18 +641,14 @@ public class AssessmentController {
         assessmentRepository.refresh(assessment.getId());
         System.out.println("✅ Reloaded assessment from database.");
 
+        // Create an assessment attempt
+//        assessmentService.createAssessmentAttempt(id, email);
+
         // Fetch questions
         List<Question> questions = questionService.findQuestionsByAssessmentId(id);
         List<Exercise> exercises = exerciseService.getExercisesByAssessmentId(id);
         //Create attempt
         StudentAssessmentAttempt attempt = studentAssessmentAttemptService.createAssessmentAttempt(id, email);
-
-        // check exerciseSession (be only attempted one assessment) and create exercise session for participant
-        if(session.getAttribute("exerciseSession") == null && !exercises.isEmpty()){
-            session.setAttribute("exerciseSession", exerciseSessionService.assessmentExerciseSession(assessment, nowUtc, exercises, attempt));
-        } else {
-            throw new RuntimeException("You are in other assessment! Can not attempt this assessment.");
-        }
         // Add to model
         model.addAttribute("assessment", assessment);
         model.addAttribute("questions", questions);
@@ -742,12 +739,20 @@ public class AssessmentController {
         }
     }
 
+
+
+
+
     @GetMapping("/viewReport/{assessmentId}")
     public String viewReport(@PathVariable Long assessmentId, @RequestParam("attempt-id") Long attemptId, Model model) {
 
         Optional<StudentAssessmentAttempt> attempt = studentAssessmentAttemptService.findById(attemptId);
 
         if (attempt != null && attempt.isPresent()) {
+            JsonNode proctoringData = attempt.get().getProctoringData();
+            int tabLeaveCount = proctoringData.has("tabLeaveCount") ? proctoringData.get("tabLeaveCount").asInt() : 0;
+
+            model.addAttribute("tabLeaveCount", tabLeaveCount);
             model.addAttribute("attemptInfo", attempt.get());
         }
         model.addAttribute("content", "assessments/view_report");
@@ -759,27 +764,27 @@ public class AssessmentController {
     public String submitAssessment(@PathVariable("id") Long assessmentId,
                                    @RequestParam("attemptId") Long attemptId,
                                    @RequestParam("elapsedTime") int elapsedTime,
-                                   @RequestParam("questionId") List<String> questionIds,
+                                   @RequestParam(value = "questionId", required = false) List<String> questionIds,
+                                   @RequestParam("tabLeaveCount") int tabLeaveCount,
                                    @RequestParam Map<String, String> responses,
                                    Principal principal,
-                                   HttpSession session,
                                    Model model) {
-        // Lấy thông tin user
         User user = userService.findByUsername(principal.getName());
-        // Tính điểm phần Exercise
-        ExerciseSession exerciseSession = (ExerciseSession) session.getAttribute("exerciseSession");
-        double rawScoreExercises = exerciseSessionService.calculateAverageExerciseScoreInAssessment(exerciseSession);
-        int scoreExercise = (int) Math.round(rawScoreExercises);
-        session.removeAttribute("exerciseSession");
-        // Tính điểm
-        double rawScore = quizService.calculateScore(questionIds, assessmentId, responses, user);
-        int score = (int) Math.round(rawScore);
-        // Lưu kết quả attempt
-        StudentAssessmentAttempt attempt = studentAssessmentAttemptService.saveTestAttempt(attemptId, elapsedTime, score, scoreExercise);
+        int quizScore = 0;
+        if (questionIds != null && !questionIds.isEmpty()) {
+            double rawScore = quizService.calculateScore(questionIds, assessmentId, responses, user);
+            quizScore = (int) Math.round(rawScore);
+        }
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode proctoringData = objectMapper.createObjectNode()
+                .put("tabLeaveCount", tabLeaveCount);
+
+        StudentAssessmentAttempt attempt = studentAssessmentAttemptService.saveTestAttempt(attemptId, elapsedTime, quizScore, 0, proctoringData);
         model.addAttribute("timeTaken", elapsedTime);
-        model.addAttribute("score", score);
         return "assessments/submitAssessment";
     }
+
 
     @GetMapping("/calendar")
     public String showAssessmentCalendar() {

@@ -217,6 +217,7 @@ public class QuizService {
     }
 
 
+
     /**
      * Hàm tạo optionLabel theo thứ tự (A, B, C, ..., Z, AA, AB, ...)
      */
@@ -228,6 +229,7 @@ public class QuizService {
         } while (index >= 0);
         return label.toString();
     }
+
 
 
     @Autowired
@@ -363,6 +365,7 @@ public class QuizService {
     }
 
 
+
     // Method to export roles to Excel
     @Transactional
     public ByteArrayInputStream exportToExcel(List<Quiz> quizs) {
@@ -470,6 +473,9 @@ public class QuizService {
 
         quizRepository.save(quiz1);
     }
+
+
+
 
 
     @Transactional
