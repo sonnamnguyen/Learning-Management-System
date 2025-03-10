@@ -185,6 +185,18 @@ public class ExerciseController {
                 List<Map<String, Object>> testCaseJsonList = objectMapper.readValue(testCasesJson, new TypeReference<>() {});
 
                 for (Map<String, Object> tcMap : testCaseJsonList) {
+                    //moi
+                    String input = (String) tcMap.get("input");
+                    String expectedOutput = (String) tcMap.get("expectedOutput");
+
+                    if (input == null || input.trim().isEmpty() || expectedOutput == null || expectedOutput.trim().isEmpty()) {
+//                        return ResponseEntity.badRequest().body("Test case input/output cannot be empty!");
+                        Map<String, String> errorResponse = new HashMap<>();
+                        errorResponse.put("error", "Test case input/output cannot be empty!");
+                        return ResponseEntity.badRequest().body(errorResponse);
+                    }
+                    //moi
+
                     TestCase tc = new TestCase();
                     tc.setInput((String) tcMap.get("input"));
                     tc.setExpectedOutput((String) tcMap.get("expectedOutput"));
@@ -200,7 +212,10 @@ public class ExerciseController {
                     testCasesFinal.add(tc);
                 }
             } catch (JsonProcessingException e) {
-                return ResponseEntity.badRequest().body("Invalid JSON format! Check console for details.");
+                Map<String, String> errorResponse = new HashMap<>();
+                errorResponse.put("error", "Invalid JSON format!");
+                return ResponseEntity.badRequest().body(errorResponse);
+//                return ResponseEntity.badRequest().body("Invalid JSON format! Check console for details.");
             }
         } else if ("ui".equalsIgnoreCase(testCaseMethod)) {
             int normalIndex = 0;
@@ -209,20 +224,23 @@ public class ExerciseController {
                 String expectedOutput = allParams.get("testCaseFormList.testCasesList[" + normalIndex + "].expectedOutput");
                 String sqlTagNumber = allParams.get("testCaseFormList.testCasesList[" + normalIndex + "].sqlTagNumber");
 
-                if (input != null && !input.trim().isEmpty() && expectedOutput != null && !expectedOutput.trim().isEmpty()) {
-                    TestCase tc = new TestCase();
-                    tc.setInput(input);
-                    tc.setExpectedOutput(expectedOutput);
-                    tc.setHidden(false);
-                    tc.setExercise(exercise);
-                    if ("SQL".equalsIgnoreCase(language.getLanguage())) {
-                        tc.setSqlTagNumber(sqlTagNumber);
-                    }
-                    testCasesFinal.add(tc);
+                if (input == null || input.trim().isEmpty() || expectedOutput == null || expectedOutput.trim().isEmpty()) {
+//                    return ResponseEntity.badRequest().body("Test case input/output cannot be empty!");
+                    Map<String, String> errorResponse = new HashMap<>();
+                    errorResponse.put("error", "Test case input/output cannot be empty!");
+                    return ResponseEntity.badRequest().body(errorResponse);
                 }
+                TestCase tc = new TestCase();
+                tc.setInput(input);
+                tc.setExpectedOutput(expectedOutput);
+                tc.setHidden(false);
+                tc.setExercise(exercise);
+                if ("SQL".equalsIgnoreCase(language.getLanguage())) {
+                    tc.setSqlTagNumber(sqlTagNumber);
+                }
+                testCasesFinal.add(tc);
                 normalIndex++;
             }
-
             int hiddenIndex = 0;
             while (allParams.containsKey("hiddenTestCases[" + hiddenIndex + "].input")) {
                 String input = allParams.get("hiddenTestCases[" + hiddenIndex + "].input");
@@ -242,8 +260,8 @@ public class ExerciseController {
                 }
                 hiddenIndex++;
             }
-
-            if (testCasesFinal.isEmpty()) {
+            //moi
+            if ("ui".equalsIgnoreCase(testCaseMethod) && testCasesFinal.isEmpty()) {
                 return ResponseEntity.badRequest().body("At least one valid test case is required!");
             }
         } else {
