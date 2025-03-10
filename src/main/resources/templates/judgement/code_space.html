@@ -1006,12 +1006,12 @@ Exercises
         <div class="container-fluid" style="height: 85vh;">
             <div class="row" style="height: 100%; display: flex; flex-wrap: nowrap;">
                 <!-- Left Panel -->
-                <div class="col-md-3 text-white d-flex flex-column position-relative" id="leftPanel"
+                 <div class="col-md-3 text-white d-flex flex-column position-relative" id="leftPanel"
                      style="height:100%; font-size:0.9em;">
                     <div class="resizer" id="resizer"></div>
                     <div id="leftPanelContent">
                         <!-- Tab Content -->
-                        <div class="tab-content" id="leftPanelTabContent">
+                        <div class="tab-content" id="leftPanelTabContent" style="overflow-y: auto;">
                             <div class="tab-pane fade show active" id="description" role="tabpanel">
                                 <input type="hidden" id="exerciseId" th:value="${exercise.id}" />
                                 <input type="hidden" id="typeExercise" th:value="${type}"/>
@@ -1025,7 +1025,7 @@ Exercises
                                 </div>
                                 <h2 class="mt-3 mb-4 code-title" th:text="${exercise.name}"></h2>
                                 <div class="description">
-                                    <p th:text="${exercise.description}"></p>
+                                    <p th:utext="${exercise.description}"></p>
                                 </div>
                                 <!-- có thể thêm phần ví dụ cho dễ hiểu -->
                                 <!--                                    <div class="examples mt-4">-->
@@ -1035,25 +1035,25 @@ Exercises
                             </div>
 
                             <!-- Search Results Tab -->
-                            <div class="tab-pane fade" id="searchResults" role="tabpanel">
-                                <div id="emptySearchState" class="text-center p-5">
-                                    <i class="fas fa-search mb-4" style="font-size: 3em; color: #6c757d;"></i>
-                                    <h4 class="mb-3" style="color: #6c757d;">Start searching</h4>
-                                    <p class="text-muted">
-                                        Enter a keyword into the search box above to search on Google.<br>
-                                        Search results will appear here.
-                                    </p>
-                                    <div class="mt-4">
-                                        <small class="text-muted">
-                                            <i class="fas fa-lightbulb"></i> Suggestion: You can search for
-                                            examples,
-                                            guides, or reference materials related to the exercise.
-                                        </small>
-                                    </div>
-                                </div>
-                                <iframe id="searchFrame"
-                                        style="width: 100%; height: 100%; border: none; display: none;"></iframe>
-                            </div>
+<!--                            <div class="tab-pane fade" id="searchResults" role="tabpanel">-->
+<!--                                <div id="emptySearchState" class="text-center p-5">-->
+<!--                                    <i class="fas fa-search mb-4" style="font-size: 3em; color: #6c757d;"></i>-->
+<!--                                    <h4 class="mb-3" style="color: #6c757d;">Start searching</h4>-->
+<!--                                    <p class="text-muted">-->
+<!--                                        Enter a keyword into the search box above to search on Google.<br>-->
+<!--                                        Search results will appear here.-->
+<!--                                    </p>-->
+<!--                                    <div class="mt-4">-->
+<!--                                        <small class="text-muted">-->
+<!--                                            <i class="fas fa-lightbulb"></i> Suggestion: You can search for-->
+<!--                                            examples,-->
+<!--                                            guides, or reference materials related to the exercise.-->
+<!--                                        </small>-->
+<!--                                    </div>-->
+<!--                                </div>-->
+<!--                                <iframe id="searchFrame"-->
+<!--                                        style="width: 100%; height: 100%; border: none; display: none;"></iframe>-->
+<!--                            </div>-->
                         </div>
 
                         <!-- Phần tìm kiếm Google -->
@@ -1176,7 +1176,7 @@ Exercises
                     </div>
 
                     <!-- Tab Navigation - Moved to bottom -->
-                    <ul class="nav nav-tabs nav-fill mt-auto" id="rightPanelTabs" role="tablist">
+                    <ul th:if="${exercise.getLanguage.language.toUpperCase()}!='SQL'" class="nav nav-tabs nav-fill mt-auto" id="rightPanelTabs" role="tablist">
                         <li class="nav-item" role="presentation">
                             <button class="nav-link active" id="output-tab" data-bs-toggle="tab"
                                     data-bs-target="#outputContent" type="button" role="tab">
