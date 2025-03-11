@@ -2,7 +2,6 @@ package com.example.testcase;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -17,16 +16,4 @@ public class TestCaseService {
         testCaseRepository.saveAll(testCases);
     }
 //    public List<TestCase> findAll() {return testCaseRepository.findAll();}
-
-    //find hidden test cases
-    public List<TestCase> findHiddenTestCases(Long id) {
-        return testCaseRepository.findHiddenTestCase(id);
-    }
-
-    //find visible test cases
-    public List<TestCase> findVisibleTestCases(Long id) {
-        return testCaseRepository.findVisibleTestCase(id);
-    }
-
-
 }

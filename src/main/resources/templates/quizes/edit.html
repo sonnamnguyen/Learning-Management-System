@@ -1,90 +1,69 @@
-<div class="container-fluid mt-5">
+<div class="container mt-5">
     <div class="card shadow-lg">
         <div class="card-header bg-primary text-white">
-            <h3 class="card-title mb-0 text-center">Edit Quiz</h3>
+            <h3 class="card-title mb-0">Update Quiz</h3>
         </div>
         <div class="card-body">
             <form th:action="@{/quizes/edit/{id}(id=${quiz.id})}" th:object="${quiz}" method="post" class="needs-validation" novalidate>
 
-                <!-- Nhóm thông tin chung -->
-                <h5 class="text-primary">Quiz Information</h5>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="quizName" class="form-label fw-bold">Quiz Name</label>
-                        <input type="text" id="quizName" th:field="*{name}" class="form-control" placeholder="Enter quiz name" required>
-                        <div class="invalid-feedback">Quiz name is required.</div>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="quizDescription" class="form-label fw-bold">Description</label>
-                        <textarea id="quizDescription" th:field="*{description}" class="form-control" placeholder="Enter quiz description" rows="3" required></textarea>
-                        <div class="invalid-feedback">Quiz description is required.</div>
-                    </div>
+                <!-- Quiz Name -->
+                <div class="mb-3">
+                    <label for="quizName" class="form-label">Quiz Name</label>
+                    <input type="text" id="quizName" th:field="*{name}" class="form-control" placeholder="Enter quiz name" required>
+                    <div class="invalid-feedback">Quiz name is required.</div>
                 </div>
 
-                <!-- Nhóm thời gian -->
-                <h5 class="text-primary mt-4">Schedule</h5>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="startTime" class="form-label fw-bold">Start Time</label>
-                        <input type="datetime-local" id="startTime"
-                               th:value="${#temporals.format(quiz.startTime, 'yyyy-MM-dd''T''HH:mm')}"
-                               name="startTime" class="form-control" required>
-                        <div class="invalid-feedback">Start time is required.</div>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="endTime" class="form-label fw-bold">End Time</label>
-                        <input type="datetime-local" id="endTime"
-                               th:value="${#temporals.format(quiz.endTime, 'yyyy-MM-dd''T''HH:mm')}"
-                               name="endTime" class="form-control" required>
-                        <div class="invalid-feedback">End time is required.</div>
-                    </div>
+                <!-- Description -->
+                <div class="mb-3">
+                    <label for="quizDescription" class="form-label">Description</label>
+                    <textarea id="quizDescription" th:field="*{description}" class="form-control" placeholder="Enter quiz description" rows="3" required></textarea>
+                    <div class="invalid-feedback">Quiz description is required.</div>
                 </div>
 
-                <!-- Nhóm cài đặt Quiz -->
-                <h5 class="text-primary mt-4">Quiz Settings</h5>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="course" class="form-label fw-bold">Course</label>
-                        <select id="course" th:field="*{course}" class="form-select" required>
-                            <option value="" disabled>-- Select a Course --</option>
-                            <option th:each="course : ${courses}" th:value="${course.getId()}" th:text="${course.getName()}"></option>
-                        </select>
-                        <div class="invalid-feedback">Course is required.</div>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="attemptLimit" class="form-label fw-bold">Attempt Limit</label>
-                        <input type="number" id="attemptLimit" th:field="*{attemptLimit}" class="form-control" placeholder="Enter attempt limit" min="1" required>
-                        <div class="invalid-feedback">Attempt limit is required and must be at least 1.</div>
-                    </div>
+                <!-- Created At -->
+                <div class="mb-3">
+                    <label for="createdAt" class="form-label">Created At</label>
+                    <!-- Format createdAt to 'yyyy-MM-dd'T'HH:mm' for datetime-local input -->
+                    <input type="datetime-local" id="createdAt" th:field="*{createdAt}"
+                           class="form-control" readonly>
+                    <div class="invalid-feedback">Created date and time are required.</div>
                 </div>
 
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="quizType" class="form-label fw-bold">Quiz Type</label>
-                        <select id="quizType" th:field="*{quizCategory}" class="form-select" required>
-                            <option value="" disabled>-- Select Quiz Type --</option>
-                            <option value="EXAM">Exam</option>
-                            <option value="PRACTICE">Practice</option>
-                        </select>
-                        <div class="invalid-feedback">Quiz type is required.</div>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="createdBy" class="form-label fw-bold">Created By</label>
-                        <div id="createdBy" th:text="${user.username}" class="form-control-plaintext"></div>
-                        <input type="hidden" th:field="*{createdBy}" th:value="${user.id}" />
-                    </div>
+                <!-- Updated At -->
+                <div class="mb-3">
+                    <label for="updatedAt" class="form-label">Updated At</label>
+                    <!-- Format updatedAt to 'yyyy-MM-dd'T'HH:mm' for datetime-local input -->
+                    <input type="datetime-local" id="updatedAt" th:field="*{updatedAt}"
+                           class="form-control" readonly required>
+                    <div class="invalid-feedback">Updated date and time are required.</div>
+                </div>
+
+
+                <!-- Course -->
+                <div class="mb-3">
+                    <label for="course" class="form-label">Course</label>
+                    <select id="course" th:field="*{course}" class="form-select" required>
+                        <option value="" disabled selected>-- Select a Course --</option>
+                        <option th:each="course : ${courses}" th:value="${course.getId()}" th:text="${course.getName()}"></option>
+                    </select>
+                    <div class="invalid-feedback">Course is required.</div>
+                </div>
+
+                <!-- Created By -->
+                <div class="mb-3">
+                    <label for="createdBy" class="form-label">Created By</label>
+                    <select id="createdBy" th:field="*{createdBy}" class="form-select">
+                        <option value="" disabled selected>-- Select Creator --</option>
+                        <option th:each="user : ${users}" th:value="${user.getId()}" th:text="${user.getUsername()}"></option>
+                    </select>
                 </div>
 
                 <!-- Buttons -->
-                <div class="d-flex justify-content-end mt-4">
-                    <button type="submit" class="btn btn-primary btn-lg">Update</button>
-                    <a th:href="@{/quizes}" class="btn btn-secondary btn-lg ms-3">Back to List</a>
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <a th:href="@{/quizes}" class="btn btn-secondary ms-2">Back to List</a>
                 </div>
             </form>
-
-            <!-- Thông báo lỗi / thành công -->
-            <div th:if="${error}" class="alert alert-danger mt-3" th:text="${error}"></div>
-            <div th:if="${success}" class="alert alert-success mt-3" th:text="${success}"></div>
         </div>
     </div>
 </div>

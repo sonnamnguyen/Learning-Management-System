@@ -3,21 +3,16 @@ package com.example.code_judgement;
 
 import com.example.code_judgement.java_judge.JavaJudgementService;
 import com.example.code_judgement.languageFactory.ExecutionBasedLanguage;
-import com.example.student_exercise_attemp.model.Exercise;
-import com.example.student_exercise_attemp.repository.ExerciseRepository;
-import com.example.student_exercise_attemp.model.StudentExerciseAttempt;
-import com.example.student_exercise_attemp.service.StudentExerciseAttemptService;
+import com.example.exercise.ExerciseRepository;
 import com.example.testcase.TestCase;
 import com.example.testcase.TestCaseResult;
 import com.example.testcase.TestCaseService;
-import com.example.user.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -41,12 +36,6 @@ public class CodeExecutionService {
 
     @Autowired
     private ExerciseRepository exerciseRepository;
-
-    @Autowired
-    private StudentExerciseAttemptService studentExerciseAttemptService;
-
-    @Autowired
-    private UserService userService;
 
     public String runWithCusTomInput(String code, String input, ExecutionBasedLanguage executionBasedLanguage) {
 //        ExecutionBasedLanguage executionBasedLanguage = initialLanguage(language);
@@ -88,32 +77,12 @@ public class CodeExecutionService {
         return userOutput;
     }
 
-    // calculate score for exercise
-    public double exerciseScore(int passed, int total) {
-        try {
-            if (total == 0) {
-                throw new ArithmeticException("TestCase is null");
-            }
-            double score = (double) passed / total * 100;
-            return Math.round(score * 10.0) / 10.0;
-        } catch (ArithmeticException e) {
-            System.err.println("Error: " + e.getMessage());
-            return 0.0;
-        }
-    }
-
-    public ExecutionResponse executeCodeOptimized(boolean submitExercise, String code, List<TestCase> testCases, ExecutionBasedLanguage executionBasedLanguage, Exercise exercise) {
+    public ExecutionResponse executeCodeOptimized(String code, List<TestCase> testCases, ExecutionBasedLanguage executionBasedLanguage) {
         // Biên dịch mã nguồn một lần
 //        ExecutionBasedLanguage executionBasedLanguage = initialLanguage(language);
-        long startCompileTime = System.nanoTime();
         CompilationResult compilationResult = executionBasedLanguage.compileCode(code);
-        long endCompileTime = System.nanoTime();
-
-        long compileTime = (endCompileTime - startCompileTime)/1_000_000;
-
-
         if (!compilationResult.isSuccess()) {
-            return new ExecutionResponse(code, 0, testCases.size(), 0, null, compilationResult.getErrorMessage(), compileTime);
+            throw new RuntimeException(compilationResult.getErrorMessage());
         }
 
         // Sử dụng ExecutorService để chạy các test case song song
@@ -175,24 +144,10 @@ public class CodeExecutionService {
             }
         }
 
-        double score = 0;
-        // Lưu kết quả exercise
-        if(submitExercise){
-            score = exerciseScore(passed, testResults.size());
-            StudentExerciseAttempt studentExerciseAttempt = new StudentExerciseAttempt();
-            studentExerciseAttempt.setAttemptDate(LocalDateTime.now());
-            studentExerciseAttempt.setSubmitted_code(code);
-            studentExerciseAttempt.setSubmitted_exercise(exercise);
-            studentExerciseAttempt.setAttendant_user(userService.getCurrentUser());
-            studentExerciseAttempt.setSubmitted(true);
-            studentExerciseAttempt.setScore_exercise(score);
-            studentExerciseAttemptService.save(studentExerciseAttempt);
-        }
 
         // Tính toán kết quả tổng quát
-        return new ExecutionResponse(code,passed,testCases.size(),score,testResults, null, compileTime);
+        return new ExecutionResponse(code,passed,testCases.size(),testResults);
     }
-
     private void deleteDirectoryRecursively(Path path) throws IOException {
         if (Files.exists(path)) {
             Files.walk(path)

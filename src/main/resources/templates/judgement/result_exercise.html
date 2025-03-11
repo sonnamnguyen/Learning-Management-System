@@ -2,10 +2,9 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 
 <head>
-    <!-- Keep all your existing head content -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exercise Result</title>
+    <title>Code Submission UI</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
@@ -17,9 +16,7 @@
           href="https://cdn.jsdelivr.net/gh/sindresorhus/github-markdown-css@4.0.0/github-markdown.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/sql/sql.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/clike/clike.min.js"></script>
-    <!-- Keep all your existing styles -->
     <style>
-        /* All your existing styles */
         body {
             font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Oxygen, Ubuntu, sans-serif;
             background-color: #f0f2f5;
@@ -70,8 +67,8 @@
         .score-number {
             background: #ed4528;
             color: white;
-            width: 40px;
-            height: 40px;
+            width: 30px;
+            height: 30px;
             border-radius: 50%;
             display: inline-flex;
             align-items: center;
@@ -83,8 +80,8 @@
         .score-number-2 {
             background: #1a73e8;
             color: white;
-            width: 40px;
-            height: 40px;
+            width: 30px;
+            height: 30px;
             border-radius: 50%;
             display: inline-flex;
             align-items: center;
@@ -482,17 +479,10 @@
         .mb-2 {
             margin-bottom: 0.5rem;
         }
-
-        .error-compile {
-            display: block !important;
-            color: #c5221f;
-        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/sql/sql.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/clike/clike.min.js"></script>
-    <!-- Add jQuery -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 </head>
 
 <body>
@@ -501,8 +491,14 @@
         <h1 style="font-weight: bold;" class="title">RESULT</h1>
 
         <div class="action-buttons" style="margin-left: auto; margin-top: 7px;   ">
+            <button class="btn btn-info" onclick="viewSolutions()">
+                <i class="fas fa-lightbulb"></i> VIEW SOLUTIONS
+            </button>
             <button class="btn btn-success" onclick="backToExercises()">
                 <i class="fas fa-backward"></i> BACK TO EXERCISES
+            </button>
+            <button class="btn btn-warning" onclick="redoChallenge()">
+                <i class="fas fa-redo"></i> REDO CHALLENGE
             </button>
         </div>
     </div>
@@ -516,7 +512,6 @@
             <i style="color: #ed4528;" class="fas fa-chevron-down"></i>
         </div>
         <div class="test-cases" id="testCases" style="display: none;">
-            <span class="error-compile" th:text="${error}"></span>
             <div class="test-case" th:each="result : ${testResults}" th:if="${!result.isCorrect}">
                 <div class="test-case-header">
                     <span class="test-number">Test Case</span>
@@ -538,23 +533,15 @@
 
         <div class="score" style="margin-bottom: 30px;">
             <div class="score-left-2">
-                <span class="score-number-2" th:text="${score}"></span> TOTAL SCORE
-            </div>
-        </div>
-
-        <div style="margin-bottom: 15px; ">
-            <div class="score-left-2">
-                Compline Time:
-                &ensp;
-                <span style="font-weight: normal; font-size: 20px; color: #3d75ea;" th:text="${compileTime} + ' ms'"></span>
+                <span class="score-number-2" th:text="${failed}"></span> TOTAL SCORE
             </div>
         </div>
     </div>
-    <input id="exerciseId" type="hidden" th:value="${exercise.id}" />
+
     <textarea id="codeEditor" th:text="${code}" style=""></textarea>
 
     <div class="input-area">
-        <input type="text" id="inputText" placeholder='Enter input here...' th:value="${exercise.getTestCases().get(0).getInput()}">
+        <input type="text" id="inputText" placeholder='Enter input here...'>
         <select id="languageSelect" class="language-select">
             <option value="en">English</option>
             <option value="vi">Vietnamese</option>
@@ -572,8 +559,6 @@
 </div>
 
 <script>
-    let editor;
-
     function detectLanguage(code) {
         const lowerCode = code.toLowerCase();
 
@@ -595,7 +580,7 @@
     }
 
     document.addEventListener("DOMContentLoaded", function () {
-        editor = CodeMirror.fromTextArea(document.getElementById("codeEditor"), {
+        var editor = CodeMirror.fromTextArea(document.getElementById("codeEditor"), {
             mode: detectLanguage(document.getElementById("codeEditor").value),
             theme: "monokai",
             lineNumbers: true,
@@ -623,75 +608,105 @@
     });
 
     function runCode() {
-        const customInput = document.getElementById("inputText").value;
-        if (!customInput.trim()) {
-            document.getElementById("output").innerHTML = `<span style="color: red">Error: Please enter your input!</span>`;
+        const input = document.getElementById("inputText").value;
+        if (!input.trim()) {
+            document.getElementById("output").innerText = "Error: Please enter input before running code!";
             return;
         }
-
-        const exerciseId = document.getElementById("exerciseId").value;
         const code = editor.getValue();
-
-        $.ajax({
-            url: "/judgement/run-custom-code",
-            method: "POST",
-            data: {
-                exerciseId: exerciseId,
-                code: code,
-                customInput: customInput
-            },
-            success: function (response) {
-                document.getElementById("output").innerHTML = `<span style="color: green">Your output:  </span><span>${response}</span>`;
-            },
-            error: function (xhr) {
-                let errorMessage = xhr.responseText ? xhr.responseText : "Something went wrong!";
-                document.getElementById("output").innerHTML = `<span style='color: red;'>${errorMessage}</span>`;
-            }
-        });
+        document.getElementById("output").innerText = "Processing input: " + input + "\nCode:\n" + code;
     }
 
     async function reviewCode() {
-        try {
-            // Get code from the CodeMirror editor
-            const code = editor.getValue();
-            const selectedLanguage = document.getElementById('languageSelect').value;
+        const code = editor.getValue();
+        const selectedLanguage = document.getElementById('languageSelect').value;
 
-            // Show loading state
-            document.getElementById("output").innerHTML = `
-                <div class="loading">
-                    <div class="loading-spinner"></div>
-                    ${selectedLanguage === 'vi' ? 'Đang phân tích code...' : 'Analyzing your code...'}
-                </div>
+        document.getElementById("output").innerHTML = `
+                        ${selectedLanguage === 'vi' ? 'Đang phân tích code của bạn...' : 'Analyzing your code...'}
+
             `;
 
-            // Send code to backend for AI review
-            const response = await fetch('/api/code/review', {
+        try {
+            const username = 'admin';
+            const password = 'admin';
+            const basicAuth = 'Basic ' + btoa(username + ':' + password);
+
+            const requestBody = {
+                model: "llama3.1:latest",
+                prompt: selectedLanguage === 'vi' ?
+                    `Analyze the following code and provide a detailed review in Vietnamese:
+                        ## 📝 Tổng Quan
+                        - Mô tả cấu trúc và mục đích của code
+                        - Đánh giá chung về chất lượng code
+
+                        ## ✅ Điểm Mạnh
+                        - Liệt kê những điểm tốt trong code
+                        - Các phần đã được triển khai đúng
+
+                        ## ⚠️ Cần Cải Thiện
+                        - Xác định các vấn đề tiềm ẩn
+                        - Các phần có thể tối ưu hóa
+
+                        ## 🔒 Vấn Đề Bảo Mật
+                        - Liệt kê các lỗ hổng bảo mật (nếu có)
+                        - Các rủi ro tiềm ẩn về bảo mật
+
+                        Code to review:
+                        \`\`\`java
+                        ${code}
+                        \`\`\`
+
+                        Note: Only provide analysis in Vietnamese, "SUGGEST" code changes or rewrite any code.` :
+                    `Analyze the following code and provide a detailed review:
+                        ## 📝 Overview
+                        - Describe the overall structure and purpose of the code
+                        - Provide a general assessment of code quality
+
+                        ## ✅ Strengths
+                        - List the good parts of the code
+                        - Parts that have been implemented correctly
+
+                        ## ⚠️ Areas for improvement
+                        - Identify potential issues
+                        - Parts that can be optimized
+
+                        ## 🔒 Security issues
+                        - List any security vulnerabilities if present
+                        - Potential security risks
+
+                        Code to review:
+                        \`\`\`java
+                        ${code}
+                        \`\`\`
+
+                        Note: Only provide analysis in English, suggest code changes or rewrite any code.`,
+                stream: false
+            };
+
+            const response = await fetch('https://ollama.truong51972.id.vn/api/generate', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': basicAuth
                 },
-                body: JSON.stringify({
-                    code: code,
-                    language: selectedLanguage
-                })
+                body: JSON.stringify(requestBody)
             });
 
             if (!response.ok) {
                 throw new Error(selectedLanguage === 'vi' ?
-                    'Không thể kết nối với dịch vụ AI' :
-                    'Failed to connect to AI service');
+                    'Yêu cầu API thất bại' :
+                    'API request failed');
             }
 
             const data = await response.json();
-
-            if (!data.review) {
-                throw new Error(data.error || (selectedLanguage === 'vi' ?
+            if (!data.response) {
+                throw new Error(selectedLanguage === 'vi' ?
                     'Không nhận được phản hồi từ AI' :
-                    'No response from AI'));
+                    'No response from AI');
             }
 
-            // Render markdown content
-            const renderedHtml = marked.parse(data.review, {
+            // Sử dụng Marked.js để render markdown
+            const renderedHtml = marked.parse(data.response, {
                 gfm: true,
                 breaks: true,
                 highlight: function (code, lang) {
@@ -703,15 +718,16 @@
             });
 
             document.getElementById("output").innerHTML = `
-                <div class="markdown-body">
-                    ${renderedHtml}
-                </div>
-            `;
+                    <div class="markdown-body">
+                        ${renderedHtml}
+                    </div>
+                `;
 
-            // Add copy buttons to code blocks
+            // Highlight tất cả code <blocks></blocks>
             document.querySelectorAll('pre code').forEach((block) => {
                 hljs.highlightBlock(block);
 
+                // Tạo nút copy cho mỗi code block
                 const copyButton = document.createElement('button');
                 copyButton.className = 'copy-suggestion';
                 copyButton.innerHTML = '<i class="fas fa-copy"></i>';
@@ -726,22 +742,27 @@
                         }, 2000);
                     } catch (err) {
                         console.error('Failed to copy text: ', err);
-                        alert(selectedLanguage === 'vi' ?
+                        alert(document.getElementById('languageSelect').value === 'vi' ?
                             'Không thể sao chép code!' :
                             'Failed to copy code!');
                     }
                 };
 
+                // Thêm nút copy vào code block
                 block.parentElement.style.position = 'relative';
                 block.parentElement.appendChild(copyButton);
             });
+
         } catch (error) {
             document.getElementById("output").innerHTML = `
-                <div class="error-message">
-                    <i class="fas fa-exclamation-circle"></i>
-                    Error: ${error.message || 'Unknown error occurred'}
-                </div>
-            `;
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i>
+                        ${selectedLanguage === 'vi' ?
+                'Lỗi: ' + error.message :
+                'Error: ' + error.message}
+                    </div>
+                `;
+            console.error('Error:', error);
         }
     }
 
@@ -753,79 +774,62 @@
                 'Code copied!');
         });
     }
-
     function downloadCode() {
-        const code = editor.getValue().trim();
+        const code = editor.getValue();
+
+        // Xác định ngôn ngữ và tên class/function từ code
         let fileName = 'code.txt';
 
-        // Danh sách ngôn ngữ và từ khóa đặc trưng
+        // Tìm kiếm các mẫu phổ biến trong các ngôn ngữ khác nhau
         const patterns = {
             java: {
                 pattern: /class\s+(\w+)/,
-                keywords: ['public class ', 'System.out.println', 'extends ', 'implements ', 'new ', 'public static void main'],
-                ext: '.java',
-                defaultName: 'Main'
+                ext: '.java'
+            },
+            python: {
+                pattern: /(class|def)\s+(\w+)/,
+                ext: '.py'
             },
             cpp: {
                 pattern: /(class|struct)\s+(\w+)|void\s+(\w+)\s*\(/,
-                keywords: ['#include', 'using namespace', 'cout', 'cin', 'std::', '->', '::', 'template'],
-                ext: '.cpp',
-                defaultName: 'main'
+                ext: '.cpp'
             },
             csharp: {
                 pattern: /(class|interface)\s+(\w+)/,
-                keywords: ['namespace ', 'using ', 'Console.WriteLine', 'public class ', 'List<>', 'async ', 'await '],
-                ext: '.cs',
-                defaultName: 'Program'
+                ext: '.cs'
             },
             c: {
                 pattern: /(void|int|char|double|float)\s+(\w+)\s*\(/,
-                keywords: ['#include', 'printf(', 'scanf(', 'main()', 'struct ', 'typedef ', 'malloc(', 'free('],
-                ext: '.c',
-                defaultName: 'main'
+                ext: '.c'
             },
             sql: {
                 pattern: /CREATE\s+(TABLE|PROCEDURE|FUNCTION|VIEW)\s+(\w+)/i,
-                keywords: ['SELECT ', 'INSERT INTO ', 'UPDATE ', 'DELETE ', 'JOIN ', 'GROUP BY ', 'ORDER BY '],
-                ext: '.sql',
-                defaultName: 'query'
-            },
+                ext: '.sql'
+            }
         };
 
-        let detectedLang = null;
-        let matchCounts = {};
-
-        // Ưu tiên kiểm tra từ khóa đặc trưng
-        for (const lang in patterns) {
-            let count = patterns[lang].keywords.reduce((acc, keyword) => acc + (code.split(keyword).length - 1), 0);
-            if (count > 0) {
-                matchCounts[lang] = count;
-            }
-        }
-
-        // Xác định ngôn ngữ có nhiều từ khóa xuất hiện nhất
-        if (Object.keys(matchCounts).length > 0) {
-            detectedLang = Object.keys(matchCounts).reduce((a, b) => matchCounts[a] > matchCounts[b] ? a : b);
-        }
-
-        // Nếu vẫn chưa xác định được, thử regex
-        if (!detectedLang) {
-            for (const lang in patterns) {
-                const match = code.match(patterns[lang].pattern);
-                if (match) {
-                    detectedLang = lang;
-                    fileName = (match[2] || match[1] || match[3]) + patterns[lang].ext;
+        // Kiểm tra từng ngôn ngữ
+        for (const [lang, config] of Object.entries(patterns)) {
+            const match = code.match(config.pattern);
+            if (match) {
+                // Lấy tên từ nhóm phù hợp
+                const name = match[2] || match[1] || match[3];
+                if (name) {
+                    fileName = name + config.ext;
                     break;
                 }
             }
         }
 
-        // Nếu vẫn chưa tìm được tên, đặt tên mặc định
-        if (detectedLang && !fileName.endsWith(patterns[detectedLang].ext)) {
-            fileName = patterns[detectedLang].defaultName + patterns[detectedLang].ext;
+        // Xử lý các trường hợp đặc biệt
+        if (code.includes('#include')) {
+            fileName = fileName.replace('.txt', '.cpp');
+        } else if (code.includes('import numpy') || code.includes('import pandas')) {
+            fileName = fileName.replace('.txt', '.py');
+        } else if (code.includes('SELECT') && code.includes('FROM')) {
+            fileName = 'query.sql';
         }
 
-        // Tạo file và tải về
         const blob = new Blob([code], { type: 'text/plain' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -834,7 +838,6 @@
         a.click();
         window.URL.revokeObjectURL(url);
     }
-
 
     function toggleTestCases() {
         const testCases = document.getElementById('testCases');

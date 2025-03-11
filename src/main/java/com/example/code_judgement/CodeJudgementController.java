@@ -1,7 +1,7 @@
 package com.example.code_judgement;
 
-import com.example.student_exercise_attemp.model.Exercise;
-import com.example.student_exercise_attemp.service.ExerciseService;
+import com.example.exercise.Exercise;
+import com.example.exercise.ExerciseService;
 import com.example.testcase.TestCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -52,7 +52,7 @@ public class CodeJudgementController {
         model.addAttribute("customInput", customInput);
         model.addAttribute("customOutput", "");
 
-        String targetPath = "/judgement/" +  (exercise.getLanguage().getLanguage().equalsIgnoreCase("c#")?"csharp":exercise.getLanguage().getLanguage().toLowerCase()) + "/run-custom-code";
+        String targetPath = "/judgement/" + exercise.getLanguage().getLanguage().toLowerCase() + "/run-custom-code";
         return "forward:" + targetPath;
     }
 
@@ -64,7 +64,7 @@ public class CodeJudgementController {
         // Lấy bài tập và test cases tương ứng
         Exercise exercise = exerciseService.getExerciseById(exerciseId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));
-        List<TestCase> testCases = exercise.getTestCases().stream().filter(testCase -> !testCase.isHidden()).toList();
+        List<TestCase> testCases = exercise.getTestCases();
 
         if (testCases == null || testCases.isEmpty()) {
             model.addAttribute("output", "No test cases defined for this exercise.");
@@ -102,7 +102,7 @@ public class CodeJudgementController {
             model.addAttribute("code", code);
             return "judgement/code_space";
         }
-        String targetPath = "/judgement/" +  (exercise.getLanguage().getLanguage().equalsIgnoreCase("c#")?"csharp":exercise.getLanguage().getLanguage().toLowerCase()) + "/submit_exercise";
+        String targetPath = "/judgement/" + exercise.getLanguage().getLanguage().toLowerCase() + "/submit_exercise";
         System.out.println(targetPath);
         return "forward:" + targetPath;
     }

@@ -1,12 +1,9 @@
 package com.example.code_judgement.sql_judge;
 
 import com.example.code_judgement.ExecutionResponse;
-import com.example.student_exercise_attemp.model.Exercise;
-import com.example.student_exercise_attemp.model.StudentExerciseAttempt;
-import com.example.student_exercise_attemp.service.StudentExerciseAttemptService;
+import com.example.exercise.Exercise;
 import com.example.testcase.TestCase;
 import com.example.testcase.TestCaseResult;
-import com.example.user.UserService;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
@@ -15,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -24,32 +20,9 @@ import java.util.regex.Pattern;
 public class SqlJudgementService {
 
     @Autowired
-    private UserService userService;
-
-    @Autowired
-    private StudentExerciseAttemptService studentExerciseAttemptService;
-
-    @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    public double exerciseScore(int passed, int total) {
-        try {
-            if (total == 0) {
-                throw new ArithmeticException("TestCase is null");
-            }
-            double score = (double) passed / total * 100;
-            return Math.round(score * 10.0) / 10.0;
-        } catch (ArithmeticException e) {
-            System.err.println("Error: " + e.getMessage());
-            return 0.0;
-        }
-    }
-
-    public ExecutionResponse executeSQLCode(boolean isSubmit, Exercise exercise, String userCode, List<TestCase> testCases) {
-        if(!isSubmit && userCode.trim().equals(exercise.getSetup().trim())){
-            throw new RuntimeException("You have not done this exercise yet!");
-        }
-
+    public ExecutionResponse executeSQLCode(Exercise exercise, String userCode, List<TestCase> testCases) {
         userCode = removeCommentsFromSQL(userCode);
 
         // Sinh suffix duy nhất (8 ký tự)
@@ -172,10 +145,8 @@ public class SqlJudgementService {
                         }
                         if (testPassed) {
                             passedTestCases++;
-                            resultsList.add(new TestCaseResult(tc, "Query successfully!", testPassed));
-                        } else {
-                            resultsList.add(new TestCaseResult(tc, "The expected output and your output are not similar!", testPassed));
                         }
+                        resultsList.add(new TestCaseResult(tc, output, testPassed));
                     }
                 } else {
                     // Nếu segment chứa nhiều câu lệnh (không chỉ SELECT)
@@ -215,14 +186,8 @@ public class SqlJudgementService {
                         }
                         if (testPassed) {
                             passedTestCases++;
-                            resultsList.add(new TestCaseResult(tc, "Query successfully!", testPassed));
-                        } else {
-                            if(output.contains("Execution error: ")) {
-                                resultsList.add(new TestCaseResult(tc, output, testPassed));
-                            } else {
-                                resultsList.add(new TestCaseResult(tc, "The expected output and your output are not similar!", testPassed));
-                            }
                         }
+                        resultsList.add(new TestCaseResult(tc, output, testPassed));
                     }
                 }
             }
@@ -232,24 +197,10 @@ public class SqlJudgementService {
             jdbcTemplate.execute("SET SCHEMA 'public'");
         }
 
-        double score = 0;
-        if(isSubmit){
-            score = exerciseScore(passedTestCases, testCases.size());
-            StudentExerciseAttempt studentExerciseAttempt = new StudentExerciseAttempt();
-            studentExerciseAttempt.setAttemptDate(LocalDateTime.now());
-            studentExerciseAttempt.setSubmitted_code(userCode);
-            studentExerciseAttempt.setSubmitted_exercise(exercise);
-            studentExerciseAttempt.setAttendant_user(userService.getCurrentUser());
-            studentExerciseAttempt.setSubmitted(true);
-            studentExerciseAttempt.setScore_exercise(score);
-            studentExerciseAttemptService.save(studentExerciseAttempt);
-        }
-
         ExecutionResponse response = new ExecutionResponse();
         response.setPassed(passedTestCases);
-        response.setTotal(testCases.size());
+        response.setTotal(totalTestCases);
         response.setTestCasesResults(resultsList);
-        response.setScore(score);
         return response;
     }
 

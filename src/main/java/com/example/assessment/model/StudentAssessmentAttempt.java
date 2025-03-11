@@ -3,14 +3,8 @@ package com.example.assessment.model;
 import com.example.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
-import lombok.Getter;
-import lombok.Setter;
-
 import java.time.LocalDateTime;
 
-
-@Getter
-@Setter
 @Entity
 @Table(name = "student_assessment_attempt")
 public class StudentAssessmentAttempt {
@@ -35,9 +29,6 @@ public class StudentAssessmentAttempt {
 
     @Min(0)
     private int scoreQuiz;
-
-    @Min(0)
-    private int scoreEx;
 
     @Min(0)
     private int scoreAss;

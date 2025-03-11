@@ -20,8 +20,6 @@ import org.springframework.security.web.SecurityFilterChain;
 
 import java.util.List;
 
-import static org.springframework.security.config.Customizer.withDefaults;
-
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -33,16 +31,9 @@ public class SecurityConfig {
         http.headers().frameOptions().sameOrigin();
         http
                 .csrf(AbstractHttpConfigurer::disable)
+//                .authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll());
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(
-                                "/login",
-                                "/register",
-                                "/otp",
-                                "/verify-otp",
-                                "/materials/**",
-                                "assessments/expired-link", // Allow expired link page
-                                "assessments/invite/**"     // Allow all invite-related links (Take Assessment)
-                        ).permitAll()
+                        .requestMatchers("/login", "/register", "/otp", "/verify-otp","/materials/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form.loginPage("/login").permitAll())
@@ -59,7 +50,6 @@ public class SecurityConfig {
 
         return http.build();
     }
-
 
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {

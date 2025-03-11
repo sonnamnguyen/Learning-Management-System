@@ -4,8 +4,6 @@ package com.example.assessment.service;
 import com.example.assessment.model.InvitedCandidate;
 import com.example.assessment.repository.InvitedCandidateRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -44,16 +42,5 @@ public class InvitedCandidateService  {
     public List<InvitedCandidate> findAll() {
         return repository.findAll();
     }
-
-    public Page<InvitedCandidate> findByAssessmentIdAndEmailContaining(Long assessmentId, String email, Pageable pageable) {
-        return repository.findByAssessmentIdAndEmailContaining(assessmentId, email, pageable);
-    }
-
-    public Page<InvitedCandidate> findByAssessmentId(Long assessmentId, Pageable pageable) {
-        return repository.findByAssessmentId(assessmentId, pageable);
-    }
-
-
-
 }
 

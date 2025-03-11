@@ -69,7 +69,7 @@ public class OtpService {
 
 
 
-        emailService.sendHtmlEmail(email, subject, body);
+        emailService.sendEmail(email, subject, body);
     }
 
     public boolean validateOtp(String email, String otp) {

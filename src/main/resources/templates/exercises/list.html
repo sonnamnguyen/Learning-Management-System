@@ -1,567 +1,24 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Exercises List</title>
     <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <!-- Bootstrap Icons CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
     <style>
         /* Sử dụng table-bordered để có đường viền giữa các cột */
         table.table-bordered th,
         table.table-bordered td {
             border: 1px solid #dee2e6;
         }
-
         /* Dòng tiêu đề với màu xanh nhạt */
         table.table-bordered thead tr {
             background-color: #e3f2fd; /* Màu xanh nhạt */
             color: #000;
         }
-
-        .btn-outline-search {
-            border: 2px solid #0d6efd; /* Viền màu xanh Bootstrap */
-            background-color: transparent; /* Không có màu nền */
-            color: #0d6efd; /* Màu chữ mặc định */
-            transition: all 0.3s ease; /* Hiệu ứng mượt */
-        }
-
-        .btn-outline-search:hover {
-            background-color: #0d6efd; /* Màu nền xanh khi hover */
-            color: white; /* Chữ trắng khi hover */
-        }
-
-        .btn-danger {
-            background-color: transparent !important; /* Nền trong suốt */
-            color: red !important; /* Màu chữ đỏ */
-            border-color: red !important; /* Viền đỏ */
-            transition: all 0.3s ease-in-out; /* Hiệu ứng mượt */
-        }
-
-        .btn-danger:hover {
-            background-color: red !important; /* Nền đỏ khi hover */
-            color: white !important; /* Chữ trắng khi hover */
-        }
-
-        .clear-btn {
-            background-color: transparent; /* Nền trong suốt */
-            border: 1px solid #ccc; /* Viền xám nhẹ */
-            color: #000; /* Màu chữ đen */
-            transition: background-color 0.3s, color 0.3s; /* Hiệu ứng mượt */
-        }
-
-        .clear-btn:hover {
-            background-color: #6c757d; /* Màu nền xám khi hover */
-            color: #fff; /* Màu chữ trắng khi hover */
-        }
-
-        /*    Alert css */
-        .alert-container {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1050;
-            min-width: 300px;
-            max-width: 400px;
-        }
-
-        .custom-alert {
-            border: none;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            margin-bottom: 1rem;
-            padding: 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            animation: slideIn 0.5s ease-out;
-        }
-
-        .alert-success {
-            background-color: #d4edda;
-            border-left: 4px solid #28a745;
-            color: #155724;
-        }
-
-        .alert-danger {
-            background-color: #f8d7da;
-            border-left: 4px solid #dc3545;
-            color: #721c24;
-        }
-
-        .alert-icon {
-            margin-right: 12px;
-            font-size: 1.2rem;
-        }
-
-        .alert-message {
-            flex-grow: 1;
-            margin-right: 12px;
-        }
-
-        .alert-close {
-            background: transparent;
-            border: none;
-            color: inherit;
-            padding: 0;
-            font-size: 1.1rem;
-            opacity: 0.7;
-            transition: opacity 0.3s ease;
-        }
-
-        .alert-close:hover {
-            opacity: 1;
-        }
-
-        @keyframes slideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        @keyframes fadeOut {
-            from {
-                opacity: 1;
-            }
-            to {
-                opacity: 0;
-            }
-        }
-
-        .col-md-6.d-flex .btn {
-            height: 38px;
-            position: relative;
-            top: -10px;
-            display: flex;
-            align-items: center;
-        }
-
-        .col-md-6.d-flex a.btn {
-            text-decoration: none;
-        }
-
-        .page-item.active .page-link {
-            background-color: red ! highlight;
-            border-color: red;
-            color: white;
-        }
-
-        .page-link {
-            color: #007bff; /* Màu mặc định cho các liên kết */
-        }
-
-        a.d-flex justify-content-end mt-3 {
-            position: absolute;
-        }
-
-        .card {
-            padding-bottom: 10px !important; /* Khoảng cách dưới */
-            padding-right: 10px !important; /* Khoảng cách phải */
-            border-radius: 12px !important; /* Bo góc rõ hơn */
-            overflow: hidden !important; /* Đảm bảo nội dung không tràn ra ngoài */
-            box-shadow: 0px 12px 24px rgba(0, 0, 0, 0.2) !important; /* Đổ bóng nhẹ hơn */
-        }
-        .card:hover {
-            box-shadow: 0px 12px 24px rgba(0, 0, 0, 0.5) !important; /* Đổ bóng nhẹ hơn */
-        }
-
-        .card .d-flex {
-            margin-top: auto; /* Đưa nút xuống đáy card */
-            padding-bottom: 10px; /* Cách viền dưới */
-            padding-right: 10px; /* Cách viền phải */
-        }
-        .card-title{
-            display: -webkit-box;
-            -webkit-line-clamp: 2; /* Hiển thị tối đa 1 dòng */
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: normal;
-            word-break: break-word;
-            overflow-wrap: break-word;
-            line-height: 1.4em; /* Cố định chiều cao dòng */
-            max-height: calc(1.4em * 2); /* Đảm bảo chỉ hiển thị 2 dòng */
-        }
-        .description {
-            display: -webkit-box;
-            -webkit-line-clamp: 1; /* Hiển thị tối đa 1 dòng */
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: normal;
-            word-break: break-word;
-            overflow-wrap: break-word;
-            line-height: 1.4em; /* Cố định chiều cao dòng */
-            max-height: calc(1.4em * 2); /* Đảm bảo chỉ hiển thị 2 dòng */
-        }
-
-        table {
-            table-layout: auto !important; /* Giúp các cột có kích thước đồng đều */
-            width: 100%;
-            border-collapse: collapse; /* Giảm khoảng cách giữa các dòng */
-        }
-
-        td, th {
-            vertical-align: middle; /* Căn giữa nội dung */
-            height: auto;
-            padding: 8px; /* Giữ khoảng cách giữa nội dung và ô */
-            word-break: normal !important; /* Đảm bảo nội dung không tràn */
-            white-space: nowrap !important;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            word-wrap: break-word;
-            max-width: 300px; /* Điều chỉnh max-width theo nhu cầu */
-        }
-
-        tr {
-            height: auto !important;
-        }
-
-        /* Cố định kích thước của các cột để tránh giãn không đều */
-        th:nth-child(2), td:nth-child(2) {
-            width: 20%;
-        }
-
-        /* Title */
-        th:nth-child(3), td:nth-child(3) {
-            width: auto !important; /* Cho phép mở rộng theo nội dung */
-            min-width: 20%; /* Đảm bảo không quá nhỏ */
-            max-width: 40%; /* Giới hạn độ rộng tối đa */
-            white-space: normal; /* Cho phép xuống dòng */
-            word-break: break-word; /* Chia từ nếu quá dài */
-            overflow-wrap: anywhere; /* Đảm bảo hiển thị đầy đủ */
-        }
-        <!--.table-title {-->
-            <!--    position: relative;-->
-            <!--    white-space: nowrap;-->
-            <!--    overflow: hidden;-->
-            <!--    text-overflow: ellipsis;-->
-            <!--    max-width: 200px;-->
-            <!--    display: inline-block;-->
-            <!--    vertical-align: middle;-->
-            <!--}-->
-
-        .table-title:hover::after {
-            content: attr(data-fulltext); /* Hiển thị nội dung đầy đủ */
-            position: absolute;
-            background-color: rgba(0, 0, 0, 0.8);
-            color: #fff;
-            padding: 8px;
-            border-radius: 5px;
-            white-space: normal;
-            max-width: 400px;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 100;
-            text-align: center;
-        }
-        /* Language */
-        th:nth-child(4), td:nth-child(4) {
-            width: 10%;
-        }
-
-        /* Difficulty */
-        th:nth-child(5), td:nth-child(5) {
-            width: 40%;
-        }
-
-        /* Description */
-        th:nth-child(6), td:nth-child(6) {
-            width: 15%;
-        }
-
-        /* Action */
-
-        /*Import */
-        .modal-content {
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-        }
-
-        /* Header của modal */
-        .modal-header {
-            background-color: #f8f9fa;
-            border-bottom: 2px solid #ddd;
-            border-radius: 10px 10px 0 0;
-        }
-
-        /* Title của modal */
-        .modal-title {
-            font-weight: 600;
-        }
-
-        /* Nút đóng */
-        .btn-close {
-            opacity: 0.7;
-            transition: opacity 0.3s ease;
-        }
-
-        .btn-close:hover {
-            opacity: 1;
-        }
-
-        /* Alert chung */
-        .alert {
-            display: flex;
-            align-items: center;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 1rem;
-        }
-
-        /* Alert thành công */
-        .alert-success {
-            background-color: #d4edda;
-            color: #155724;
-            border-left: 4px solid #28a745;
-        }
-
-        Alert cảnh báo
-        .alert-warning {
-            background-color: #fff3cd;
-            color: #856404;
-            border-left: 4px solid #ffc107;
-        }
-
-        /* Icon trong alert */
-        .alert i {
-            margin-right: 8px;
-            font-size: 1.2rem;
-        }
-
-        /* Nút xem chi tiết */
-        .toggle-details {
-            font-weight: 500;
-            color: #856404;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            transition: color 0.3s ease;
-        }
-
-        .toggle-details i {
-            margin-left: 5px;
-            transition: transform 0.3s ease;
-        }
-
-        .toggle-details[aria-expanded="true"] i {
-            transform: rotate(180deg);
-        }
-
-        /*!* Danh sách cảnh báo *!*/
-        /*.warning-list {*/
-        /*    color: #b71c1c;*/
-        /*    background-color: #fff3cd;*/
-        /*    border-left: 4px solid #ffa000;*/
-        /*    padding: 10px;*/
-        /*    border-radius: 5px;*/
-        /*    list-style-type: none;*/
-        /*    margin: 0;*/
-        /*}*/
-
-        /*.warning-list li {*/
-        /*    padding: 5px 0;*/
-        /*    font-weight: 500;*/
-        /*}*/
-
-        /*!* Card chứa chi tiết *!*/
-        /*.card.card-body {*/
-        /*    background-color: #fffbee;*/
-        /*    border: 1px solid #ffc107;*/
-        /*    border-radius: 5px;*/
-        /*    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);*/
-        /*}*/
-
-        .warning-list {
-            list-style: none;
-            padding: 0;
-            margin: 15px 0;
-        }
-
-        .warning-list li {
-            background-color: #fff9e6;
-            border-left: 4px solid #ffd700;
-            color: #8b6914;
-            margin-bottom: 10px;
-            padding: 15px;
-            border-radius: 6px;
-            font-size: 14px;
-            box-shadow: 0 2px 6px rgba(255, 215, 0, 0.15);
-            transition: all 0.3s ease;
-            cursor: pointer;
-            position: relative;
-        }
-
-        .warning-list li:hover {
-            transform: translateX(5px);
-            background-color: #fff5d4;
-            box-shadow: 0 3px 8px rgba(255, 215, 0, 0.2);
-        }
-
-        .warning-details {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: #fff9e6;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-            z-index: 1000;
-            width: 90%;
-            max-width: 500px;
-            border: 2px solid #ffd700;
-            transition: all 0.3s ease;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translate(-50%, -48%);
-            }
-            to {
-                opacity: 1;
-                transform: translate(-50%, -50%);
-            }
-        }
-
-        .warning-details.active {
-            display: block;
-        }
-
-        .warning-details h3 {
-            color: #8b6914;
-            margin-bottom: 15px;
-            font-size: 1.4em;
-        }
-
-        .warning-details p {
-            color: #5c4a1d;
-            line-height: 1.6;
-            margin-bottom: 12px;
-        }
-
-        .warning-details .font-weight-bold {
-            color: #8b6914;
-        }
-
-        .warning-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-            backdrop-filter: blur(2px);
-            transition: all 0.3s ease;
-        }
-
-        .warning-overlay.active {
-            display: block;
-        }
-
-        .close-button {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            background: none;
-            border: none;
-            font-size: 24px;
-            color: #8b6914;
-            cursor: pointer;
-            padding: 5px;
-            transition: all 0.2s ease;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-        }
-
-        .close-button:hover {
-            background-color: #fff5d4;
-            color: #8b6914;
-            transform: rotate(90deg);
-        }
-
-        #warningDetails {
-            background-color: #fff9e6;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 3px 10px rgba(255, 215, 0, 0.1);
-            border: 1px solid #ffd700;
-            margin: 15px 0;
-            transition: all 0.3s ease;
-        }
-
-        .card.card-body {
-            border: none;
-            padding: 0;
-            background: transparent;
-        }
-
-        /* Footer của modal */
-        .modal-footer {
-            border-top: 2px solid #ddd;
-            border-radius: 0 0 10px 10px;
-            background-color: #f8f9fa;
-        }
-
-
-        /*Delete Notification*/
-        #deleteSuccessToast {
-            min-width: 250px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            border: none;
-            border-radius: 8px;
-            overflow: hidden;
-            background-color: #e8f5e9; /* Màu xanh nhạt giống hình */
-            color: #333;
-            animation: slideIn 0.3s ease-in-out;
-            border-left: 4px solid #2e7d32; /* Viền màu xanh đậm bên trái */
-        }
-
-        .toast-body {
-            padding: 0.75rem 1rem;
-            font-weight: 500;
-            font-size: 1rem;
-        }
-
-        /*@keyframes slideIn {*/
-        /*    from {*/
-        /*        transform: translateX(100%);*/
-        /*        opacity: 0;*/
-        /*    }*/
-        /*    to {*/
-        /*        transform: translateX(0);*/
-        /*        opacity: 1;*/
-        /*    }*/
-        /*}*/
-
-
-        /*@keyframes slideOut {*/
-        /*    from {*/
-        /*        transform: translateX(0);*/
-        /*        opacity: 1;*/
-        /*    }*/
-        /*    to {*/
-        /*        transform: translateX(100%);*/
-        /*        opacity: 0;*/
-        /*    }*/
-        /*}*/
     </style>
 </head>
 <body>
@@ -570,284 +27,95 @@
     <!-- Header -->
     <div th:replace="~{fragments :: header}" class="sticky-top"></div>
 
-    <!--Import -->
-    <div class="alert-container">
-
-
-        <!--        <div th:if="${editSuccess}" class="custom-alert alert-success" role="alert" id="editSuccessAlert">&ndash;&gt;-->
-        <!--            <i class="bi bi-check-circle-fill alert-icon"></i>-->
-        <!--            <span class="alert-message" th:text="${deletedSuccess}">Success message</span>-->
-        <!--            <button type="button" class="alert-close" onclick="closeAlert('successAlert')">-->
-        <!--                <i class="bi bi-x"></i>-->
-        <!--            </button>-->
-        <!--        </div>-->
-
-        <!--        Success Alert-->
-        <div th:if="${successMessage}" class="custom-alert alert-success" role="alert" id="successAlert">
-            <i class="bi bi-check-circle-fill alert-icon"></i>
-            <span class="alert-message" th:text="${successMessage}">Success message</span>
-            <button type="button" class="alert-close" onclick="closeAlert('successAlert')">
-                <i class="bi bi-x"></i>
-            </button>
-        </div>
-
-
-        <!-- &lt;!&ndash; Error Alert &ndash;&gt;-->
-        <div th:if="${error}" class="custom-alert alert-danger" role="alert" id="errorAlert">
-            <i class="bi bi-exclamation-circle-fill alert-icon"></i>
-            <span class="alert-message" th:text="${error}">Error message</span>
-            <button type="button" class="alert-close" onclick="closeAlert('errorAlert')">
-                <i class="bi bi-x"></i>
-            </button>
-        </div>
-    </div>
-    <!-- Modal Thông Báo -->
-    <div class="modal fade" id="importResultModal" tabindex="-1" aria-labelledby="importResultModalLabel"
-         aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="importResultModalLabel">Import Result</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <!-- Thông báo thành công -->
-                    <div th:if="${success}" class="alert alert-success">
-                        <i class="bi bi-check-circle-fill"></i>
-                        <span th:text="${success}">Import successful!</span>
-                    </div>
-
-                    <!-- Thông báo cảnh báo -->
-                    <div th:if="${warningList != null and not #lists.isEmpty(warningList)}">
-                        <div class="alert alert-warning" role="alert">
-                            <i class="bi bi-exclamation-triangle-fill"></i>
-                            <span>Some data contains errors, please check the details!</span>
-                            <button class="btn btn-link toggle-details" type="button" data-bs-toggle="collapse"
-                                    data-bs-target="#warningDetails">
-                                View Details <i class="bi bi-chevron-down"></i>
-                            </button>
-                        </div>
-                        <!--                        <div class="collapse" id="warningDetails">-->
-                        <!--                            <div class="card card-body">-->
-                        <!--                                <ul class="warning-list">-->
-                        <!--                                    <li th:each="warning : ${warningList}" th:text="${warning}"></li>-->
-                        <!--                                </ul>-->
-                        <!--                            </div>-->
-                        <!--                        </div>-->
-
-                        <div class="collapse" id="warningDetails">
-                            <div class="card card-body">
-                                <ul class="warning-list">
-                                    <li th:each="warning, stat : ${warningList}"
-                                        th:onclick="'showDetails(' + ${stat.index} + ')'"
-                                        th:data-index="${stat.index}">
-                                        <span th:text="${warning}"></span>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        <div class="warning-overlay" id="overlay"></div>
-                        <div th:each="warning, stat : ${warningList}"
-                             th:id="'details-' + ${stat.index}"
-                             class="warning-details">
-                            <button class="close-button" th:onclick="'closeDetails(' + ${stat.index} + ')'">×</button>
-                            <h3>Warning Details</h3>
-                            <!--                            <p th:text="${'Lỗi ở dòng ' + (stat.index + 1) + ':'}" class="mt-2"></p>-->
-                            <p th:text="${warning}" class="mt-2"></p>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
     <!-- Main Content -->
-    <div class="flex-grow-1 container-fluid mt-5">
+    <div class="flex-grow-1 container mt-5">
         <div class="px-5">
             <!-- Title -->
             <h1 class="text-center mb-4">Exercises</h1>
 
             <!-- Combined Filter and Toolbar Section -->
-            <div class="container-fluid mt-4">
-                <div class="row gx-2 align-items-center mb-3">
-                    <!-- Search Bar and Filters -->
-                    <div class="col-md-6">
-                        <div class="row gx-2 align-items-center">
-                            <!-- Search Input -->
-                            <div class="col-9">
-                                <form id="filterForm" method="get" action="/exercises">
-                                    <label for="searchInput" class="form-label">Search</label>
-                                    <div class="input-group">
-                                        <input type="text" id="searchInput" name="title" class="form-control"
-                                               placeholder="Searching title..." th:value="${param.title}">
-                                        <button type="submit" class="btn btn-outline-search">
-                                            <i class="bi bi-search"></i>
-                                        </button>
-                                        <button type="button" class="btn clear-btn btn-secondary ms-1 px-4"
-                                                onclick="clearFilters()">Clear
-                                        </button>
-                                    </div>
-
-                                    <div class="row gx-2 mt-2">
-                                        <!-- Language Filter -->
-                                        <div class="col-md-6">
-                                            <label for="languageFilter" class="form-label">Language</label>
-                                            <select id="languageFilter" name="language" class="form-select">
-                                                <option value="" th:selected="${currentLanguage == null}">All
-                                                    Languages
-                                                </option>
-                                                <option th:each="lang : ${languages}"
-                                                        th:value="${lang.id}"
-                                                        th:text="${lang.language}"
-                                                        th:selected="${lang.id == currentLanguage}">
-                                                </option>
-                                            </select>
-                                        </div>
-                                        <!-- Difficulty Filter -->
-                                        <div class="col-md-6">
-                                            <label for="levelFilter" class="form-label">Difficulty</label>
-                                            <select id="levelFilter" name="level" class="form-select">
-                                                <option value=""
-                                                        th:selected="${currentLevel == null or currentLevel == ''}">All
-                                                    Levels
-                                                </option>
-                                                <option value="EASY" th:selected="${currentLevel == 'EASY'}">Easy
-                                                </option>
-                                                <option value="MEDIUM" th:selected="${currentLevel == 'MEDIUM'}">
-                                                    Medium
-                                                </option>
-                                                <option value="HARD" th:selected="${currentLevel == 'HARD'}">Hard
-                                                </option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </form>
-                            </div>
+            <div class="row mb-4 align-items-center">
+                <form id="filterForm" class="col-md-6" method="get" action="/exercises">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="languageFilter" class="form-label">Language</label>
+                            <select id="languageFilter" name="language" class="form-select">
+                                <option value="">All Languages</option>
+                                <option th:each="lang : ${languages}"
+                                        th:value="${lang.id}"
+                                        th:text="${lang.language}"
+                                        th:selected="${lang.id == currentLanguage}">
+                                </option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="levelFilter" class="form-label">Difficulty</label>
+                            <select id="levelFilter" name="level" class="form-select">
+                                <option value="" th:selected="${currentLevel == null or currentLevel == ''}">All Levels</option>
+                                <option value="EASY" th:selected="${currentLevel == 'EASY'}">Easy</option>
+                                <option value="MEDIUM" th:selected="${currentLevel == 'MEDIUM'}">Medium</option>
+                                <option value="HARD" th:selected="${currentLevel == 'HARD'}">Hard</option>
+                            </select>
                         </div>
                     </div>
-
-                    <!-- Buttons: Import, Export, Print, Add, Delete -->
-                    <div class="col-md-6 d-flex flex-column align-items-end">
-                        <div class="d-flex justify-content-end align-items-center mt-5">
-                            <!-- Import Button (Opens Modal) -->
-                            <button class="btn btn-outline-secondary me-2" data-bs-toggle="modal"
-                                    data-bs-target="#importModal">
-                                <i class="bi bi-upload me-1"></i> Import
-                            </button>
-                            <!-- Export Button -->
-                            <a href="/exercises/export" class="btn btn-outline-secondary me-2">
-                                <i class="bi bi-file-earmark-excel me-1"></i> Export
-                            </a>
-                            <!-- Print Button -->
-                            <a href="/exercises/print" class="btn btn-outline-secondary me-2" target="_blank">
-                                <i class="bi bi-printer me-1"></i> Print
-                            </a>
-                            <!-- Add Button -->
-                            <a href="/exercises/create" class="btn btn-primary me-2">
-                                <i class="bi bi-plus-circle me-1"></i> Add
-                            </a>
-                            <!-- Delete Button -->
-                            <button id="deleteSelected" class="btn btn-danger">
-                                <i class="bi bi-trash me-1"></i> Delete
-                            </button>
-                        </div>
-
-                        <!-- Switch to Table View Button -->
-                        <div class="mt-5">
-                            <button id="toggleView" class="btn btn-primary btn-sm">
-                                <i class="bi bi-table"></i>Switch to Table View
-                            </button>
-                        </div>
-                    </div>
-
-
-                </div>
-                <!-- Switch to Table View Button -->
-                <!--                <div class="col-md-12 text-end mt-3">-->
-                <!--                    <button id="toggleView" class="btn btn-primary btn-sm">-->
-                <!--                        <i class="bi bi-table"></i> Switch to Table View-->
-                <!--                    </button>-->
-                <!--                </div>-->
-
-
-                <!-- Import Modal -->
-                <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel"
-                     aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="importModalLabel">Import Excel File</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                        aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <!-- Template Import -->
-                                <div class="mb-3">
-                                    <p>Download the Excel template before uploading your file:</p>
-                                    <a href="https://drive.usercontent.google.com/u/0/uc?id=19rJnBMdN-b76hpcq6G0W_Y3EOjiefa7H&export=download"
-                                       class="btn btn-link" download>Download Exercise Template</a>
-                                </div>
-                                <!-- Form Upload -->
-                                <form id="UploadForm" action="/exercises/import" method="post"
-                                      enctype="multipart/form-data">
-                                    <div class="mb-3">
-                                        <label for="file" class="form-label">Choose Excel File:</label>
-                                        <input type="file" name="file" id="file" class="form-control"
-                                               accept=".xlsx, .xls" required>
-                                    </div>
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="bi bi-upload"></i> Upload
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
+                </form>
+                <!-- Toolbar: Nút Add và Delete -->
+                <div class="col-md-6 d-flex justify-content-end">
+                    <a href="/exercises/create" class="btn btn-primary me-2">
+                        <i class="bi bi-plus-circle"></i> Add exercise
+                    </a>
+                    <button class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Delete
+                    </button>
                 </div>
             </div>
-            <!-- Table View-->
-            <div id="tableView" class="table-responsive">
+
+            <!-- Table -->
+            <div class="table-responsive">
                 <table class="table table-hover table-bordered">
                     <thead>
                     <tr>
-                        <th class="text-center">
-                            <input type="checkbox" id="selectAll"/>
+                        <th scope="col" class="text-center" style="width: 5%;">
+                            <label>
+                                <input type="checkbox" />
+                            </label>
                         </th>
-                        <th style="width: 20%;">Title</th>
-                        <th class="text-center" style="width: 10%;">Language</th>
-                        <th class="text-center" style="width: 10%;">Difficulty</th>
-                        <th style="width: 40%;">Description</th>
-                        <th class="text-center" style="width: 15%;">Action</th>
+                        <th scope="col" style="width: 20%;">Title</th>
+                        <th scope="col" class="text-center" style="width: 10%;">Language</th>
+                        <th scope="col" class="text-center" style="width: 10%;">Difficulty</th>
+                        <th scope="col" style="width: 40%;">Description</th>
+                        <th scope="col" class="text-center" style="width: 15%;">Action</th>
                     </tr>
                     </thead>
                     <tbody>
-                    <tr th:each="exercise : ${exercises}" th:attr="data-id=${exercise.id}">
+                    <tr th:each="exercise : ${exercises}">
                         <td class="text-center">
-                            <input type="checkbox" class="selectItem"/>
+                            <label>
+                                <input type="checkbox" />
+                            </label>
                         </td>
-                        <td class="table-title" th:text="${exercise.name}"th:attr="data-fulltext=${exercise.name}"></td>
+                        <td th:text="${exercise.name}"></td>
                         <td class="text-center" th:text="${exercise.language.language}">Language</td>
                         <td class="text-center">
-                <span th:class="${'badge ' + (exercise.level.name() == 'HARD' ? 'bg-danger' :
-                         (exercise.level.name() == 'MEDIUM' ? 'bg-warning' : 'bg-success'))}"
-                      th:text="${exercise.level}">
-                </span>
+              <span th:class="${'badge ' + (exercise.level.name() == 'HARD' ? 'bg-danger' : (exercise.level.name() == 'MEDIUM' ? 'bg-warning' : 'bg-success'))}" th:text="${exercise.level}">
+              </span>
                         </td>
-                        <td>
-                            <div class="description" th:utext="${exercise.description}"></div>
+
+                        <td th:text="${exercise.description}">
+                            Description comes here...
                         </td>
                         <td class="text-center">
-                            <a th:href="@{'/judgement/code_space/' + ${exercise.id}}"
-                               class="btn btn-outline-primary btn-sm">
+                            <a th:href="@{'/judgement/code_space/' + ${exercise.id}}" class="btn btn-outline-primary btn-sm me-1" title="Info">
                                 <i class="bi bi-info-circle"></i>
                             </a>
-                            <a th:href="@{'/exercises/edit/' + ${exercise.id}}" class="btn btn-outline-primary btn-sm">
+                            <a th:href="@{'/exercises/edit/' + ${exercise.id}}"
+                               class="btn btn-outline-primary btn-sm me-1" title="Edit">
                                 <i class="bi bi-pencil"></i>
                             </a>
-                            <a th:href="@{'/exercises/delete/' + ${exercise.id}}" class="btn btn-outline-danger btn-sm"
-                               onclick="return confirm('Are you sure you want to delete this exercise?')">
+                            <a th:href="@{'/exercises/delete/' + ${exercise.id}}"
+                               class="btn btn-outline-danger btn-sm"
+                               onclick="return confirm('Are you sure you want to delete this exercise?')"
+                               title="Delete">
                                 <i class="bi bi-trash"></i>
                             </a>
                         </td>
@@ -859,87 +127,45 @@
                 </table>
             </div>
 
-            <!-- Card View -->
-            <div id="cardView" class="row row-cols-1 row-cols-md-3 g-3 mt-3" style="display: block;">
-                <div class="col" th:each="exercise : ${exercises}">
-                    <div class="card h-100 border-secondary shadow-sm d-flex flex-column">
-                        <div class="card-body flex-grow-1">
-                            <h5 class="card-title fw-bold text-primary" th:text="${exercise.name}">Exercise Title</h5>
-                            <p class="mb-1"><strong>Language:</strong>
-                                <span class="text-muted" th:text="${exercise.language.language}">Java</span>
-                            </p>
-                            <p class="mb-1">
-                                <strong>Difficulty:</strong>
-                                <span th:class="${'badge ' + (exercise.level.name() == 'HARD' ? 'bg-danger' :
-                         (exercise.level.name() == 'MEDIUM' ? 'bg-warning' : 'bg-success'))}"
-                                      th:text="${exercise.level}">
-                                </span>
-                            </p>
-                            <p class="mb-2"><strong>Description:</strong>
-                                <span class="description" th:utext="${exercise.description}"></span>
-                            </p>
-                        </div>
-
-                        <!-- Các nút được căn dưới cùng với khoảng cách 10px -->
-                        <div class="d-flex justify-content-end mt-auto" style="padding-bottom: 10px;">
-                            <a th:href="@{'/judgement/code_space/' + ${exercise.id}}"
-                               class="btn btn-outline-primary btn-sm me-2">
-                                <i class="bi bi-info-circle"></i>
-                            </a>
-                            <a th:href="@{'/exercises/edit/' + ${exercise.id}}"
-                               class="btn btn-outline-primary btn-sm me-2">
-                                <i class="bi bi-pencil"></i> Edit
-                            </a>
-                            <a th:href="@{'/exercises/delete/' + ${exercise.id}}" class="btn btn-outline-danger btn-sm"
-                               onclick="return confirm('Are you sure you want to delete this exercise?')">
-                                <i class="bi bi-trash"></i> Delete
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                <div th:if="${#lists.isEmpty(exercises)}"
-                     class="d-flex justify-content-center align-items-center"
-                     style="height: 50px; width: 100%;">
-                    <p>No exercises found.</p>
-                </div>
-
-            </div>
-
-
             <!-- Pagination -->
             <div class="d-flex justify-content-center mt-4" th:if="${totalPages >= 1}">
                 <nav>
                     <ul class="pagination">
-                        <!-- Nút First (<<) -->
+                        <!-- Nút First: chỉ hiển thị nếu có nhiều hơn 1 trang và không phải trang đầu -->
                         <li class="page-item" th:if="${totalPages > 1 and currentPage > 0}">
                             <a class="page-link"
-                               th:href="@{/exercises(page=0, language=${currentLanguage}, level=${currentLevel})}">&laquo;</a>
+                               th:href="@{/exercises(page=0, language=${currentLanguage}, level=${currentLevel})}">
+                                First
+                            </a>
                         </li>
-                        <!-- Nút Previous (<) -->
+                        <!-- Nút Previous: chỉ hiển thị nếu có nhiều hơn 1 trang và không phải trang đầu -->
                         <li class="page-item" th:if="${totalPages > 1 and currentPage > 0}">
                             <a class="page-link"
-                               th:href="@{/exercises(page=${currentPage - 1}, language=${currentLanguage}, level=${currentLevel})}">&lt;</a>
+                               th:href="@{/exercises(page=${currentPage - 1}, language=${currentLanguage}, level=${currentLevel})}">
+                                Previous
+                            </a>
                         </li>
                         <!-- Danh sách số trang -->
-                        <th:block th:with="startPage=${T(java.lang.Math).max(0, T(java.lang.Math).min(currentPage - 2, totalPages - 5))},
-                           endPage=${T(java.lang.Math).min(totalPages - 1, T(java.lang.Math).max(currentPage + 2, 4))},
-                           visiblePages=${#numbers.sequence(startPage, endPage)}">
-                            <li class="page-item" th:each="i : ${visiblePages}"
-                                th:classappend="${i == currentPage} ? 'active'">
-                                <a class="page-link"
-                                   th:href="@{/exercises(page=${i}, language=${currentLanguage}, level=${currentLevel}, title=${paramTitle})}"
-                                   th:text="${i + 1}">Page</a>
-                            </li>
-                        </th:block>
-                        <!-- Nút Next (>) -->
-                        <li class="page-item" th:if="${totalPages > 1 and currentPage < totalPages - 1}">
+                        <li class="page-item"
+                            th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                            th:classappend="${i == currentPage} ? ' active'">
                             <a class="page-link"
-                               th:href="@{/exercises(page=${currentPage + 1}, language=${currentLanguage}, level=${currentLevel})}">&gt;</a>
+                               th:href="@{/exercises(page=${i}, language=${currentLanguage}, level=${currentLevel})}"
+                               th:text="${i + 1}">Page</a>
                         </li>
-                        <!-- Nút Last (>>) -->
+                        <!-- Nút Next: chỉ hiển thị nếu có nhiều hơn 1 trang và chưa ở trang cuối -->
                         <li class="page-item" th:if="${totalPages > 1 and currentPage < totalPages - 1}">
                             <a class="page-link"
-                               th:href="@{/exercises(page=${totalPages - 1}, language=${currentLanguage}, level=${currentLevel})}">&raquo;</a>
+                               th:href="@{/exercises(page=${currentPage + 1}, language=${currentLanguage}, level=${currentLevel})}">
+                                Next
+                            </a>
+                        </li>
+                        <!-- Nút Last: chỉ hiển thị nếu có nhiều hơn 1 trang và chưa ở trang cuối -->
+                        <li class="page-item" th:if="${totalPages > 1 and currentPage < totalPages - 1}">
+                            <a class="page-link"
+                               th:href="@{/exercises(page=${totalPages - 1}, language=${currentLanguage}, level=${currentLevel})}">
+                                Last
+                            </a>
                         </li>
                     </ul>
                 </nav>
@@ -947,209 +173,23 @@
         </div>
     </div>
 
+    <!-- Footer -->
+    <div th:replace="~{fragments :: footer}" class="mt-auto"></div>
 </div>
 
-<!-- Toast Notification -->
-<!--<div id="deleteSuccessToast" class="toast position-fixed top-50 start-50 translate-middle" role="alert"-->
-<!--     aria-live="assertive" aria-atomic="true" style="z-index: 1050; display: none;">-->
-<!--    <div class="toast-header bg-success text-white">-->
-<!--        <strong class="me-auto">Success</strong>-->
-<!--        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>-->
-<!--    </div>-->
-<!--    <div class="toast-body text-center">-->
-<!--        Deleted Successfully!-->
-<!--    </div>-->
-<!--</div>-->
-
-<div id="deleteSuccessToast" class="toast position-fixed" role="alert"
-     aria-live="assertive" aria-atomic="true" style="z-index: 1050; display: none; top: 70px; right: 20px;">
-    <div class="toast-body text-center">
-        Deleted Successfully!
-    </div>
-</div>
-
-<!-- Footer -->
-<div th:replace="~{fragments :: footer}" class="mt-auto"></div>
-</div>
-<!-- Limit description in 20 words -->
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        document.querySelectorAll('.description').forEach(desc => {
-            let text = desc.innerText;
-            if (text.length > 50) {
-                desc.innerText = text.substring(0, 50) + "...";
-            }
-        });
-    });
-
-</script>
-<!-- Switch card and table -->
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        let viewMode = localStorage.getItem("viewMode") || "card"; // Mặc định Card View
-        updateView(viewMode);
-
-        document.getElementById("toggleView").addEventListener("click", function () {
-            viewMode = (viewMode === "card") ? "table" : "card";
-            localStorage.setItem("viewMode", viewMode);
-            updateView(viewMode);
-        });
-    });
-
-    function updateView(mode) {
-        let toggleButton = document.getElementById("toggleView");
-
-        if (mode === "card") {
-            document.getElementById("cardView").style.display = "flex";
-            document.getElementById("tableView").style.display = "none";
-            toggleButton.innerHTML = '<i class="bi bi-table me-2"></i> Switch to Table View';
-            toggleButton.classList.replace("btn-secondary", "btn-primary");
-        } else {
-            document.getElementById("cardView").style.display = "none";
-            document.getElementById("tableView").style.display = "block";
-            toggleButton.innerHTML = '<i class="bi bi-grid me-2"></i> Switch to Card View';
-            toggleButton.classList.replace("btn-primary", "btn-secondary");
-        }
-    }
-</script>
 <!-- Bootstrap 5 JS Bundle -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const selectAllCheckbox = document.getElementById("selectAll");
-        const itemCheckboxes = document.querySelectorAll(".selectItem");
-        const deleteButton = document.getElementById("deleteSelected");
-        const toastElement = document.getElementById("deleteSuccessToast");
-        const importResultModal = new bootstrap.Modal(document.getElementById("importResultModal"));
-
-        // Kiểm tra nếu có thông báo thành công hoặc cảnh báo thì hiển thị modal
-        // if (document.querySelector(".alert-success") || document.querySelector(".alert-warning")) {
-        //     importResultModal.show();
-        // }
-
-        if(document.querySelector("#importResultModal .alert")) {
-            importResultModal.show();
-        }
-
-        function setupAlertAutoDismiss(alertId) {
-            const alert = document.getElementById(alertId);
-            if (alert) {
-                setTimeout(() => {
-                    closeAlert(alertId);
-                }, 3000);
-            }
-        }
-
-        function closeAlert(alertId) {
-            const alert = document.getElementById(alertId);
-            if (alert) {
-                alert.style.animation = 'fadeOut 0.5s ease-out forwards';
-                setTimeout(() => {
-                    alert.remove();
-                }, 2000);
-            }
-        }
-
-        // Setup auto-dismiss for both alerts
-        setupAlertAutoDismiss('successAlert');
-        setupAlertAutoDismiss('errorAlert');
-
-
-        // Chọn tất cả checkbox
-        selectAllCheckbox.addEventListener("change", function () {
-            itemCheckboxes.forEach(checkbox => {
-                checkbox.checked = selectAllCheckbox.checked;
+    // Khi có thay đổi trong các select của form, tự động submit form lọc
+    document.addEventListener('DOMContentLoaded', function() {
+        const filterForm = document.getElementById('filterForm');
+        const selects = filterForm.querySelectorAll('select');
+        selects.forEach(function(select) {
+            select.addEventListener('change', function() {
+                filterForm.submit();
             });
         });
-
-        // Nếu bỏ chọn một checkbox, bỏ chọn "Select All"
-        itemCheckboxes.forEach(checkbox => {
-            checkbox.addEventListener("change", function () {
-                selectAllCheckbox.checked = [...itemCheckboxes].every(cb => cb.checked);
-            });
-        });
-
-        // Xử lý khi nhấn nút "Delete Selected"
-        deleteButton.addEventListener("click", function () {
-            const selectedIds = [...document.querySelectorAll(".selectItem:checked")]
-                .map(cb => cb.closest("tr").getAttribute("data-id"));
-
-            if (selectedIds.length === 0) {
-                alert("No exercises selected.");
-                return;
-            }
-
-            if (confirm("Are you sure you want to delete selected exercises?")) {
-                fetch('/exercises/delete-batch', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ids: selectedIds})
-                }).then(response => {
-                    if (response.ok) {
-                        showToast();
-                        setTimeout(() => location.reload(), 1000);
-                    } else {
-                        alert("Failed to delete exercises.");
-                    }
-                });
-            }
-        });
-
-        // Hiển thị thông báo
-        function showToast() {
-            toastElement.style.display = "block";
-            const toast = new bootstrap.Toast(toastElement);
-            toast.show();
-        }
-    });
-    document.addEventListener("DOMContentLoaded", function () {
-        const languageFilter = document.getElementById("languageFilter");
-        const levelFilter = document.getElementById("levelFilter");
-        const filterForm = document.getElementById("filterForm");
-
-        // Submit form khi thay đổi dropdown
-        languageFilter.addEventListener("change", function () {
-            filterForm.submit();
-        });
-
-        levelFilter.addEventListener("change", function () {
-            filterForm.submit();
-        });
-
-    });
-
-    function clearFilters() {
-        // Clear the dropdowns and input
-        document.getElementById('languageFilter').value = '';
-        document.getElementById('levelFilter').value = '';
-        document.getElementById('searchInput').value = '';
-
-        // Submit the form without filters
-        document.getElementById('filterForm').submit();
-    }
-
-    function showDetails(index) {
-        const details = document.getElementById(`details-${index}`);
-        const overlay = document.getElementById('overlay');
-        details.classList.add('active');
-        overlay.classList.add('active');
-    }
-
-    function closeDetails(index) {
-        const details = document.getElementById(`details-${index}`);
-        const overlay = document.getElementById('overlay');
-        details.classList.remove('active');
-        overlay.classList.remove('active');
-    }
-
-    // Close popup when clicking outside
-    document.getElementById('overlay').addEventListener('click', function () {
-        document.querySelectorAll('.warning-details.active').forEach(detail => {
-            detail.classList.remove('active');
-        });
-        this.classList.remove('active');
     });
 </script>
-
 </body>
 </html>

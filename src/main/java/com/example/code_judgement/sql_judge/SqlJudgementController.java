@@ -2,8 +2,8 @@ package com.example.code_judgement.sql_judge;
 
 import com.example.code_judgement.CodeExecutionService;
 import com.example.code_judgement.ExecutionResponse;
-import com.example.student_exercise_attemp.model.Exercise;
-import com.example.student_exercise_attemp.service.ExerciseService;
+import com.example.exercise.Exercise;
+import com.example.exercise.ExerciseService;
 import com.example.testcase.TestCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -23,31 +23,30 @@ public class SqlJudgementController {
 
     private final SqlJudgementService sqlJudgementService;
 
+    // Sau khi gửi từ CodeJudgementController về nhận và xử lý chức năng pre-check
     @PostMapping("/precheck-code")
     public String precheckCode(@RequestParam("exerciseId") Long exerciseId,
                                @RequestParam("code") String code,
                                Model model) {
         Exercise exercise = exerciseService.getExerciseById(exerciseId)
                 .orElseThrow(()-> new IllegalArgumentException("Invalid exercise ID"));
-        List<TestCase> testCases = exercise.getTestCases().stream().filter(testCase -> !testCase.isHidden()).toList();
-
-
+        List<TestCase> testCases = exercise.getTestCases();
         if(testCases.isEmpty()) {
             model.addAttribute("exercise", exercise);
             model.addAttribute("code", code);
-            model.addAttribute("output", "<strong>No test case defined for this exercise</strong>");
-            return "judgement/precheck_judge/precheck_code";
+            model.addAttribute("output", "No test case defined for this exercise");
+            return "judgement/code_space";
         }
         try {
             ExecutionResponse response;
             // Nếu ngôn ngữ là SQL, chuyển qua xử lý SQL tại tầng service
             if ("sql".equalsIgnoreCase(exercise.getLanguage().getLanguage())) {
-                response = sqlJudgementService.executeSQLCode(false, exercise, code, testCases);
+                response = sqlJudgementService.executeSQLCode(exercise, code, testCases);
             } else {
-                model.addAttribute("output", "<strong>No test case defined for this exercise</strong>");
+                model.addAttribute("output", "No test cases defined for this exercise.");
                 model.addAttribute("exercise", exercise);
                 model.addAttribute("code", code);
-                return "judgement/precheck_judge/precheck_code";
+                return "judgement/code_space";
             }
             // Đưa kết quả vào model
             model.addAttribute("exercise", exercise);
@@ -55,13 +54,15 @@ public class SqlJudgementController {
             model.addAttribute("passed", response.getPassed());
             model.addAttribute("total", response.getTotal());
             model.addAttribute("testResults", response.getTestCasesResults());
-            String outputMessage = String.format("<p>You passed <strong>%d</strong> out of <strong>%d</strong> test cases.</p>",
-                    response.getPassed(), response.getTotal());
-            model.addAttribute("output", outputMessage);
-            return "judgement/precheck_judge/precheck_code";
+            model.addAttribute("output", response.getPassed() + "/" + response.getTotal() + " test cases passed.");
+            return "judgement/code_space";
         } catch (Exception e) {
-            model.addAttribute("error", e.getMessage());
-            return "judgement/precheck_judge/precheck_code";
+            System.out.println(e.getMessage());
+            model.addAttribute("output", e.getMessage());
+            model.addAttribute("exercise", exercise);
+            model.addAttribute("code", code);
+            model.addAttribute("language", exercise.getLanguage().getLanguage());
+            return "judgement/code_space";
         }
     }
 
@@ -75,28 +76,25 @@ public class SqlJudgementController {
         if(testCases.isEmpty()) {
             model.addAttribute("exercise", exercise);
             model.addAttribute("code", code);
-            model.addAttribute("output", "<strong>No test case defined for this exercise</strong>");
+            model.addAttribute("output", "No test case defined for this exercise");
             return "judgement/code_space";
         }
         try {
             ExecutionResponse response;
             // Nếu ngôn ngữ là SQL, chuyển qua xử lý SQL tại tầng service
             if ("sql".equalsIgnoreCase(exercise.getLanguage().getLanguage())) {
-                response = sqlJudgementService.executeSQLCode(true, exercise, code, testCases);
+                response = sqlJudgementService.executeSQLCode(exercise, code, testCases);
             } else {
-                model.addAttribute("output", "<strong>No test case defined for this exercise</strong>");
+                model.addAttribute("output", "No test cases defined for this exercise.");
                 model.addAttribute("exercise", exercise);
                 model.addAttribute("code", code);
                 return "judgement/code_space";
             }
             // Đưa kết quả vào model
-            model.addAttribute("exercise", exercise);
-            model.addAttribute("code", code);
-            model.addAttribute("testResults", response.getTestCasesResults());
-            model.addAttribute("failed", response.getTotal() - response.getPassed());
-            model.addAttribute("score", response.getScore());
-            model.addAttribute("output", "<p>You passed <strong th:text=\"${passed}\">0</strong> out of <strong th:text=\"${total}\">0</strong>\n" +
-                                                                "test cases.</p>");
+                model.addAttribute("exercise", exercise);
+                model.addAttribute("code", code);
+                model.addAttribute("testResults", response.getTestCasesResults());
+                model.addAttribute("failed", response.getTotal() - response.getPassed());
             return "judgement/result_exercise";
         } catch (Exception e) {
             System.out.println(e.getMessage());
@@ -107,4 +105,54 @@ public class SqlJudgementController {
             return "judgement/code_space";
         }
     }
+
+//    @PostMapping("/submit_exercise")
+//    public String submitExercise(@RequestParam("exerciseId") Long exerciseId,
+//                                 @RequestParam("code") String code,
+//                                 Model model) {
+//        Exercise exercise = exerciseService.getExerciseById(exerciseId)
+//                .orElseThrow(()-> new IllegalArgumentException("Invalid exercise ID"));
+//        List<TestCase> testCases = exercise.getTestCases();
+//        if(testCases.isEmpty()) {
+//            model.addAttribute("exercise", exercise);
+//            model.addAttribute("code", code);
+//            model.addAttribute("output", "No test case defined for this exercise");
+//            return "judgement/code_space";
+//        }
+//        if(code.isEmpty()) {
+//            model.addAttribute("exercise", exercise);
+//            model.addAttribute("code", code);
+//            model.addAttribute("output", "Your code is empty");
+//            return "judgement/code_space";
+//        }
+//        try {
+//            // type 2: "CREATE TABLE"
+//            if(exercise.getSetup().isEmpty()) {
+//                ExecutionResponse response = codeExecutionService.executeSQLCodeType2(code, testCases);
+//                model.addAttribute("exercise", exercise);
+//                model.addAttribute("code", code);
+//                model.addAttribute("passed", response.getPassed());
+//                model.addAttribute("total", response.getTotal());
+//                model.addAttribute("testResults", response.getTestCasesResults());
+//                model.addAttribute("output", response.getPassed() + "/" + response.getTotal() + " test cases passed.");
+//                return "judgement/result_exercise";
+//
+//            } else {
+//                // type 1: "SELECT"
+//                ExecutionResponse response = codeExecutionService.executeSQLCodeType1(exercise.getSetup(), code, testCases);
+//
+//                model.addAttribute("exercise", exercise);
+//                model.addAttribute("code", code);
+//                model.addAttribute("testResults", response.getTestCasesResults());
+//                model.addAttribute("failed", response.getTotal() - response.getPassed());
+//                return "judgement/result_exercise";
+//            }
+//        } catch (Exception e) {
+//            model.addAttribute("output", e.getMessage());
+//            model.addAttribute("exercise", exercise);
+//            model.addAttribute("code", code);
+//            model.addAttribute("language", exercise.getLanguage().getLanguage());
+//            return "judgement/code_space";
+//        }
+//    }
 }

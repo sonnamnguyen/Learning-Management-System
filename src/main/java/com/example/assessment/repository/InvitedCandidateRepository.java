@@ -1,15 +1,12 @@
 package com.example.assessment.repository;
 
 import com.example.assessment.model.InvitedCandidate;
-import org.apache.poi.sl.draw.geom.GuideIf;
-import org.springframework.cglib.core.Local;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,25 +30,4 @@ public interface InvitedCandidateRepository extends JpaRepository<InvitedCandida
 
     // Save or update an invited candidate (provided by JpaRepository)
     InvitedCandidate save(InvitedCandidate invitedCandidate);
-
-    /**
-     * Tìm kiếm tất cả InvitedCandidate của một Assessment
-     * theo từ khóa email (có chứa 'email').
-     * Sử dụng phân trang (Pageable).
-     */
-    @Query("SELECT ic FROM InvitedCandidate ic " +
-            "WHERE ic.assessment.id = :assessmentId " +
-            "AND ic.email LIKE %:email%")
-    Page<InvitedCandidate> findByAssessmentIdAndEmailContaining(@Param("assessmentId") Long assessmentId,
-                                                                @Param("email") String email,
-                                                                Pageable pageable);
-
-    @Query("SELECT ic.expirationDate FROM InvitedCandidate ic WHERE ic.assessment.id = :assessmentId ORDER BY ic.expirationDate DESC")
-    Optional<LocalDateTime> findLatestExpireDateByAssessmentId(@Param("assessmentId") Long assessmentId);
-
-    @Query("SELECT ic.expirationDate FROM InvitedCandidate ic " +
-            "WHERE ic.assessment.id = :assessmentId AND ic.email = :email")
-    Optional<LocalDateTime> findExpireDateByAssessmentIdAndEmail(@Param("assessmentId") Long assessmentId,
-                                                                 @Param("email") String email);
-
 }

@@ -2,11 +2,7 @@ package com.example.assessment.model;
 
 import com.example.user.User;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
 
-@Getter
-@Setter
 @Entity
 @Table(name = "assessment_final_score")
 public class AssessmentFinalScore {
