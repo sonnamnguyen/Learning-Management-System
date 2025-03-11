@@ -94,6 +94,7 @@ public class CJudgementController {
             model.addAttribute("failed", response.getTotal() - response.getPassed());
             model.addAttribute("score", response.getScore());
             model.addAttribute("compileTime", response.getCompileTimeMillis());
+            model.addAttribute("runTime", response.getRunTimeMillis());
 
             if(response.getErrorMessage()!=null){
                 model.addAttribute("error", response.getErrorMessage());

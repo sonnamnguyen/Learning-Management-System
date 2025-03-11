@@ -137,10 +137,12 @@ public class CodeExecutionService {
 
 
         if (!compilationResult.isSuccess()) {
-            return new ExecutionResponse(code, 0, testCases.size(), 0, null, compilationResult.getErrorMessage(), compileTime);
+            return new ExecutionResponse(code, 0, testCases.size(), 0, null, compilationResult.getErrorMessage(), compileTime, null);
         }
 
         // Sử dụng ExecutorService để chạy các test case song song
+
+        long startRunTime = System.nanoTime();
         ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         List<Future<TestCaseResult>> futures = new ArrayList<>();
 
@@ -168,6 +170,8 @@ public class CodeExecutionService {
         }
 
         executor.shutdown();
+        long endRunTime = System.nanoTime();
+        long runTime = ((endRunTime - startRunTime)/1_000_000)/testCases.size();
         if(!compilationResult.getExtensionFileName().equalsIgnoreCase(".cs")){
             try {
                 Path filePath = Path.of(compilationResult.getRandomFileName().getAbsolutePath());
@@ -207,7 +211,7 @@ public class CodeExecutionService {
         }
 
         // Tính toán kết quả tổng quát
-        return new ExecutionResponse(code,passed,testCases.size(),score,testResults, null, compileTime);
+        return new ExecutionResponse(code,passed,testCases.size(),score,testResults, null, compileTime, runTime);
     }
 
     private void deleteDirectoryRecursively(Path path) throws IOException {

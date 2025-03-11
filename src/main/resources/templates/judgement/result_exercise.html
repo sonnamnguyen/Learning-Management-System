@@ -542,6 +542,22 @@
                 <span class="score-number-2" th:text="${score}"></span> TOTAL SCORE
             </div>
         </div>
+        <div style="margin-bottom: 15px; ">
+            <div class="score-left-2">
+                Compile Time:
+                &ensp;
+                <span style="font-weight: normal; font-size: 20px; color: #3d75ea;" th:text="${compileTime} + ' ms'"></span>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 15px; ">
+            <div class="score-left-2">
+                AVG Run Time:
+                &ensp;
+                <span style="font-weight: normal; font-size: 20px; color: #3d75ea;" th:text="${runTime} + ' ms'"></span>
+            </div>
+        </div>
+
     </div>
     <input id="exerciseId" type="hidden" th:value="${exercise.id}" />
     <textarea id="codeEditor" th:text="${code}" style=""></textarea>
