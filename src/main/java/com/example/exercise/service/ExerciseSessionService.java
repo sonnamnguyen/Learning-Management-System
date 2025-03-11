@@ -35,7 +35,8 @@ public class ExerciseSessionService {
             studentExerciseAttempt.setAttemptDate(nowUtc);
             studentExerciseAttempt.setExercise_session(exerciseSession);
             studentExerciseAttempt.setSubmitted_exercise(exercise);
-            studentExerciseAttempt.setAttendant_user(attempt.getUser());
+//            studentExerciseAttempt.setAttendant_user(attempt.getUser());
+            studentExerciseAttempt.setAttendant_email(attempt.getEmail());
             studentExerciseAttemptService.save(studentExerciseAttempt);
         }
         return exerciseSession;

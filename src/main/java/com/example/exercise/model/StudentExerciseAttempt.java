@@ -22,9 +22,14 @@ public class StudentExerciseAttempt {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    // có thể null nếu như participant truy cập assessment bằng email
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
     private User attendant_user;
+
+    // participant truy cập assessment bằng email
+    @Column(nullable = true)
+    private String attendant_email;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "exercise_id", referencedColumnName = "id",nullable = false)
