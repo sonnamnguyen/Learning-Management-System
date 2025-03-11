@@ -1,7 +1,7 @@
 package com.example.code_judgement;
 
-import com.example.student_exercise_attemp.model.Exercise;
-import com.example.student_exercise_attemp.service.ExerciseService;
+import com.example.exercise.model.Exercise;
+import com.example.exercise.service.ExerciseService;
 import com.example.testcase.TestCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;

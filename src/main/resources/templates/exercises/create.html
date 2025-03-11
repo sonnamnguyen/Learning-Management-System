@@ -4,6 +4,7 @@
     <title>Add New Exercise</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         .cke_notification {
             display: none !important;
@@ -29,14 +30,33 @@
             justify-content: center;
             font-size: 16px;
         }
+
+        td {
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        td.text-center {
+            width: 50px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
     </style>
 </head>
+
 <body onload="toggleTestCaseMethod(); updateJSONSample();">
 
 <div class="container mt-4">
     <div class="card shadow-lg">
         <div class="card-header bg-primary text-white">
-            <h2 class="text-center">Add New Exercise</h2>
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="text-center m-0">Add New Exercise</h2>
+                <a href="https://docs.google.com/document/d/1pJQJ7eoA4__OV17WzLvmbPLgGmTj71qx/edit?usp=sharing&ouid=113705567570222338078&rtpof=true&sd=true"
+                   class="btn btn-light text-primary" target="_blank">
+                    <i class="bi bi-plus-circle me-1"></i> Guide
+                </a>
+            </div>
         </div>
         <div class="card-body">
             <!-- Display error if present -->
@@ -89,7 +109,8 @@
                 <div class="mb-3">
                     <label for="level" class="form-label">Difficulty Level</label>
                     <select class="form-select" id="level" th:field="*{level}">
-                        <option th:each="lvl : ${T(com.example.student_exercise_attemp.model.Exercise.Level).values()}" th:value="${lvl}"
+                        <option th:each="lvl : ${T(com.example.student_exercise_attemp.model.Exercise.Level).values()}"
+                                th:value="${lvl}"
                                 th:text="${lvl}"></option>
                     </select>
                     <div class="text-danger" th:if="${#fields.hasErrors('level')}" th:errors="*{level}"></div>
@@ -142,7 +163,7 @@
                                     <th>Input</th>
                                     <th>Expected Output</th>
                                     <th class="tagSQLColumn hidden" data-sql>Tag SQL</th>
-                                    <th></th>
+                                    <th>Action</th>
                                 </tr>
                                 </thead>
                                 <tbody id="normalTestCasesContainer">
@@ -162,7 +183,7 @@
                                                th:name="|testCaseFormList.testCasesList[${stat.index}].sqlTagNumber|"
                                                th:value="${testCase.sqlTagNumber}" placeholder="Tag SQL">
                                     </td>
-                                    <td>
+                                    <td class="text-center">
                                         <button title="Delete" type="button" class="btn btn-danger btn-sm"
                                                 onclick="removeTestCase(this)">
                                             <i class="bi bi-trash"></i>
@@ -188,7 +209,7 @@
                                     <th>Input</th>
                                     <th>Expected Output</th>
                                     <th class="tagSQLColumn hidden" data-sql>Tag SQL</th>
-                                    <th></th>
+                                    <th>Action</th>
                                 </tr>
                                 </thead>
                                 <tbody id="hiddenTestCasesContainer">
@@ -200,7 +221,7 @@
                                     <td class="tagSQLColumn hidden" data-sql><input type="text" class="form-control"
                                                                                     name="hiddenTestCases[0].sqlTagNumber"
                                                                                     placeholder="HiddenTag SQL"></td>
-                                    <td>
+                                    <td class="text-center">
                                         <button title="Delete" type="button" class="btn btn-danger btn-sm"
                                                 onclick="removeTestCase(this)">
                                             <i class="bi bi-trash"></i>
@@ -232,6 +253,7 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 <script src="https://cdn.ckeditor.com/4.20.2/standard/ckeditor.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> <!-- Ensure SweetAlert2 is loaded -->
 <script>
     CKEDITOR.replace('description', {
         removePlugins: 'easyimage, cloudservices, toolbar, format, styles, link',
@@ -271,15 +293,28 @@
                 contentType: false,
                 data: formData,
                 success: function (response) {
-                    alert("Exercise created successfully!");
-                    window.location.href = "/exercises";
+                    Swal.fire({
+                        icon: "success",
+                        title: "Created successfully!",
+                        confirmButtonColor: "#3085d6",
+                        confirmButtonText: "OK"
+                    }).then(() => {
+                        window.location.href = "/exercises";
+                    });
                 },
                 error: function (xhr) {
-                    alert("Error: " + xhr.responseText);
+                    Swal.fire({
+                        icon: "error",
+                        title: "Error",
+                        text: xhr.responseText || "An unexpected error occurred!",
+                        confirmButtonColor: "#d33",
+                        confirmButtonText: "OK"
+                    });
                     $("button[type=submit]").prop("disabled", false);
                     isSubmitting = false;
                 }
             });
+
         });
     });
 
@@ -292,22 +327,18 @@
         jsonInputDiv.style.display = isJsonSelected ? 'block' : 'none';
         uiInputDiv.style.display = isJsonSelected ? 'none' : 'block';
 
-        // JSON required khi chọn JSON
         jsonTextarea.required = isJsonSelected;
 
-        // Normal Test Cases required khi chọn UI
         const normalTestCaseInputs = document.querySelectorAll('#normalTestCasesContainer .testcase-input');
         normalTestCaseInputs.forEach(input => {
             input.required = !isJsonSelected;
         });
 
-        // Hidden Test Cases không required trong mọi trường hợp
         const hiddenTestCaseInputs = document.querySelectorAll('#hiddenTestCasesContainer input:not([name$=".sqlTagNumber"]):not([name$=".hidden"])');
         hiddenTestCaseInputs.forEach(input => {
             input.required = false;
         });
 
-        // sqlTagNumber không required trong mọi trường hợp
         const sqlTagInputs = document.querySelectorAll('input[name$=".sqlTagNumber"]');
         sqlTagInputs.forEach(input => {
             input.required = false;
@@ -326,16 +357,16 @@
         let selectedLang = languageSelect.options[languageSelect.selectedIndex]?.text;
         let isSQL = selectedLang === "SQL";
 
-        let inputPlaceholder = isHiddenTestCase ? "HiddenInput" : "Input";
-        let expectedOutputPlaceholder = isHiddenTestCase ? "HiddenExpected Output" : "Expected Output";
-        let sqlTagPlaceholder = isHiddenTestCase ? "HiddenTag SQL" : "Tag SQL";
+        let inputPlaceholder = isHiddenTestCase ? "Hidden Input" : "Input";
+        let expectedOutputPlaceholder = isHiddenTestCase ? "Hidden Expected Output" : "Expected Output";
+        let sqlTagPlaceholder = isHiddenTestCase ? "Hidden Tag SQL" : "Tag SQL";
 
         let newRow = document.createElement('tr');
         newRow.innerHTML = `
             <td><input type="text" class="form-control ${isHiddenTestCase ? '' : 'testcase-input'}" name="${prefix}[${rowCount}].input" placeholder="${inputPlaceholder}"></td>
             <td><input type="text" class="form-control ${isHiddenTestCase ? '' : 'testcase-input'}" name="${prefix}[${rowCount}].expectedOutput" placeholder="${expectedOutputPlaceholder}"></td>
             ${isSQL ? `<td class="tagSQLColumn"><input type="text" class="form-control" name="${prefix}[${rowCount}].sqlTagNumber" placeholder="${sqlTagPlaceholder}"></td>` : ''}
-            <td>
+            <td class="text-center">
                 <button title="Delete" type="button" class="btn btn-danger btn-sm" onclick="removeTestCase(this)">
                     <i class="bi bi-trash"></i>
                 </button>
@@ -354,19 +385,6 @@
             container.removeChild(row);
         }
     }
-
-    document.querySelector('form').addEventListener('submit', function (event) {
-        const isJsonSelected = document.getElementById('jsonOption').checked;
-        if (isJsonSelected) {
-            const testCases = document.getElementById('testCases').value;
-            try {
-                JSON.parse(testCases);
-            } catch (e) {
-                event.preventDefault();
-                alert('Invalid JSON format. Please correct it before submitting.');
-            }
-        }
-    });
 
     function updateJSONSample() {
         const languageSelect = document.getElementById("language");
@@ -415,7 +433,7 @@
 
             document.querySelectorAll("input[name$='.sqlTagNumber']").forEach(input => {
                 const isHiddenTestCase = input.closest('tbody')?.id === 'hiddenTestCasesContainer';
-                const placeholder = isHiddenTestCase ? "HiddenTag SQL" : "Tag SQL";
+                const placeholder = isHiddenTestCase ? "Hidden Tag SQL" : "Tag SQL";
 
                 input.parentElement.style.display = isSQL ? "table-cell" : "none";
 
@@ -427,13 +445,59 @@
                     input.value = input.getAttribute('data-original-value') || '';
                     input.setAttribute('placeholder', placeholder);
                 }
-                input.required = false; // sqlTagNumber không bắt buộc trong mọi trường hợp
+                input.required = false;
             });
         }
 
         languageSelect.addEventListener("change", updateSQLUI);
         updateSQLUI();
     });
+</script>
+<script>
+    document.getElementById("create-ex-form").addEventListener("submit", function(event) {
+        const isJsonSelected = document.getElementById("jsonOption").checked;
+
+        if (isJsonSelected) {
+            const testCasesJson = document.getElementById("testCases").value.trim();
+            if (!testCasesJson) {
+                event.preventDefault();
+                showErrorPopup("Invalid Data", "Test case JSON cannot be empty!");
+                return;
+            }
+            try {
+                const testCases = JSON.parse(testCasesJson);
+                for (const testCase of testCases) {
+                    if (!testCase.input || (!testCase.expectedOutput && !testCase.isHidden)) {
+                        event.preventDefault();
+                        showErrorPopup("Invalid Data", "Test case input/output cannot be empty!");
+                        return;
+                    }
+                }
+            } catch (e) {
+                event.preventDefault();
+                return;
+            }
+        } else {
+            const inputs = document.querySelectorAll('#normalTestCasesContainer .testcase-input');
+            for (const input of inputs) {
+                if (!input.value.trim()) {
+                    event.preventDefault();
+                    showErrorPopup("Invalid Data", "Test case input cannot be empty!");
+                    return;
+                }
+            }
+        }
+    });
+    // Hàm hiển thị thông báo bằng SweetAlert2
+    function showErrorPopup(title, message) {
+        Swal.fire({
+            icon: 'error',
+            title: title,
+            text: message,
+            confirmButtonColor: '#3085d6',
+            confirmButtonText: 'OK'
+        });
+    }
 </script>
 </body>
 </html>
