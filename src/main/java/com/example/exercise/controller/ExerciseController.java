@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 @Controller
 @RequestMapping("/exercises")
 @RequiredArgsConstructor
-public class ExerciseController {
+public class    ExerciseController {
     private final ProgrammingLanguageService programmingLanguageService;
     private final ExerciseRepository exerciseRepository;
     private final ExerciseService exerciseService;
@@ -55,6 +55,7 @@ public class ExerciseController {
         model.addAttribute("links", "/style.css");
         model.addAttribute("links", "/print.css");
     }
+
 
     @GetMapping
     @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPERADMIN', 'STUDENT')")
@@ -164,8 +165,6 @@ public class ExerciseController {
                 .anyMatch(auth -> auth.getAuthority().equals("ADMIN") || auth.getAuthority().equals("SUPERADMIN"));
         return isAdmin ? "exercises/dashboard-admin":"exercises/profile";
     }
-
-
 
 
     // Show create exercise form (existing method)
