@@ -40,6 +40,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.support.SessionStatus;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.lang.reflect.Field;
@@ -61,7 +62,13 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/assessments")
+@SessionAttributes("exerciseSession")
 public class AssessmentController {
+    @ModelAttribute("exerciseSession")
+    public ExerciseSession createExerciseSession() {
+        return new ExerciseSession();
+    }
+
     @Autowired
     private AssessmentService assessmentService;
 
@@ -572,9 +579,7 @@ public class AssessmentController {
     }
 
     @PostMapping("/invite/{id}/take-exam")
-    public String verifyEmail(@PathVariable("id") String rawId, @RequestParam("email") String email, Model model,
-                              RedirectAttributes redirectAttributes,
-                              HttpSession session) {
+    public String verifyEmail(@PathVariable("id") String rawId, @RequestParam("email") String email, Model model) {
         email = email.toLowerCase();
         // Decode the ID (but don't overwrite rawId)
         System.out.println("");
@@ -655,12 +660,8 @@ public class AssessmentController {
         //Create attempt
         StudentAssessmentAttempt attempt = studentAssessmentAttemptService.createAssessmentAttempt(id, email);
 
-        // check exerciseSession (be only attempted one assessment) and create exercise session for participant
-        if(session.getAttribute("exerciseSession") == null && !exercises.isEmpty()){
-            session.setAttribute("exerciseSession", exerciseSessionService.assessmentExerciseSession(assessment, nowUtc, exercises, attempt));
-        } else {
-            throw new RuntimeException("You are in other assessment! Can not attempt this assessment.");
-        }
+        // create exercise session for participant
+        model.addAttribute("exerciseSession", exerciseSessionService.assessmentExerciseSession(assessment, nowUtc, exercises, attempt));
         // Add to model
         model.addAttribute("assessment", assessment);
         model.addAttribute("questions", questions);
@@ -776,7 +777,7 @@ public class AssessmentController {
                                    @RequestParam("tabLeaveCount") int tabLeaveCount,
                                    @RequestParam Map<String, String> responses,
                                    Principal principal,
-                                   HttpSession session,
+                                   SessionStatus sessionStatus,
                                    Model model) {
         // Lấy thông tin user
         User user = userService.findByUsername(principal.getName());
@@ -790,10 +791,11 @@ public class AssessmentController {
         JsonNode proctoringData = objectMapper.createObjectNode()
                 .put("tabLeaveCount", tabLeaveCount);
         // Tính điểm phần Exercise
-        ExerciseSession exerciseSession = (ExerciseSession) session.getAttribute("exerciseSession");
+        ExerciseSession exerciseSession = (ExerciseSession) model.getAttribute("exerciseSession");
+        assert exerciseSession != null;
+        sessionStatus.setComplete();
         double rawScoreExercises = exerciseSessionService.calculateAverageExerciseScoreInAssessment(exerciseSession);
         int scoreExercise = (int) Math.round(rawScoreExercises);
-        session.removeAttribute("exerciseSession");
         // Lưu kết quả attempt
         StudentAssessmentAttempt attempt = studentAssessmentAttemptService.saveTestAttempt(attemptId, elapsedTime, quizScore, scoreExercise, proctoringData);
         model.addAttribute("timeTaken", elapsedTime);
