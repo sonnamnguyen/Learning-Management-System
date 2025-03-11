@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -19,6 +20,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 import java.util.List;
+
+import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 @EnableWebSecurity
@@ -31,9 +34,21 @@ public class SecurityConfig {
         http.headers().frameOptions().sameOrigin();
         http
                 .csrf(AbstractHttpConfigurer::disable)
-//                .authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll());
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/login", "/register", "/otp", "/verify-otp","/materials/**").permitAll()
+                        .requestMatchers(
+                                "/login",
+                                "/register",
+                                "/otp",
+                                "/verify-otp",
+                                "/materials/**",
+                                "assessments/expired-link", // Allow expired link page
+                                "assessments/invite/**",   // Allow all invite-related links (Take Assessment)
+                                "/already-assessed",
+                                "assessments/create/**",
+                                "assessments/detail/{id}"
+                                // Allow all invite-related links (Take Assessment)
+                        ).permitAll()
+                        .requestMatchers("/admin/**").hasAnyRole("ADMIN", "SUPERADMIN")// Chỉ admin được truy cập API /admin/**
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form.loginPage("/login").permitAll())
@@ -50,6 +65,7 @@ public class SecurityConfig {
 
         return http.build();
     }
+
 
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {

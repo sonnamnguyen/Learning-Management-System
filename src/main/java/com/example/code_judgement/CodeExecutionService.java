@@ -3,19 +3,26 @@ package com.example.code_judgement;
 
 import com.example.code_judgement.java_judge.JavaJudgementService;
 import com.example.code_judgement.languageFactory.ExecutionBasedLanguage;
-import com.example.exercise.ExerciseRepository;
+import com.example.exercise.model.Exercise;
+import com.example.exercise.model.ExerciseSession;
+import com.example.exercise.repository.ExerciseRepository;
+import com.example.exercise.model.StudentExerciseAttempt;
+import com.example.exercise.service.StudentExerciseAttemptService;
 import com.example.testcase.TestCase;
 import com.example.testcase.TestCaseResult;
 import com.example.testcase.TestCaseService;
+import com.example.user.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -36,6 +43,12 @@ public class CodeExecutionService {
 
     @Autowired
     private ExerciseRepository exerciseRepository;
+
+    @Autowired
+    private StudentExerciseAttemptService studentExerciseAttemptService;
+
+    @Autowired
+    private UserService userService;
 
     public String runWithCusTomInput(String code, String input, ExecutionBasedLanguage executionBasedLanguage) {
 //        ExecutionBasedLanguage executionBasedLanguage = initialLanguage(language);
@@ -77,15 +90,59 @@ public class CodeExecutionService {
         return userOutput;
     }
 
-    public ExecutionResponse executeCodeOptimized(String code, List<TestCase> testCases, ExecutionBasedLanguage executionBasedLanguage) {
+    // calculate score for exercise
+    public double exerciseScore(int passed, int total) {
+        try {
+            if (total == 0) {
+                throw new ArithmeticException("TestCase is null");
+            }
+            double score = (double) passed / total * 100;
+            return Math.round(score * 10.0) / 10.0;
+        } catch (ArithmeticException e) {
+            System.err.println("Error: " + e.getMessage());
+            return 0.0;
+        }
+    }
+
+    public ExecutionResponse executeCodeOptimized(String type, String code, List<TestCase> testCases, ExecutionBasedLanguage executionBasedLanguage, Exercise exercise, ExerciseSession exerciseSession) {
         // Biên dịch mã nguồn một lần
 //        ExecutionBasedLanguage executionBasedLanguage = initialLanguage(language);
+        long startCompileTime = System.nanoTime();
         CompilationResult compilationResult = executionBasedLanguage.compileCode(code);
+        long endCompileTime = System.nanoTime();
+
+        long compileTime = (endCompileTime - startCompileTime)/1_000_000;
+
+        StudentExerciseAttempt studentExerciseAttempt = new StudentExerciseAttempt();
+        if(type.equalsIgnoreCase("practice")){
+            studentExerciseAttempt.setAttemptDate(LocalDateTime.now());
+            studentExerciseAttempt.setSubmitted_code(code);
+            studentExerciseAttempt.setSubmitted_exercise(exercise);
+            studentExerciseAttempt.setAttendant_user(userService.getCurrentUser());
+            studentExerciseAttempt.setSubmitted(true);
+            studentExerciseAttemptService.save(studentExerciseAttempt);
+        } else if(type.equalsIgnoreCase("assessment")){
+            Optional<StudentExerciseAttempt> optStudentExerciseAttempt = studentExerciseAttemptService.getStudentExerciseAttemptBySessionAndExercise(exerciseSession, exercise);
+            if(optStudentExerciseAttempt.isPresent()){
+                studentExerciseAttempt = optStudentExerciseAttempt.get();
+                studentExerciseAttempt.setSubmitted_code(code);
+                studentExerciseAttempt.setSubmitted(true);
+                studentExerciseAttemptService.save(studentExerciseAttempt);
+            } else {
+                String error = "Can not take Student Exercise Attempt!";
+                System.out.println(error);
+                throw new RuntimeException(error);
+            }
+        }
+
+
         if (!compilationResult.isSuccess()) {
-            throw new RuntimeException(compilationResult.getErrorMessage());
+            return new ExecutionResponse(code, 0, testCases.size(), 0, null, compilationResult.getErrorMessage(), compileTime, null);
         }
 
         // Sử dụng ExecutorService để chạy các test case song song
+
+        long startRunTime = System.nanoTime();
         ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         List<Future<TestCaseResult>> futures = new ArrayList<>();
 
@@ -113,6 +170,8 @@ public class CodeExecutionService {
         }
 
         executor.shutdown();
+        long endRunTime = System.nanoTime();
+        long runTime = ((endRunTime - startRunTime)/1_000_000)/testCases.size();
         if(!compilationResult.getExtensionFileName().equalsIgnoreCase(".cs")){
             try {
                 Path filePath = Path.of(compilationResult.getRandomFileName().getAbsolutePath());
@@ -144,10 +203,17 @@ public class CodeExecutionService {
             }
         }
 
+        double score = 0;
+        if(type.equalsIgnoreCase("practice") || type.equalsIgnoreCase("assessment")){
+            score = exerciseScore(passed, testResults.size());
+            studentExerciseAttempt.setScore_exercise(score);
+            studentExerciseAttemptService.save(studentExerciseAttempt);
+        }
 
         // Tính toán kết quả tổng quát
-        return new ExecutionResponse(code,passed,testCases.size(),testResults);
+        return new ExecutionResponse(code,passed,testCases.size(),score,testResults, null, compileTime, runTime);
     }
+
     private void deleteDirectoryRecursively(Path path) throws IOException {
         if (Files.exists(path)) {
             Files.walk(path)

@@ -1,8 +1,10 @@
-package com.example.exercise;
+package com.example.exercise.repository;
 
+import com.example.exercise.model.Exercise;
 import com.example.testcase.TestCase;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
@@ -12,7 +14,12 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface ExerciseRepository extends PagingAndSortingRepository<Exercise, Long> {
+public interface ExerciseRepository extends PagingAndSortingRepository<Exercise, Long>, JpaRepository<Exercise, Long> {
+
+
+    @Query("SELECT e FROM Exercise e WHERE LOWER(e.name) LIKE LOWER(CONCAT('%', :title, '%'))")
+    List<Exercise> searchByTitle(@Param("title") String title);
+
 
     @Query("SELECT e FROM Exercise e WHERE e.name LIKE %:searchQuery%")
     Page<Exercise> searchExercises(@Param("searchQuery") String searchQuery, Pageable pageable);
@@ -24,6 +31,13 @@ public interface ExerciseRepository extends PagingAndSortingRepository<Exercise,
                                  @Param("level") Exercise.Level level,
                                  Pageable pageable);
 
+    Optional<Exercise> findByName(String name);
+
+    boolean existsByName(String name);
+
+    @Query("SELECT COUNT(e) > 0 FROM Exercise e WHERE e.name = :name AND e.id <> :id")
+    boolean existsByNameExcludingId(@Param("name") String name, @Param("id") Long id);
+
     Page<Exercise> findAll(Pageable pageable);
 
     List<Exercise> findAll();
@@ -32,8 +46,14 @@ public interface ExerciseRepository extends PagingAndSortingRepository<Exercise,
 
     Exercise save(Exercise exercise);
 
-    boolean existsByName(String name);
-
     void deleteById(Long id);
 
+    void deleteAllByIdIn(List<Long> ids);
+
+    @Query("SELECT e FROM Assessment a JOIN a.exercises e WHERE a.id = :assessmentId")
+    List<Exercise> findExercisesByAssessmentId(@Param("assessmentId") Long assessmentId);
+
+
+    @Query("SELECT e.name FROM Exercise e")
+    List<String> findAllName();
 }

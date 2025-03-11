@@ -1,9 +1,9 @@
-package com.example.student_exercise_attemp.service;
+package com.example.exercise.service;
 
 import com.example.assessment.model.ProgrammingLanguage;
 import com.example.assessment.repository.ProgrammingLanguageRepository;
-import com.example.student_exercise_attemp.model.Exercise;
-import com.example.student_exercise_attemp.repository.ExerciseRepository;
+import com.example.exercise.model.Exercise;
+import com.example.exercise.repository.ExerciseRepository;
 import com.example.testcase.TestCase;
 import com.example.testcase.TestCaseRepository;
 import jakarta.transaction.Transactional;

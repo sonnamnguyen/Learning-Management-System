@@ -1,4 +1,4 @@
-package com.example.student_exercise_attemp.model;
+package com.example.exercise.model;
 
 
 import com.example.assessment.model.Assessment;
@@ -24,7 +24,7 @@ public class ExerciseSession {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
 
-    private double totalScore;
+    private double averageScore = 0;
 
     @OneToMany(mappedBy = "exercise_session", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<StudentExerciseAttempt> studentExerciseAttempts;

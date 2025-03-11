@@ -3,8 +3,14 @@ package com.example.assessment.model;
 import com.example.course.Course;
 import com.example.user.User;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.time.LocalDateTime;
 
+
+@Getter
+@Setter
 @Entity
 @Table(name = "course_final_score")
 public class CourseFinalScore {

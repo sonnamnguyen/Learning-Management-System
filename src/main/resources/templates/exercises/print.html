@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exercise List</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/print.css">
 </head>
 <body>
@@ -12,21 +12,27 @@
     <table class="table table-bordered table-striped">
         <thead class="table-light">
         <tr>
-            <th class="text-center">#</th>
-            <th>Exercise</th>
-            <th>Language</th>
-            <th>Level</th>
+            <th class="text-center w-5">#</th>
+            <th class="w-15">Exercise</th>
+            <th class="w-10">Language</th>
+            <th class="w-10">Level</th>
+            <th class="w-20">Description</th>
+            <th class="w-40">Set Up Code</th>
         </tr>
         </thead>
         <tbody>
         <!-- Loop through exercises and display them -->
         <tr th:each="exercise, iterStat : ${exercises}">
-            <td class="text-center" th:text="${iterStat.index + 1}"></td> <!-- Start numbering from 1 -->
-            <td th:text="${exercise.name}"></td>
+            <td class="text-center w-5" th:text="${iterStat.index + 1}"></td> <!-- Start numbering from 1 -->
+            <td class="w-15" th:text="${exercise.name}"></td>
             <!-- Display programming language -->
-            <td th:text="${exercise.language.language}"></td>
+            <td class="w-10" th:text="${exercise.language.language}"></td>
             <!-- Display exercise level -->
-            <td th:text="${exercise.level}"></td>
+            <td class="w-10" th:text="${exercise.level}"></td>
+            <!-- Display exercise description -->
+            <td class="w-20" th:utext="${exercise.description}"></td>
+            <!-- Display exercise set up -->
+            <td class="w-40 code-column"><pre th:utext="${exercise.setup}"></pre></td>
         </tr>
         </tbody>
     </table>

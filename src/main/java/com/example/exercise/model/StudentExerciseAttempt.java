@@ -1,7 +1,7 @@
-package com.example.student_exercise_attemp.model;
+package com.example.exercise.model;
 
 
-import com.example.student_exercise_attemp.model.Exercise;
+import com.example.exercise.model.Exercise;
 import com.example.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "student_exercise_attemp")
+@Table(name = "student_exercise_attempt")
 public class StudentExerciseAttempt {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

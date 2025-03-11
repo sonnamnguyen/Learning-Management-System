@@ -2,9 +2,9 @@ package com.example.student_exercise_attemp.controller;
 
 import com.example.assessment.model.ProgrammingLanguage;
 import com.example.assessment.service.ProgrammingLanguageService;
-import com.example.student_exercise_attemp.model.Exercise;
-import com.example.student_exercise_attemp.repository.ExerciseRepository;
-import com.example.student_exercise_attemp.service.ExerciseService;
+import com.example.exercise.model.Exercise;
+import com.example.exercise.repository.ExerciseRepository;
+import com.example.exercise.service.ExerciseService;
 import com.example.testcase.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -37,7 +37,7 @@ import java.util.regex.*;
 @Controller
 @RequestMapping("/exercises")
 @RequiredArgsConstructor
-public class ExerciseController {
+public class    ExerciseController {
     private final ProgrammingLanguageService programmingLanguageService;
     private final ExerciseRepository exerciseRepository;
     private final ExerciseService exerciseService;

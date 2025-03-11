@@ -1,4 +1,4 @@
-<div class="px-5 flex-grow-1">
+<div class="container-fluid px-4 py-3 flex-grow-1">
     <h1 class="text-center">Assessments</h1>
     <div>
         <div class="d-flex align-items-center mb-3">
@@ -12,127 +12,163 @@
                     </button>
                 </form>
             </div>
+            <!-- Buttons -->
             <div>
                 <a href="/assessments/print" class="btn btn-outline-secondary me-2" target="_blank">
                     <i class="bi bi-printer"></i> Print
                 </a>
                 <!-- Export Button -->
-                <a href="/assessments/export" class="btn btn-outline-secondary me-2">
+                <a href="/assessments/export"
+                   class="btn btn-outline-secondary me-2"
+                   th:classappend="${curr_role != 'SUPERADMIN' and curr_role != 'ADMIN'} ? 'disabled'">
                     <i class="bi bi-file-earmark-excel"></i> Export
                 </a>
 
                 <!-- Import Button that triggers modal -->
-                <button class="btn btn-outline-secondary me-2" data-bs-toggle="modal" data-bs-target="#importModal">
+                <button class="btn btn-outline-secondary me-2"
+                        data-bs-toggle="modal" data-bs-target="#importModal"
+                        th:classappend="${curr_role != 'SUPERADMIN' and curr_role != 'ADMIN'} ? 'disabled'">
                     <i class="bi bi-upload"></i> Import
                 </button>
 
-                <a href="/assessments/create" class="btn btn-primary">
+                <a href="/assessments/create"
+                   class="btn btn-primary"
+                   th:classappend="${curr_role != 'SUPERADMIN' and curr_role != 'ADMIN'} ? 'disabled'">
                     <i class="bi bi-plus-circle"></i> Create New Assessment
                 </a>
             </div>
         </div>
-        <div class="scrollable-table" style="overflow-x: hidden; width: 100%;">
-            <div class="row" id="quizCards">
-                <div th:each="assessment : ${assessments}" class="col-md-4">
-                    <div class="card mb-4 shadow">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h5 class="card-title mb-0 fw-bold">
-                                    <span th:text="${assessment.title}"></span>
-                                    <span class="badge bg-light text-secondary ms-2 rounded-pill small px-2 py-1"
-                                          style="font-size: 0.7rem; font-weight: 400;"
-                                          th:text="${assessment.assessmentType.name}">
-                            </span>
-                                </h5>
-                                <div class="btn-group gap-2">
-                                    <a th:href="@{'/assessments/edit/' + ${assessment.id}}"
-                                       class="btn btn-sm btn-outline-primary" title="Edit assessment">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <a th:href="@{'/assessments/detail/' + ${assessment.id}}"
-                                       class="btn btn-sm btn-outline-primary" title="Open">
-                                        <i class="fas fa-arrow-right"></i>
-                                    </a>
-                                </div>
-                            </div>
 
-                            <p class="card-text mb-1 text-muted small">
-                                Course: <span th:text="${assessment.course.name}"></span>
-                            </p>
-
-                            <div class="row mb-2">
-                                <div class="col-md-8 d-flex align-items-center mb-2">
-                                    <strong class="me-2 text-muted small">Qualified:</strong>
-                                    <div class="progress flex-grow-1" style="height: 0.4rem;">
-                                        <div class="progress-bar bg-primary" role="progressbar"
-                                             th:style="'width:' + ${assessment.qualifiedCount} + '%;'"
-                                             th:aria-valuenow="${assessment.qualifiedCount}"
-                                             aria-valuemin="0" aria-valuemax="100">
-                                        </div>
-                                    </div>
-                                    <strong class="ms-2 small" th:text="${assessment.qualifiedCount + '%'}"></strong>
-                                </div>
-                                <div class="col-md-4 text-end small text-muted">
-                                    <p class="mb-0" th:text="${assessment.invitedCount + ' Invited'}"></p>
-                                    <p class="mb-0" th:text="${assessment.assessedCount + ' Assessed'}"></p>
-                                    <p class="mb-0" th:text="${assessment.qualifiedCount + ' Qualified'}"></p>
-                                </div>
-                                <div class="row text-center mb-0">
-                                    <div class="col">
-                                        <p class="card-text small text-muted mb-0">Exercises</p>
-<!--                                        <h6 th:text="${assessment.exerciseCount}"></h6>-->
-                                    </div>
-                                    <div class="col">
-                                        <p class="card-text small text-muted mb-0">Questions</p>
-<!--                                        <h6 th:text="${assessment.questionCount}"></h6>-->
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="card-footer bg-light d-flex justify-content-between align-items-center small text-muted" style="margin-top: -0.9rem;">
+        <!-- Assessments Cards Grid -->
+        <div class="row g-4" id="quizCards">
+            <div th:each="assessment : ${assessments}" class="col-md-4">
+                <!-- Assessments Card -->
+                <div class="card mb-4 hover-shadow shadow transition-all">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="card-title mb-0 fw-bold">
+                                <span th:text="${assessment.title}"></span>
+                                <span class="badge bg-light text-secondary ms-2 rounded-pill small px-2 py-1"
+                                      style="font-size: 0.7rem; font-weight: 400;"
+                                      th:text="${assessment.assessmentType.name}">
+                                    </span>
+                            </h5>
                             <div class="btn-group gap-2">
-                                <a th:href="@{'/assessments/take/' + ${assessment.id} + '?preview=true'}"
-                                   class="btn btn-sm btn-outline-secondary" title="Preview">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                                <a th:href="@{'/assessments/invite/' + ${assessment.id}}"
-                                   class="btn btn-sm btn-outline-secondary" title="Invite">
-                                    <i class="fas fa-envelope"></i>
-                                </a>
-                                <a href="#" class="btn btn-outline-secondary btn-sm"
-                                   onclick="copyInviteLink(event, [[${assessment.id}]])" title="Copy Link">
+                                <a th:href="@{'/assessments/duplicate/' + ${assessment.id}}"
+                                   class="btn btn-sm btn-outline-primary" title="duplicate"
+                                   th:classappend="${curr_role != 'SUPERADMIN' and curr_role != 'ADMIN'} ? 'disabled'">
                                     <i class="fas fa-copy"></i>
                                 </a>
+                                <a th:href="@{'/assessments/edit/' + ${assessment.id}}"
+                                   class="btn btn-sm btn-outline-primary" title="Edit assessment"
+                                   th:classappend="${curr_role != 'SUPERADMIN' and curr_role != 'ADMIN'} ? 'disabled'">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a th:href="@{'/assessments/detail/' + ${assessment.id}}"
+                                   class="btn btn-sm btn-outline-primary" title="Open"
+                                   th:classappend="${curr_role != 'SUPERADMIN' and curr_role != 'ADMIN'} ? 'disabled'">
+                                    <i class="fas fa-arrow-right"></i>
+                                </a>
+
                             </div>
-                            <small>
-                                <i class="fas fa-user me-1"></i>
-                                <span th:text="${assessment.createdBy.username}"></span> |
-                                <span th:text="${#temporals.format(assessment.createdAt, 'yyyy-MM-dd')}"></span>
-                            </small>
                         </div>
+
+                        <p class="card-text mb-1 text-muted small">
+                            Course: <span th:text="${assessment.course.name}"></span>
+                        </p>
+
+                        <div class="row mb-2">
+                            <div class="col-md-8 d-flex align-items-center mb-2">
+                                <strong class="me-2 text-muted small">Qualified:</strong>
+                                <div class="progress flex-grow-1" style="height: 0.4rem;">
+                                    <div class="progress-bar bg-primary" role="progressbar"
+                                         th:style="'width:' + ${assessment.qualifiedCount} + '%;'"
+                                         th:aria-valuenow="${assessment.qualifiedCount}"
+                                         aria-valuemin="0" aria-valuemax="100">
+                                    </div>
+                                </div>
+                                <strong class="ms-2 small" th:text="${assessment.qualifiedCount + '%'}"></strong>
+                            </div>
+                            <div class="col-md-4 text-end small text-muted">
+                                <p class="mb-0" th:text="${assessment.invitedCount + ' Invited'}"></p>
+                                <p class="mb-0" th:text="${assessment.assessedCount + ' Assessed'}"></p>
+                                <p class="mb-0" th:text="${assessment.qualifiedCount + ' Qualified'}"></p>
+                            </div>
+                            <div class="row text-center mb-0">
+                                <div class="col">
+                                    <p class="card-text small text-muted mb-0">Exercises</p>
+                                    <!--                                        <h6 th:text="${assessment.exerciseCount}"></h6>-->
+                                </div>
+                                <div class="col">
+                                    <p class="card-text small text-muted mb-0">Questions</p>
+                                    <!--                                        <h6 th:text="${assessment.questionCount}"></h6>-->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-footer bg-light d-flex justify-content-between align-items-center small text-muted" style="margin-top: -0.9rem;">
+                        <div class="btn-group gap-2">
+                            <a th:href="@{assessments/{id}/preview(id=${assessment.id})}"
+                               class="btn btn-sm btn-outline-secondary" title="Preview"
+                               th:classappend="${curr_role != 'SUPERADMIN' and curr_role != 'ADMIN'} ? 'disabled'">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a th:href="@{'/assessments/invite/' + ${assessment.id}}"
+                               class="btn btn-sm btn-outline-secondary" title="Invite"
+                               th:classappend="${curr_role != 'SUPERADMIN' and curr_role != 'ADMIN'} ? 'disabled'">
+                                <i class="fas fa-envelope"></i>
+                            </a>
+                            <a href="javascript:void(0);" class="btn btn-outline-secondary btn-sm"
+                               th:attr="data-assessment-id=${assessment.id}"
+                               onclick="copyInviteLink(event, this.getAttribute('data-assessment-id'))"
+                               title="Copy Link"
+                               th:classappend="${curr_role != 'SUPERADMIN' and curr_role != 'ADMIN'} ? 'disabled'">
+                                <i class="fas fa-copy"></i>
+                            </a>
+
+                        </div>
+                        <small>
+                            <i class="fas fa-user me-1"></i>
+                            <span th:text="${assessment.createdBy.username}"></span> |
+                            <span th:text="${#temporals.format(assessment.createdAt, 'yyyy-MM-dd')}"></span>
+                        </small>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="pagination float-end" th:if="${totalPages > 0}">
-            <ul class="pagination">
+        <!-- Pagination -->
+        <nav th:if="${totalPages > 0}" class="mt-4" aria-label="Assessment navigation">
+            <ul class="pagination justify-content-center">
                 <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
-                    <a class="page-link" th:href="@{/assessments(page=${currentPage - 1}, pageSize=${pageSize}, searchQuery=${searchQuery})}">Previous</a>
+                    <a class="page-link"
+                       th:href="@{/assessments(page=${currentPage - 1}, pageSize=${pageSize}, searchQuery=${searchQuery})}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
                 </li>
-
-                <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}" th:classappend="${currentPage == i} ? 'active'">
-                    <a class="page-link" th:href="@{/assessments(page=${i}, pageSize=${pageSize}, searchQuery=${searchQuery})}" th:text="${i + 1}"></a>
+                <li class="page-item"
+                    th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                    th:classappend="${currentPage == i} ? 'active'">
+                    <a class="page-link"
+                       th:href="@{/assessments(page=${i}, pageSize=${pageSize}, searchQuery=${searchQuery})}"
+                       th:text="${i + 1}">
+                    </a>
                 </li>
-
                 <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
-                    <a class="page-link" th:href="@{/assessments(page=${currentPage + 1}, pageSize=${pageSize}, searchQuery=${searchQuery})}">Next</a>
+                    <a class="page-link"
+                       th:href="@{/assessments(page=${currentPage + 1}, pageSize=${pageSize}, searchQuery=${searchQuery})}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
                 </li>
             </ul>
-        </div>
+        </nav>
     </div>
 </div>
+
+<button onclick="scrollToTop()" id="scrollToTopButton" title="Go to top">
+    <i class="fas fa-arrow-up"></i>
+</button>
 
 <!-- Modal for Import -->
 <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
@@ -155,3 +191,171 @@
         </div>
     </div>
 </div>
+<script>
+
+    // Show/hide scrollToTopButton
+    window.onscroll = function() {
+        const scrollToTopButton = document.getElementById("scrollToTopButton");
+        if (document.body.scrollTop > 100 || document.documentElement.scrollTop > 100) {
+            scrollToTopButton.style.display = "flex";
+        } else {
+            scrollToTopButton.style.display = "none";
+        }
+    };
+
+    function scrollToTop() {
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+
+    function copyInviteLink(event, assessmentId) {
+        event.preventDefault();  // Stop any default behavior
+
+        if (!assessmentId) {
+            console.error("Error: assessmentId is undefined!");
+            alert("Invalid assessment ID!");
+            return;
+        }
+
+        console.log("Copying invite link for ID:", assessmentId); // Debugging
+
+        const url = `/assessments/${assessmentId}/copy_invite_link/`;
+
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Network response was not ok");
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("Response Data:", data); // Debugging
+
+                if (data.invite_link) {
+                    navigator.clipboard.writeText(data.invite_link)
+                        .then(() => {
+                            console.log("Copied to clipboard:", data.invite_link);
+                            alert("Invite link copied!");
+                        })
+                        .catch(err => {
+                            console.error("Clipboard error:", err);
+                            alert("Failed to copy invite link.");
+                        });
+                } else {
+                    alert("No invite link found.");
+                }
+            })
+            .catch(err => {
+                console.error("Fetch error:", err);
+                alert("Error fetching invite link.");
+            });
+    }
+</script>
+
+<style>
+    /* Scroll-to-top button */
+    #scrollToTopButton {
+        position: fixed;
+        bottom: 3vh;
+        right: 20px;
+        display: none; /* Initially hidden */
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(45deg, #6a11cb, #2575fc);
+        color: white;
+        border: none;
+        outline: none;
+        border-radius: 50%;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+        justify-content: center;
+        align-items: center;
+        opacity: 0.8;
+        transition: transform 0.3s ease, opacity 0.3s ease;
+        z-index: 80;
+    }
+
+    #scrollToTopButton:hover {
+        transform: scale(1.2); /* Slight zoom on hover */
+        opacity: 1; /* Increase clarity */
+        background: linear-gradient(45deg, #2575fc, #6a11cb); /* Reverse gradient on hover */
+    }
+
+    /* Add these new styles and modify existing ones */
+    html, body {
+        height: 100%;
+        margin: 0;
+    }
+
+    /* Ensure header content stays in place */
+    .d-flex.align-items-center.mb-3 {
+        flex-shrink: 0;
+        background: white;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    /* Ensure the title stays in place */
+    h1.text-center {
+        flex-shrink: 0;
+        margin-bottom: 1rem;
+    }
+
+    .main-container {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    /* Enhanced scrollable table styles */
+    .scrollable-table {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        height: calc(100vh - 180px); /* Adjust based on your header and pagination height */
+        padding-right: 10px;
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+        position: relative;
+    }
+
+    /* Customized scrollbar for better visual feedback */
+    .scrollable-table::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .scrollable-table::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+    .scrollable-table::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+    }
+
+    .scrollable-table::-webkit-scrollbar-thumb:hover {
+        background: #666;
+    }
+
+    /* Grid system improvements */
+    .scrollable-table .row {
+        margin-right: 0;
+        margin-left: 0;
+    }
+
+    .hover-shadow:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+    }
+
+    .transition-all {
+        transition: all .2s ease-in-out;
+    }
+
+    /* Card animations and transitions */
+    .card {
+        transform: translateZ(0); /* Hardware acceleration */
+        will-change: transform; /* Optimize animations */
+        transition: all 0.2s ease-in-out;
+    }
+</style>

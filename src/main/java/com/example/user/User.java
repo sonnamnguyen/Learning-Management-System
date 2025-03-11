@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 
@@ -87,9 +88,10 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
+
         return roles.stream()
-                .map(role -> (GrantedAuthority) role::getName)  // Assuming Role has a method getName() returning role name
-                .toList();  // Collect roles into a list of GrantedAuthority
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
+                .toList(); // Collect roles into a list of GrantedAuthority
     }
 
 

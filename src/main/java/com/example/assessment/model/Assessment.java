@@ -1,23 +1,24 @@
 package com.example.assessment.model;
 
 import com.example.course.Course;
-import com.example.exercise.Exercise;
-import com.example.quiz.model.Question;
+import com.example.exercise.model.Exercise;
 import com.example.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
 @Data
 @Builder
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "assessment")
@@ -42,13 +43,8 @@ public class Assessment {
     )
     private Set<Exercise> exercises = new HashSet<>();
 
-    @ManyToMany
-    @JoinTable(
-            name = "assessment_question",
-            joinColumns = @JoinColumn(name = "assessment_id"),
-            inverseJoinColumns = @JoinColumn(name = "question_id")
-    )
-    private Set<Question> questions = new HashSet<>();
+    @OneToMany(mappedBy = "assessment", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<AssessmentQuestion> assessmentQuestions = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assessment_type_id", nullable = false)
@@ -66,8 +62,7 @@ public class Assessment {
     @Min(0)
     private int qualifyScore;
 
-    @Min(0)
-    private int totalScore;
+    private boolean shuffled ;
 
     @Min(0)
     private int quizScoreRatio;
@@ -78,15 +73,28 @@ public class Assessment {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(nullable = false, name = "updatedAt")
+    private LocalDateTime updatedAt = LocalDateTime.now();
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
+
     @Column(nullable = false)
     private int timeLimit;
 
     @Lob
+    @Column(columnDefinition = "TEXT")
     private String invitedEmails;
 
     @ManyToOne
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
+
+    @ManyToOne
+    @JoinColumn(name = "updated_by", nullable = true)
+    private User updatedBy;
 
 //    @PostPersist
 //    public void createProgressNotificationOnAssessmentAttempt() {

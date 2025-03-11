@@ -1,4 +1,4 @@
-package com.example.exercise;
+package com.example.exercise.model;
 
 import com.example.assessment.model.ProgrammingLanguage;
 import com.example.testcase.TestCase;
@@ -23,7 +23,7 @@ public class Exercise {
 
     private String name;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String description;
 
     @ManyToOne
@@ -37,10 +37,14 @@ public class Exercise {
     private String setupsql;
 
     @Enumerated(EnumType.STRING)
-    private Level level = Level.EASY;
+    private Level level;
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TestCase> testCases = new ArrayList<>();
+
+    public List<TestCase> getTwoTestCases() {
+        return testCases.size() > 2 ? testCases.subList(0, 2) : new ArrayList<>(testCases);
+    }
 
     public void setTestCases(List<TestCase> testCases) {
         if (testCases == null) return;
@@ -54,6 +58,14 @@ public class Exercise {
         if (testCase != null) {
             testCase.setExercise(this);
             testCases.add(testCase);
+        }
+    }
+
+    //Nếu không phải SQL thì setupsql null
+    public void setLanguage(ProgrammingLanguage language) {
+        this.language = language;
+        if (language != null && !"SQL".equalsIgnoreCase(language.getLanguage()) && this.setupsql != null) {
+            this.setupsql = "";
         }
     }
 }
