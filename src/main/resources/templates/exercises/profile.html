@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<style>
+    body {
+        background-color: rgb(26, 26, 26);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        color: rgb(255, 255, 255);
+    }
+
+    .container {
+        max-width: 1200px;
+        padding: 20px;
+    }
+
+    /* User Profile Header */
+    .profile-header {
+        background: rgb(40, 40, 40);
+        border-radius: 8px;
+        padding: 24px;
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+    }
+
+    .profile-avatar {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid rgb(79, 193, 255);
+    }
+
+    .profile-info {
+        flex-grow: 1;
+    }
+
+    .profile-name {
+        font-size: 24px;
+        font-weight: 600;
+        color: rgb(255, 255, 255);
+        margin-bottom: 8px;
+    }
+
+    .profile-details {
+        display: flex;
+        gap: 24px;
+        color: rgb(156, 156, 156);
+        font-size: 14px;
+    }
+
+    .profile-detail-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .profile-detail-item i {
+        font-size: 16px;
+    }
+
+    .edit-profile-btn {
+        background: transparent;
+        border: 1px solid rgb(79, 193, 255);
+        color: rgb(79, 193, 255);
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .edit-profile-btn:hover {
+        background: rgba(79, 193, 255, 0.1);
+    }
+
+    /* Stats Card */
+    .stats-card {
+        background: rgb(40, 40, 40);
+        border-radius: 8px;
+        padding: 24px;
+        margin-bottom: 24px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-number {
+        font-size: 24px;
+        font-weight: 500;
+        color: rgb(255, 255, 255);
+    }
+
+    .stat-label {
+        color: rgb(156, 156, 156);
+        font-size: 14px;
+        margin-top: 4px;
+    }
+
+    /* Progress Charts */
+    .charts-container {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 24px;
+        margin-bottom: 24px;
+        min-height: 400px;
+    }
+
+    .chart-card {
+        background: rgb(40, 40, 40);
+        border-radius: 8px;
+        padding: 24px;
+        min-height: 380px;
+    }
+
+    .chart-title {
+        color: rgb(255, 255, 255);
+        font-size: 16px;
+        font-weight: 500;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+    }
+
+    /* Submission History */
+    .history-card {
+        background: rgb(40, 40, 40);
+        border-radius: 8px;
+        padding: 20px;
+    }
+
+    .history-title {
+        color: rgb(255, 255, 255);
+        font-size: 16px;
+        font-weight: 500;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgb(61, 61, 61);
+    }
+
+    .submission-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .submission-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        border-radius: 4px;
+        margin-bottom: 8px;
+        background: rgb(48, 48, 48);
+        transition: background-color 0.2s;
+    }
+
+    .submission-item:hover {
+        background: rgb(55, 55, 55);
+    }
+
+    .problem-name {
+        color: rgb(79, 193, 255);
+        text-decoration: none;
+    }
+
+    .submission-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .status-accepted {
+        color: rgb(67, 160, 71);
+    }
+
+    .status-wrong {
+        color: rgb(239, 71, 67);
+    }
+
+    .submission-time {
+        color: rgb(156, 156, 156);
+        font-size: 14px;
+    }
+
+    /* Difficulty Tags */
+    .difficulty-easy {
+        color: rgb(67, 160, 71);
+    }
+
+    .difficulty-medium {
+        color: rgb(255, 192, 30);
+    }
+
+    .difficulty-hard {
+        color: rgb(239, 71, 67);
+    }
+
+    /* Charts Customization */
+    canvas {
+        width: 100% !important;
+        height: 300px !important;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .stats-card {
+            grid-template-columns: 1fr;
+        }
+
+        .charts-container {
+            grid-template-columns: 1fr;
+        }
+
+        .chart-card {
+            min-height: 350px;
+        }
+    }
+
+    /* Achievements Card */
+    .achievements-card {
+        background: rgb(40, 40, 40);
+        border-radius: 8px;
+        padding: 24px;
+        margin-bottom: 24px;
+    }
+
+    .achievements-title {
+        color: rgb(255, 255, 255);
+        font-size: 16px;
+        font-weight: 500;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgb(61, 61, 61);
+    }
+
+    .achievements-container {
+        overflow-x: auto;
+        padding: 10px 0;
+        margin: 0 -20px;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+    }
+
+    /* Custom scrollbar cho Webkit browsers */
+    .achievements-container::-webkit-scrollbar {
+        height: 6px;
+    }
+
+    .achievements-container::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .achievements-container::-webkit-scrollbar-thumb {
+        background-color: rgba(255, 255, 255, 0.2);
+        border-radius: 6px;
+    }
+
+    .achievements-container::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .achievements-grid {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: 280px;
+        gap: 20px;
+        padding: 10px 20px;
+    }
+
+    .achievement-item {
+        background: rgba(48, 48, 48, 0.8);
+        border-radius: 12px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        min-width: 280px;
+    }
+
+    .achievement-item:hover {
+        transform: translateY(-5px);
+        background: rgba(55, 55, 55, 0.9);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .achievement-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(145deg, #2a2a2a, #383838);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 15px;
+        font-size: 24px;
+        color: #666;
+        transition: all 0.3s ease;
+        box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.2),
+            -5px -5px 10px rgba(255, 255, 255, 0.05);
+    }
+
+    .achievement-icon.unlocked {
+        background: linear-gradient(145deg, #4CAF50, #2196F3);
+        color: white;
+        box-shadow: 0 0 20px rgba(76, 175, 80, 0.3);
+    }
+
+    .achievement-name {
+        color: #fff;
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .achievement-progress {
+        color: #888;
+        font-size: 14px;
+        font-weight: 500;
+        background: rgba(0, 0, 0, 0.2);
+        padding: 4px 12px;
+        border-radius: 12px;
+        min-width: 60px;
+    }
+
+    /* Custom tooltip style */
+    .achievement-tooltip {
+        background-color: rgba(40, 40, 40, 0.95) !important;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 14px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    @media (max-width: 768px) {
+        .achievements-grid {
+            grid-auto-columns: 240px;
+        }
+
+        .achievement-item {
+            min-width: 240px;
+            padding: 15px;
+        }
+    }
+
+    /* New styles for chart-card */
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        border-bottom: 1px solid rgb(61, 61, 61);
+    }
+
+    .language-select {
+        background: rgba(48, 48, 48, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #fff;
+        padding: 6px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        outline: none;
+        font-size: 14px;
+        margin-bottom: 20px;
+    }
+
+    .language-select:hover {
+        background: rgba(55, 55, 55, 0.9);
+    }
+
+    .language-select option {
+        background: #2a2a2a;
+        color: #fff;
+    }
+
+    /* AI Recommendations Styles */
+    .ai-recommendations {
+        padding: 15px 0;
+    }
+
+    .recommendation-item {
+        background: rgba(48, 48, 48, 0.8);
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 12px;
+        border-left: 4px solid #4CAF50;
+        transition: all 0.2s ease;
+    }
+
+    .recommendation-item:hover {
+        background: rgba(55, 55, 55, 0.9);
+        transform: translateX(5px);
+    }
+
+    .recommendation-item.medium {
+        border-left-color: #FFC01E;
+    }
+
+    .recommendation-item.hard {
+        border-left-color: #EF4743;
+    }
+
+    .recommendation-title {
+        font-weight: 600;
+        margin-bottom: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .recommendation-tag {
+        font-size: 12px;
+        padding: 3px 8px;
+        border-radius: 12px;
+        background: rgba(76, 175, 80, 0.2);
+        color: #4CAF50;
+    }
+
+    .recommendation-tag.medium {
+        background: rgba(255, 192, 30, 0.2);
+        color: #FFC01E;
+    }
+
+    .recommendation-tag.hard {
+        background: rgba(239, 71, 67, 0.2);
+        color: #EF4743;
+    }
+
+    .recommendation-description {
+        color: #CCC;
+        font-size: 14px;
+        margin-bottom: 10px;
+    }
+
+    .recommendation-reason {
+        font-size: 13px;
+        color: #999;
+        font-style: italic;
+    }
+
+    .refresh-btn {
+        background: transparent;
+        border: none;
+        color: #4CAF50;
+        cursor: pointer;
+        font-size: 16px;
+        transition: transform 0.3s ease;
+    }
+
+    .refresh-btn:hover {
+        transform: rotate(180deg);
+    }
+
+    .loading-spinner {
+        text-align: center;
+        padding: 20px;
+        color: #999;
+    }
+
+    .header-controls {
+        display: flex;
+        align-items: center;
+    }
+
+    .prompt-language-select {
+        background: rgba(48, 48, 48, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #fff;
+        padding: 6px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        outline: none;
+        font-size: 14px;
+    }
+
+    .prompt-language-select:hover {
+        background: rgba(55, 55, 55, 0.9);
+    }
+
+    .prompt-language-select option {
+        background: #2a2a2a;
+        color: #fff;
+    }
+</style>
+
+<body>
+    <div class="container">
+        <!-- Profile Header -->
+        <div class="profile-header">
+            <img src="data:image/jpeg;base64,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"   
+                alt="Profile Avatar" class="profile-avatar">
+            <div class="profile-info">
+                <h1 class="profile-name">Phụng Xing Gái</h1>
+                <div class="profile-details">
+                    <div class="profile-detail-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>Việt Nam</span>
+                    </div>
+                    <div class="profile-detail-item">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>Joined Mar 2024</span>
+                    </div>
+                    <div class="profile-detail-item">
+                        <i class="fas fa-code"></i>
+                        <span>Java, C++, SQL</span>
+                    </div>
+                </div>
+            </div>
+            <!-- <button class="edit-profile-btn">Edit Profile</button> -->
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="stats-card">
+            <div class="stat-item">
+                <div class="stat-number"></div>
+                <div class="stat-label">Problems Solved</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number"></div>
+                <div class="stat-label">Submissions</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number"></div>
+                <div class="stat-label">Acceptance Rate</div>
+            </div>
+        </div>
+
+        <!-- Achievements Card -->
+        <div class="achievements-card">
+            <h3 class="achievements-title">Achievements</h3>
+            <div class="achievements-container">
+                <div class="achievements-grid">
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-container">
+            <div class="chart-card">
+                <h3 class="chart-title">Solving Progress</h3>
+                <canvas id="progressChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Problem Types</h3>
+                    <select class="language-select">
+                        <option value="overall">Overall</option>
+                        <option value="java">Java</option>
+                        <option value="sql">SQL</option>
+                        <option value="c">C</option>
+                        <option value="cpp">C++</option>
+                    </select>
+                </div>
+                <canvas id="difficultyChart"></canvas>
+            </div>
+        </div>
+
+        <!-- AI Learning Recommendations -->
+        <div class="chart-card">
+            <div class="chart-header">
+                    <h3 class="chart-title">AI Recommendations</h3>
+                   
+                <div class="header-controls">
+                    <select class="prompt-language-select" id="promptLanguage" style="margin-right: 10px mar; margin-bottom: 20px;">
+                        <option value="en">English</option>
+                        <option value="vi">Tiếng Việt</option>
+                    </select>
+                    <button class="refresh-btn" style="margin-bottom: 20px; margin-left: 10px;" id="refreshRecommendations">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+            </div>
+            <p style="font-size: 14px; color: #6c757d;">The information provided by AI is intended for reference purposes and its accuracy is not guaranteed.</p>
+            <div id="aiRecommendations" class="ai-recommendations">
+                <div class="loading-spinner">
+                    <i class="fas fa-spinner fa-spin"></i> Analyzing data...
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modal Chỉnh sửa Hồ sơ -->
+    <div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content bg-dark text-white">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title" id="editProfileModalLabel">Edit Profile</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="editUsername" class="form-label">Name</label>
+                        <input type="text" class="form-control bg-dark text-white border-secondary" id="editUsername">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editLocation" class="form-label">Location</label>
+                        <input type="text" class="form-control bg-dark text-white border-secondary" id="editLocation">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editLanguages" class="form-label">Programming Languages</label>
+                        <input type="text" class="form-control bg-dark text-white border-secondary" id="editLanguages">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editAvatar" class="form-label">Profile Picture</label>
+                        <input type="file" class="form-control bg-dark text-white border-secondary" id="editAvatar"
+                            accept="image/*">
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="saveProfile">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Cập nhật userData với thêm thông tin cho stats
+            const userData = {
+                submissions: {
+                    months: {
+                        'Jan': 5,
+                        'Feb': 8,
+                        'Mar': 12,
+                        'Apr': 7,
+                        'May': 10,
+                        'Jun': 15,
+                        'Jul': 12,
+                        'Aug': 10,
+                        'Sep': 8,
+                        'Oct': 15,
+                        'Nov': 12,
+                        'Dec': 10
+                    },
+                    total: 45,  // Tổng số submissions
+                    accepted: 38 // Số submissions thành công
+                },
+                difficulty: {
+                    easy: 15,
+                    medium: 10,
+                    hard: 20,
+                    totalEasy: 30,
+                    totalMedium: 20,
+                    totalHard: 10
+                },
+                languageStats: {
+                    java: {
+                        easy: 8,
+                        medium: 5,
+                        hard: 1,
+                        totalEasy: 30,
+                        totalMedium: 20,
+                        totalHard: 10
+                    },
+                    sql: {
+                        easy: 3,
+                        medium: 2,
+                        hard: 1,
+                        totalEasy: 30,
+                        totalMedium: 20,
+                        totalHard: 10
+                    },
+                    c: {
+                        easy: 2,
+                        medium: 1,
+                        hard: 1,
+                        totalEasy: 30,
+                        totalMedium: 20,
+                        totalHard: 10
+                    },
+                    cpp: {
+                        easy: 10,
+                        medium: 10,
+                        hard: 5,
+                        totalEasy: 30,
+                        totalMedium: 20,
+                        totalHard: 10
+                    }
+                }
+            };
+
+            // Hàm cập nhật stats
+            function updateStats(userData) {
+                // Tính tổng số bài đã giải
+                const totalSolved = userData.languageStats.java.easy +
+                    userData.languageStats.java.medium +
+                    userData.languageStats.java.hard +
+                    userData.languageStats.sql.easy +
+                    userData.languageStats.sql.medium +
+                    userData.languageStats.sql.hard +
+                    userData.languageStats.c.easy +
+                    userData.languageStats.c.medium +
+                    userData.languageStats.c.hard +
+                    userData.languageStats.cpp.easy +
+                    userData.languageStats.cpp.medium +
+                    userData.languageStats.cpp.hard;
+
+                // Tính tổng số bài
+                const totalProblems = userData.languageStats.java.totalEasy +
+                    userData.languageStats.java.totalMedium +
+                    userData.languageStats.java.totalHard +
+                    userData.languageStats.sql.totalEasy +
+                    userData.languageStats.sql.totalMedium +
+                    userData.languageStats.sql.totalHard +
+                    userData.languageStats.c.totalEasy +
+                    userData.languageStats.c.totalMedium +
+                    userData.languageStats.c.totalHard +
+                    userData.languageStats.cpp.totalEasy +
+                    userData.languageStats.cpp.totalMedium +
+                    userData.languageStats.cpp.totalHard;
+
+                // Tính tỷ lệ chấp nhận
+                const acceptanceRate = Math.round((userData.submissions.accepted / userData.submissions.total) * 100);
+
+                // Cập nhật UI
+                document.querySelector('.stat-item:nth-child(1) .stat-number').textContent =
+                    `${totalSolved}/${totalProblems}`;
+                document.querySelector('.stat-item:nth-child(2) .stat-number').textContent =
+                    userData.submissions.total;
+                document.querySelector('.stat-item:nth-child(3) .stat-number').textContent =
+                    `${acceptanceRate}%`;
+            }
+
+            // Cập nhật stats ban đầu
+            updateStats(userData);
+
+            // Hàm để BE gọi khi cần cập nhật toàn bộ dữ liệu
+            window.updateUserData = function (newUserData) {
+                // Cập nhật userData
+                Object.assign(userData, newUserData);
+                // Cập nhật tất cả các phần
+                updateStats(userData);
+                updateAchievements(userData);
+                // Charts sẽ tự cập nhật khi scroll đến
+            };
+
+            // Định nghĩa cấu trúc achievements
+            const achievementTypes = {
+                HARD_MASTER: {
+                    id: 'hard-master',
+                    title: 'Hard Master',
+                    description: 'Solved 40+ Hard Problems',
+                    icon: 'fa-crown',
+                    requirement: 40,
+                    checkProgress: (userData) => ({
+                        current: userData.languageStats.java.hard +
+                            userData.languageStats.sql.hard +
+                            userData.languageStats.c.hard +
+                            userData.languageStats.cpp.hard,
+                        total: 40,
+                        isCompleted: userData.languageStats.java.hard +
+                            userData.languageStats.sql.hard +
+                            userData.languageStats.c.hard +
+                            userData.languageStats.cpp.hard >= 40
+                    })
+                },
+                MEDIUM_EXPERT: {
+                    id: 'medium-expert',
+                    title: 'Medium Expert',
+                    description: 'Solved 20+ Medium Problems',
+                    icon: 'fa-star',
+                    requirement: 20,
+                    checkProgress: (userData) => ({
+                        current: userData.languageStats.java.medium +
+                            userData.languageStats.sql.medium +
+                            userData.languageStats.c.medium +
+                            userData.languageStats.cpp.medium,
+                        total: 20,
+                        isCompleted: userData.languageStats.java.medium +
+                            userData.languageStats.sql.medium +
+                            userData.languageStats.c.medium +
+                            userData.languageStats.cpp.medium >= 20
+                    })
+                },
+                SPEED_DEMON: {
+                    id: 'speed-demon',
+                    title: 'Speed Demon',
+                    description: 'Solved a problem in under 5 minutes',
+                    icon: 'fa-bolt',
+                    requirement: 1,
+                    checkProgress: (userData) => ({
+                        current: userData.speedSolves || 0,
+                        total: 1,
+                        isCompleted: (userData.speedSolves || 0) >= 1
+                    })
+                },
+                PERSISTENT: {
+                    id: 'persistent',
+                    title: 'Persistent',
+                    description: 'Solved a problem after 5+ attempts',
+                    icon: 'fa-dumbbell',
+                    requirement: 1,
+                    checkProgress: (userData) => ({
+                        current: userData.persistentSolves || 0,
+                        total: 1,
+                        isCompleted: (userData.persistentSolves || 0) >= 1
+                    })
+                },
+                WEEK_STREAK: {
+                    id: 'week-streak',
+                    title: 'Week Streak',
+                    description: 'Solved problems for 7 consecutive days',
+                    icon: 'fa-fire',
+                    requirement: 7,
+                    checkProgress: (userData) => ({
+                        current: userData.streak || 0,
+                        total: 7,
+                        isCompleted: (userData.streak || 0) >= 7
+                    })
+                },
+                PROBLEM_SOLVER: {
+                    id: 'problem-solver',
+                    title: 'Problem Solver',
+                    description: 'Solved 50+ Problems',
+                    icon: 'fa-award',
+                    requirement: 50,
+                    checkProgress: (userData) => {
+                        const total = userData.languageStats.java.easy +
+                            userData.languageStats.java.medium +
+                            userData.languageStats.java.hard +
+                            userData.languageStats.sql.easy +
+                            userData.languageStats.sql.medium +
+                            userData.languageStats.sql.hard +
+                            userData.languageStats.c.easy +
+                            userData.languageStats.c.medium +
+                            userData.languageStats.c.hard;
+                        return {
+                            current: total,
+                            total: 50,
+                            isCompleted: total >= 50
+                        };
+                    }
+                },
+                EARLY_BIRD: {
+                    id: 'early-bird',
+                    title: 'Early Bird',
+                    description: 'Solved a problem before 6 AM',
+                    icon: 'fa-sun',
+                    requirement: 1,
+                    checkProgress: (userData) => ({
+                        current: userData.earlyBirdSolves || 0,
+                        total: 1,
+                        isCompleted: (userData.earlyBirdSolves || 0) >= 1
+                    })
+                },
+                NIGHT_OWL: {
+                    id: 'night-owl',
+                    title: 'Night Owl',
+                    description: 'Solved a problem after midnight',
+                    icon: 'fa-moon',
+                    requirement: 1,
+                    checkProgress: (userData) => ({
+                        current: userData.nightOwlSolves || 0,
+                        total: 1,
+                        isCompleted: (userData.nightOwlSolves || 0) >= 1
+                    })
+                },
+                PERFECT_SOLUTION: {
+                    id: 'perfect-solution',
+                    title: 'Perfect Solution',
+                    description: 'Got 100% on all test cases first try',
+                    icon: 'fa-check-circle',
+                    requirement: 1,
+                    checkProgress: (userData) => ({
+                        current: userData.perfectSolutions || 0,
+                        total: 1,
+                        isCompleted: (userData.perfectSolutions || 0) >= 1
+                    })
+                }
+            };
+
+            // Hàm tạo HTML cho achievement
+            function createAchievementHTML(achievement, progress) {
+                return `
+                    <div class="achievement-item" 
+                         data-achievement-id="${achievement.id}"
+                         data-bs-toggle="tooltip" 
+                         data-bs-placement="top" 
+                         data-bs-custom-class="achievement-tooltip"
+                         title="${achievement.description}">
+                        <div class="achievement-icon ${progress.isCompleted ? 'unlocked' : ''}">
+                            <i class="fas ${achievement.icon}"></i>
+                        </div>
+                        <div class="achievement-info">
+                            <div class="achievement-name">${achievement.title}</div>
+                            <div class="achievement-progress">${progress.current}/${progress.total}</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Hàm cập nhật achievements
+            function updateAchievements(userData) {
+                const achievementsContainer = document.querySelector('.achievements-grid');
+                achievementsContainer.innerHTML = '';
+
+                // Thêm tất cả achievements vào container
+                Object.values(achievementTypes).forEach(achievement => {
+                    const progress = achievement.checkProgress(userData);
+                    const achievementHTML = createAchievementHTML(achievement, progress);
+                    achievementsContainer.insertAdjacentHTML('beforeend', achievementHTML);
+                });
+
+                // Khởi tạo tooltips
+                const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+                tooltips.forEach(tooltip => new bootstrap.Tooltip(tooltip, {
+                    trigger: 'hover',
+                    animation: true,
+                    delay: { show: 100, hide: 100 }
+                }));
+            }
+
+            // Khởi tạo charts khi scroll đến gần vị trí hiển thị
+            const observerOptions = {
+                root: null,
+                rootMargin: '50px',
+                threshold: 0.1
+            };
+
+            const chartsObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        requestAnimationFrame(() => {
+                            if (entry.target.id === "progressChart") {
+                                initProgressChart(userData);
+                            } else if (entry.target.id === "difficultyChart") {
+                                initDifficultyChart(userData);
+                            }
+                        });
+                        chartsObserver.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+
+            // Theo dõi các chart elements
+            document.querySelectorAll('#progressChart, #difficultyChart').forEach(chart => {
+                chartsObserver.observe(chart);
+            });
+
+            function initProgressChart(userData) {
+                const submissionCtx = document.getElementById("progressChart").getContext("2d");
+                new Chart(submissionCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(userData.submissions.months),
+                        datasets: [{
+                            label: 'Submissions',
+                            data: Object.values(userData.submissions.months),
+                            backgroundColor: '#2cbb5d',
+                            borderRadius: 4,
+                            barThickness: 8,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: {
+                            duration: 800,
+                            easing: 'easeOutQuart',
+                            delay: (context) => context.dataIndex * 50
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgb(40, 40, 40)',
+                                titleColor: 'rgb(255, 255, 255)',
+                                bodyColor: 'rgb(255, 255, 255)',
+                                padding: 12,
+                                displayColors: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: {
+                                    display: false,
+                                    drawBorder: false
+                                },
+                                ticks: {
+                                    color: 'rgb(156, 156, 156)'
+                                }
+                            },
+                            y: {
+                                grid: {
+                                    color: 'rgb(48, 48, 48)',
+                                    drawBorder: false
+                                },
+                                ticks: {
+                                    color: 'rgb(156, 156, 156)',
+                                    stepSize: 1
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function initDifficultyChart(userData) {
+                let chart = null;
+                const difficultyCtx = document.getElementById("difficultyChart").getContext("2d");
+                const languageSelect = document.querySelector('.language-select');
+
+                // Thêm hàm tính overall
+                function calculateOverall(userData) {
+                    const overall = {
+                        easy: 0,
+                        medium: 0,
+                        hard: 0,
+                        totalEasy: 0,
+                        totalMedium: 0,
+                        totalHard: 0
+                    };
+
+                    // Lấy tất cả ngôn ngữ trừ 'overall'
+                    const languages = Object.keys(userData.languageStats).filter(lang => lang !== 'overall');
+
+                    // Tính tổng cho từng mức độ
+                    languages.forEach(lang => {
+                        const stats = userData.languageStats[lang];
+                        overall.easy += stats.easy;
+                        overall.medium += stats.medium;
+                        overall.hard += stats.hard;
+                        overall.totalEasy += stats.totalEasy;
+                        overall.totalMedium += stats.totalMedium;
+                        overall.totalHard += stats.totalHard;
+                    });
+
+                    return overall;
+                }
+
+                function updateChart(language) {
+                    // Nếu là overall, tính toán lại tổng
+                    const stats = language === 'overall' ?
+                        calculateOverall(userData) :
+                        userData.languageStats[language];
+
+                    if (chart) {
+                        chart.destroy();
+                    }
+
+                    chart = new Chart(difficultyCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Easy', 'Medium', 'Hard'],
+                            datasets: [{
+                                data: [
+                                    stats.easy,
+                                    stats.medium,
+                                    stats.hard
+                                ],
+                                backgroundColor: [
+                                    '#2cbb5d',
+                                    '#ffc01e',
+                                    '#ef4743'
+                                ],
+                                borderWidth: 0,
+                                borderRadius: 4,
+                                spacing: 3,
+                                weight: 0.65,
+                                cutout: '75%',
+                                radius: '90%'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            layout: {
+                                padding: 20
+                            },
+                            animation: {
+                                duration: 1000,
+                                easing: 'easeOutCirc',
+                                animateRotate: true,
+                                animateScale: true
+                            },
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                    labels: {
+                                        color: '#FFFFFF',
+                                        padding: 30,
+                                        font: {
+                                            size: 15
+                                        },
+                                        generateLabels: function (chart) {
+                                            const data = chart.data;
+                                            return data.labels.map((label, i) => ({
+                                                text: `${label} ${stats[label.toLowerCase()]}/${stats['total' + label]}`,
+                                                fillStyle: data.datasets[0].backgroundColor[i],
+                                                hidden: false,
+                                                index: i,
+                                                fontColor: '#FFFFFF'
+                                            }));
+                                        }
+                                    }
+                                },
+                                tooltip: {
+                                    backgroundColor: 'rgb(40, 40, 40)',
+                                    titleColor: 'rgb(255, 255, 255)',
+                                    bodyColor: 'rgb(255, 255, 255)',
+                                    padding: 20,
+                                    callbacks: {
+                                        label: function (context) {
+                                            const label = context.label;
+                                            const value = context.raw;
+                                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                            const percentage = Math.round((value / total) * 100);
+                                            return `${label}: ${value} (${percentage}%)`;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // Event listener cho language selector
+                languageSelect.addEventListener('change', (e) => {
+                    updateChart(e.target.value);
+                });
+
+                // Khởi tạo chart với ngôn ngữ mặc định
+                updateChart('overall');
+            }
+
+            // Xử lý chỉnh sửa profile
+            document.getElementById("saveProfile").addEventListener("click", function () {
+                document.getElementById("username").textContent = document.getElementById("editUsername").value;
+                document.getElementById("email").textContent = document.getElementById("editEmail").value;
+                document.getElementById("editProfileModal").querySelector(".btn-close").click();
+            });
+
+            // Cập nhật achievements ban đầu
+            updateAchievements(userData);
+
+            // Thêm vào phần JavaScript hiện có
+            async function generateAIRecommendations(userData) {
+                const recommendationsContainer = document.getElementById('aiRecommendations');
+                const selectedLanguage = document.getElementById('promptLanguage').value;
+
+                // Hiển thị loading spinner với text tương ứng ngôn ngữ
+                const loadingText = selectedLanguage === 'vi' ? 'Đang phân tích dữ liệu...' : 'Analyzing data...';
+                recommendationsContainer.innerHTML = `
+                    <div class="loading-spinner">
+                        <i class="fas fa-spinner fa-spin"></i> ${loadingText}
+                    </div>
+                `;
+
+                try {
+                    // const API_KEY = 'AIzaSyBVvP7mpC7CrpDpCEUgc7z7nNAkedTkc5Y';
+                    const API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
+
+                    // Tạo prompt dựa trên ngôn ngữ đã chọn
+                    const promptText = selectedLanguage === 'vi' ?
+                        `Phân tích dữ liệu lập trình và đưa ra các khuyến nghị học tập ngắn gọn, có mục tiêu.
+
+                        THỐNG KÊ TỔNG QUAN:
+                        - Tổng số bài đã giải: ${userData.difficulty.easy + userData.difficulty.medium + userData.difficulty.hard}
+                        - Tổng số lần nộp bài: ${userData.submissions.total}
+                        - Tỷ lệ chấp nhận: ${(userData.submissions.accepted / userData.submissions.total * 100).toFixed(1)}%
+
+                        CHI TIẾT THEO NGÔN NGỮ:
+
+                        JAVA:
+                        - Dễ: ${userData.languageStats.java.easy}/${userData.languageStats.java.totalEasy}
+                        - Trung bình: ${userData.languageStats.java.medium}/${userData.languageStats.java.totalMedium}
+                        - Khó: ${userData.languageStats.java.hard}/${userData.languageStats.java.totalHard}
+
+                        C++:
+                        - Dễ: ${userData.languageStats.cpp.easy}/${userData.languageStats.cpp.totalEasy}
+                        - Trung bình: ${userData.languageStats.cpp.medium}/${userData.languageStats.cpp.totalMedium}
+                        - Khó: ${userData.languageStats.cpp.hard}/${userData.languageStats.cpp.totalHard}
+
+                        SQL:
+                        - Dễ: ${userData.languageStats.sql.easy}/${userData.languageStats.sql.totalEasy}
+                        - Trung bình: ${userData.languageStats.sql.medium}/${userData.languageStats.sql.totalMedium}
+                        - Khó: ${userData.languageStats.sql.hard}/${userData.languageStats.sql.totalHard}
+
+                        Dựa trên các số liệu thống kê được cung cấp, hãy đưa ra các khuyến nghị ngắn gọn theo định dạng JSON với cấu trúc sau:
+
+                        {
+                            "recommendations": [
+                                {
+                                    "title": "Tiêu đề khuyến nghị ngắn gọn và rõ ràng",
+                                    "difficulty": "Dễ/Trung bình/Khó",
+                                    "description": "Mô tả ngắn gọn về hoạt động học tập hoặc giải quyết vấn đề được đề xuất (tối đa 3 câu)",
+                                    "reason": "Lý do cụ thể dựa trên dữ liệu đã cung cấp (tối đa 2 câu)"
+                                }
+                            ]
+                        }
+
+                        Hướng dẫn quan trọng:
+                        - Nêu rõ điểm mạnh và điểm yếu của từng ngôn ngữ CHỈ dựa trên số liệu thống kê.
+                        - Cung cấp lộ trình học tập rõ ràng và ngắn gọn cho từng ngôn ngữ.
+                        - Đề xuất các bài toán tiếp theo phù hợp với trình độ đã thể hiện của người dùng.
+                        - Đề xuất các chủ đề hoặc khái niệm cụ thể cần học, liên quan trực tiếp đến điểm yếu đã thể hiện.
+
+                        Tránh đưa ra lời khuyên chung chung hoặc mơ hồ.` :
+                        `Analyze the provided programming data and generate concise, targeted learning recommendations.
+
+                        OVERALL STATISTICS:
+                        - Total Problems Solved: ${userData.difficulty.easy + userData.difficulty.medium + userData.difficulty.hard}
+                        - Total Submissions: ${userData.submissions.total}
+                        - Acceptance Rate: ${(userData.submissions.accepted / userData.submissions.total * 100).toFixed(1)}%
+
+                        LANGUAGE-SPECIFIC DETAILS:
+
+                        JAVA:
+                        - Easy: ${userData.languageStats.java.easy}/${userData.languageStats.java.totalEasy}
+                        - Medium: ${userData.languageStats.java.medium}/${userData.languageStats.java.totalMedium}
+                        - Hard: ${userData.languageStats.java.hard}/${userData.languageStats.java.totalHard}
+
+                        C++:
+                        - Easy: ${userData.languageStats.cpp.easy}/${userData.languageStats.cpp.totalEasy}
+                        - Medium: ${userData.languageStats.cpp.medium}/${userData.languageStats.cpp.totalMedium}
+                        - Hard: ${userData.languageStats.cpp.hard}/${userData.languageStats.cpp.totalHard}
+
+                        SQL:
+                        - Easy: ${userData.languageStats.sql.easy}/${userData.languageStats.sql.totalEasy}
+                        - Medium: ${userData.languageStats.sql.medium}/${userData.languageStats.sql.totalMedium}
+                        - Hard: ${userData.languageStats.sql.hard}/${userData.languageStats.sql.totalHard}
+
+                        Based strictly on the provided statistics, please provide concise recommendations in JSON format with the following clear structure:
+
+                        {
+                            "recommendations": [
+                                {
+                                    "title": "Brief and clear recommendation title",
+                                    "difficulty": "Easy/Medium/Hard",
+                                    "description": "Concise description of the suggested learning or problem-solving activity (max 3 sentences)",
+                                    "reason": "Direct and specific reasoning based solely on the provided data (max 2 sentences)"
+                                }
+                            ]
+                        }
+
+                        Important guidelines:
+                        - Clearly state strengths and weaknesses of each language based ONLY on provided statistics.
+                        - Provide a clear, concise learning path for each language.
+                        - Recommend next problems to tackle, directly matching the user's demonstrated proficiency.
+                        - Suggest specific topics or concepts to learn, directly relevant to the user's demonstrated weaknesses.
+
+                        Avoid general or vague advice.`;
+
+                    const prompt = {
+                        contents: [{
+                            parts: [{
+                                text: promptText
+                            }]
+                        }]
+                    };
+
+                    console.log('Calling Gemini API...');
+
+                    const response = await fetch(API_ENDPOINT, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(prompt)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API error: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    console.log('API response:', data);
+
+                    if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+                        throw new Error('Invalid API response format');
+                    }
+
+                    const responseText = data.candidates[0].content.parts[0].text;
+                    console.log('API text response:', responseText);
+
+                    // Tìm JSON trong phản hồi
+                    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+                    if (!jsonMatch) {
+                        throw new Error('Không tìm thấy JSON trong phản hồi');
+                    }
+
+                    const recommendations = JSON.parse(jsonMatch[0]).recommendations;
+
+                    if (!Array.isArray(recommendations) || recommendations.length === 0) {
+                        throw new Error('Không có khuyến nghị hợp lệ');
+                    }
+
+                    // Hiển thị recommendations
+                    recommendationsContainer.innerHTML = '';
+                    recommendations.forEach(rec => {
+                        recommendationsContainer.innerHTML += `
+                            <div class="recommendation-item ${rec.difficulty.toLowerCase()}">
+                                <div class="recommendation-title">
+                                    ${rec.title}
+                                    <span class="recommendation-tag ${rec.difficulty.toLowerCase()}">${rec.difficulty}</span>
+                                </div>
+                                <div class="recommendation-description">${rec.description}</div>
+                                <div class="recommendation-reason">${rec.reason}</div>
+                            </div>
+                        `;
+                    });
+
+                } catch (error) {
+                    console.error('Error:', error);
+                    const errorMessage = selectedLanguage === 'vi' ?
+                        'Đã xảy ra lỗi' :
+                        'An error occurred';
+                    const retryText = selectedLanguage === 'vi' ?
+                        'Thử lại' :
+                        'Retry';
+
+                    recommendationsContainer.innerHTML = `
+                        <div class="error-message" style="color: #ef4743; padding: 15px; text-align: center;">
+                            <i class="fas fa-exclamation-circle"></i>
+                            ${errorMessage}: ${error.message}
+                            <br><br>
+                            <button onclick="generateAIRecommendations(userData)" class="btn btn-outline-danger btn-sm">
+                                <i class="fas fa-sync-alt"></i> ${retryText}
+                            </button>
+                        </div>
+                    `;
+                }
+            }
+
+            // Thêm event listener cho nút refresh
+            document.getElementById('refreshRecommendations').addEventListener('click', function () {
+                generateAIRecommendations(userData);
+            });
+
+            // Gọi lần đầu khi trang load
+            generateAIRecommendations(userData);
+        });
+    </script>
+</body>
+
+</html>
