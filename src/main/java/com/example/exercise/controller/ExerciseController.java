@@ -125,14 +125,7 @@ public class ExerciseController {
         return isAdmin ? "exercises/list" : "exercises/student-list";
     }
 
-    @GetMapping("/dashboard")
-    public String dashboardAdmin(Model model,Authentication authentication) {
-        model.addAttribute("exercises", exerciseRepository.findAll());
-        model.addAttribute("content", "exercises/dashboard/admin");
-        boolean isAdmin = authentication.getAuthorities().stream()
-                .anyMatch(auth -> auth.getAuthority().equals("ADMIN") || auth.getAuthority().equals("SUPERADMIN"));
-        return isAdmin ? "exercises/dashboard-admin" : "exercises/dashboard-user";
-    }
+
     private Map<String, Integer> getWordFrequency(List<Exercise> exercises) {
         Map<String, Integer> wordCount = new HashMap<>();
 
@@ -161,6 +154,18 @@ public class ExerciseController {
                         LinkedHashMap::new
                 ));
     }
+
+    @GetMapping("/new-dashboard")
+    public String showDashboard(Model model, Authentication authentication) {
+        model.addAttribute("exercises", exerciseRepository.findAll());
+
+        model.addAttribute("content", "exercises/new-dashboard");
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ADMIN") || auth.getAuthority().equals("SUPERADMIN"));
+        return isAdmin ? "exercises/dashboard-admin":"exercises/profile";
+    }
+
+
 
 
     // Show create exercise form (existing method)
