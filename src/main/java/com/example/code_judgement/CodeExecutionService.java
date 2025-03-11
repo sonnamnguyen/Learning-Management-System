@@ -137,12 +137,12 @@ public class CodeExecutionService {
 
 
         if (!compilationResult.isSuccess()) {
-            return new ExecutionResponse(code, 0, testCases.size(), 0, null, compilationResult.getErrorMessage(), compileTime, null);
+            return new ExecutionResponse(code, 0, testCases.size(), 0, null, compilationResult.getErrorMessage(), compileTime, 0);
         }
 
         // Sử dụng ExecutorService để chạy các test case song song
 
-        long startRunTime = System.nanoTime();
+
         ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         List<Future<TestCaseResult>> futures = new ArrayList<>();
 
@@ -157,9 +157,13 @@ public class CodeExecutionService {
         // Thu thập kết quả
         List<TestCaseResult> testResults = new ArrayList<>();
         int passed = 0;
+        long runTime =0;
         for (Future<TestCaseResult> future : futures) {
+            long startRunTime = System.nanoTime();
             try {
                 TestCaseResult result = future.get();
+                long endRunTime = System.nanoTime();
+                runTime += endRunTime - startRunTime;
                 if (result.isCorrect()) {
                     passed++;
                 }
@@ -170,8 +174,7 @@ public class CodeExecutionService {
         }
 
         executor.shutdown();
-        long endRunTime = System.nanoTime();
-        long runTime = ((endRunTime - startRunTime)/1_000_000)/testCases.size();
+        long avgRunTime = (runTime/testCases.size())/1_000_000;
         if(!compilationResult.getExtensionFileName().equalsIgnoreCase(".cs")){
             try {
                 Path filePath = Path.of(compilationResult.getRandomFileName().getAbsolutePath());
@@ -211,7 +214,7 @@ public class CodeExecutionService {
         }
 
         // Tính toán kết quả tổng quát
-        return new ExecutionResponse(code,passed,testCases.size(),score,testResults, null, compileTime, runTime);
+        return new ExecutionResponse(code,passed,testCases.size(),score,testResults, null, compileTime, avgRunTime);
     }
 
     private void deleteDirectoryRecursively(Path path) throws IOException {
