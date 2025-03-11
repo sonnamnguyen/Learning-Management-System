@@ -17,6 +17,7 @@ import org.springframework.data.domain.*;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -56,6 +57,7 @@ public class ExerciseController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPERADMIN', 'STUDENT')")
     public String getList(
             @RequestParam(value = "title", required = false) String title,
             @RequestParam(value = "language", required = false) Long languageId,
@@ -123,6 +125,14 @@ public class ExerciseController {
         return isAdmin ? "exercises/list" : "exercises/student-list";
     }
 
+    @GetMapping("/dashboard")
+    public String dashboardAdmin(Model model,Authentication authentication) {
+        model.addAttribute("exercises", exerciseRepository.findAll());
+        model.addAttribute("content", "exercises/dashboard/admin");
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ADMIN") || auth.getAuthority().equals("SUPERADMIN"));
+        return isAdmin ? "exercises/dashboard-admin" : "exercises/dashboard-user";
+    }
     private Map<String, Integer> getWordFrequency(List<Exercise> exercises) {
         Map<String, Integer> wordCount = new HashMap<>();
 
@@ -164,14 +174,6 @@ public class ExerciseController {
         model.addAttribute("programmingLanguages", programmingLanguages);
         model.addAttribute("content", "exercises/create");
         return "layout";
-    }
-
-    @GetMapping("/dashboard")
-    public String showDashboard(Model model) {
-        model.addAttribute("exercises", exerciseRepository.findAll());
-
-        model.addAttribute("content", "exercises/dashboard");
-        return "dashboard";
     }
 
     @PostMapping("/create")
