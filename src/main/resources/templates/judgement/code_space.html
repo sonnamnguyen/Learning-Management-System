@@ -1015,6 +1015,7 @@ Exercises
                             <div class="tab-pane fade show active" id="description" role="tabpanel">
                                 <input type="hidden" id="exerciseId" th:value="${exercise.id}" />
                                 <input type="hidden" id="typeExercise" th:value="${type}"/>
+                                <input type="hidden" id="initialCode" th:value="${exercise.setup}"/>
                                 <div class="border-bottom border-secondary" style="padding-bottom: 10px;">
                                         <span class="badge rounded-pill difficulty-badge"
                                               th:attr="data-difficulty=${exercise.level}"
@@ -1126,7 +1127,8 @@ Exercises
                                     border: 1px solid #1f1f1f;
                                     border-radius: 4px;
                                     resize: none;
-                                    display: none;" th:text="${code}"></textarea>
+                                    display: none;" th:text="${code}">
+                            </textarea>
                         </div>
                     </form>
                 </div>
@@ -1265,7 +1267,7 @@ Exercises
         });
 
         editor.setSize("100%", "100%");
-        const initialCode = editor.getValue();
+        const initialCode = document.getElementById('initialCode').value;
 
         // Toggle Theme (Dark/Light)
         const themeToggleButton = document.getElementById("theme-toggle-button");
@@ -1743,6 +1745,17 @@ Exercises
                 editor.setOption("theme", selectedTheme);
             });
     });
+
+    // catch exit action if user is attempting assessment
+    if(document.getElementById('typeExercise').value === 'assessment'){
+        window.addEventListener("unload", function () {
+            const exerciseId = document.getElementById("exerciseId").value;
+            const code = editor.getValue();
+            let data = JSON.stringify({ exerciseId: exerciseId, code:code });
+            let blob = new Blob([data], { type: "application/json" });
+            navigator.sendBeacon("/assessments/save_data", blob);
+        });
+    }
 
     window.addEventListener("DOMContentLoaded", function () {
         let outputDiv = document.getElementById("output");
