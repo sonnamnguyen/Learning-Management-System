@@ -45,7 +45,7 @@ public class ExerciseSessionService {
     }
 
     public double calculateAverageExerciseScoreInAssessment(ExerciseSession exerciseSession){
-        List<StudentExerciseAttempt> studentExerciseAttempts = exerciseSession.getStudentExerciseAttempts();
+        List<StudentExerciseAttempt> studentExerciseAttempts = studentExerciseAttemptService.getStudentExerciseAttempts(exerciseSession);
         double averageScore = 0;
         double sum = 0;
         for(StudentExerciseAttempt studentExerciseAttempt : studentExerciseAttempts){
@@ -56,5 +56,4 @@ public class ExerciseSessionService {
         exerciseSessionRepository.save(exerciseSession);
         return averageScore;
     }
-
 }
