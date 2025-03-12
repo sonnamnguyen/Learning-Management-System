@@ -56,4 +56,29 @@ public interface ExerciseRepository extends PagingAndSortingRepository<Exercise,
 
     @Query("SELECT e.name FROM Exercise e")
     List<String> findAllName();
+    @Query("SELECT e FROM Exercise e WHERE LOWER(e.description) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    Page<Exercise> findByDescriptionContainingIgnoreCase(@Param("keyword") String keyword, Pageable pageable);
+
+    @Query("SELECT e FROM Exercise e WHERE LOWER(e.description) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+            "AND e.language.id = :languageId")
+    Page<Exercise> findByDescriptionContainingIgnoreCaseAndLanguageId(@Param("keyword") String keyword,
+                                                                      @Param("languageId") Long languageId,
+                                                                      Pageable pageable);
+
+    @Query("SELECT e FROM Exercise e WHERE LOWER(e.description) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+            "AND e.level = :level")
+    Page<Exercise> findByDescriptionContainingIgnoreCaseAndLevel(@Param("keyword") String keyword,
+                                                                 @Param("level") Exercise.Level level,
+                                                                 Pageable pageable);
+
+    @Query("SELECT e FROM Exercise e WHERE LOWER(e.description) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+            "AND e.language.id = :languageId " +
+            "AND e.level = :level")
+    Page<Exercise> findByDescriptionContainingIgnoreCaseAndLanguageIdAndLevel(@Param("keyword") String keyword,
+                                                                              @Param("languageId") Long languageId,
+                                                                              @Param("level") Exercise.Level level,
+                                                                              Pageable pageable);
+
+    Page<Exercise> findByLanguageId(Long languageId, Pageable pageable);
+
 }

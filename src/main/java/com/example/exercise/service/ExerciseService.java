@@ -410,4 +410,29 @@ public class ExerciseService {
         return exerciseRepository.findExercisesByAssessmentId(assessmentId);
     }
 
+
+    public List<Exercise> findAll() {
+        return exerciseRepository.findAll();
+    }
+    public Page<Exercise> getExercisesByLanguage(Long languageId, Pageable pageable) {
+        return exerciseRepository.findByLanguageId(languageId, pageable);
+    }
+    public Page<Exercise> searchByDescriptionPaginated(String keyword, Pageable pageable) {
+        return exerciseRepository.findByDescriptionContainingIgnoreCase(keyword, pageable);
+    }
+
+    public Page<Exercise> searchByDescriptionAndLanguage(String keyword, Long languageId, Pageable pageable) {
+        return exerciseRepository.findByDescriptionContainingIgnoreCaseAndLanguageId(keyword, languageId, pageable);
+    }
+
+    public Page<Exercise> searchByDescriptionAndLevel(String keyword, String level, Pageable pageable) {
+        Exercise.Level exerciseLevel = (level == null || level.trim().isEmpty()) ? null : Exercise.Level.valueOf(level.toUpperCase());
+        return exerciseRepository.findByDescriptionContainingIgnoreCaseAndLevel(keyword, exerciseLevel, pageable);
+    }
+
+    public Page<Exercise> searchByDescriptionAndLanguageAndLevel(String keyword, Long languageId, String level, Pageable pageable) {
+        Exercise.Level exerciseLevel = (level == null || level.trim().isEmpty()) ? null : Exercise.Level.valueOf(level.toUpperCase());
+        return exerciseRepository.findByDescriptionContainingIgnoreCaseAndLanguageIdAndLevel(keyword, languageId, exerciseLevel, pageable);
+    }
+
 }
