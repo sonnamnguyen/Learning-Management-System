@@ -155,8 +155,14 @@
         <!-- Questions Section -->
         <div class="col-md-6">
             <div class="card">
-                <div class="card-header">
+                <div class="card-header d-flex justify-content-between align-items-center">
                     <h3>Multiple Choice</h3>
+                    <!-- View All Button -->
+                    <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal"
+                            data-bs-target="#viewAllModal">
+                        View All
+                    </button>
+
                 </div>
                 <div class="card-body" style="max-height: 300px; overflow-y: auto;">
                     <ul class="list-group">
@@ -171,10 +177,47 @@
                 </div>
             </div>
         </div>
+
+        <!-- Modal for View All Questions with Answers -->
+        <div class="modal fade" id="viewAllModal" tabindex="-1" aria-labelledby="viewAllModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="viewAllModalLabel">All Multiple Choice Questions</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- List all questions with their answer options in a scrollable container -->
+                        <div class="scrollable-table">
+                            <div th:each="question, iterStat : ${questions}" class="mb-4 border-bottom pb-3">
+                                <p class="fw-bold">
+                                    <strong th:text="${iterStat.count}"></strong>.
+                                    <span th:text="${question?.questionText ?: 'Question text not available'}"></span>
+                                </p>
+                                <ul class="list-group">
+                                    <li class="list-group-item" th:each="ans : ${questionAnswerOptionsMap[question.id]}">
+                                        <span th:text="${ans?.optionText ?: ''}"></span>
+                                        <span th:if="${ans?.isCorrect}" class="badge bg-success ms-2">Correct</span>
+                                    </li>
+                                    <li class="list-group-item text-muted" th:if="${#lists.isEmpty(questionAnswerOptionsMap[question.id])}">
+                                        No answers assigned.
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
     </div>
 
     <!-- Registered Attempts Section -->
-    <div class="card">
+    <div class="card" id="registeredAttemptsContainer">
         <div class="card-header">
             <h3>Registered Attempts</h3>
         </div>
@@ -206,14 +249,14 @@
                     </td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(registeredAttempts)}">
-                    <td colspan="8" class="text-center text-muted">
+                    <td colspan="7" class="text-center text-muted">
                         No attempts yet.
                     </td>
                 </tr>
                 </tbody>
             </table>
 
-            <!-- Centered Pagination for Registered Attempts -->
+            <!-- Centered Pagination for Registered Attempts (without AJAX) -->
             <nav aria-label="Registered Attempts Pagination" th:if="${registeredAttemptsPage.totalPages > 0}">
                 <ul class="pagination justify-content-center">
                     <!-- First Page -->
@@ -231,7 +274,8 @@
                         </a>
                     </li>
                     <!-- Page Numbers -->
-                    <li class="page-item" th:each="i : ${#numbers.sequence(0, registeredAttemptsPage.totalPages - 1)}"
+                    <li class="page-item"
+                        th:each="i : ${#numbers.sequence(0, registeredAttemptsPage.totalPages - 1)}"
                         th:classappend="${registeredAttemptsPage.number == i} ? 'active'">
                         <a class="page-link"
                            th:href="@{/assessments/detail/{id}(id=${assessment.id}, pageReg=${i}, pageInv=${invitedCandidatesPage.number}, searchEmail=${searchEmail})}"
@@ -239,14 +283,16 @@
                         </a>
                     </li>
                     <!-- Next Page -->
-                    <li class="page-item" th:classappend="${registeredAttemptsPage.number == registeredAttemptsPage.totalPages - 1} ? 'disabled'">
+                    <li class="page-item"
+                        th:classappend="${registeredAttemptsPage.number == registeredAttemptsPage.totalPages - 1} ? 'disabled'">
                         <a class="page-link"
                            th:href="@{/assessments/detail/{id}(id=${assessment.id}, pageReg=${registeredAttemptsPage.number + 1}, pageInv=${invitedCandidatesPage.number}, searchEmail=${searchEmail})}">
                             Next
                         </a>
                     </li>
                     <!-- Last Page -->
-                    <li class="page-item" th:classappend="${registeredAttemptsPage.number == (registeredAttemptsPage.totalPages - 1)} ? 'disabled'">
+                    <li class="page-item"
+                        th:classappend="${registeredAttemptsPage.number == (registeredAttemptsPage.totalPages - 1)} ? 'disabled'">
                         <a class="page-link"
                            th:href="@{/assessments/detail/{id}(id=${assessment.id}, pageReg=${registeredAttemptsPage.totalPages - 1}, pageInv=${invitedCandidatesPage.number}, searchEmail=${searchEmail})}"
                            th:text="'Last'">
@@ -258,13 +304,16 @@
     </div>
 
 
+
+
     <!-- All Invited Candidates Section - only visible for currentUser with role id=1 or role name "SUPERADMIN" -->
     <div class="card mt-4"
          th:if="${currentUser != null and (currentUser.roles.?[id == 1].size() > 0 or currentUser.roles.?[name=='SUPERADMIN'].size() > 0)}">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h3>All Invited Candidates</h3>
             <!-- Search Bar on the right with a magnifying glass icon -->
-            <form id="searchCandidatesForm" th:action="@{/assessments/detail/{id}(id=${assessment.id})}" method="get" class="d-flex">
+            <form id="searchCandidatesForm" th:action="@{/assessments/detail/{id}(id=${assessment.id})}" method="get"
+                  class="d-flex">
                 <input type="hidden" name="pageReg" th:value="${registeredAttemptsPage.number}"/>
                 <input type="hidden" name="pageInv" id="pageInvInput" value="0"/>
                 <input type="text" name="searchEmail" id="searchEmailInput" th:value="${searchEmail}"

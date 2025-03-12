@@ -1,9 +1,9 @@
-package com.example.student_exercise_attemp.service;
+package com.example.exercise.service;
 
 import com.example.assessment.model.ProgrammingLanguage;
 import com.example.assessment.repository.ProgrammingLanguageRepository;
-import com.example.student_exercise_attemp.model.Exercise;
-import com.example.student_exercise_attemp.repository.ExerciseRepository;
+import com.example.exercise.model.Exercise;
+import com.example.exercise.repository.ExerciseRepository;
 import com.example.testcase.TestCase;
 import com.example.testcase.TestCaseRepository;
 import jakarta.transaction.Transactional;
@@ -408,6 +408,31 @@ public class ExerciseService {
 
     public List<Exercise> getExercisesByAssessmentId(Long assessmentId) {
         return exerciseRepository.findExercisesByAssessmentId(assessmentId);
+    }
+
+
+    public List<Exercise> findAll() {
+        return exerciseRepository.findAll();
+    }
+    public Page<Exercise> getExercisesByLanguage(Long languageId, Pageable pageable) {
+        return exerciseRepository.findByLanguageId(languageId, pageable);
+    }
+    public Page<Exercise> searchByDescriptionPaginated(String keyword, Pageable pageable) {
+        return exerciseRepository.findByDescriptionContainingIgnoreCase(keyword, pageable);
+    }
+
+    public Page<Exercise> searchByDescriptionAndLanguage(String keyword, Long languageId, Pageable pageable) {
+        return exerciseRepository.findByDescriptionContainingIgnoreCaseAndLanguageId(keyword, languageId, pageable);
+    }
+
+    public Page<Exercise> searchByDescriptionAndLevel(String keyword, String level, Pageable pageable) {
+        Exercise.Level exerciseLevel = (level == null || level.trim().isEmpty()) ? null : Exercise.Level.valueOf(level.toUpperCase());
+        return exerciseRepository.findByDescriptionContainingIgnoreCaseAndLevel(keyword, exerciseLevel, pageable);
+    }
+
+    public Page<Exercise> searchByDescriptionAndLanguageAndLevel(String keyword, Long languageId, String level, Pageable pageable) {
+        Exercise.Level exerciseLevel = (level == null || level.trim().isEmpty()) ? null : Exercise.Level.valueOf(level.toUpperCase());
+        return exerciseRepository.findByDescriptionContainingIgnoreCaseAndLanguageIdAndLevel(keyword, languageId, exerciseLevel, pageable);
     }
 
 }

@@ -3,11 +3,11 @@ package com.example.code_judgement;
 
 import com.example.code_judgement.java_judge.JavaJudgementService;
 import com.example.code_judgement.languageFactory.ExecutionBasedLanguage;
-import com.example.student_exercise_attemp.model.Exercise;
-import com.example.student_exercise_attemp.model.ExerciseSession;
-import com.example.student_exercise_attemp.repository.ExerciseRepository;
-import com.example.student_exercise_attemp.model.StudentExerciseAttempt;
-import com.example.student_exercise_attemp.service.StudentExerciseAttemptService;
+import com.example.exercise.model.Exercise;
+import com.example.exercise.model.ExerciseSession;
+import com.example.exercise.repository.ExerciseRepository;
+import com.example.exercise.model.StudentExerciseAttempt;
+import com.example.exercise.service.StudentExerciseAttemptService;
 import com.example.testcase.TestCase;
 import com.example.testcase.TestCaseResult;
 import com.example.testcase.TestCaseService;
@@ -137,10 +137,12 @@ public class CodeExecutionService {
 
 
         if (!compilationResult.isSuccess()) {
-            return new ExecutionResponse(code, 0, testCases.size(), 0, null, compilationResult.getErrorMessage(), compileTime);
+            return new ExecutionResponse(code, 0, testCases.size(), 0, null, compilationResult.getErrorMessage(), compileTime, 0);
         }
 
         // Sử dụng ExecutorService để chạy các test case song song
+
+
         ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         List<Future<TestCaseResult>> futures = new ArrayList<>();
 
@@ -155,9 +157,13 @@ public class CodeExecutionService {
         // Thu thập kết quả
         List<TestCaseResult> testResults = new ArrayList<>();
         int passed = 0;
+        long runTime =0;
         for (Future<TestCaseResult> future : futures) {
+            long startRunTime = System.nanoTime();
             try {
                 TestCaseResult result = future.get();
+                long endRunTime = System.nanoTime();
+                runTime += endRunTime - startRunTime;
                 if (result.isCorrect()) {
                     passed++;
                 }
@@ -168,6 +174,7 @@ public class CodeExecutionService {
         }
 
         executor.shutdown();
+        long avgRunTime = (runTime/testCases.size())/1_000_000;
         if(!compilationResult.getExtensionFileName().equalsIgnoreCase(".cs")){
             try {
                 Path filePath = Path.of(compilationResult.getRandomFileName().getAbsolutePath());
@@ -207,7 +214,7 @@ public class CodeExecutionService {
         }
 
         // Tính toán kết quả tổng quát
-        return new ExecutionResponse(code,passed,testCases.size(),score,testResults, null, compileTime);
+        return new ExecutionResponse(code,passed,testCases.size(),score,testResults, null, compileTime, avgRunTime);
     }
 
     private void deleteDirectoryRecursively(Path path) throws IOException {

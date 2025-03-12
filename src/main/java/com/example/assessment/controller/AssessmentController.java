@@ -6,20 +6,24 @@ import com.example.assessment.repository.InvitedCandidateRepository;
 import com.example.assessment.service.*;
 import com.example.course.CourseService;
 import com.example.email.EmailService;
-import com.example.student_exercise_attemp.model.Exercise;
+import com.example.quiz.model.*;
+import com.example.exercise.model.Exercise;
 import com.example.assessment.model.Assessment;
 import com.example.assessment.service.AssessmentService;
 import com.example.assessment.service.AssessmentTypeService;
 import com.example.assessment.service.StudentAssessmentAttemptService;
 import com.example.assessment.service.InvitedCandidateService;
-import com.example.student_exercise_attemp.model.ExerciseSession;
-import com.example.student_exercise_attemp.service.ExerciseSessionService;
+import com.example.exercise.model.ExerciseSession;
+import com.example.exercise.model.StudentExerciseAttempt;
+import com.example.exercise.service.ExerciseSessionService;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.hashids.Hashids;
-import com.example.student_exercise_attemp.service.ExerciseService;
+import com.example.exercise.service.ExerciseService;
 import com.example.quiz.model.AnswerOption;
 import com.example.quiz.model.Question;
 import com.example.quiz.model.Quiz;
@@ -39,9 +43,12 @@ import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.support.SessionStatus;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.lang.reflect.Field;
+import org.springframework.format.annotation.DateTimeFormat;
+import java.time.LocalDate;
 import java.security.Principal;
 import java.time.LocalDateTime;
 import java.io.ByteArrayInputStream;
@@ -58,9 +65,43 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/assessments")
+@SessionAttributes("exerciseSession")
 public class AssessmentController {
+
+    @ModelAttribute("exerciseSession")
+    public ExerciseSession createExerciseSession() {
+        return new ExerciseSession();
+    }
+
+    @ModelAttribute("exerciseSession")
+    public ExerciseSession updateExerciseSession(ExerciseSession session) {
+        return session;
+    }
+
+    @PostMapping("/save_data")
+    public ResponseEntity<String> saveData(@ModelAttribute("exerciseSession") ExerciseSession exerciseSession,
+                         Model model,
+                         @RequestBody Map<String, String> requestBody) {
+        try{
+            Long exerciseId = Long.parseLong(requestBody.get("exerciseId"));
+            String code = requestBody.get("code");
+            for(StudentExerciseAttempt attempt: exerciseSession.getStudentExerciseAttempts()){
+                if(Objects.equals(attempt.getSubmitted_exercise().getId(), exerciseId)){
+                    attempt.setSubmitted_code(code);
+                }
+            }
+            this.updateExerciseSession(exerciseSession);
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid exercise ID: " + requestBody.get("exerciseId"));
+            return new ResponseEntity<>("Invalid exercise ID", HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>("Save data successful", HttpStatus.OK);
+    }
+
+
     @Autowired
     private AssessmentService assessmentService;
+
     @Autowired
     private CourseService courseService;
 
@@ -120,6 +161,8 @@ public class AssessmentController {
 
     // code mới
     @GetMapping("/create")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPERADMIN')")
+
     public String createAssessment(Model model) {
         Assessment assessment = new Assessment();
         assessment.setTimeLimit(30);
@@ -167,7 +210,7 @@ public class AssessmentController {
             for (String exerciseIdStr : exerciseIdsStr) {
                 Long exerciseId = Long.parseLong(exerciseIdStr);
                 Optional<Exercise> exerciseOptional = exerciseService.getExerciseById(exerciseId);
-                Exercise exercise = exerciseOptional.orElse(null); // Handle Optional and get Exercise or null
+                Exercise exercise = exerciseOptional.orElse(null);
                 if (exercise != null) {
                     selectedExercisesSet.add(exercise);
                 }
@@ -177,25 +220,25 @@ public class AssessmentController {
             for (String questionIdStr : questionIdsStr) {
                 Long questionId = Long.parseLong(questionIdStr);
                 Optional<Question> exerciseOptional = questionService.findById(questionId);
-                Question question = exerciseOptional.orElse(null); // Handle Optional and get Exercise or null
+                Question question = exerciseOptional.orElse(null);
                 if (question != null) {
                     selectedQuestionsSet.add(question);
                 }
             }
         }
         assessment.setExercises(selectedExercisesSet);
-        List<AssessmentQuestion> assessmentQuestions = new ArrayList<>(); // Use ArrayList to maintain order
+        List<AssessmentQuestion> assessmentQuestions = new ArrayList<>();
         int orderIndex = 1; // Initialize order index
 
-        for (Question question : selectedQuestionsSet) { // Iterate through the selected questions
+        for (Question question : selectedQuestionsSet) {
             AssessmentQuestion aq = new AssessmentQuestion();
             aq.setAssessment(assessment);
             aq.setQuestion(question);
-            aq.setOrderIndex(orderIndex); // Set the order index HERE!
+            aq.setOrderIndex(orderIndex);
             assessmentQuestions.add(aq);
-            orderIndex++; // Increment for the next question
+            orderIndex++;
         }
-        assessmentService.alignSequenceForAssessmentQuestion(); // align the sequence of the increment id
+        assessmentService.alignSequenceForAssessmentQuestion();
         assessment.setAssessmentQuestions(assessmentQuestions);
 //        assessment.setUpdatedBy(currentUser);
         assessmentService.createAssessment(assessment);
@@ -205,11 +248,11 @@ public class AssessmentController {
 
 
     @GetMapping("/duplicate/{id}")
-    public String duplicateAssessment(@PathVariable("id") Long id, Model model) {
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPERADMIN')")
+    public String duplicateAssessment(@PathVariable("id") Long id) {
         System.out.println("duplicateAssessment");
-        Assessment duplicatedAssessment = assessmentService.duplicateAssessment(id);
-        return "redirect:/assessments" + duplicatedAssessment.getId(); // Redirect to edit the duplicated assessment
-
+        assessmentService.duplicateAssessment(id);
+            return "redirect:/assessments";
     }
 
     @ModelAttribute
@@ -256,6 +299,8 @@ public class AssessmentController {
     }
 
 
+
+
     @GetMapping("/create/check-duplicate")
     public ResponseEntity<Map<String, Boolean>> checkDuplicateTitle(
             @RequestParam String title,
@@ -271,6 +316,7 @@ public class AssessmentController {
     }
 
     @GetMapping("/invite/{id}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPERADMIN')")
     public String inviteCandidate(@PathVariable int id, Model model) {
         List<User> usersWithRole5 = userRepository.findByRoles_Id(2L);
         System.out.println("Users found: " + usersWithRole5.size()); // Debugging print
@@ -281,6 +327,7 @@ public class AssessmentController {
     }
 
     @GetMapping("/detail/{id}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPERADMIN')")
     @Transactional(readOnly = true)
     public String showDetail(
             @PathVariable("id") Long id,
@@ -385,7 +432,21 @@ public class AssessmentController {
         }
         model.addAttribute("questions", orderedQuestions);
 
-        // 6. Retrieve exercises from the assessment
+        // 6. Map each question to its answer options (to support modal view)
+        Map<Long, List<AnswerOption>> questionAnswerOptionsMap = new HashMap<>();
+        for (Question q : orderedQuestions) {
+            try {
+                List<AnswerOption> answerOptions = answerOptionService.getAnswerOptionByid(q.getId());
+                questionAnswerOptionsMap.put(q.getId(), answerOptions);
+            } catch (Exception e) {
+                logger.error("Error retrieving answer options for question id " + q.getId(), e);
+                errorMessages.add("Error retrieving answer options for question id " + q.getId() + ": " + e.getMessage());
+                questionAnswerOptionsMap.put(q.getId(), new ArrayList<>());
+            }
+        }
+        model.addAttribute("questionAnswerOptionsMap", questionAnswerOptionsMap);
+
+        // 7. Retrieve exercises from the assessment
         try {
             model.addAttribute("exercises", assessment.getExercises());
         } catch (Exception e) {
@@ -411,6 +472,8 @@ public class AssessmentController {
         model.addAttribute("content", "assessments/detail");
         return "layout";
     }
+
+
 
 
 //    @GetMapping("/invite/{id}")
@@ -445,6 +508,7 @@ public class AssessmentController {
     }
 
     @GetMapping("/export")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPERADMIN')")
     public ResponseEntity<InputStreamResource> exportExcel() {
         List<Assessment> assessments = assessmentService.findAll();
         ByteArrayInputStream excelFile = assessmentService.exportToExcel(assessments);
@@ -457,12 +521,15 @@ public class AssessmentController {
 
 
     @PostMapping("/import")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPERADMIN')")
     public String importExcel(@RequestParam("file") MultipartFile file) {
         assessmentService.importExcel(file);
         return "redirect:/assessments";
     }
 
     @GetMapping("/edit/{id}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPERADMIN')")
+
     public String showEditForm(@PathVariable("id") Long id, Model model) throws JsonProcessingException {
         Assessment assessment = assessmentService.findById(id).orElse(null);
 
@@ -539,6 +606,7 @@ public class AssessmentController {
 
     //Preview assessment
     @GetMapping("/{id}/preview")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPERADMIN')")
     public String showAssessmentPreview(@PathVariable("id") Long id, Model model) {
         // Get Assessment
         Assessment assessment = assessmentService.getAssessmentByIdForPreview(id);
@@ -566,9 +634,7 @@ public class AssessmentController {
     }
 
     @PostMapping("/invite/{id}/take-exam")
-    public String verifyEmail(@PathVariable("id") String rawId, @RequestParam("email") String email, Model model,
-                              RedirectAttributes redirectAttributes,
-                              HttpSession session) {
+    public String verifyEmail(@PathVariable("id") String rawId, @RequestParam("email") String email, Model model) {
         email = email.toLowerCase();
         // Decode the ID (but don't overwrite rawId)
         System.out.println("");
@@ -640,18 +706,17 @@ public class AssessmentController {
         assessmentRepository.refresh(assessment.getId());
         System.out.println("✅ Reloaded assessment from database.");
 
+        // Create an assessment attempt
+//        assessmentService.createAssessmentAttempt(id, email);
+
         // Fetch questions
         List<Question> questions = questionService.findQuestionsByAssessmentId(id);
         List<Exercise> exercises = exerciseService.getExercisesByAssessmentId(id);
         //Create attempt
         StudentAssessmentAttempt attempt = studentAssessmentAttemptService.createAssessmentAttempt(id, email);
 
-        // check exerciseSession (be only attempted one assessment) and create exercise session for participant
-        if(session.getAttribute("exerciseSession") == null && !exercises.isEmpty()){
-            session.setAttribute("exerciseSession", exerciseSessionService.assessmentExerciseSession(assessment, nowUtc, exercises, attempt));
-        } else {
-            throw new RuntimeException("You are in other assessment! Can not attempt this assessment.");
-        }
+        // create exercise session for participant
+        model.addAttribute("exerciseSession", exerciseSessionService.assessmentExerciseSession(assessment, nowUtc, exercises, attempt));
         // Add to model
         model.addAttribute("assessment", assessment);
         model.addAttribute("questions", questions);
@@ -733,14 +798,31 @@ public class AssessmentController {
             }
             model.addAttribute("questionAnswerOptionsMap", questionAnswerOptionsMap);
 
+//            // 6. Retrieve TestSession for the user (from the attempt) and assessment to get user's selected answers
+//            Map<Long, Long> userAnswersMap = new HashMap<>();
+//            try {
+//                Optional<TestSession> testSessionOpt = quizService.findTestSessionByAssessmentIdAndUserId(assessmentId, userFromAttempt.getId());
+//                if (testSessionOpt.isPresent() && testSessionOpt.get().getAnswers() != null) {
+//                    for (Answer ans : testSessionOpt.get().getAnswers()) {
+//                        if (ans.getQuestion() != null && ans.getSelectedOption() != null) {
+//                            userAnswersMap.put(ans.getQuestion().getId(), ans.getSelectedOption().getId());
+//                        }
+//                    }
+//                }
+//            } catch (Exception e) {
+//                model.addAttribute("errorMessage", "Error retrieving test session or user answers: " + e.getMessage());
+//            }
+//            model.addAttribute("userAnswersMap", userAnswersMap);
 
             // 6. Return the view; errors (if any) will be displayed in the page via errorMessage
             return "assessments/view_score";
         } catch (Exception e) {
             model.addAttribute("errorMessage", "Unexpected error occurred: " + e.getMessage());
-            return "error"; // Fallback error page if something catastrophic happens
+            return "error";
         }
     }
+
+
 
     @GetMapping("/viewReport/{assessmentId}")
     public String viewReport(@PathVariable Long assessmentId, @RequestParam("attempt-id") Long attemptId, Model model) {
@@ -748,6 +830,10 @@ public class AssessmentController {
         Optional<StudentAssessmentAttempt> attempt = studentAssessmentAttemptService.findById(attemptId);
 
         if (attempt != null && attempt.isPresent()) {
+            JsonNode proctoringData = attempt.get().getProctoringData();
+            int tabLeaveCount = proctoringData.has("tabLeaveCount") ? proctoringData.get("tabLeaveCount").asInt() : 0;
+
+            model.addAttribute("tabLeaveCount", tabLeaveCount);
             model.addAttribute("attemptInfo", attempt.get());
         }
         model.addAttribute("content", "assessments/view_report");
@@ -759,27 +845,35 @@ public class AssessmentController {
     public String submitAssessment(@PathVariable("id") Long assessmentId,
                                    @RequestParam("attemptId") Long attemptId,
                                    @RequestParam("elapsedTime") int elapsedTime,
-                                   @RequestParam("questionId") List<String> questionIds,
+                                   @RequestParam(value = "questionId", required = false) List<String> questionIds,
+                                   @RequestParam("tabLeaveCount") int tabLeaveCount,
                                    @RequestParam Map<String, String> responses,
                                    Principal principal,
-                                   HttpSession session,
+                                   SessionStatus sessionStatus,
                                    Model model) {
         // Lấy thông tin user
         User user = userService.findByUsername(principal.getName());
+        int quizScore = 0;
+        if (questionIds != null && !questionIds.isEmpty()) {
+            double rawScore = quizService.calculateScore(questionIds, assessmentId, responses, user);
+            quizScore = (int) Math.round(rawScore);
+        }
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode proctoringData = objectMapper.createObjectNode()
+                .put("tabLeaveCount", tabLeaveCount);
         // Tính điểm phần Exercise
-        ExerciseSession exerciseSession = (ExerciseSession) session.getAttribute("exerciseSession");
+        ExerciseSession exerciseSession = (ExerciseSession) model.getAttribute("exerciseSession");
+        assert exerciseSession != null;
+        this.updateExerciseSession(null);
         double rawScoreExercises = exerciseSessionService.calculateAverageExerciseScoreInAssessment(exerciseSession);
         int scoreExercise = (int) Math.round(rawScoreExercises);
-        session.removeAttribute("exerciseSession");
-        // Tính điểm
-        double rawScore = quizService.calculateScore(questionIds, assessmentId, responses, user);
-        int score = (int) Math.round(rawScore);
         // Lưu kết quả attempt
-        StudentAssessmentAttempt attempt = studentAssessmentAttemptService.saveTestAttempt(attemptId, elapsedTime, score, scoreExercise);
+        StudentAssessmentAttempt attempt = studentAssessmentAttemptService.saveTestAttempt(attemptId, elapsedTime, quizScore, scoreExercise, proctoringData);
         model.addAttribute("timeTaken", elapsedTime);
-        model.addAttribute("score", score);
         return "assessments/submitAssessment";
     }
+
 
     @GetMapping("/calendar")
     public String showAssessmentCalendar() {

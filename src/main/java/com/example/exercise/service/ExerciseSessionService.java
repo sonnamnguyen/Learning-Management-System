@@ -1,11 +1,11 @@
-package com.example.student_exercise_attemp.service;
+package com.example.exercise.service;
 
 import com.example.assessment.model.Assessment;
 import com.example.assessment.model.StudentAssessmentAttempt;
-import com.example.student_exercise_attemp.model.Exercise;
-import com.example.student_exercise_attemp.model.ExerciseSession;
-import com.example.student_exercise_attemp.model.StudentExerciseAttempt;
-import com.example.student_exercise_attemp.repository.ExerciseSessionRepository;
+import com.example.exercise.model.Exercise;
+import com.example.exercise.model.ExerciseSession;
+import com.example.exercise.model.StudentExerciseAttempt;
+import com.example.exercise.repository.ExerciseSessionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -35,7 +35,10 @@ public class ExerciseSessionService {
             studentExerciseAttempt.setAttemptDate(nowUtc);
             studentExerciseAttempt.setExercise_session(exerciseSession);
             studentExerciseAttempt.setSubmitted_exercise(exercise);
-            studentExerciseAttempt.setAttendant_user(attempt.getUser());
+//            studentExerciseAttempt.setAttendant_user(attempt.getUser());
+            studentExerciseAttempt.setAttendant_email(attempt.getEmail());
+            studentExerciseAttempt.setSubmitted_code(exercise.getSetup());
+            exerciseSession.getStudentExerciseAttempts().add(studentExerciseAttempt);
             studentExerciseAttemptService.save(studentExerciseAttempt);
         }
         return exerciseSession;

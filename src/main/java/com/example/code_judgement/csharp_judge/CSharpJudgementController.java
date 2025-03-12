@@ -2,9 +2,9 @@ package com.example.code_judgement.csharp_judge;
 
 import com.example.code_judgement.CodeExecutionService;
 import com.example.code_judgement.ExecutionResponse;
-import com.example.student_exercise_attemp.model.Exercise;
-import com.example.student_exercise_attemp.model.ExerciseSession;
-import com.example.student_exercise_attemp.service.ExerciseService;
+import com.example.exercise.model.Exercise;
+import com.example.exercise.model.ExerciseSession;
+import com.example.exercise.service.ExerciseService;
 import com.example.testcase.TestCase;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -92,6 +92,7 @@ public class CSharpJudgementController {
             model.addAttribute("failed", response.getTotal() - response.getPassed());
             model.addAttribute("score", response.getScore());
             model.addAttribute("compileTime", response.getCompileTimeMillis());
+            model.addAttribute("runTime", response.getRunTimeMillis());
 
             if(response.getErrorMessage()!=null){
                 model.addAttribute("error", response.getErrorMessage());

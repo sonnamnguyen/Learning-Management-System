@@ -1,10 +1,10 @@
 package com.example.code_judgement.sql_judge;
 
 import com.example.code_judgement.ExecutionResponse;
-import com.example.student_exercise_attemp.model.Exercise;
-import com.example.student_exercise_attemp.model.ExerciseSession;
-import com.example.student_exercise_attemp.model.StudentExerciseAttempt;
-import com.example.student_exercise_attemp.service.StudentExerciseAttemptService;
+import com.example.exercise.model.Exercise;
+import com.example.exercise.model.ExerciseSession;
+import com.example.exercise.model.StudentExerciseAttempt;
+import com.example.exercise.service.StudentExerciseAttemptService;
 import com.example.testcase.TestCase;
 import com.example.testcase.TestCaseResult;
 import com.example.user.UserService;

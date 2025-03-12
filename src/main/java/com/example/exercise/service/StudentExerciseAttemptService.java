@@ -1,9 +1,9 @@
-package com.example.student_exercise_attemp.service;
+package com.example.exercise.service;
 
-import com.example.student_exercise_attemp.model.Exercise;
-import com.example.student_exercise_attemp.model.ExerciseSession;
-import com.example.student_exercise_attemp.model.StudentExerciseAttempt;
-import com.example.student_exercise_attemp.repository.StudentExerciseAttemptRepository;
+import com.example.exercise.model.Exercise;
+import com.example.exercise.model.ExerciseSession;
+import com.example.exercise.model.StudentExerciseAttempt;
+import com.example.exercise.repository.StudentExerciseAttemptRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

@@ -18,4 +18,5 @@ public class ExecutionResponse {
     List<TestCaseResult> testCasesResults;
     String errorMessage;
     long compileTimeMillis;
+    long runTimeMillis;
 }

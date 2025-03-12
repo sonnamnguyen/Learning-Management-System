@@ -1,7 +1,7 @@
 package com.example.assessment.model;
 
 import com.example.course.Course;
-import com.example.student_exercise_attemp.model.Exercise;
+import com.example.exercise.model.Exercise;
 import com.example.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;

@@ -1,7 +1,7 @@
-package com.example.student_exercise_attemp.repository;
+package com.example.exercise.repository;
 
 
-import com.example.student_exercise_attemp.model.ExerciseSession;
+import com.example.exercise.model.ExerciseSession;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ExerciseSessionRepository extends JpaRepository<ExerciseSession, Long> {

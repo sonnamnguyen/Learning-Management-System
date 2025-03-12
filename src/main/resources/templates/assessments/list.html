@@ -18,16 +18,22 @@
                     <i class="bi bi-printer"></i> Print
                 </a>
                 <!-- Export Button -->
-                <a href="/assessments/export" class="btn btn-outline-secondary me-2">
+                <a href="/assessments/export"
+                   class="btn btn-outline-secondary me-2"
+                   th:classappend="${curr_role != 'SUPERADMIN' and curr_role != 'ADMIN'} ? 'disabled'">
                     <i class="bi bi-file-earmark-excel"></i> Export
                 </a>
 
                 <!-- Import Button that triggers modal -->
-                <button class="btn btn-outline-secondary me-2" data-bs-toggle="modal" data-bs-target="#importModal">
+                <button class="btn btn-outline-secondary me-2"
+                        data-bs-toggle="modal" data-bs-target="#importModal"
+                        th:classappend="${curr_role != 'SUPERADMIN' and curr_role != 'ADMIN'} ? 'disabled'">
                     <i class="bi bi-upload"></i> Import
                 </button>
 
-                <a href="/assessments/create" class="btn btn-primary">
+                <a href="/assessments/create"
+                   class="btn btn-primary"
+                   th:classappend="${curr_role != 'SUPERADMIN' and curr_role != 'ADMIN'} ? 'disabled'">
                     <i class="bi bi-plus-circle"></i> Create New Assessment
                 </a>
             </div>
@@ -48,14 +54,22 @@
                                     </span>
                             </h5>
                             <div class="btn-group gap-2">
+                                <a th:href="@{'/assessments/duplicate/' + ${assessment.id}}"
+                                   class="btn btn-sm btn-outline-primary" title="duplicate"
+                                   th:classappend="${curr_role != 'SUPERADMIN' and curr_role != 'ADMIN'} ? 'disabled'">
+                                    <i class="fas fa-copy"></i>
+                                </a>
                                 <a th:href="@{'/assessments/edit/' + ${assessment.id}}"
-                                   class="btn btn-sm btn-outline-primary" title="Edit assessment">
+                                   class="btn btn-sm btn-outline-primary" title="Edit assessment"
+                                   th:classappend="${curr_role != 'SUPERADMIN' and curr_role != 'ADMIN'} ? 'disabled'">
                                     <i class="fas fa-edit"></i>
                                 </a>
                                 <a th:href="@{'/assessments/detail/' + ${assessment.id}}"
-                                   class="btn btn-sm btn-outline-primary" title="Open">
+                                   class="btn btn-sm btn-outline-primary" title="Open"
+                                   th:classappend="${curr_role != 'SUPERADMIN' and curr_role != 'ADMIN'} ? 'disabled'">
                                     <i class="fas fa-arrow-right"></i>
                                 </a>
+
                             </div>
                         </div>
 
@@ -96,17 +110,20 @@
                     <div class="card-footer bg-light d-flex justify-content-between align-items-center small text-muted" style="margin-top: -0.9rem;">
                         <div class="btn-group gap-2">
                             <a th:href="@{assessments/{id}/preview(id=${assessment.id})}"
-                               class="btn btn-sm btn-outline-secondary" title="Preview">
+                               class="btn btn-sm btn-outline-secondary" title="Preview"
+                               th:classappend="${curr_role != 'SUPERADMIN' and curr_role != 'ADMIN'} ? 'disabled'">
                                 <i class="fas fa-eye"></i>
                             </a>
                             <a th:href="@{'/assessments/invite/' + ${assessment.id}}"
-                               class="btn btn-sm btn-outline-secondary" title="Invite">
+                               class="btn btn-sm btn-outline-secondary" title="Invite"
+                               th:classappend="${curr_role != 'SUPERADMIN' and curr_role != 'ADMIN'} ? 'disabled'">
                                 <i class="fas fa-envelope"></i>
                             </a>
                             <a href="javascript:void(0);" class="btn btn-outline-secondary btn-sm"
                                th:attr="data-assessment-id=${assessment.id}"
                                onclick="copyInviteLink(event, this.getAttribute('data-assessment-id'))"
-                               title="Copy Link">
+                               title="Copy Link"
+                               th:classappend="${curr_role != 'SUPERADMIN' and curr_role != 'ADMIN'} ? 'disabled'">
                                 <i class="fas fa-copy"></i>
                             </a>
 

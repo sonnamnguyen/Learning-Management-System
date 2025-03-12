@@ -1,10 +1,10 @@
-package com.example.student_exercise_attemp.controller;
+package com.example.exercise.controller;
 
 import com.example.assessment.model.ProgrammingLanguage;
 import com.example.assessment.service.ProgrammingLanguageService;
-import com.example.student_exercise_attemp.model.Exercise;
-import com.example.student_exercise_attemp.repository.ExerciseRepository;
-import com.example.student_exercise_attemp.service.ExerciseService;
+import com.example.exercise.model.Exercise;
+import com.example.exercise.repository.ExerciseRepository;
+import com.example.exercise.service.ExerciseService;
 import com.example.testcase.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -17,6 +17,8 @@ import org.springframework.data.domain.*;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -33,11 +35,12 @@ import java.security.SecureRandom;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.*;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/exercises")
 @RequiredArgsConstructor
-public class ExerciseController {
+public class    ExerciseController {
     private final ProgrammingLanguageService programmingLanguageService;
     private final ExerciseRepository exerciseRepository;
     private final ExerciseService exerciseService;
@@ -45,6 +48,7 @@ public class ExerciseController {
 
 
     // Common attributes for all views
+
     @ModelAttribute
     public void addCommonAttributes(Model model) {
         model.addAttribute("title", "Exercises");
@@ -53,60 +57,46 @@ public class ExerciseController {
     }
 
 
-    //    @GetMapping
-//    public String getList(
-//            @RequestParam(value = "title", required = false) String title,
-//            @RequestParam(value = "language", required = false) Long languageId,
-//            @RequestParam(value = "level", required = false) String level,
-//            @RequestParam(value = "page", defaultValue = "0") int page,
-//            Model model) {
-//
-//        Pageable pageable = PageRequest.of(page, 10);
-//        Page<Exercise> exercisesPage = exerciseService.getExercisesByLanguageAndLevel(languageId, level, pageable);
-//
-//        // Nếu có từ khóa tìm kiếm, thì gọi searchByTitle()
-//        if (title != null && !title.isEmpty()) {
-//            List<Exercise> exercises = exerciseService.searchByTitle(title);
-//            model.addAttribute("exercises", exercises);
-//            model.addAttribute("totalPages", 1); // Vì kết quả search không có phân trang
-//        } else {
-//            exercisesPage = exerciseService.getExercisesByLanguageAndLevel(languageId, level, pageable);
-//            model.addAttribute("exercises", exercisesPage.getContent());
-//            model.addAttribute("totalPages", exercisesPage.getTotalPages());
-//        }
-//        model.addAttribute("currentPage", page);
-//        model.addAttribute("languages", programmingLanguageService.findAll());
-//        model.addAttribute("currentLanguage", languageId);
-//        model.addAttribute("currentLevel", level);
-//
-//        return "exercises/list";
-//    }
     @GetMapping
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPERADMIN', 'STUDENT')")
     public String getList(
             @RequestParam(value = "title", required = false) String title,
             @RequestParam(value = "language", required = false) Long languageId,
             @RequestParam(value = "level", required = false) String level,
+            @RequestParam(value = "description", required = false) String descriptionKeyword,
             @RequestParam(value = "page", defaultValue = "0") int page,
-            Model model) {
+            Model model, Authentication authentication) {
 
-        Pageable pageable = PageRequest.of(page, 12);
-
+        Pageable pageable = PageRequest.of(page, 12); // 12 items per page
+        Page<Exercise> exercisesPage;
         List<Exercise> exercises;
         int totalPages;
 
-        // Search by title if provided
+        // Logic filtering
         if (title != null && !title.isEmpty()) {
-            List<Exercise> allResults = exerciseService.searchByTitle(title); // Current method
-            totalPages = (int) Math.ceil((double) allResults.size() / pageable.getPageSize());
-            int start = (int) pageable.getOffset();
-            int end = Math.min((start + pageable.getPageSize()), allResults.size());
-            exercises = allResults.subList(start, end);
+            exercisesPage = exerciseService.searchExercises(title, pageable);
+        } else if (descriptionKeyword != null && !descriptionKeyword.isEmpty()) {
+            if (languageId != null && level != null && !level.isEmpty()) {
+                exercisesPage = exerciseService.searchByDescriptionAndLanguageAndLevel(descriptionKeyword, languageId, level, pageable);
+            } else if (languageId != null) {
+                exercisesPage = exerciseService.searchByDescriptionAndLanguage(descriptionKeyword, languageId, pageable);
+            } else if (level != null && !level.isEmpty()) {
+                exercisesPage = exerciseService.searchByDescriptionAndLevel(descriptionKeyword, level, pageable);
+            } else {
+                exercisesPage = exerciseService.searchByDescriptionPaginated(descriptionKeyword, pageable);
+            }
         } else {
-            // Filter by language and level
-            Page<Exercise> exercisesPage = exerciseService.getExercisesByLanguageAndLevel(languageId, level, pageable);
-            exercises = exercisesPage.getContent();
-            totalPages = exercisesPage.getTotalPages();
+            if (languageId != null && level != null && !level.isEmpty()) {
+                exercisesPage = exerciseService.getExercisesByLanguageAndLevel(languageId, level, pageable);
+            } else if (languageId != null) {
+                exercisesPage = exerciseService.getExercisesByLanguage(languageId, pageable);
+            } else {
+                exercisesPage = exerciseService.getAllExercises(pageable);
+            }
         }
+
+        exercises = exercisesPage.getContent();
+        totalPages = exercisesPage.getTotalPages();
 
         // Add attributes to model
         model.addAttribute("exercises", exercises);
@@ -116,11 +106,66 @@ public class ExerciseController {
         model.addAttribute("currentLanguage", languageId);
         model.addAttribute("currentLevel", level);
         model.addAttribute("paramTitle", title);
+        model.addAttribute("paramDescription", descriptionKeyword);
 
-        System.out.println("Language ID: " + languageId + ", Level: " + level + ", Title: " + title);
+        // Calculate common words if languageId is provided
+        if (languageId != null) {
+            Page<Exercise> allExercises;
+            if (level != null && !level.isEmpty()) {
+                allExercises = exerciseService.getExercisesByLanguageAndLevel(languageId, level, Pageable.unpaged());
+            } else {
+                allExercises = exerciseService.getExercisesByLanguage(languageId, Pageable.unpaged());
+            }
+            model.addAttribute("commonWords", getWordFrequency(allExercises.getContent()));
+        }
 
-        return "exercises/list";
+        System.out.println("Language ID: " + languageId + ", Level: " + level +
+                ", Title: " + title + ", Description: " + descriptionKeyword);
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ADMIN") || auth.getAuthority().equals("SUPERADMIN"));
+        return isAdmin ? "exercises/list" : "exercises/student-list";
     }
+
+
+    private Map<String, Integer> getWordFrequency(List<Exercise> exercises) {
+        Map<String, Integer> wordCount = new HashMap<>();
+
+        for (Exercise exercise : exercises) {
+            if (exercise.getDescription() != null) {
+                String[] words = exercise.getDescription()
+                        .toLowerCase()
+                        .replaceAll("[^a-zA-Z\\s]", "")
+                        .split("\\s+");
+
+                for (String word : words) {
+                    if (!word.isEmpty() && word.length() > 2) {
+                        wordCount.put(word, wordCount.getOrDefault(word, 0) + 1);
+                    }
+                }
+            }
+        }
+
+        return wordCount.entrySet().stream()
+                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                .limit(10)
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (e1, e2) -> e1,
+                        LinkedHashMap::new
+                ));
+    }
+
+    @GetMapping("/new-dashboard")
+    public String showDashboard(Model model, Authentication authentication) {
+        model.addAttribute("exercises", exerciseRepository.findAll());
+
+        model.addAttribute("content", "exercises/new-dashboard");
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ADMIN") || auth.getAuthority().equals("SUPERADMIN"));
+        return isAdmin ? "exercises/dashboard-admin":"exercises/profile";
+    }
+
 
     // Show create exercise form (existing method)
     @GetMapping("/create")
@@ -184,6 +229,18 @@ public class ExerciseController {
                 List<Map<String, Object>> testCaseJsonList = objectMapper.readValue(testCasesJson, new TypeReference<>() {});
 
                 for (Map<String, Object> tcMap : testCaseJsonList) {
+                    //moi
+                    String input = (String) tcMap.get("input");
+                    String expectedOutput = (String) tcMap.get("expectedOutput");
+
+                    if (input == null || input.trim().isEmpty() || expectedOutput == null || expectedOutput.trim().isEmpty()) {
+//                        return ResponseEntity.badRequest().body("Test case input/output cannot be empty!");
+                        Map<String, String> errorResponse = new HashMap<>();
+                        errorResponse.put("error", "Test case input/output cannot be empty!");
+                        return ResponseEntity.badRequest().body(errorResponse);
+                    }
+                    //moi
+
                     TestCase tc = new TestCase();
                     tc.setInput((String) tcMap.get("input"));
                     tc.setExpectedOutput((String) tcMap.get("expectedOutput"));
@@ -199,7 +256,10 @@ public class ExerciseController {
                     testCasesFinal.add(tc);
                 }
             } catch (JsonProcessingException e) {
-                return ResponseEntity.badRequest().body("Invalid JSON format! Check console for details.");
+                Map<String, String> errorResponse = new HashMap<>();
+                errorResponse.put("error", "Invalid JSON format!");
+                return ResponseEntity.badRequest().body(errorResponse);
+//                return ResponseEntity.badRequest().body("Invalid JSON format! Check console for details.");
             }
         } else if ("ui".equalsIgnoreCase(testCaseMethod)) {
             int normalIndex = 0;
@@ -208,20 +268,23 @@ public class ExerciseController {
                 String expectedOutput = allParams.get("testCaseFormList.testCasesList[" + normalIndex + "].expectedOutput");
                 String sqlTagNumber = allParams.get("testCaseFormList.testCasesList[" + normalIndex + "].sqlTagNumber");
 
-                if (input != null && !input.trim().isEmpty() && expectedOutput != null && !expectedOutput.trim().isEmpty()) {
-                    TestCase tc = new TestCase();
-                    tc.setInput(input);
-                    tc.setExpectedOutput(expectedOutput);
-                    tc.setHidden(false);
-                    tc.setExercise(exercise);
-                    if ("SQL".equalsIgnoreCase(language.getLanguage())) {
-                        tc.setSqlTagNumber(sqlTagNumber);
-                    }
-                    testCasesFinal.add(tc);
+                if (input == null || input.trim().isEmpty() || expectedOutput == null || expectedOutput.trim().isEmpty()) {
+//                    return ResponseEntity.badRequest().body("Test case input/output cannot be empty!");
+                    Map<String, String> errorResponse = new HashMap<>();
+                    errorResponse.put("error", "Test case input/output cannot be empty!");
+                    return ResponseEntity.badRequest().body(errorResponse);
                 }
+                TestCase tc = new TestCase();
+                tc.setInput(input);
+                tc.setExpectedOutput(expectedOutput);
+                tc.setHidden(false);
+                tc.setExercise(exercise);
+                if ("SQL".equalsIgnoreCase(language.getLanguage())) {
+                    tc.setSqlTagNumber(sqlTagNumber);
+                }
+                testCasesFinal.add(tc);
                 normalIndex++;
             }
-
             int hiddenIndex = 0;
             while (allParams.containsKey("hiddenTestCases[" + hiddenIndex + "].input")) {
                 String input = allParams.get("hiddenTestCases[" + hiddenIndex + "].input");
@@ -241,8 +304,8 @@ public class ExerciseController {
                 }
                 hiddenIndex++;
             }
-
-            if (testCasesFinal.isEmpty()) {
+            //moi
+            if ("ui".equalsIgnoreCase(testCaseMethod) && testCasesFinal.isEmpty()) {
                 return ResponseEntity.badRequest().body("At least one valid test case is required!");
             }
         } else {

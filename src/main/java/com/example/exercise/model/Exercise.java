@@ -1,4 +1,4 @@
-package com.example.student_exercise_attemp.model;
+package com.example.exercise.model;
 
 import com.example.assessment.model.ProgrammingLanguage;
 import com.example.testcase.TestCase;

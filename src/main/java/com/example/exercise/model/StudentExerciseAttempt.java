@@ -1,7 +1,7 @@
-package com.example.student_exercise_attemp.model;
+package com.example.exercise.model;
 
 
-import com.example.student_exercise_attemp.model.Exercise;
+import com.example.exercise.model.Exercise;
 import com.example.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
@@ -22,9 +22,14 @@ public class StudentExerciseAttempt {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    // có thể null nếu như participant truy cập assessment bằng email
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
     private User attendant_user;
+
+    // participant truy cập assessment bằng email
+    @Column(nullable = true)
+    private String attendant_email;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "exercise_id", referencedColumnName = "id",nullable = false)

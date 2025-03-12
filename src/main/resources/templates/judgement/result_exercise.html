@@ -542,17 +542,33 @@
                 <span class="score-number-2" th:text="${score}"></span> TOTAL SCORE
             </div>
         </div>
+        <div th:if="${exercise.language.language.toLowerCase()}!='sql'" style="margin-bottom: 15px; ">
+            <div class="score-left-2">
+                Compile Time:
+                &ensp;
+                <span style="font-weight: normal; font-size: 20px; color: #3d75ea;" th:text="${compileTime} + ' ms'"></span>
+            </div>
+        </div>
+
+        <div th:if="${exercise.language.language.toLowerCase()}!='sql'" style="margin-bottom: 15px; ">
+            <div class="score-left-2">
+                AVG Run Time:
+                &ensp;
+                <span style="font-weight: normal; font-size: 20px; color: #3d75ea;" th:text="${runTime} + ' ms'"></span>
+            </div>
+        </div>
+
     </div>
     <input id="exerciseId" type="hidden" th:value="${exercise.id}" />
     <textarea id="codeEditor" th:text="${code}" style=""></textarea>
 
     <div th:if="${type}!='assessment'" class="input-area">
-        <input type="text" id="inputText" placeholder='Enter input here...' th:value="${exercise.getTestCases().get(0).getInput()}">
+        <input th:if="${exercise.language.language.toLowerCase()}!='sql'" type="text" id="inputText" placeholder='Enter input here...' th:value="${exercise.getTestCases().get(0).getInput()}">
         <select id="languageSelect" class="language-select">
             <option value="en">English</option>
             <option value="vi">Vietnamese</option>
         </select>
-        <button onclick="runCode()">Run Code</button>
+        <button th:if="${exercise.language.language.toLowerCase()}!='sql'" onclick="runCode()">Run Code</button>
         <button onclick="reviewCode()" data-tooltip="Review your code using AI">Review Code</button>
         <button onclick="copyCode()" data-tooltip="Copy code to clipboard">
             <i class="fas fa-copy"></i>
@@ -561,7 +577,14 @@
             <i class="fas fa-download"></i>
         </button>
     </div>
-    <div th:if="${type}!='assessment'" class="output" id="output">Output logs will appear here</div>
+    <div th:if="${type}!='assessment'" class="output" id="output">
+        <div th:if="${exercise.language.language.toLowerCase()}!='sql'">
+            Output logs will appear here
+        </div>
+        <div th:if="${exercise.language.language.toLowerCase()}=='sql'">
+            Review AI logs will appear here
+        </div>
+    </div>
 </div>
 
 <script>

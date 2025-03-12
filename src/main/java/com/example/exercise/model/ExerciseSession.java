@@ -1,4 +1,4 @@
-package com.example.student_exercise_attemp.model;
+package com.example.exercise.model;
 
 
 import com.example.assessment.model.Assessment;
@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -27,7 +28,7 @@ public class ExerciseSession {
     private double averageScore = 0;
 
     @OneToMany(mappedBy = "exercise_session", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<StudentExerciseAttempt> studentExerciseAttempts;
+    private List<StudentExerciseAttempt> studentExerciseAttempts = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assessment_id", referencedColumnName = "id")

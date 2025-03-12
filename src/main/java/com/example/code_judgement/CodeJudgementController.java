@@ -1,7 +1,9 @@
 package com.example.code_judgement;
 
-import com.example.student_exercise_attemp.model.Exercise;
-import com.example.student_exercise_attemp.service.ExerciseService;
+import com.example.exercise.model.Exercise;
+import com.example.exercise.model.ExerciseSession;
+import com.example.exercise.model.StudentExerciseAttempt;
+import com.example.exercise.service.ExerciseService;
 import com.example.testcase.TestCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -9,6 +11,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Objects;
 
 @Controller
 @RequestMapping("/judgement")
@@ -17,15 +20,26 @@ public class CodeJudgementController {
     private final ExerciseService exerciseService;
 
     // Hiển thị giao diện code space cho một bài tập
-    // Hiển thị giao diện code space cho một bài tập
     @GetMapping("/{type}/code_space/{id}")
     public String showExercisePlayground(@PathVariable Long id,
                                          @PathVariable String type,
-                                         Model model) {
+                                         Model model,
+                                         @SessionAttribute(name = "exerciseSession", required = false) ExerciseSession exerciseSession) {
         Exercise exercise = exerciseService.getExerciseById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));
         model.addAttribute("exercise", exercise);
-        model.addAttribute("code", exercise.getSetup() );
+        if(type.equals("assessment")) {
+            String codeSession = "";
+            for(StudentExerciseAttempt attempt: exerciseSession.getStudentExerciseAttempts()){
+                if(Objects.equals(attempt.getSubmitted_exercise().getId(), id)){
+                    codeSession = attempt.getSubmitted_code();
+                    model.addAttribute("code", codeSession);
+                    break;
+                }
+            }
+        } else {
+            model.addAttribute("code", exercise.getSetup());
+        }
         model.addAttribute("output", "");
         model.addAttribute("type", type);
         return "judgement/code_space";

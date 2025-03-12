@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -42,8 +43,17 @@ public class SecurityConfig {
                                 "/materials/**",
                                 "assessments/expired-link", // Allow expired link page
                                 "assessments/invite/**",   // Allow all invite-related links (Take Assessment)
-                                "/already-assessed"
+                                "/already-assessed",
+                                "assessments/create/**",
+                                "assessments/detail/{id}",
+                                "assessments/export",
+                                "assessments/import",
+                                "assessments/duplicate/{id}",
+                                "assessments/edit/",
+                                "assessments/{id}/preview"
+                                // Allow all invite-related links (Take Assessment)
                         ).permitAll()
+                        .requestMatchers("/admin/**").hasAnyRole("ADMIN", "SUPERADMIN")// Chỉ admin được truy cập API /admin/**
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form.loginPage("/login").permitAll())

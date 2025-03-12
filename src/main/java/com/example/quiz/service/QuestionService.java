@@ -1,11 +1,11 @@
 package com.example.quiz.service;
 
-import com.example.assessment.model.AssessmentQuestion;
-import com.example.assessment.repository.AssessmentQuestionRepository;
 import com.example.course.Course;
 import com.example.course.CourseRepository;
 import com.example.course.CourseService;
 import com.example.exception.InputException;
+import com.example.assessment.model.AssessmentQuestion;
+import com.example.assessment.repository.AssessmentQuestionRepository;
 import com.example.exception.NotFoundException;
 import com.example.quiz.model.AnswerOption;
 import com.example.quiz.model.Question;
@@ -29,6 +29,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -37,6 +39,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class QuestionService {
+
     @Autowired
     private QuizRepository quizRepository;
     @Autowired
@@ -61,9 +64,7 @@ public class QuestionService {
     @Autowired
     private QuizService quizService;
 
-    private final AssessmentQuestionRepository assessmentQuestionRepository;
-
-
+    private  AssessmentQuestionRepository assessmentQuestionRepository;
 
     public Optional<Question> findById(Long id) {
         return questionRepository.findById(id);
@@ -478,7 +479,9 @@ public class QuestionService {
 
         return questionRepository.save(clonedQuestion);
     }
-
+    public List<Question> getQuestionsByAssessmentId(Long assessmentId) {
+        return questionRepository.findQuestionsWithAnswersByAssessmentId(assessmentId);
+    }
 
 
     @Autowired
@@ -495,6 +498,5 @@ public class QuestionService {
                 .map(AssessmentQuestion::getQuestion)
                 .collect(Collectors.toList());
     }
-
 }
 
