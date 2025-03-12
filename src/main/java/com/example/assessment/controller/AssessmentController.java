@@ -13,11 +13,13 @@ import com.example.assessment.service.AssessmentTypeService;
 import com.example.assessment.service.StudentAssessmentAttemptService;
 import com.example.assessment.service.InvitedCandidateService;
 import com.example.exercise.model.ExerciseSession;
+import com.example.exercise.model.StudentExerciseAttempt;
 import com.example.exercise.service.ExerciseSessionService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.hashids.Hashids;
 import com.example.exercise.service.ExerciseService;
@@ -64,10 +66,37 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequestMapping("/assessments")
 @SessionAttributes("exerciseSession")
 public class AssessmentController {
+
     @ModelAttribute("exerciseSession")
     public ExerciseSession createExerciseSession() {
         return new ExerciseSession();
     }
+
+    @ModelAttribute("exerciseSession")
+    public ExerciseSession updateExerciseSession(ExerciseSession session) {
+        return session;
+    }
+
+    @PostMapping("/save_data")
+    public ResponseEntity<String> saveData(@ModelAttribute("exerciseSession") ExerciseSession exerciseSession,
+                         Model model,
+                         @RequestBody Map<String, String> requestBody) {
+        try{
+            Long exerciseId = Long.parseLong(requestBody.get("exerciseId"));
+            String code = requestBody.get("code");
+            for(StudentExerciseAttempt attempt: exerciseSession.getStudentExerciseAttempts()){
+                if(Objects.equals(attempt.getSubmitted_exercise().getId(), exerciseId)){
+                    attempt.setSubmitted_code(code);
+                }
+            }
+            this.updateExerciseSession(exerciseSession);
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid exercise ID: " + requestBody.get("exerciseId"));
+            return new ResponseEntity<>("Invalid exercise ID", HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>("Save data successful", HttpStatus.OK);
+    }
+
 
     @Autowired
     private AssessmentService assessmentService;
@@ -793,7 +822,7 @@ public class AssessmentController {
         // Tính điểm phần Exercise
         ExerciseSession exerciseSession = (ExerciseSession) model.getAttribute("exerciseSession");
         assert exerciseSession != null;
-        sessionStatus.setComplete();
+        this.updateExerciseSession(null);
         double rawScoreExercises = exerciseSessionService.calculateAverageExerciseScoreInAssessment(exerciseSession);
         int scoreExercise = (int) Math.round(rawScoreExercises);
         // Lưu kết quả attempt

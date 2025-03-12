@@ -37,6 +37,8 @@ public class ExerciseSessionService {
             studentExerciseAttempt.setSubmitted_exercise(exercise);
 //            studentExerciseAttempt.setAttendant_user(attempt.getUser());
             studentExerciseAttempt.setAttendant_email(attempt.getEmail());
+            studentExerciseAttempt.setSubmitted_code(exercise.getSetup());
+            exerciseSession.getStudentExerciseAttempts().add(studentExerciseAttempt);
             studentExerciseAttemptService.save(studentExerciseAttempt);
         }
         return exerciseSession;
