@@ -44,3 +44,4 @@ logs/**
 logs/*.log
 
 lms_project/nginx/
+data/
