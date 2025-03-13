@@ -52,10 +52,6 @@ public class SecurityConfig {
                                 "assessments/edit/",
                                 "assessments/{id}/preview"
                                 // Allow all invite-related links (Take Assessment)
-                                "/already-assessed",
-                                "assessments/create/**",
-                                "assessments/detail/{id}"
-                                // Allow all invite-related links (Take Assessment)
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
