@@ -47,7 +47,9 @@ import org.springframework.web.bind.support.SessionStatus;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.lang.reflect.Field;
+
 import org.springframework.format.annotation.DateTimeFormat;
+
 import java.time.LocalDate;
 import java.security.Principal;
 import java.time.LocalDateTime;
@@ -848,26 +850,30 @@ public class AssessmentController {
                                    @RequestParam(value = "questionId", required = false) List<String> questionIds,
                                    @RequestParam("tabLeaveCount") int tabLeaveCount,
                                    @RequestParam Map<String, String> responses,
+                                   @RequestParam("hasExercise") boolean hasExercise,
                                    Principal principal,
                                    SessionStatus sessionStatus,
                                    Model model) {
         // Lấy thông tin user
         User user = userService.findByUsername(principal.getName());
         int quizScore = 0;
+        int scoreExercise = 0;
         if (questionIds != null && !questionIds.isEmpty()) {
             double rawScore = quizService.calculateScore(questionIds, assessmentId, responses, user);
             quizScore = (int) Math.round(rawScore);
         }
-
+        //Save cheating count
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode proctoringData = objectMapper.createObjectNode()
                 .put("tabLeaveCount", tabLeaveCount);
-        // Tính điểm phần Exercise
-        ExerciseSession exerciseSession = (ExerciseSession) model.getAttribute("exerciseSession");
-        assert exerciseSession != null;
-        this.updateExerciseSession(null);
-        double rawScoreExercises = exerciseSessionService.calculateAverageExerciseScoreInAssessment(exerciseSession);
-        int scoreExercise = (int) Math.round(rawScoreExercises);
+        if (hasExercise) {
+            // Tính điểm phần Exercise
+            ExerciseSession exerciseSession = (ExerciseSession) model.getAttribute("exerciseSession");
+            assert exerciseSession != null;
+            double rawScoreExercises = exerciseSessionService.calculateAverageExerciseScoreInAssessment(exerciseSession);
+            scoreExercise = (int) Math.round(rawScoreExercises);
+            this.updateExerciseSession(null);
+        }
         // Lưu kết quả attempt
         StudentAssessmentAttempt attempt = studentAssessmentAttemptService.saveTestAttempt(attemptId, elapsedTime, quizScore, scoreExercise, proctoringData);
         model.addAttribute("timeTaken", elapsedTime);
