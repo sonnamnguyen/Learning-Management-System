@@ -2,9 +2,18 @@ package com.example.exercise.controller;
 
 import com.example.assessment.model.ProgrammingLanguage;
 import com.example.assessment.service.ProgrammingLanguageService;
+<<<<<<< HEAD:src/main/java/com/example/exercise/controller/ExerciseController.java
 import com.example.exercise.model.Exercise;
 import com.example.exercise.repository.ExerciseRepository;
 import com.example.exercise.service.ExerciseService;
+=======
+import com.example.student_exercise_attemp.model.Exercise;
+import com.example.student_exercise_attemp.model.StudentExerciseAttempt;
+import com.example.student_exercise_attemp.model.StudentExerciseResponse;
+import com.example.student_exercise_attemp.repository.ExerciseRepository;
+import com.example.student_exercise_attemp.service.ExerciseService;
+import com.example.student_exercise_attemp.service.StudentExerciseAttemptService;
+>>>>>>> 6c22cd6 (feat: add Dashboard display feature for users):src/main/java/com/example/student_exercise_attemp/controller/ExerciseController.java
 import com.example.testcase.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -45,6 +54,7 @@ public class    ExerciseController {
     private final ExerciseRepository exerciseRepository;
     private final ExerciseService exerciseService;
     private final TestCaseService testCaseService;
+    private final StudentExerciseAttemptService studentExerciseAttemptService;
 
 
     // Common attributes for all views
@@ -610,6 +620,57 @@ public class    ExerciseController {
                 .body(excelBytes);
 
     }
+
+        @GetMapping("/profile/{id}")
+        public String showChart(@PathVariable Long id,
+                                @RequestParam(value = "language", required = false) String language,
+                                @RequestParam(value = "year", required = false) Integer year,
+                                @RequestParam(defaultValue = "0") int page,
+                                @RequestParam(defaultValue = "5") int size,
+                                Model model) {
+            if (year == null) {
+                year = 2025; // Default value
+            }
+            if(language == null){
+                language = "";
+            }
+            Integer easyExercisesNoLanguage = exerciseService.countEasyExercises("");
+            Integer hardExercisesNoLanguage = exerciseService.countHardExercises("");
+            Integer mediumExercisesNoLanguage = exerciseService.countMediumExercises("");
+            Integer userEasyExercisesNoLanguage = exerciseService.countUserEasyExercises(id, "");
+            Integer userHardExercisesNoLanguage = exerciseService.countUserHardExercises(id, "");
+            Integer userMediumExercisesNoLanguage = exerciseService.countUserMediumExercises(id, "");
+            Integer easyExercises = exerciseService.countEasyExercises(language);
+            Integer hardExercises = exerciseService.countHardExercises(language);
+            Integer mediumExercises = exerciseService.countMediumExercises(language);
+            Integer userExercises = exerciseService.countUserExercises(id);
+            Integer perfectScoreUserExercises = exerciseService.countPerfectScoreUserExercises(id);
+            Integer userPassExercises = exerciseService.countUserPassedExercises(id);
+            Integer userEasyExercises = exerciseService.countUserEasyExercises(id, language);
+            Integer userHardExercises = exerciseService.countUserHardExercises(id, language);
+            Integer userMediumExercises = exerciseService.countUserMediumExercises(id, language);
+            Map<String, Integer> passedTestsPerMonth = exerciseService.countPassedTestsPerMonth(id, year);
+            Integer exercisesWithMoreThanFiveAttempts = exerciseService.countExercisesWithMoreThanFiveAttempts(id);
+            Integer exercisesSubmittedMidnight = exerciseService.countExercisesSubmittedMidnight(id);
+            Integer exercisesSubmittedEarly = exerciseService.countExercisesSubmittedEarly(id);
+            Page<StudentExerciseAttempt> studentAttempts = studentExerciseAttemptService.getStudentAttemptsByUser(id, page, size);
+            StudentExerciseResponse chartResponse = new StudentExerciseResponse(
+                    easyExercises, hardExercises, mediumExercises, userExercises,userPassExercises,
+                    perfectScoreUserExercises, userEasyExercises, userHardExercises,
+                    userMediumExercises, passedTestsPerMonth, exercisesWithMoreThanFiveAttempts,
+                    exercisesSubmittedMidnight, exercisesSubmittedEarly,easyExercisesNoLanguage,hardExercisesNoLanguage,
+                    mediumExercisesNoLanguage,userEasyExercisesNoLanguage,userHardExercisesNoLanguage,userMediumExercisesNoLanguage
+            );
+            model.addAttribute("languages", programmingLanguageService.findAll());
+            model.addAttribute("currentLanguage", language);
+            model.addAttribute("chartData", chartResponse);
+            model.addAttribute("studentAttempts", studentAttempts.getContent());
+            model.addAttribute("currentPage", studentAttempts.getNumber()+1);
+            model.addAttribute("totalPages", studentAttempts.getTotalPages());
+            return "exercises/profile"; // Ensure this view exists
+
+        }
+
 
 
     // Export exercises to an Excel file

@@ -2,6 +2,7 @@ package com.example.exercise.model;
 
 import com.example.assessment.model.ProgrammingLanguage;
 import com.example.testcase.TestCase;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -39,12 +40,12 @@ public class Exercise {
     @Enumerated(EnumType.STRING)
     private Level level;
 
+
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TestCase> testCases = new ArrayList<>();
 
-    public List<TestCase> getTwoTestCases() {
-        return testCases.size() > 2 ? testCases.subList(0, 2) : new ArrayList<>(testCases);
-    }
+    @OneToMany(mappedBy = "submitted_exercise", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<StudentExerciseAttempt> studentExerciseAttempts = new ArrayList<>();
 
     public void setTestCases(List<TestCase> testCases) {
         if (testCases == null) return;
