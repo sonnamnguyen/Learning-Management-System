@@ -53,6 +53,7 @@ public class ExerciseSessionService {
         }
         averageScore = sum / studentExerciseAttempts.size();
         exerciseSession.setAverageScore(averageScore);
+        exerciseSession.setStudentExerciseAttempts(studentExerciseAttempts);
         exerciseSessionRepository.save(exerciseSession);
         return averageScore;
     }

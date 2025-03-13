@@ -3,9 +3,13 @@ package com.example.exercise.controller;
 import com.example.assessment.model.ProgrammingLanguage;
 import com.example.assessment.service.ProgrammingLanguageService;
 import com.example.exercise.model.Exercise;
+import com.example.exercise.model.StudentExerciseAttempt;
+import com.example.exercise.model.StudentExerciseResponse;
 import com.example.exercise.repository.ExerciseRepository;
 import com.example.exercise.service.ExerciseService;
+import com.example.exercise.service.StudentExerciseAttemptService;
 import com.example.testcase.*;
+import com.example.user.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.servlet.http.HttpServletRequest;
@@ -40,11 +44,13 @@ import java.util.stream.Collectors;
 @Controller
 @RequestMapping("/exercises")
 @RequiredArgsConstructor
-public class    ExerciseController {
+public class ExerciseController {
     private final ProgrammingLanguageService programmingLanguageService;
     private final ExerciseRepository exerciseRepository;
     private final ExerciseService exerciseService;
     private final TestCaseService testCaseService;
+    private final StudentExerciseAttemptService studentExerciseAttemptService;
+    private final UserService userService;
 
 
     // Common attributes for all views
@@ -72,7 +78,7 @@ public class    ExerciseController {
         List<Exercise> exercises;
         int totalPages;
 
-        // Logic filtering
+        // Search by title if provided
         if (title != null && !title.isEmpty()) {
             exercisesPage = exerciseService.searchExercises(title, pageable);
         } else if (descriptionKeyword != null && !descriptionKeyword.isEmpty()) {
@@ -157,13 +163,17 @@ public class    ExerciseController {
     }
 
     @GetMapping("/new-dashboard")
-    public String showDashboard(Model model, Authentication authentication) {
+    public String showDashboard(Model model, Authentication authentication, RedirectAttributes redirectAttributes) {
         model.addAttribute("exercises", exerciseRepository.findAll());
 
         model.addAttribute("content", "exercises/new-dashboard");
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(auth -> auth.getAuthority().equals("ADMIN") || auth.getAuthority().equals("SUPERADMIN"));
-        return isAdmin ? "exercises/dashboard-admin":"exercises/profile";
+        if(!isAdmin){
+            Long id = userService.getCurrentUser().getId();
+            return "redirect:/exercises/profile/" + id;
+        }
+        return "exercises/dashboard-admin";
     }
 
 
@@ -610,6 +620,57 @@ public class    ExerciseController {
                 .body(excelBytes);
 
     }
+
+        @GetMapping("/profile/{id}")
+        public String showChart(@PathVariable Long id,
+                                @RequestParam(value = "language", required = false) String language,
+                                @RequestParam(value = "year", required = false) Integer year,
+                                @RequestParam(defaultValue = "0") int page,
+                                @RequestParam(defaultValue = "5") int size,
+                                Model model) {
+            if (year == null) {
+                year = 2025; // Default value
+            }
+            if(language == null){
+                language = "";
+            }
+            Integer easyExercisesNoLanguage = exerciseService.countEasyExercises("");
+            Integer hardExercisesNoLanguage = exerciseService.countHardExercises("");
+            Integer mediumExercisesNoLanguage = exerciseService.countMediumExercises("");
+            Integer userEasyExercisesNoLanguage = exerciseService.countUserEasyExercises(id, "");
+            Integer userHardExercisesNoLanguage = exerciseService.countUserHardExercises(id, "");
+            Integer userMediumExercisesNoLanguage = exerciseService.countUserMediumExercises(id, "");
+            Integer easyExercises = exerciseService.countEasyExercises(language);
+            Integer hardExercises = exerciseService.countHardExercises(language);
+            Integer mediumExercises = exerciseService.countMediumExercises(language);
+            Integer userExercises = exerciseService.countUserExercises(id);
+            Integer perfectScoreUserExercises = exerciseService.countPerfectScoreUserExercises(id);
+            Integer userPassExercises = exerciseService.countUserPassedExercises(id);
+            Integer userEasyExercises = exerciseService.countUserEasyExercises(id, language);
+            Integer userHardExercises = exerciseService.countUserHardExercises(id, language);
+            Integer userMediumExercises = exerciseService.countUserMediumExercises(id, language);
+            Map<String, Integer> passedTestsPerMonth = exerciseService.countPassedTestsPerMonth(id, year);
+            Integer exercisesWithMoreThanFiveAttempts = exerciseService.countExercisesWithMoreThanFiveAttempts(id);
+            Integer exercisesSubmittedMidnight = exerciseService.countExercisesSubmittedMidnight(id);
+            Integer exercisesSubmittedEarly = exerciseService.countExercisesSubmittedEarly(id);
+            Page<StudentExerciseAttempt> studentAttempts = studentExerciseAttemptService.getStudentAttemptsByUser(id, page, size);
+            StudentExerciseResponse chartResponse = new StudentExerciseResponse(
+                    easyExercises, hardExercises, mediumExercises, userExercises,userPassExercises,
+                    perfectScoreUserExercises, userEasyExercises, userHardExercises,
+                    userMediumExercises, passedTestsPerMonth, exercisesWithMoreThanFiveAttempts,
+                    exercisesSubmittedMidnight, exercisesSubmittedEarly,easyExercisesNoLanguage,hardExercisesNoLanguage,
+                    mediumExercisesNoLanguage,userEasyExercisesNoLanguage,userHardExercisesNoLanguage,userMediumExercisesNoLanguage
+            );
+            model.addAttribute("languages", programmingLanguageService.findAll());
+            model.addAttribute("currentLanguage", language);
+            model.addAttribute("chartData", chartResponse);
+            model.addAttribute("studentAttempts", studentAttempts.getContent());
+            model.addAttribute("currentPage", studentAttempts.getNumber()+1);
+            model.addAttribute("totalPages", studentAttempts.getTotalPages());
+            return "exercises/profile"; // Ensure this view exists
+
+        }
+
 
 
     // Export exercises to an Excel file

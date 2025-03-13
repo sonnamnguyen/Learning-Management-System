@@ -3,6 +3,8 @@ package com.example.exercise.repository;
 import com.example.exercise.model.Exercise;
 import com.example.exercise.model.ExerciseSession;
 import com.example.exercise.model.StudentExerciseAttempt;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,4 +22,7 @@ public interface StudentExerciseAttemptRepository extends JpaRepository<StudentE
     Optional<StudentExerciseAttempt> findByExerciseSessionAndSubmittedExercise(
             @Param("exerciseSession") ExerciseSession exerciseSession,
             @Param("submittedExercise") Exercise submittedExercise);
+
+    @Query("SELECT e FROM StudentExerciseAttempt e join e.submitted_exercise WHERE e.attendant_user.id =:userId ORDER BY e.attemptDate DESC")
+    Page<StudentExerciseAttempt> getStudentExerciseAttemptByUser(@Param("userId") Long userId, Pageable pageable);
 }
