@@ -845,10 +845,11 @@ public class AssessmentController {
     public String submitAssessment(@PathVariable("id") Long assessmentId,
                                    @RequestParam("attemptId") Long attemptId,
                                    @RequestParam("elapsedTime") int elapsedTime,
-                                   @RequestParam("questionId") List<String> questionIds,
+                                   @RequestParam(value = "questionId", required = false) List<String> questionIds,
+                                   @RequestParam("tabLeaveCount") int tabLeaveCount,
                                    @RequestParam Map<String, String> responses,
                                    Principal principal,
-                                   HttpSession session,
+                                   SessionStatus sessionStatus,
                                    Model model) {
         // Lấy thông tin user
         User user = userService.findByUsername(principal.getName());
@@ -867,17 +868,11 @@ public class AssessmentController {
         this.updateExerciseSession(null);
         double rawScoreExercises = exerciseSessionService.calculateAverageExerciseScoreInAssessment(exerciseSession);
         int scoreExercise = (int) Math.round(rawScoreExercises);
-        session.removeAttribute("exerciseSession");
-        // Tính điểm
-        double rawScore = quizService.calculateScore(questionIds, assessmentId, responses, user);
-        int score = (int) Math.round(rawScore);
         // Lưu kết quả attempt
         StudentAssessmentAttempt attempt = studentAssessmentAttemptService.saveTestAttempt(attemptId, elapsedTime, quizScore, scoreExercise, proctoringData);
         model.addAttribute("timeTaken", elapsedTime);
-        model.addAttribute("score", score);
         return "assessments/submitAssessment";
     }
-
 
     @GetMapping("/calendar")
     public String showAssessmentCalendar() {
@@ -889,3 +884,4 @@ public class AssessmentController {
         return "assessments/already-assessed";  // This will load the calendar.html template
     }
 }
+
