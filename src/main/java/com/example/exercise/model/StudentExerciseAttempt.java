@@ -24,7 +24,7 @@ public class StudentExerciseAttempt {
 
     // có thể null nếu như participant truy cập assessment bằng email
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User attendant_user;
 
     // participant truy cập assessment bằng email

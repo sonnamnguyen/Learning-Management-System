@@ -59,11 +59,14 @@
             }
         }
 
+        /* Prevent COPY action */
+        .question-text, .form-check-label {
+            user-select: none;
+        }
+
     </style>
 </head>
 <body>
-<!-- Navbar -->
-<div th:replace="~{fragments :: header}" class="sticky-top"></div> <!-- Header always on top -->
 <!-- Main Content Container -->
 <div class="container-fluid">
     <button class="btn btn-primary d-md-none" onclick="toggleSidebar()"
@@ -135,14 +138,19 @@
                             <div class="border rounded p-3" style="max-height: 80vh; overflow-y: auto;">
                                 <!-- Loop through questions -->
                                 <div th:each="question, iterStat : ${questions}"
-                                     class="card mb-4 shadow-sm question-card">
+                                     class="card mb-4 shadow-sm question-card" th:id="'question_' + ${question.id}">
                                     <div class="card-body">
-                                        <h5><strong th:text="${iterStat.index + 1}"></strong></h5>
-                                        <p th:utext="${question.questionText}"></p>
-
+                                        <div class="d-flex align-items-start">
+                                            <h5 class="me-2 question-number">
+                                                <strong th:text="${iterStat.index + 1}"></strong>
+                                            </h5>
+                                            <p class="question-text" th:utext="${question.questionText}"></p>
+                                            <input type="checkbox" class="form-check-input me-2"
+                                                   th:attr="id='check_' + ${question.id}">
+                                            <i class="bi bi-flag"></i>
+                                        </div>
                                         <!-- Hidden input để gửi danh sách câu hỏi -->
                                         <input type="hidden" name="questionId" th:value="${question.id}">
-
                                         <!-- Answers -->
                                         <ul class="list-group mt-3">
                                             <li class="list-group-item option-item"
@@ -150,8 +158,10 @@
                                                 <div class="form-check">
                                                     <input class="form-check-input" type="radio"
                                                            th:name="'answers[' + ${question.id} + ']'"
-                                                           th:value="${option.id}">
+                                                           th:value="${option.id}"
+                                                           th:id="'option_' + ${question.id} + '_' + ${option.id}">
                                                     <label class="form-check-label"
+                                                           th:for="'option_' + ${question.id} + '_' + ${option.id}"
                                                            th:text="${option.optionText}"></label>
                                                 </div>
                                             </li>
@@ -161,23 +171,24 @@
                             </div>
                         </div>
                         <!-- Display Exercises -->
+                        <!-- Exercises -->
+                        <input type="hidden" name="hasExercise" id="hasExercise"
+                               th:value="${exercises != null and not #lists.isEmpty(exercises)}">
                         <div class="mb-4" th:if="${exercises != null and not #lists.isEmpty(exercises)}">
                             <h3>Exercises</h3>
-                            <div class="border rounded p-3"
-                                 style="max-height: 50vh; overflow-y: auto;">
+                            <div class="border rounded p-3" style="max-height: 50vh; overflow-y: auto;">
                                 <!-- Loop through exercises -->
                                 <div th:each="exercise, stat : ${exercises}" class="card mb-4 shadow-sm exercise-card"
                                      th:id="'exercise_' + ${exercise.id}">
                                     <div class="card-body d-flex justify-content-between align-items-center">
                                         <h6 class="exercise-title btn btn-light">
-                                            <!-- Hiển thị số thứ tự bắt đầu từ 1 -->
                                             <span th:text="'Exercise ' + (${stat.index} + 1) + ': '"></span>
                                             <!--redirect to coding site-->
                                             <a th:href="@{/judgement/{type}/code_space/{id}(type='assessment', id=${exercise.id})}"
                                                th:text="${exercise.name}" target="_blank"></a>
                                         </h6>
                                         <input type="checkbox" class="form-check-input me-2"
-                                               th:attr="id='check_' + ${exercise.id}">
+                                               th:id="'check_' + ${exercise.id}">
                                         <i class="bi bi-flag"></i>
                                     </div>
                                 </div>
@@ -185,6 +196,9 @@
                         </div>
                     </div>
                 </div>
+                <!-- Hidden inputs -->
+                <!-- Hidden inputs -->
+                <input type="hidden" name="attemptMail" th:value="${attempt.getEmail()}">
 
                 <!-- Hidden input để gửi attemptId và elapsedTime -->
                 <input type="hidden" name="attemptId" th:value="${attempt.id}">
@@ -262,6 +276,59 @@
             }
         });
     });
+</script>
+
+
+<!--Cheating check-->
+<script>
+    // Initial tabLeaveCount from sessionStorage
+    let tabLeaveCount = sessionStorage.getItem("tabLeaveCount")
+        ? parseInt(sessionStorage.getItem("tabLeaveCount"), 10)
+        : 0;
+
+    // Detect when user leaves/switches tab
+    document.addEventListener("visibilitychange", function () {
+        if (document.hidden) {
+            tabLeaveCount++;
+            sessionStorage.setItem("tabLeaveCount", tabLeaveCount.toString());
+        }
+    })
+
+    // Prevent copy question or answer action
+    document.addEventListener("DOMContentLoaded", function () {
+        let elements = document.querySelectorAll(".question-text, .form-check-label");
+
+        elements.forEach(element => {
+            element.addEventListener("copy", function (e) {
+                e.preventDefault();
+                alert('Copying is not allowed!');
+            })
+
+            element.addEventListener("contextmenu", function (e) {
+                e.preventDefault();
+            })
+
+            element.addEventListener("selectstart", function (e) {
+                e.preventDefault();
+            })
+        })
+
+        document.addEventListener("keydown", function (e) {
+            if ((e.ctrlKey || e.metaKey) && (e.key === "c" || e.key === "x" || e.key === "a")) {
+                e.preventDefault();
+                alert("Copying is not allowed!");
+            }
+        });
+    })
+
+    // Attach tabLeaveCount to form before submission
+    document.getElementById("form-assessment").addEventListener("submit", function () {
+        let input = document.createElement("input");
+        input.type = "hidden";
+        input.name = "tabLeaveCount";
+        input.value = tabLeaveCount.toString();
+        this.appendChild(input);
+    })
 </script>
 </body>
 </html>
