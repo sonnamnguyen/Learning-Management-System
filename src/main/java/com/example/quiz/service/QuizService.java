@@ -687,4 +687,16 @@ public double calculateScore(List<String> questionId, Long assessmentId, Map<Str
         return correctCount;
     }
 
+    /**
+     * find TestSession by assessmentId và userId.
+     *
+     * @param assessmentId ID of assessment
+     * @param userId ID of user
+     * Contact gr 2 if this function error
+     */
+    public Optional<TestSession> findTestSessionByAssessmentIdAndUserId(Long assessmentId, Long userId) {
+        return testSessionRepository.findByAssessmentIdAndUserId(assessmentId, userId);
+    }
+
+
 }

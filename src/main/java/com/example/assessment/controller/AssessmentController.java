@@ -6,6 +6,7 @@ import com.example.assessment.repository.InvitedCandidateRepository;
 import com.example.assessment.service.*;
 import com.example.course.CourseService;
 import com.example.email.EmailService;
+import com.example.quiz.model.*;
 import com.example.exercise.model.Exercise;
 import com.example.assessment.model.Assessment;
 import com.example.assessment.service.AssessmentService;
@@ -209,7 +210,7 @@ public class AssessmentController {
             for (String exerciseIdStr : exerciseIdsStr) {
                 Long exerciseId = Long.parseLong(exerciseIdStr);
                 Optional<Exercise> exerciseOptional = exerciseService.getExerciseById(exerciseId);
-                Exercise exercise = exerciseOptional.orElse(null); // Handle Optional and get Exercise or null
+                Exercise exercise = exerciseOptional.orElse(null);
                 if (exercise != null) {
                     selectedExercisesSet.add(exercise);
                 }
@@ -219,25 +220,25 @@ public class AssessmentController {
             for (String questionIdStr : questionIdsStr) {
                 Long questionId = Long.parseLong(questionIdStr);
                 Optional<Question> exerciseOptional = questionService.findById(questionId);
-                Question question = exerciseOptional.orElse(null); // Handle Optional and get Exercise or null
+                Question question = exerciseOptional.orElse(null);
                 if (question != null) {
                     selectedQuestionsSet.add(question);
                 }
             }
         }
         assessment.setExercises(selectedExercisesSet);
-        List<AssessmentQuestion> assessmentQuestions = new ArrayList<>(); // Use ArrayList to maintain order
+        List<AssessmentQuestion> assessmentQuestions = new ArrayList<>();
         int orderIndex = 1; // Initialize order index
 
-        for (Question question : selectedQuestionsSet) { // Iterate through the selected questions
+        for (Question question : selectedQuestionsSet) {
             AssessmentQuestion aq = new AssessmentQuestion();
             aq.setAssessment(assessment);
             aq.setQuestion(question);
-            aq.setOrderIndex(orderIndex); // Set the order index HERE!
+            aq.setOrderIndex(orderIndex);
             assessmentQuestions.add(aq);
-            orderIndex++; // Increment for the next question
+            orderIndex++;
         }
-        assessmentService.alignSequenceForAssessmentQuestion(); // align the sequence of the increment id
+        assessmentService.alignSequenceForAssessmentQuestion();
         assessment.setAssessmentQuestions(assessmentQuestions);
 //        assessment.setUpdatedBy(currentUser);
         assessmentService.createAssessment(assessment);
@@ -247,11 +248,11 @@ public class AssessmentController {
 
 
     @GetMapping("/duplicate/{id}")
-    public String duplicateAssessment(@PathVariable("id") Long id, Model model) {
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPERADMIN')")
+    public String duplicateAssessment(@PathVariable("id") Long id) {
         System.out.println("duplicateAssessment");
-        Assessment duplicatedAssessment = assessmentService.duplicateAssessment(id);
-        return "redirect:/assessments" + duplicatedAssessment.getId(); // Redirect to edit the duplicated assessment
-
+        assessmentService.duplicateAssessment(id);
+            return "redirect:/assessments";
     }
 
     @ModelAttribute
@@ -298,6 +299,8 @@ public class AssessmentController {
     }
 
 
+
+
     @GetMapping("/create/check-duplicate")
     public ResponseEntity<Map<String, Boolean>> checkDuplicateTitle(
             @RequestParam String title,
@@ -313,6 +316,7 @@ public class AssessmentController {
     }
 
     @GetMapping("/invite/{id}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPERADMIN')")
     public String inviteCandidate(@PathVariable int id, Model model) {
         List<User> usersWithRole5 = userRepository.findByRoles_Id(2L);
         System.out.println("Users found: " + usersWithRole5.size()); // Debugging print
@@ -323,6 +327,7 @@ public class AssessmentController {
     }
 
     @GetMapping("/detail/{id}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPERADMIN')")
     @Transactional(readOnly = true)
     public String showDetail(
             @PathVariable("id") Long id,
@@ -427,7 +432,21 @@ public class AssessmentController {
         }
         model.addAttribute("questions", orderedQuestions);
 
-        // 6. Retrieve exercises from the assessment
+        // 6. Map each question to its answer options (to support modal view)
+        Map<Long, List<AnswerOption>> questionAnswerOptionsMap = new HashMap<>();
+        for (Question q : orderedQuestions) {
+            try {
+                List<AnswerOption> answerOptions = answerOptionService.getAnswerOptionByid(q.getId());
+                questionAnswerOptionsMap.put(q.getId(), answerOptions);
+            } catch (Exception e) {
+                logger.error("Error retrieving answer options for question id " + q.getId(), e);
+                errorMessages.add("Error retrieving answer options for question id " + q.getId() + ": " + e.getMessage());
+                questionAnswerOptionsMap.put(q.getId(), new ArrayList<>());
+            }
+        }
+        model.addAttribute("questionAnswerOptionsMap", questionAnswerOptionsMap);
+
+        // 7. Retrieve exercises from the assessment
         try {
             model.addAttribute("exercises", assessment.getExercises());
         } catch (Exception e) {
@@ -453,6 +472,8 @@ public class AssessmentController {
         model.addAttribute("content", "assessments/detail");
         return "layout";
     }
+
+
 
 
 //    @GetMapping("/invite/{id}")
@@ -487,6 +508,7 @@ public class AssessmentController {
     }
 
     @GetMapping("/export")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPERADMIN')")
     public ResponseEntity<InputStreamResource> exportExcel() {
         List<Assessment> assessments = assessmentService.findAll();
         ByteArrayInputStream excelFile = assessmentService.exportToExcel(assessments);
@@ -499,12 +521,15 @@ public class AssessmentController {
 
 
     @PostMapping("/import")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPERADMIN')")
     public String importExcel(@RequestParam("file") MultipartFile file) {
         assessmentService.importExcel(file);
         return "redirect:/assessments";
     }
 
     @GetMapping("/edit/{id}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPERADMIN')")
+
     public String showEditForm(@PathVariable("id") Long id, Model model) throws JsonProcessingException {
         Assessment assessment = assessmentService.findById(id).orElse(null);
 
@@ -581,6 +606,7 @@ public class AssessmentController {
 
     //Preview assessment
     @GetMapping("/{id}/preview")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPERADMIN')")
     public String showAssessmentPreview(@PathVariable("id") Long id, Model model) {
         // Get Assessment
         Assessment assessment = assessmentService.getAssessmentByIdForPreview(id);
@@ -772,6 +798,21 @@ public class AssessmentController {
             }
             model.addAttribute("questionAnswerOptionsMap", questionAnswerOptionsMap);
 
+//            // 6. Retrieve TestSession for the user (from the attempt) and assessment to get user's selected answers
+//            Map<Long, Long> userAnswersMap = new HashMap<>();
+//            try {
+//                Optional<TestSession> testSessionOpt = quizService.findTestSessionByAssessmentIdAndUserId(assessmentId, userFromAttempt.getId());
+//                if (testSessionOpt.isPresent() && testSessionOpt.get().getAnswers() != null) {
+//                    for (Answer ans : testSessionOpt.get().getAnswers()) {
+//                        if (ans.getQuestion() != null && ans.getSelectedOption() != null) {
+//                            userAnswersMap.put(ans.getQuestion().getId(), ans.getSelectedOption().getId());
+//                        }
+//                    }
+//                }
+//            } catch (Exception e) {
+//                model.addAttribute("errorMessage", "Error retrieving test session or user answers: " + e.getMessage());
+//            }
+//            model.addAttribute("userAnswersMap", userAnswersMap);
 
             // 6. Return the view; errors (if any) will be displayed in the page via errorMessage
             return "assessments/view_score";
@@ -780,6 +821,8 @@ public class AssessmentController {
             return "error"; // Fallback error page if something catastrophic happens
         }
     }
+
+
 
     @GetMapping("/viewReport/{assessmentId}")
     public String viewReport(@PathVariable Long assessmentId, @RequestParam("attempt-id") Long attemptId, Model model) {
@@ -841,3 +884,4 @@ public class AssessmentController {
         return "assessments/already-assessed";  // This will load the calendar.html template
     }
 }
+

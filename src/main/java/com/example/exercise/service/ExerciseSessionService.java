@@ -56,4 +56,5 @@ public class ExerciseSessionService {
         exerciseSessionRepository.save(exerciseSession);
         return averageScore;
     }
+
 }

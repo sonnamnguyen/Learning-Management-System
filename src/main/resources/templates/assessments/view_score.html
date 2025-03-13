@@ -98,7 +98,7 @@
                     Assessment Detail
                 </a>
             </li>
-            <li class="breadcrumb-item active" aria-current="page">View Grade</li>
+            <li class="breadcrumb-item active" aria-current="page">View score</li>
         </ol>
     </nav>
 
@@ -165,15 +165,18 @@
                     </p>
 
                     <ul class="list-group">
-                        <li class="list-group-item" th:each="ans : ${questionAnswerOptionsMap[question.id]}">
-                            <span th:text="${ans?.optionText ?: ''}">Answer Option Text</span>
-                            <span th:if="${ans?.isCorrect}" class="badge bg-success ms-2">Correct</span>
+                        <li class="list-group-item" th:each="ans : ${questionAnswerOptionsMap[question.id] != null ? questionAnswerOptionsMap[question.id] : T(java.util.Collections).emptyList()}">
+                            <span th:text="${ans.optionText}"></span>
+                            <span th:if="${userAnswersMap != null and userAnswersMap[question.id] == ans.id}"
+                                  class="badge ms-2" style="background-color: #85C8FF;">Your Answer</span>
+                            <span th:if="${ans.isCorrect}" class="badge bg-success ms-2">Correct</span>
                         </li>
-                        <li class="list-group-item text-muted"
-                            th:if="${#lists.isEmpty(questionAnswerOptionsMap[question.id])}">
+                        <li class="list-group-item text-muted" th:if="${#lists.isEmpty(questionAnswerOptionsMap[question.id])}">
                             No answers assigned.
                         </li>
                     </ul>
+
+
                 </div>
             </div>
         </div>
