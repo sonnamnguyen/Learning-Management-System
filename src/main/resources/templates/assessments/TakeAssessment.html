@@ -170,6 +170,7 @@
                                 </div>
                             </div>
                         </div>
+                        <!-- Display Exercises -->
                         <!-- Exercises -->
                         <input type="hidden" name="hasExercise" id="hasExercise"
                                th:value="${exercises != null and not #lists.isEmpty(exercises)}">
@@ -182,7 +183,8 @@
                                     <div class="card-body d-flex justify-content-between align-items-center">
                                         <h6 class="exercise-title btn btn-light">
                                             <span th:text="'Exercise ' + (${stat.index} + 1) + ': '"></span>
-                                            <a th:href="@{/judgement/assessment/code_space/{id}(id=${exercise.id})}"
+                                            <!--redirect to coding site-->
+                                            <a th:href="@{/judgement/{type}/code_space/{id}(type='assessment', id=${exercise.id})}"
                                                th:text="${exercise.name}" target="_blank"></a>
                                         </h6>
                                         <input type="checkbox" class="form-check-input me-2"
@@ -197,6 +199,8 @@
                 <!-- Hidden inputs -->
                 <!-- Hidden inputs -->
                 <input type="hidden" name="attemptMail" th:value="${attempt.getEmail()}">
+
+                <!-- Hidden input để gửi attemptId và elapsedTime -->
                 <input type="hidden" name="attemptId" th:value="${attempt.id}">
                 <input type="hidden" name="elapsedTime" id="elapsedTime">
             </form>

@@ -964,6 +964,14 @@
         body.light-theme #emptySearchState i.fa-lightbulb {
             color: #ffc107;
         }
+
+        body.light-theme #customInputLabel {
+            color: #000000 !important;
+        }
+
+        body.light-theme #customOutputLabel {
+            color: #000000 !important;
+        }
     </style>
 </head>
 
@@ -1139,8 +1147,8 @@ Exercises
                     <!-- Tab Content -->
                     <div class="tab-content flex-grow-1">
                         <!-- Output Tab -->
-                        <div class="tab-pane fade show active" id="outputContent" role="tabpanel">
-                            <div class="btn-group" style="margin-left: 10px;" role="group">
+                        <div class="tab-pane fade show active" id="outputContent" role="tabpanel" >
+                            <div class="btn-group" style="display: flex; justify-content: center" role="group" >
                                 <button type="button" id="precheck-button" class="btn btn-success btn-lg">
                                     <i class="fa fa-check-circle"></i> Pre-check
                                 </button>
@@ -1161,11 +1169,11 @@ Exercises
                         <!-- Custom Input Tab -->
                         <div class="tab-pane fade" id="inputContent" role="tabpanel">
                             <div class="form-group">
-                                <label for="customInput" class="mb-2">Input:</label>
+                                <label id="customInputLabel" for="customInput" class="mb-2">Input:</label>
                                 <textarea class="form-control mb-3" id="customInput"
                                           rows="6" th:utext="${exercise.getTestCases().get(0).getInput()}"></textarea>
 
-                                <label for="customOutput" class="mb-2">Output:</label>
+                                <label id="customOutputLabel" for="customOutput" class="mb-2">Output:</label>
                                 <div id="customOutput" class="custom-output p-3 rounded mb-3">
                                     <!-- Custom output will appear here -->
                                 </div>
@@ -1179,15 +1187,15 @@ Exercises
 
                     <!-- Tab Navigation - Moved to bottom -->
                     <ul th:if="${exercise.getLanguage.language.toUpperCase()}!='SQL'" class="nav nav-tabs nav-fill mt-auto" id="rightPanelTabs" role="tablist">
-                        <li class="nav-item" role="presentation">
+                        <li class="nav-item" role="presentation" style="flex: 1">
                             <button class="nav-link active" id="output-tab" data-bs-toggle="tab"
-                                    data-bs-target="#outputContent" type="button" role="tab">
+                                    data-bs-target="#outputContent" type="button" role="tab" style="width: 100%">
                                 Output
                             </button>
                         </li>
-                        <li class="nav-item" role="presentation">
+                        <li class="nav-item" role="presentation" style="flex: 1">
                             <button class="nav-link" id="input-tab" data-bs-toggle="tab"
-                                    data-bs-target="#inputContent" type="button" role="tab">
+                                    data-bs-target="#inputContent" type="button" role="tab" style="width: 100%">
                                 Custom input
                             </button>
                         </li>
