@@ -1,16 +1,10 @@
 package com.example.exercise.repository;
 
-<<<<<<< HEAD:src/main/java/com/example/exercise/repository/StudentExerciseAttemptRepository.java
 import com.example.exercise.model.Exercise;
 import com.example.exercise.model.ExerciseSession;
 import com.example.exercise.model.StudentExerciseAttempt;
-=======
-import com.example.student_exercise_attemp.model.Exercise;
-import com.example.student_exercise_attemp.model.ExerciseSession;
-import com.example.student_exercise_attemp.model.StudentExerciseAttempt;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
->>>>>>> 6c22cd6 (feat: add Dashboard display feature for users):src/main/java/com/example/student_exercise_attemp/repository/StudentExerciseAttemptRepository.java
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

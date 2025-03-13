@@ -495,12 +495,38 @@ public class ExerciseService {
     }
 
 
+
+
+    public List<Exercise> findAll() {
+        return exerciseRepository.findAll();
+    }
+    public Page<Exercise> getExercisesByLanguage(Long languageId, Pageable pageable) {
+        return exerciseRepository.findByLanguageId(languageId, pageable);
+    }
+    public Page<Exercise> searchByDescriptionPaginated(String keyword, Pageable pageable) {
+        return exerciseRepository.findByDescriptionContainingIgnoreCase(keyword, pageable);
+    }
+
+    public Page<Exercise> searchByDescriptionAndLanguage(String keyword, Long languageId, Pageable pageable) {
+        return exerciseRepository.findByDescriptionContainingIgnoreCaseAndLanguageId(keyword, languageId, pageable);
+    }
+
+    public Page<Exercise> searchByDescriptionAndLevel(String keyword, String level, Pageable pageable) {
+        Exercise.Level exerciseLevel = (level == null || level.trim().isEmpty()) ? null : Exercise.Level.valueOf(level.toUpperCase());
+        return exerciseRepository.findByDescriptionContainingIgnoreCaseAndLevel(keyword, exerciseLevel, pageable);
+    }
+
+    public Page<Exercise> searchByDescriptionAndLanguageAndLevel(String keyword, Long languageId, String level, Pageable pageable) {
+        Exercise.Level exerciseLevel = (level == null || level.trim().isEmpty()) ? null : Exercise.Level.valueOf(level.toUpperCase());
+        return exerciseRepository.findByDescriptionContainingIgnoreCaseAndLanguageIdAndLevel(keyword, languageId, exerciseLevel, pageable);
+    }
     public Map<String, Integer> countPassedTestsPerMonth(Long userId, int year) {
         List<Object[]> results = exerciseRepository.countPassedTestsPerMonth(userId, year, pass_score);
         Map<String, Integer> passedTestsPerMonth = new LinkedHashMap<>(); // Keep order of months
 
         DateFormatSymbols dfs = new DateFormatSymbols(Locale.ENGLISH);
         String[] monthNames = dfs.getMonths(); // Array of month names: "January", "February", etc.
+
 
         for (Object[] row : results) {
             int monthIndex = (Integer) row[0] - 1; // Convert 1-based (SQL) to 0-based (Java)

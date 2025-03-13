@@ -2,18 +2,12 @@ package com.example.exercise.controller;
 
 import com.example.assessment.model.ProgrammingLanguage;
 import com.example.assessment.service.ProgrammingLanguageService;
-<<<<<<< HEAD:src/main/java/com/example/exercise/controller/ExerciseController.java
 import com.example.exercise.model.Exercise;
+import com.example.exercise.model.StudentExerciseAttempt;
 import com.example.exercise.repository.ExerciseRepository;
 import com.example.exercise.service.ExerciseService;
-=======
-import com.example.student_exercise_attemp.model.Exercise;
-import com.example.student_exercise_attemp.model.StudentExerciseAttempt;
+import com.example.exercise.service.StudentExerciseAttemptService;
 import com.example.student_exercise_attemp.model.StudentExerciseResponse;
-import com.example.student_exercise_attemp.repository.ExerciseRepository;
-import com.example.student_exercise_attemp.service.ExerciseService;
-import com.example.student_exercise_attemp.service.StudentExerciseAttemptService;
->>>>>>> 6c22cd6 (feat: add Dashboard display feature for users):src/main/java/com/example/student_exercise_attemp/controller/ExerciseController.java
 import com.example.testcase.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -49,7 +43,7 @@ import java.util.stream.Collectors;
 @Controller
 @RequestMapping("/exercises")
 @RequiredArgsConstructor
-public class    ExerciseController {
+public class ExerciseController {
     private final ProgrammingLanguageService programmingLanguageService;
     private final ExerciseRepository exerciseRepository;
     private final ExerciseService exerciseService;
@@ -82,7 +76,7 @@ public class    ExerciseController {
         List<Exercise> exercises;
         int totalPages;
 
-        // Logic filtering
+        // Search by title if provided
         if (title != null && !title.isEmpty()) {
             exercisesPage = exerciseService.searchExercises(title, pageable);
         } else if (descriptionKeyword != null && !descriptionKeyword.isEmpty()) {

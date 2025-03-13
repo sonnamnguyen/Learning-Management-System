@@ -24,23 +24,17 @@ public class StudentExerciseAttempt {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-<<<<<<< HEAD:src/main/java/com/example/exercise/model/StudentExerciseAttempt.java
     // có thể null nếu như participant truy cập assessment bằng email
-=======
     @JsonIgnore
->>>>>>> 6c22cd6 (feat: add Dashboard display feature for users):src/main/java/com/example/student_exercise_attemp/model/StudentExerciseAttempt.java
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User attendant_user;
 
-<<<<<<< HEAD:src/main/java/com/example/exercise/model/StudentExerciseAttempt.java
     // participant truy cập assessment bằng email
     @Column(nullable = true)
     private String attendant_email;
 
-=======
     @JsonIgnore
->>>>>>> 6c22cd6 (feat: add Dashboard display feature for users):src/main/java/com/example/student_exercise_attemp/model/StudentExerciseAttempt.java
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "exercise_id", referencedColumnName = "id",nullable = false)
     private Exercise submitted_exercise;
