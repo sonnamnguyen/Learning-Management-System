@@ -20,6 +20,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.DateFormatSymbols;
 import java.util.*;
 
 import static com.example.utils.Helper.getCellValueAsString;
@@ -409,5 +410,78 @@ public class ExerciseService {
     public List<Exercise> getExercisesByAssessmentId(Long assessmentId) {
         return exerciseRepository.findExercisesByAssessmentId(assessmentId);
     }
+//                      COOKING DASHBOARD
+    double min_score = 0.0;
+    double pass_score = 70.0;
+    double max_score = 100.0;
+    int start_lateTime = 0;
+    int end_lateTime = 1;
+    int start_earlyTime = 5;
+    int end_earlyTime = 6;
 
+    public Integer countEasyExercises(String language) {
+        return Optional.ofNullable(exerciseRepository.countNumberEasyExercises(language)).orElse(0);
+    }
+
+    public Integer countHardExercises(String language) {
+        return Optional.ofNullable(exerciseRepository.countNumberHardExercises(language)).orElse(0);
+    }
+
+    public Integer countMediumExercises(String language) {
+        return Optional.ofNullable(exerciseRepository.countNumberMediumExercises(language)).orElse(0);
+    }
+
+    public Integer countUserExercises(Long userId) {
+        return Optional.ofNullable(exerciseRepository.countUserNumberExercises(userId, min_score)).orElse(0);
+    }
+
+    public Integer countUserPassedExercises(Long userId) {
+        return Optional.ofNullable(exerciseRepository.countUserNumberExercises(userId, pass_score)).orElse(0);
+    }
+
+    public Integer countPerfectScoreUserExercises(Long userId) {
+        return Optional.ofNullable(exerciseRepository.countUserNumberPerfectExercises(userId, max_score)).orElse(0);
+    }
+
+    public Integer countUserEasyExercises(Long userId, String language) {
+        return Optional.ofNullable(exerciseRepository.countUserNumberEasyExercises(userId, language, pass_score)).orElse(0);
+    }
+
+    public Integer countUserHardExercises(Long userId, String language) {
+        return Optional.ofNullable(exerciseRepository.countUserNumberHardExercises(userId, language, pass_score)).orElse(0);
+    }
+
+    public Integer countUserMediumExercises(Long userId, String language) {
+        return Optional.ofNullable(exerciseRepository.countUserNumberMediumExercises(userId, language, pass_score)).orElse(0);
+    }
+
+    public Integer countExercisesWithMoreThanFiveAttempts(Long userId) {
+        return Optional.ofNullable(exerciseRepository.countExercisesWithMoreThanFiveAttemptsAndAtLeastOneAbove70(userId)).orElse(0);
+    }
+
+    public Integer countExercisesSubmittedMidnight(Long userId) {
+        return Optional.ofNullable(exerciseRepository.countExercisesSubmittedBetweenHours(userId, start_lateTime, end_lateTime)).orElse(0);
+    }
+
+    public Integer countExercisesSubmittedEarly(Long userId) {
+        return Optional.ofNullable(exerciseRepository.countExercisesSubmittedBetweenHours(userId, start_earlyTime, end_earlyTime)).orElse(0);
+    }
+
+
+    public Map<String, Integer> countPassedTestsPerMonth(Long userId, int year) {
+        List<Object[]> results = exerciseRepository.countPassedTestsPerMonth(userId, year, pass_score);
+        Map<String, Integer> passedTestsPerMonth = new LinkedHashMap<>(); // Keep order of months
+
+        DateFormatSymbols dfs = new DateFormatSymbols(Locale.ENGLISH);
+        String[] monthNames = dfs.getMonths(); // Array of month names: "January", "February", etc.
+
+        for (Object[] row : results) {
+            int monthIndex = (Integer) row[0] - 1; // Convert 1-based (SQL) to 0-based (Java)
+            String monthName = monthNames[monthIndex]; // Get English month name
+            Integer count = ((Number) row[1]).intValue();
+            passedTestsPerMonth.put(monthName, count);
+        }
+
+        return passedTestsPerMonth;
+    }
 }

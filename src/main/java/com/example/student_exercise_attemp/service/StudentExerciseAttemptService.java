@@ -5,6 +5,9 @@ import com.example.student_exercise_attemp.model.ExerciseSession;
 import com.example.student_exercise_attemp.model.StudentExerciseAttempt;
 import com.example.student_exercise_attemp.repository.StudentExerciseAttemptRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,4 +29,11 @@ public class StudentExerciseAttemptService {
     public List<StudentExerciseAttempt> getStudentExerciseAttempts(ExerciseSession exerciseSession) {
         return studentExerciseAttemptRepository.findByExerciseSession(exerciseSession);
     }
-}
+
+        public Page<StudentExerciseAttempt> getStudentAttemptsByUser(Long userId, int page, int size) {
+            Pageable pageable = PageRequest.of(page, size);
+            return studentExerciseAttemptRepository.getStudentExerciseAttemptByUser(userId, pageable);
+        }
+    }
+
+
