@@ -20,17 +20,17 @@ public class ExerciseSessionService {
     @Autowired
     private StudentExerciseAttemptService studentExerciseAttemptService;
 
-    public ExerciseSession createNewExerciseSession(ExerciseSession exerciseSession) {
+    public ExerciseSession createNewExerciseSession(ExerciseSession exerciseSession){
         return exerciseSessionRepository.save(exerciseSession);
     }
 
-    public ExerciseSession assessmentExerciseSession(Assessment assessment, LocalDateTime nowUtc, List<Exercise> exercises, StudentAssessmentAttempt attempt) {
+    public ExerciseSession assessmentExerciseSession(Assessment assessment, LocalDateTime nowUtc, List<Exercise> exercises, StudentAssessmentAttempt attempt){
         ExerciseSession exerciseSession = new ExerciseSession();
         exerciseSession.setAssessment(assessment);
         exerciseSession.setStartTime(nowUtc);
         this.createNewExerciseSession(exerciseSession);
         // create student_attempt_exercise for each exerciseSession
-        for (Exercise exercise : exercises) {
+        for(Exercise exercise : exercises){
             StudentExerciseAttempt studentExerciseAttempt = new StudentExerciseAttempt();
             studentExerciseAttempt.setAttemptDate(nowUtc);
             studentExerciseAttempt.setExercise_session(exerciseSession);
@@ -53,8 +53,8 @@ public class ExerciseSessionService {
         }
         averageScore = sum / studentExerciseAttempts.size();
         exerciseSession.setAverageScore(averageScore);
+        exerciseSession.setStudentExerciseAttempts(studentExerciseAttempts);
         exerciseSessionRepository.save(exerciseSession);
         return averageScore;
     }
-
 }

@@ -68,7 +68,6 @@ public class AssessmentService {
 
     @Autowired
     private final Gson gson = new Gson();
-
     //Hashids to hash the assessment id
     private Hashids hashids = new Hashids("BaTramBaiCodeThieuNhi", 32);
     @Autowired
@@ -439,7 +438,6 @@ public class AssessmentService {
         duplicatedAssessment.setQualifiedCount(0);
 
 
-        // Copy Exercises (linking to existing exercises)
         Set<Exercise> duplicatedExercises = new HashSet<>(originalAssessment.getExercises());
         duplicatedAssessment.setExercises(duplicatedExercises);
         // Duplicate AssessmentQuestions (linking to existing questions, creating new AssessmentQuestion entities)

@@ -45,14 +45,10 @@ public class SecurityConfig {
                                 "assessments/invite/**",   // Allow all invite-related links (Take Assessment)
                                 "/already-assessed",
                                 "assessments/create/**",
-                                "assessments/detail/{id}",
-                                "assessments/export",
-                                "assessments/import",
-                                "assessments/duplicate/{id}",
-                                "assessments/edit/",
-                                "assessments/{id}/preview"
+                                "assessments/detail/{id}"
                                 // Allow all invite-related links (Take Assessment)
                         ).permitAll()
+                        .requestMatchers("/admin/**").hasAnyRole("ADMIN", "SUPERADMIN")// Chỉ admin được truy cập API /admin/**
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form.loginPage("/login").permitAll())
