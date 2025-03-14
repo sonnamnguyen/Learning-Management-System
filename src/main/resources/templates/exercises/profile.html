@@ -1380,16 +1380,18 @@
             // Function to update stats
             function updateStats(userData) {
                 // Calculate total solved problems
-                const totalSolved = userData.submissions.accepted;
+                const totalSubmittedSolved = userData.submissions.accepted;
                 const totalSubmitted = userData.submissions.total;
                 // Calculate total problems available
                 const totalProblems = userData.difficultyNoLanguage.totalEasyNoLanguage +
                     userData.difficultyNoLanguage.totalMediumNoLanguage +
                     userData.difficultyNoLanguage.totalHardNoLanguage;
-
+                const totalSolved = userData.difficultyNoLanguage.easyNoLanguage +
+                    userData.difficultyNoLanguage.mediumNoLanguage +
+                    userData.difficultyNoLanguage.hardNoLanguage;
                 // Calculate acceptance rate
                 const acceptanceRate = totalSubmitted > 0
-                    ? Math.round((totalSolved / totalSubmitted) * 100)
+                    ? Math.round((totalSubmittedSolved / totalSubmitted) * 100)
                     : 0;
 
                 // Update UI
@@ -1633,12 +1635,12 @@
                 const difficultyCtx = document.getElementById("difficultyChart").getContext("2d");
 
                 let stats = {
-                    easy: /*[[${chartData.userEasyExercises}]]*/0,
-                    medium: /*[[${chartData.userMediumExercises}]]*/0,
-                    hard: /*[[${chartData.userHardExercises}]]*/0,
-                    totalEasy: /*[[${chartData.easyExercises}]]*/0,
-                    totalMedium: /*[[${chartData.mediumExercises}]]*/0,
-                    totalHard: /*[[${chartData.hardExercises}]]*/0
+                    userEasy: /*[[${chartData.userEasyExercises}]]*/0,
+                    userMedium: /*[[${chartData.userMediumExercises}]]*/0,
+                    userHard: /*[[${chartData.userHardExercises}]]*/0,
+                    totalEasy: /*[[${chartData.easyExercises}]]*/1,  // Avoid division by zero
+                    totalMedium: /*[[${chartData.mediumExercises}]]*/1,
+                    totalHard: /*[[${chartData.hardExercises}]]*/1
                 };
 
                 new Chart(difficultyCtx, {
@@ -1646,7 +1648,7 @@
                     data: {
                         labels: ['Easy', 'Medium', 'Hard'],
                         datasets: [{
-                            data: [stats.easy, stats.medium, stats.hard],
+                            data: [stats.userEasy, stats.userMedium, stats.userHard],
                             backgroundColor: ['#2cbb5d', '#ffc01e', '#ef4743'],
                             borderWidth: 0,
                             borderRadius: 4,
@@ -1658,21 +1660,42 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
+                        animation: {
+                            duration: 1000,
+                            easing: 'easeOutCirc',
+                            animateRotate: true,
+                            animateScale: true
+                        },
                         plugins: {
                             legend: {
                                 position: 'right',
                                 labels: {
                                     color: '#FFFFFF',
-                                    font: { size: 15 }
+                                    font: { size: 15 },
+                                    generateLabels: function (chart) {
+                                        const data = chart.data;
+                                        return data.labels.map((label, i) => {
+                                            let key = `user${label}`; // 'userEasy', 'userMedium', 'userHard'
+                                            let totalKey = `total${label}`; // 'userTotalEasy', 'totalMedium', 'totalHard'
+                                            return {
+                                                text: `${label} ${stats[key]}/${stats[totalKey]}`,
+                                                fillStyle: data.datasets[0].backgroundColor[i],
+                                                hidden: false,
+                                                index: i,
+                                                fontColor: "#FFFFFF" // Ensures white text
+                                            };
+                                        });
+                                    }
                                 }
                             },
                             tooltip: {
                                 callbacks: {
                                     label: function (context) {
+                                        let label = context.label;
                                         let value = context.raw;
-                                        let total = stats.totalEasy + stats.totalMedium + stats.totalHard;
+                                        let total = stats[`user${label}`]; // Get correct total per category
                                         let percentage = Math.round((value / total) * 100);
-                                        return `${context.label}: ${value} (${percentage}%)`;
+                                        return `${label}: ${value}/${total} (${percentage}%)`;
                                     }
                                 }
                             }
@@ -1680,6 +1703,7 @@
                     }
                 });
             }
+
 
             // Gọi hàm để khởi tạo biểu đồ khi DOM đã tải
             document.addEventListener("DOMContentLoaded", function () {
