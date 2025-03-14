@@ -86,6 +86,35 @@
             white-space: nowrap;
         }
 
+        .quiz-dropdown .quiz-arrow {
+            position: absolute; /* Giữ nguyên định vị tuyệt đối */
+            bottom: 0;          /* Đặt biểu tượng ở dưới cùng của quiz-header */
+            left: 50%;         /* Giữ nguyên canh giữa theo chiều ngang */
+            transform: translateX(-50%); /* Giữ nguyên dịch chuyển ngang để canh giữa */
+            align-self: auto;   /* Giữ nguyên hoặc bỏ align-self: auto; */
+            /* Các style khác của biểu tượng (như transition, color, v.v.) có thể được giữ lại */
+        }
+
+        .quiz-header {
+            position: relative; /* Đảm bảo quiz-header là phần tử tham chiếu (nếu chưa có) */
+            font-size: 0.8rem; /* Giữ nguyên font-size hiện tại */
+            padding-bottom: 15px; /* Tăng padding-bottom cho quiz-header để tạo không gian cho mũi tên (điều chỉnh giá trị này nếu cần) */
+            /* Các style khác của quiz-header có thể được giữ lại */
+        }
+
+        .answer_options_hidden { /* Changed to underscore */
+            display: none;
+        }
+        .question-input .answer-dropdown-icon { /* Style for the icon container */
+            transition: transform 0.2s ease-in-out; /* Smooth rotation transition */
+            /* margin-left: 10px;  No longer needed for bottom-centered arrow */
+            color: #6c757d; /* Example: Change icon color to gray */
+            font-size: 0.9rem; /* Example: Adjust icon size */
+        }
+
+        .question-input .answer-dropdown-icon.rotated { /* Class for rotated icon */
+            transform: rotate(180deg); /* Rotate icon 180 degrees */
+        }
         .btn.saved { /* Class 'saved' áp dụng cho bất kỳ nút nào có class 'btn' */
             background-color: #5cb85c; /* Màu nền xanh lá cây cho trạng thái đã lưu */
             border-color: #4cae4c;
@@ -192,8 +221,6 @@
                                 <i class="bi bi-chevron-down select-arrow"></i> <!-- Bootstrap Icon -->
                             </div>
                         </div>
-
-
                         <div class="col-md-4  d-flex align-items-center m-0">
                             <label for="id_course" class="form-label me-2">Course: </label>
                             <div class="select-wrapper">  <!-- Add this wrapper -->
@@ -225,12 +252,7 @@
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab" aria-controls="settings" aria-selected="false">Settings</button>
                         </li>
-
-
                     </ul>
-
-
-
                     <div class="tab-content mt-3" id="myTabContent">
                         <!-- Exercises Tab -->
                         <div class="tab-pane fade show active p-3" id="exercises" role="tabpanel" aria-labelledby="exercises-tab">
@@ -319,13 +341,13 @@
                                                                 <button type="button" class="btn btn-primary d-flex align-items-center justify-content-center position-relative btn-add-question add-questions"
                                                                         th:data-quiz-id="${quiz.id}"
                                                                         data-question-id=""
-                                                                        style="width: 35px; height: 35px; border-radius: 50%; transition: width 0.3s ease; overflow: hidden;"
-                                                                        onmouseover="this.style.width='70px'; this.style.borderRadius='5px'; this.querySelector('.add-all-text').style.opacity='1'; this.querySelector('.add-all-text').style.transform='translateY(0)'; this.querySelector('.plus-sign').style.opacity='0';"
-                                                                        onmouseout="this.style.width='35px'; this.style.borderRadius='50%'; this.querySelector('.add-all-text').style.opacity='0'; this.querySelector('.add-all-text').style.transform='translateY(-10px)'; this.querySelector('.plus-sign').style.opacity='1';">
+                                                                        style="width: 35px; height: 35px; border-radius: 50%; transition: width 0.3s ease; overflow: hidden;">
                                                                     <span class="plus-sign" style="font-size: 1.3rem; transition: opacity 0.3s ease;">+</span>
                                                                     <span class="add-all-text position-absolute" style="opacity: 0; left: 20%; transform: translateX(-50%) translateY(-10px); font-size: 0.8rem; transition: opacity 0.3s ease, transform 0.3s ease;">Add All</span>
                                                                 </button>
+                                                                <i class="quiz-arrow bi bi-chevron-down ms-2"></i>  <!-- Biểu tượng mũi tên NẰM TRONG quiz-header -->
                                                             </div>
+
                                                         </div>
                                                     </h2>
                                                     <!-- Dynamic collapse ID based on quiz ID -->
@@ -367,10 +389,6 @@
                                     <div class="card shadow-sm hover-shadow">
                                         <div class="card-header d-flex justify-content-between align-items-center"> <!-- ADDED d-flex justify-content-between align-items-center -->
                                             <h5 class="mb-0">Selected Questions</h5>
-                                            <div class="form-check form-switch d-flex align-items-center" style="margin-bottom: 0;">
-                                                <input class="form-check-input" type="checkbox" id="bootstrapSwitch" th:field="*{shuffled}" style="margin-right: 0.5rem;">
-                                                <label class="form-check-label" for="bootstrapSwitch" style="margin-bottom: 0;">Shuffle Questions</label>
-                                            </div>
                                         </div>
                                         <div class="card-body" style="max-height: 800px; overflow-y: auto;">
                                             <ul class="list-group" id="selected-questions">
@@ -383,24 +401,74 @@
                         </div>
 
                         <!-- Settings Tab -->
-                        <div class="tab-pane fade p-3" id="settings" role="tabpanel" aria-labelledby="settings-tab">
+                        <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="settings-tab">
                             <div class="row g-3">
-                                <div class="col-md-4">
-                                    <label for="id_qualify_score" class="form-label">Minimum Score:</label>
-                                    <input th:value="60" th:field="*{qualifyScore}" type="number"  class="form-control" placeholder="Enter minimum score to qualify" required id="id_qualify_score">
+                                <div class="col-12">
+                                    <h6 class="text-muted">General Settings</h6>
                                 </div>
                                 <div class="col-md-4">
-                                    <label for="id_time_limit" class="form-label">Time Limit (minutes):</label>
-                                    <input  th:field="*{timeLimit}"   type="number"  class="form-control" placeholder="Enter time limit for assessment" required id="id_time_limit">
+                                    <label for="id_qualify_score" class="form-label">Minimum Score:</label>
+                                    <input type="number"
+                                           th:field="*{qualifyScore}"
+                                           class="form-control"
+                                           placeholder="Enter minimum score to qualify"
+                                           required
+                                           id="id_qualify_score">
                                 </div>
 
                                 <div class="col-md-4">
-                                    <label  class="form-label">Exercise Score Ratio:</label>
-                                    <input  th:field="*{exerciseScoreRatio}"   type="number"  class="form-control" placeholder="Enter time limit for assessment" required >
+                                    <label for="id_time_limit" class="form-label">Time Limit (minutes):</label>
+                                    <input type="number"
+                                           th:field="*{timeLimit}"
+                                           class="form-control"
+                                           placeholder="Enter time limit for assessment"
+                                           required
+                                           id="id_time_limit">
                                 </div>
-                                <div class="col-md-4">
-                                    <label  class="form-label">Quiz Score Ratio:</label>
-                                    <input  th:field="*{quizScoreRatio}"   type="number"  class="form-control" placeholder="Enter time limit for assessment" required >
+                            </div>
+
+                            <hr>
+
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <h6 class="text-muted">Score Distribution</h6>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="id_quiz_score_ratio" class="form-label">Quiz Score Ratio (%):</label>
+                                    <input type="number"
+                                           th:field="*{quizScoreRatio}"
+                                           class="form-control"
+                                           placeholder="Enter quiz score ratio"
+                                           min="0"
+                                           required
+                                           id="id_quiz_score_ratio">
+                                </div>
+
+                                <div class="col-md-3">
+                                    <label for="id_exercise_score_ratio" class="form-label">Exercise Score Ratio (%):</label>
+                                    <input type="number"
+                                           th:field="*{exerciseScoreRatio}"
+                                           class="form-control"
+                                           placeholder="Enter exercise score ratio"
+                                           min="0"
+                                           required
+                                           id="id_exercise_score_ratio">
+                                </div>
+                            </div>
+
+                            <hr/>
+
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <h6 class="text-muted">Additional Settings</h6>
+                                </div>
+                                <div class="col-md-4 d-flex align-items-center">
+                                    <label class="form-label me-3 mb-0">Shuffle Question Order:</label>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input custom-switch" type="checkbox"
+                                               th:field="*{shuffled}"
+                                               id="id_shuffled">
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -408,21 +476,30 @@
 
                 </div>
             </div>
-
-
-
         </form>
     </div>
-
     <div id="fullscreen-preview" class="d-none position-fixed top-0 start-0 w-100 h-100 bg-white" style="z-index: 1050;">
         <!-- Nội dung sẽ được chèn vào đây -->
     </div>
-
     <script>
-
-
         document.addEventListener('DOMContentLoaded', function () {
 
+
+
+
+            function toggleAnswerVisibility(questionInput) {
+                console.log('toggleAnswerVisibility function called!');
+                const questionContent = questionInput.parentElement; // Get the parent .question-content
+                const answerOptionsContainer = questionContent.querySelector('#answerOptionsContainer');
+
+                if (answerOptionsContainer.classList.contains('answer_options_hidden')) {
+                    // If hidden, show the answer options
+                    answerOptionsContainer.classList.remove('answer_options_hidden');
+                } else {
+                    // If visible, hide the answer options
+                    answerOptionsContainer.classList.add('answer_options_hidden');
+                }
+            }
 
             const addQuestionButtons = document.querySelectorAll('.add-question');
             const selectedQuestionsList = document.getElementById('selected-questions');
@@ -466,36 +543,92 @@
                     }
                 }
             });
-
-
-
             const questionMap = new Map();
+            const assessmentTypeDropdown = document.getElementById('id_assessment_type');
+            const exercisesTabButton = document.getElementById('exercises-tab');
+            const questionsTabButton = document.getElementById('questions-tab');
+            const exercisesTabPane = document.getElementById('exercises');
+            const questionsTabPane = document.getElementById('questions');
 
-            //
-            // function randomizeQuestionOrder() {
-            //     const list = selectedQuestionsList;
-            //     const items = Array.from(list.children); // Get list items and convert to array
-            //
-            //     if (items.length <= 1) {
-            //         return; // No need to randomize if 0 or 1 item
-            //     }
-            //
-            //     // Fisher-Yates (Knuth) Shuffle Algorithm
-            //     for (let i = items.length - 1; i > 0; i--) {
-            //         const j = Math.floor(Math.random() * (i + 1));
-            //         [items[i], items[j]] = [items[j], items[i]]; // Swap elements
-            //     }
-            //
-            //     // Re-append shuffled items to the list
-            //     list.innerHTML = ''; // Clear the list
-            //     items.forEach(item => list.appendChild(item)); // Append in new order
-            //
-            //     updateQuestionNumbers(); // Re-number the questions
-            // }
+            function handleAssessmentTypeChange() {
+                const selectedAssessmentType = assessmentTypeDropdown.value;
 
-            // randomizeOrderButton.addEventListener('click', randomizeQuestionOrder); // Event listener for randomize button
+                if (selectedAssessmentType === /* Value for "Quiz" from your options */ "1") { // Replace "1" with actual Quiz ID/value
+                    // Activate Questions tab, deactivate Exercises tab
+                    activateTab(questionsTabButton, questionsTabPane);
+                    deactivateTab(exercisesTabButton, exercisesTabPane);
+
+                    // Disable Exercises tab button to prevent clicks
+                    exercisesTabButton.setAttribute('disabled', 'true');
+                    exercisesTabButton.classList.add('disabled'); // Add a class for visual styling if needed
+
+                    // Enable Questions tab button
+                    questionsTabButton.removeAttribute('disabled');
+                    questionsTabButton.classList.remove('disabled');
+
+                } else if (selectedAssessmentType === /* Value for "Assignment" from your options */ "2") { // Replace "2" with actual Assignment ID/value
+                    // Activate Exercises tab, deactivate Questions tab
+                    activateTab(exercisesTabButton, exercisesTabPane);
+                    deactivateTab(questionsTabButton, questionsTabPane);
+
+                    // Disable Questions tab button to prevent clicks
+                    questionsTabButton.setAttribute('disabled', 'true');
+                    questionsTabButton.classList.add('disabled'); // Add a class for visual styling if needed
+
+                    // Enable Exercises tab button
+                    exercisesTabButton.removeAttribute('disabled');
+                    exercisesTabButton.classList.remove('disabled');
+
+                } else {
+                    // For other assessment types or default, enable both tabs
+                    enableTab(exercisesTabButton);
+                    enableTab(questionsTabButton);
+                    // You might want to set a default active tab here if needed for other types
+                }
+            }
+
+            function activateTab(tabButton, tabPane) {
+                tabButton.classList.add('active');
+                tabButton.setAttribute('aria-selected', 'true');
+                tabPane.classList.add('show', 'active');
+            }
+
+            function deactivateTab(tabButton, tabPane) {
+                tabButton.classList.remove('active');
+                tabButton.setAttribute('aria-selected', 'false');
+                tabPane.classList.remove('show', 'active');
+            }
+
+            function enableTab(tabButton) {
+                tabButton.removeAttribute('disabled');
+                tabButton.classList.remove('disabled');
+            }
 
 
+            assessmentTypeDropdown.addEventListener('change', handleAssessmentTypeChange);
+
+
+
+            // Handle click events for disabled tabs to prevent switching
+            exercisesTabButton.addEventListener('click', function(event) {
+                if (this.hasAttribute('disabled')) {
+                    event.preventDefault(); // Prevent default tab switching behavior
+                    event.stopPropagation(); // Stop event propagation to be safe
+                    return false; // Stop further execution
+                }
+                // If not disabled, Bootstrap's default tab behavior will handle the switch
+            });
+
+            questionsTabButton.addEventListener('click', function(event) {
+                if (this.hasAttribute('disabled')) {
+                    event.preventDefault(); // Prevent default tab switching behavior
+                    event.stopPropagation(); // Stop event propagation to be safe
+                    return false; // Stop further execution
+                }
+                // If not disabled, Bootstrap's default tab behavior will handle the switch
+            });
+            // Initial tab state on page load
+            handleAssessmentTypeChange();
             const quizDropdowns = document.querySelectorAll('.quiz-dropdown');
             quizDropdowns.forEach(dropdown => {
                 dropdown.addEventListener('click', function (event) {
@@ -518,7 +651,6 @@
                 // Optional: Add functionality to the Add All button
                 const addAllButton = dropdown.querySelector('.btn-add-question');
             });
-
 
             addQuestionButtons.forEach(button => {
                 button.addEventListener('click', function (event) {
@@ -549,10 +681,16 @@
                             listItem.style.borderRadius = '0.25rem'; // Thêm bo tròn góc nhẹ (tùy chọn)
                             listItem.innerHTML = `
                     <div class="question-content flex-grow-1">
-                        <div class="question-input" style="padding: 8px; font-size: 1.1rem; border: 1px solid #ced4da; border-radius: 0.25rem; font-weight: 800;">
-                            ${questionText}
-                        </div>
-                        <div id="answerOptionsContainer" class="mt-2"></div>
+                         <div class="question-input d-flex align-items-center justify-content-between" style="padding: 8px; font-size: 1.1rem; border: 1px solid #ced4da; border-radius: 0.25rem; font-weight: 800; cursor: pointer;">  <!-- KEEP d-flex and justify-content-between -->
+            <span class="question-text-span flex-grow-1">
+                ${questionText}
+            </span>  <!-- Question text comes FIRST -->
+            <span class="answer-dropdown-icon" style="margin-left: 10px;">  <!-- Icon comes AFTER text -->
+                <i class="bi bi-chevron-down"></i>  <!-- Bootstrap Down Arrow Icon -->
+            </span>
+        </div>
+
+                        <div id="answerOptionsContainer" class="mt-2 answer_options_hidden"></div>
                     </div>
                     <div class="actions d-flex flex-column align-items-center" style="margin-left: 10px; gap: 5px;">
                         <i class="fas fa-trash-alt remove-question text-danger" data-question-id="${questionId}" title="Remove question" style="cursor: pointer; font-size: 1.1rem;"></i>
@@ -571,6 +709,10 @@
                             selectedQuestionsList.appendChild(listItem);
                             questionMap.set(questionId, listItem);
 
+                            const questionInputDiv = listItem.querySelector('.question-input'); // Get the question-input element *after* it's created
+                            questionInputDiv.addEventListener('click', function() { // Attach click listener to it
+                                toggleAnswerVisibility(this); // Now 'this' will correctly refer to the questionInputDiv
+                            });
                             // **ADD ANSWER OPTIONS TO SELECTED QUESTION**
                             const answerOptionsContainer = listItem.querySelector('#answerOptionsContainer');
                             answerOptions.forEach(optionElement => {
@@ -607,11 +749,6 @@
                                 answerOptionsContainer.appendChild(optionDiv);
                             });
 
-
-
-
-
-
                             // NOW add the event listeners:
                             const moveUpButton = listItem.querySelector('.move-up');
                             const moveDownButton = listItem.querySelector('.move-down');
@@ -629,12 +766,6 @@
                 });
             });
 
-
-
-
-
-
-
             function updateQuestionNumbers() {
                 const listItems = selectedQuestionsList.children;
                 for (let i = 0; i < listItems.length; i++) {
@@ -646,7 +777,6 @@
                     }
                 }
             }
-
 
             function moveQuestion(listItem, direction) {
                 const currentOrder = parseInt(listItem.dataset.order);
@@ -694,8 +824,6 @@
                 duplicateTitleErrorDiv.style.opacity = "0";
                 setTimeout(() => duplicateTitleErrorDiv.classList.add("d-none"), 500);
             }
-
-
             assessmentForm.addEventListener('submit', function (event) {
                 event.preventDefault();
 
@@ -770,11 +898,6 @@
                         showError("Error when checking for duplicate title!");
                         // Optionally handle failure to check duplicate (e.g., still submit or prevent submission)
                     });
-
-
-
-
-
             });
 
 
@@ -954,8 +1077,6 @@
                     delete exerciseContent.dataset.exerciseId; // Clear in case of error
                 });
         }
-
-
         // Hàm để chuyển đổi trạng thái nút và gọi viewExercise
         function toggleViewButton(button, exerciseId) {
             const icon = button.querySelector('i');
@@ -987,26 +1108,18 @@
                 }
             });
         });
-
-
-
     </script>
-
-
 </div>
 </div>
 </div>
-
 <button onclick="scrollToTop()" id="scrollToTopButton" title="Go to top">
     <i class="fas fa-arrow-up"></i>
 </button>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
-
 <script>
     window.onscroll = function () {
         const scrollToTopButton = document.getElementById("scrollToTopButton");
@@ -1032,6 +1145,5 @@
         });
     });
 </script>
-
 </body>
 </html>

@@ -33,7 +33,7 @@ public class InvitedCandidateService  {
         return repository.findByAssessmentId(assessmentId);
     }
 
-    public Optional<InvitedCandidate> findByEmail(String email) {
+    public List<InvitedCandidate> findByEmail(String email) {
         return repository.findByEmail(email);
     }
 
@@ -52,8 +52,5 @@ public class InvitedCandidateService  {
     public Page<InvitedCandidate> findByAssessmentId(Long assessmentId, Pageable pageable) {
         return repository.findByAssessmentId(assessmentId, pageable);
     }
-
-
-
 }
 

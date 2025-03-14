@@ -3,11 +3,13 @@ package com.example.email;
 import com.example.assessment.model.Assessment;
 import com.example.assessment.repository.AssessmentRepository;
 import com.example.assessment.service.AssessmentService;
+import com.example.config.AppConfig;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import org.hashids.Hashids;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailException;
 import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -37,14 +39,8 @@ public class EmailService {
 
     //    Changing this to the deploy server url later or change this according to the port of ur docker-compose
     //    private final String inviteUrlHeader = "https://group-02.cookie-candy.id.vn/assessment/invite/";
-    private final String inviteUrlHeader = "http://localhost:9091/assessments/invite/";
-    //  private final String inviteUrlHeader = "https://java02.fsa.io.vn/assessments/invite/";
-
-
-    public String abc(){
-        return "abc";
-    }
-
+    @Value("${invite.url.header}")
+    private String inviteUrlHeader;//  private final String inviteUrlHeader = "https://java02.fsa.io.vn/assessments/invite/";
     private Hashids hashids = new Hashids("BaTramBaiCodeThieuNhi", 32);
 
     public void increaseInvitedCount(long assessmentId, int count) {
@@ -139,8 +135,8 @@ public class EmailService {
                 + ".header { text-align: center; color: #d9534f; font-size: 22px; font-weight: bold; }"
                 + ".content { margin-top: 20px; font-size: 16px; color: #000000; text-align: center; }"
                 + ".button-container { margin-top: 20px; text-align: center; }"
-                + ".invite-button { background-color: #d9534f; color: white; padding: 12px 20px; text-decoration: none; font-size: 16px; font-weight: bold; border-radius: 6px; display: inline-block; }"
-                + ".invite-button:hover { background-color: #c9302c; }"
+                + ".invite-button { background-color: #d9534f !important; color: white !important; padding: 12px 20px; text-decoration: none !important; font-size: 16px; font-weight: bold; border-radius: 6px; display: inline-block; }"
+                + ".invite-button:hover { background-color: #c9302c !important; }"
                 + ".footer { margin-top: 30px; text-align: left; font-size: 14px; color: #888; }"
                 + "</style>"
                 + "</head>"
@@ -153,13 +149,14 @@ public class EmailService {
                 + "<p><strong>Expiration Time: " + formattedExpirationDate + " (GMT+7)</strong></p>"
                 + "<p>Click below to take the assessment before it's too late!</p>"
                 + "<div class='button-container'>"
-                + "<a href='" + assessmentLink + "' class='invite-button'>Complete Now</a>"
+                + "<a href='" + assessmentLink + "' class='invite-button' "
+                + "style='background-color: #d9534f !important; color: white !important; text-decoration: none !important; padding: 12px 20px; font-size: 16px; font-weight: bold; border-radius: 6px; display: inline-block;'>"
+                + "Complete Now</a>"
                 + "</div>"
                 + "<p>If you have already completed this assessment, you may ignore this message.</p>"
                 + "</div>"
                 + "<div class='footer'>"
                 + "<p>If you have any questions, feel free to contact our support team.</p>"
-                + "<p>PhucTH50@fpt.com - Senior IT</p>"
                 + "<p>Thank you!</p>"
                 + "</div>"
                 + "</div>"

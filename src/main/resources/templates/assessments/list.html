@@ -20,21 +20,27 @@
                 <!-- Export Button -->
                 <a href="/assessments/export"
                    class="btn btn-outline-secondary me-2"
-                   th:classappend="${curr_role != 'SUPERADMIN' and curr_role != 'ADMIN'} ? 'disabled'">
+                   th:if="${#strings.contains(curr_role, 'SUPERADMIN') or #strings.contains(curr_role, 'ADMIN')}">
                     <i class="bi bi-file-earmark-excel"></i> Export
                 </a>
 
                 <!-- Import Button that triggers modal -->
                 <button class="btn btn-outline-secondary me-2"
                         data-bs-toggle="modal" data-bs-target="#importModal"
-                        th:classappend="${curr_role != 'SUPERADMIN' and curr_role != 'ADMIN'} ? 'disabled'">
+                        th:if="${#strings.contains(curr_role, 'SUPERADMIN') or #strings.contains(curr_role, 'ADMIN')}">
                     <i class="bi bi-upload"></i> Import
                 </button>
 
                 <a href="/assessments/create"
                    class="btn btn-primary"
-                   th:classappend="${curr_role != 'SUPERADMIN' and curr_role != 'ADMIN'} ? 'disabled'">
+                   th:if="${#strings.contains(curr_role, 'SUPERADMIN') or #strings.contains(curr_role, 'ADMIN')}">
                     <i class="bi bi-plus-circle"></i> Create New Assessment
+                </a>
+
+                <a href="/assessments/calendar"
+                   class="btn btn-primary"
+                   th:if="${#strings.contains(curr_role, 'STUDENT')}">
+                    <i class="bi bi-calendar"></i> Your Calendar
                 </a>
             </div>
         </div>

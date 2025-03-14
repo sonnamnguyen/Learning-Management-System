@@ -325,10 +325,6 @@ public class AssessmentService {
         return hashids.decode(hash);
     }
 
-    public String generateInviteLink(long id) {
-        return inviteUrlHeader + encodeId(id) + "/take";
-    }
-
     public Assessment getAssessmentByIdForPreview(Long id) {
         return assessmentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Assessment not found!"));

@@ -4,6 +4,7 @@ import com.example.assessment.model.*;
 import com.example.assessment.repository.AssessmentRepository;
 import com.example.assessment.repository.InvitedCandidateRepository;
 import com.example.assessment.service.*;
+import com.example.config.AppConfig;
 import com.example.course.CourseService;
 import com.example.email.EmailService;
 import com.example.quiz.model.*;
@@ -16,10 +17,15 @@ import com.example.assessment.service.InvitedCandidateService;
 import com.example.exercise.model.ExerciseSession;
 import com.example.exercise.model.StudentExerciseAttempt;
 import com.example.exercise.service.ExerciseSessionService;
+import com.example.utils.CalendarEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.hashids.Hashids;
@@ -39,6 +45,8 @@ import org.springframework.data.domain.*;
 import org.springframework.http.HttpHeaders;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
@@ -48,6 +56,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.lang.reflect.Field;
 
+import java.time.Duration;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
@@ -69,7 +78,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequestMapping("/assessments")
 @SessionAttributes("exerciseSession")
 public class AssessmentController {
-
+    @Value("${invite.url.header}")
+    private String inviteUrlHeader;
     @ModelAttribute("exerciseSession")
     public ExerciseSession createExerciseSession() {
         return new ExerciseSession();
@@ -82,13 +92,13 @@ public class AssessmentController {
 
     @PostMapping("/save_data")
     public ResponseEntity<String> saveData(@ModelAttribute("exerciseSession") ExerciseSession exerciseSession,
-                         Model model,
-                         @RequestBody Map<String, String> requestBody) {
-        try{
+                                           Model model,
+                                           @RequestBody Map<String, String> requestBody) {
+        try {
             Long exerciseId = Long.parseLong(requestBody.get("exerciseId"));
             String code = requestBody.get("code");
-            for(StudentExerciseAttempt attempt: exerciseSession.getStudentExerciseAttempts()){
-                if(Objects.equals(attempt.getSubmitted_exercise().getId(), exerciseId)){
+            for (StudentExerciseAttempt attempt : exerciseSession.getStudentExerciseAttempts()) {
+                if (Objects.equals(attempt.getSubmitted_exercise().getId(), exerciseId)) {
                     attempt.setSubmitted_code(code);
                 }
             }
@@ -254,7 +264,7 @@ public class AssessmentController {
     public String duplicateAssessment(@PathVariable("id") Long id) {
         System.out.println("duplicateAssessment");
         assessmentService.duplicateAssessment(id);
-            return "redirect:/assessments";
+        return "redirect:/assessments";
     }
 
     @ModelAttribute
@@ -457,7 +467,7 @@ public class AssessmentController {
             model.addAttribute("exercises", new ArrayList<>());
         }
 
-        // 7. Retrieve current user information for display
+        // 8. Retrieve current user information for display
         try {
             model.addAttribute("currentUser", userService.getCurrentUser());
         } catch (Exception e) {
@@ -465,12 +475,12 @@ public class AssessmentController {
             errorMessages.add("Error retrieving current user: " + e.getMessage());
         }
 
-        // 8. Add collected error messages to model, if any
+        // 9. Add collected error messages to model, if any
         if (!errorMessages.isEmpty()) {
             model.addAttribute("errorMessage", String.join(" | ", errorMessages));
         }
 
-        // 9. Set the content template for the common layout and return the view
+        // 10. Set the content template for the common layout and return the view
         model.addAttribute("content", "assessments/detail");
         return "layout";
     }
@@ -820,7 +830,7 @@ public class AssessmentController {
             return "assessments/view_score";
         } catch (Exception e) {
             model.addAttribute("errorMessage", "Unexpected error occurred: " + e.getMessage());
-            return "error"; // Fallback error page if something catastrophic happens
+            return "error";
         }
     }
 
@@ -881,9 +891,95 @@ public class AssessmentController {
     }
 
     @GetMapping("/calendar")
-    public String showAssessmentCalendar() {
-        return "assessments/Calendar";  // This will load the calendar.html template
+    public String showAssessmentCalendar(Model model) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userEmail = authentication.getName();
+
+        List<InvitedCandidate> userAssessments = invitedCandidateRepository.findByEmail(userEmail);
+
+        DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+
+        // Convert to JSON-friendly format
+        List<CalendarEvent> events = userAssessments.stream()
+                .map(ic -> {
+                    String encodedId = hashids.encode(ic.getAssessment().getId());
+                    String inviteLink = inviteUrlHeader + encodedId + "/verify-email"; // ✅ Pass invite link
+
+                    return new CalendarEvent(
+                            ic.getAssessment().getTitle(),
+                            ic.getInvitationDate().format(formatter),
+                            ic.getExpirationDate().format(formatter),
+                            inviteLink // ✅ Include inviteLink
+                    );
+                })
+                .toList();
+
+        // 🔍 Debugging: Log data before passing it to the view
+        System.out.println("📝 Sending events to Thymeleaf: " + events);
+
+        model.addAttribute("events", events);
+        model.addAttribute("assessments", userAssessments);
+
+        return "assessments/Calendar";
+
+
+    }@GetMapping("/calendar/events")
+    @ResponseBody
+    public List<CalendarEvent> getCalendarEvents() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        Optional<User> user = userRepository.findByUsername(username);
+        if (user.isEmpty()) {
+            System.out.println("❌ User not found: " + username);
+            return Collections.emptyList();
+        }
+
+        String userEmail = user.get().getEmail();
+        System.out.println("🔍 Fetching events for email: " + userEmail);
+
+        String inviteUrlHeader = "https://java02.fsa.io.vn/assessments/invite/";
+        List<InvitedCandidate> invitedAssessments = invitedCandidateRepository.findByEmail(userEmail);
+
+        DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+        LocalDateTime now = LocalDateTime.now();
+
+        List<CalendarEvent> events = invitedAssessments.stream()
+                .map(a -> {
+                    String encodedId = hashids.encode(a.getAssessment().getId());
+                    String inviteLink = inviteUrlHeader + encodedId + "/verify-email";
+
+                    boolean hasAssessed = a.isHasAssessed();
+                    LocalDateTime expirationDate = a.getExpirationDate();
+                    long hoursLeft = Duration.between(now, expirationDate).toHours();
+
+                    // 📝 New logic to fix expired events
+                    String title = hasAssessed
+                            ? "<del>" + a.getAssessment().getTitle() + "</del>" // ✅ Completed = strikethrough
+                            : a.getAssessment().getTitle();
+
+                    CalendarEvent event = new CalendarEvent(
+                            title,
+                            a.getInvitationDate().format(formatter),
+                            expirationDate.format(formatter),
+                            inviteLink
+                    );
+
+                    // ✅ If event is expired, override the color to gray
+                    if (hoursLeft <= 0) {
+                        event.setColor("#6c757d"); // Gray for expired events
+                    } else if (hoursLeft < 24) {
+                        event.setColor("#dc3545"); // Red for soon-to-expire events
+                    }
+
+                    return event;
+                })
+                .toList();
+
+        System.out.println("📅 Events to return: " + events);
+        return events;
     }
+
 
     @GetMapping("/already-assessed")
     public String showAlreadyAssessedError() {
