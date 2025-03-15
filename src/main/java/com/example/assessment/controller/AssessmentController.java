@@ -167,6 +167,8 @@ public class AssessmentController {
     private StudentAssessmentAttemptService studentAssessmentAttemptService;
     @Autowired
     private AssessmentRepository assessmentRepository;
+    @Autowired
+    private AssessmentQuestionService assessmentQuestionService;
 
     @Autowired
     private ExerciseSessionService exerciseSessionService;
@@ -421,7 +423,8 @@ public class AssessmentController {
             } else {
                 invitedCandidatesPage = candidateService.findByAssessmentId(id, pageableInv);
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.error("Error retrieving invited candidates for assessment id: " + id, e);
             errorMessages.add("Error retrieving invited candidates: " + e.getMessage());
             invitedCandidatesPage = Page.empty();
@@ -539,6 +542,18 @@ public class AssessmentController {
         return "redirect:/assessments";
     }
 
+    /**
+     * Displays the edit form for an assessment.
+     *
+     * This method retrieves an assessment by its ID and prepares all necessary data
+     * for rendering the edit page. It includes fetching related quizzes, questions,
+     * answer options, exercises, and other assessment-related attributes.
+     *
+     * @param id    The ID of the assessment to edit.
+     * @param model The model to hold attributes for the view.
+     * @return The name of the Thymeleaf template to render.
+     * @throws JsonProcessingException If there is an error converting objects to JSON.
+     */
     @GetMapping("/edit/{id}")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPERADMIN')")
 
@@ -563,31 +578,85 @@ public class AssessmentController {
         }
 
         // Fetch answer options for all questions
-        Map<Long, List<AnswerOption>> questionAnswerOptionsMap = new HashMap<>();
         List<Question> allQuestions = Optional.ofNullable(questionService.findAll()).orElse(new ArrayList<>());
+
+
+        //Selected question list
+        List<Map<String, Object>> selectedQuestionList = assessment.getAssessmentQuestions()
+                .stream()
+                .sorted(Comparator.comparing(AssessmentQuestion::getOrderIndex))
+                .map(aq -> {
+                    Map<String, Object> questionData = new HashMap<>();
+                    questionData.put("questionId", aq.getQuestion().getId());
+                    questionData.put("text", aq.getQuestion().getQuestionText());
+                    questionData.put("orderIndex", aq.getOrderIndex());
+
+                    Quiz quiz = aq.getQuestion().getQuizzes();
+                    Long quizId = (quiz != null) ? quiz.getId() : null;
+
+                    questionData.put("quizId", quizId);
+
+                    return questionData;
+                })
+                .collect(Collectors.toList());
+
+        //Answer list
+        Map<Long, List<AnswerOption>> questionAnswerOptionsMap = new HashMap<>();
 
         for (Question question : allQuestions) {
             questionAnswerOptionsMap.put(question.getId(), answerOptionService.getAnswerOptionByid(question.getId()));
         }
 
-        List<Question> orderedQuestions = assessment.getAssessmentQuestions()
-                .stream()
-                .map(AssessmentQuestion::getQuestion)
-                .collect(Collectors.toList());
-        List<Map<String, Object>> selectedQuestionList = new ArrayList<>();
-        for (Question q : orderedQuestions) {
-            Map<String, Object> questionData = new HashMap<>();
-            questionData.put("id", q.getId());
-            questionData.put("text", q.getQuestionText());
-            selectedQuestionList.add(questionData);
+        Map<Long, List<Map<String, Object>>> answersJsonMap = new HashMap<>();
+        for (Question question : allQuestions) {
+            List<Map<String, Object>> answerList = questionAnswerOptionsMap.getOrDefault(question.getId(), new ArrayList<>())
+                    .stream()
+                    .map(answer -> {
+                        Map<String, Object> answerData = new HashMap<>();
+                        answerData.put("questionId", question.getId());
+                        answerData.put("answerId", answer.getId());
+                        answerData.put("text", answer.getOptionText());
+                        answerData.put("isCorrect", answer.getIsCorrect());
+                        return answerData;
+                    })
+                    .collect(Collectors.toList());
+            answersJsonMap.put(question.getId(), answerList);
         }
 
         ObjectMapper objectMapper = new ObjectMapper();
         String selectedQuestionsJson = objectMapper.writeValueAsString(selectedQuestionList);
-        System.out.println("Selected Questions JSON: " + selectedQuestionsJson);
+        String answersJson = objectMapper.writeValueAsString(answersJsonMap);
+
+//        DEBUG: log selected question list json
+//        System.out.println("-------------------------------------------------------");
+//        selectedQuestionList.forEach(item -> {
+//            String json = item.entrySet()
+//                    .stream()
+//                    .map(entry -> String.format("\"%s\":%s", entry.getKey(),
+//                            entry.getValue() instanceof String ? "\"" + entry.getValue() + "\"" : entry.getValue()))
+//                    .collect(Collectors.joining(", "));
+//
+//            System.out.println("{" + json + "}");
+//        });
+
+//        DEBUG: log answer of the question json
+//        System.out.println("-------------------------------------------------------");
+//        answersJsonMap.forEach((questionId, answerList) -> {
+//            System.out.println("Answers for Question ID " + questionId + ":");
+//            answerList.forEach(answer -> {
+//                String json = answer.entrySet()
+//                        .stream()
+//                        .map(entry -> String.format("\"%s\":%s", entry.getKey(),
+//                                entry.getValue() instanceof String ? "\"" + entry.getValue() + "\"" : entry.getValue()))
+//                        .collect(Collectors.joining(", "));
+//
+//                System.out.println("  {" + json + "}");
+//            });
+//        });
+
         model.addAttribute("selectedQuestionsJson", selectedQuestionsJson);
         model.addAttribute("quizQuestionsMap", quizQuestionsMap);
-        model.addAttribute("questionAnswerOptionsMap", questionAnswerOptionsMap);
+        model.addAttribute("answersJson", answersJson);
         model.addAttribute("questions", allQuestions);
 
         // Fetch selected exercises & ensure it's not null
@@ -610,10 +679,118 @@ public class AssessmentController {
         model.addAttribute("creator", assessment.getCreatedBy());
         model.addAttribute("currentUser", userService.getCurrentUser());
 
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+        User updater = assessment.getUpdatedBy();
+        model.addAttribute("updater", updater);
+        if(updater != null) {
+            String formattedUpdatedAt = assessment.getUpdatedAt().format(formatter);
+            model.addAttribute("formattedUpdatedAt", formattedUpdatedAt);
+        }
+
+        String formattedCreateAt = assessment.getCreatedAt().format(formatter);
+        model.addAttribute("formattedCreateAt", formattedCreateAt);
+
         // Set the content for the edit view
         model.addAttribute("content", "assessments/edit");
 
         return "layout";
+    }
+
+    @GetMapping("/questionList/{assessmentId}")
+    @ResponseBody
+    public List<Map<String, Object>> getQuestionsByAssessment(@PathVariable Long assessmentId) {
+        List<AssessmentQuestion> assessmentQuestions = assessmentQuestionService.findByAssessmentId(assessmentId);
+
+        return assessmentQuestions.stream().map(aq -> {
+            Map<String, Object> questionMap = new HashMap<>();
+            questionMap.put("id", aq.getQuestion().getId());  // Lấy ID từ Question
+            questionMap.put("orderIndex", aq.getOrderIndex()); // Lấy orderIndex từ AssessmentQuestion
+            return questionMap;
+        }).collect(Collectors.toList());
+    }
+
+    @PostMapping("/update/{id}")
+    public String updateAssessment(
+            @PathVariable Long id,
+            @ModelAttribute Assessment assessment,
+            @RequestParam(value = "exerciseIds", required = false) List<Long> exerciseIds,
+            @RequestParam(value = "newAddedQuestions", required = false) String newAddedQuestionsJson,
+            RedirectAttributes redirectAttributes) {
+
+        System.out.println("[Controller] Updating Assessment ID: " + id);
+
+        Assessment existingAssessment = assessmentService.findById(id)
+                .orElseThrow(() -> {
+                    System.out.println("Assessment not found with ID: " + id);
+                    return new RuntimeException("Assessment not found with ID: " + id);
+                });
+
+        // ✅ Cập nhật thông tin cơ bản
+        existingAssessment.setTitle(assessment.getTitle());
+        existingAssessment.setAssessmentType(assessment.getAssessmentType());
+        existingAssessment.setCourse(assessment.getCourse());
+        existingAssessment.setTimeLimit(assessment.getTimeLimit());
+        existingAssessment.setQualifyScore(assessment.getQualifyScore());
+        existingAssessment.setShuffled(assessment.isShuffled());
+        existingAssessment.setQuizScoreRatio(assessment.getQuizScoreRatio());
+        existingAssessment.setExerciseScoreRatio(assessment.getExerciseScoreRatio());
+
+        User currentUser = userService.getCurrentUser();
+        existingAssessment.setUpdatedBy(currentUser);
+
+        // ✅ Cập nhật danh sách bài tập
+        if (exerciseIds != null && !exerciseIds.isEmpty()) {
+            Set<Exercise> selectedExercises = new HashSet<>(exerciseService.findByIds(exerciseIds));
+            existingAssessment.setExercises(selectedExercises);
+            System.out.println("Updated " + selectedExercises.size() + " exercises in the assessment.");
+        } else {
+            existingAssessment.getExercises().clear();
+            System.out.println("No exercises selected.");
+        }
+
+        // ✅ Xử lý danh sách câu hỏi mới
+        List<AssessmentQuestionService.QuestionOrder> questionOrders = new ArrayList<>();
+        if (newAddedQuestionsJson != null && !newAddedQuestionsJson.isEmpty()) {
+            try {
+                ObjectMapper objectMapper = new ObjectMapper();
+                questionOrders = objectMapper.readValue(newAddedQuestionsJson, new TypeReference<>() {});
+                System.out.println("Parsed " + questionOrders.size() + " questions from JSON.");
+            } catch (Exception e) {
+                System.out.println("❌ Lỗi khi parse JSON: " + e.getMessage());
+                redirectAttributes.addFlashAttribute("error", "Invalid question data format.");
+                return "redirect:/assessments";
+            }
+        } else {
+            System.out.println("No new questions provided.");
+        }
+
+        // Update the list of questions in the assessment if new data is available
+        if (!questionOrders.isEmpty()) {
+            assessmentQuestionService.updateAssessmentQuestions(id, questionOrders);
+            System.out.println("Updated question list in the assessment.");
+        }
+
+        // Save the updated assessment in the database
+        assessmentService.saveAssessment(existingAssessment);
+        System.out.println("Assessment ID " + id + " has been successfully updated.");
+
+        // Redirect with success message
+        redirectAttributes.addFlashAttribute("message", "Assessment updated successfully!");
+        return "redirect:/assessments";
+    }
+
+    @GetMapping("/edit/check-duplicate")
+    public ResponseEntity<Map<String, Boolean>> checkDuplicateTitle(
+            @RequestParam String title,
+            @RequestParam Long assessmentTypeId,
+            @RequestParam Long id) {
+
+        boolean exists = assessmentService.existsByTitleAndAssessmentType(title, assessmentTypeId, id);
+        Map<String, Boolean> response = new HashMap<>();
+        response.put("isDuplicate", exists);
+
+        return ResponseEntity.ok(response);
     }
 
     //Preview assessment

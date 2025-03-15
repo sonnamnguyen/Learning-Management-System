@@ -485,6 +485,11 @@ public class ExerciseService {
         return passedTestsPerMonth;
     }
 
+    //Cai method nay cua nhom 2 dung de lay list exercise theo id
+    public List<Exercise> findByIds(List<Long> ids) {
+        return exerciseRepository.findAllById(ids);
+    }
+
     public List<Exercise> findAll() {
         return exerciseRepository.findAll();
     }

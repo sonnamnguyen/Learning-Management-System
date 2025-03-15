@@ -110,6 +110,10 @@ public class AssessmentService {
         return assessmentRepository.existsByTitleAndAssessmentTypeId(title, assessmentTypeId);
     }
 
+    public Assessment saveAssessment(Assessment assessment) {
+        return assessmentRepository.save(assessment);
+    }
+
     public boolean duplicateAss(String name) {
         return assessmentRepository.existsByName(name);
     }
@@ -240,6 +244,7 @@ public class AssessmentService {
 
         return new ByteArrayInputStream(out.toByteArray());
     }
+
     public void increaseInvitedCount(long assessmentId, int count) {
         Optional<Assessment> assessmentOpt = assessmentRepository.findById(assessmentId);
         if (assessmentOpt.isPresent()) {
@@ -368,6 +373,7 @@ public class AssessmentService {
         return attemptRepository.countByAssessmentId(assessmentId);
     }
 
+
     @Transactional // Add transactional annotation
     public Assessment duplicateAssessment(Long assessmentId) {
         Assessment originalAssessment = assessmentRepository.findById(assessmentId)
@@ -425,12 +431,10 @@ public class AssessmentService {
         duplicatedAssessment.setQuizScoreRatio(originalAssessment.getQuizScoreRatio());
         duplicatedAssessment.setExerciseScoreRatio(originalAssessment.getExerciseScoreRatio());
         duplicatedAssessment.setShuffled(originalAssessment.isShuffled());
-        duplicatedAssessment.setInvitedEmails(originalAssessment.getInvitedEmails()); // Decide if you want to copy this
-        duplicatedAssessment.setCreatedBy(userService.getCurrentUser()); // Set current user as creator
-        duplicatedAssessment.setUpdatedBy(userService.getCurrentUser()); // Set current user as updater
-        duplicatedAssessment.setCreatedAt(LocalDateTime.now()); //New created time
-        duplicatedAssessment.setUpdatedAt(LocalDateTime.now()); //New updated time
-        duplicatedAssessment.setInvitedCount(0); // Reset counters for the new assessment
+        duplicatedAssessment.setInvitedEmails(originalAssessment.getInvitedEmails());
+        duplicatedAssessment.setCreatedBy(userService.getCurrentUser());
+        duplicatedAssessment.setCreatedAt(LocalDateTime.now());
+        duplicatedAssessment.setInvitedCount(0);
         duplicatedAssessment.setAssessedCount(0);
         duplicatedAssessment.setQualifiedCount(0);
 
@@ -443,12 +447,16 @@ public class AssessmentService {
         for (AssessmentQuestion originalAq : originalAssessment.getAssessmentQuestions()) {
             AssessmentQuestion duplicatedAq = new AssessmentQuestion();
             duplicatedAq.setAssessment(duplicatedAssessment);
-            duplicatedAq.setQuestion(originalAq.getQuestion()); // Link to the same Question
-            duplicatedAq.setOrderIndex(originalAq.getOrderIndex()); // Copy order index
+            duplicatedAq.setQuestion(originalAq.getQuestion());
+            duplicatedAq.setOrderIndex(originalAq.getOrderIndex());
             duplicatedAssessmentQuestions.add(duplicatedAq);
         }
         duplicatedAssessment.setAssessmentQuestions(duplicatedAssessmentQuestions);
 
         return assessmentRepository.save(duplicatedAssessment);
+    }
+
+    public boolean existsByTitleAndAssessmentType(String title, Long assessmentTypeId, Long id) {
+        return assessmentRepository.existsByTitleAndAssessmentTypeIdAndIdNot(title, assessmentTypeId, id);
     }
 }

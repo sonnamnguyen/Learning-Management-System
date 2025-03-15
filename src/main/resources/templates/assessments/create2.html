@@ -1,3 +1,4 @@
+--- START OF FILE create2.html ---
 <!DOCTYPE html>
 
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
@@ -152,6 +153,45 @@
                 max-height: 300px;
             }
         }
+
+        /* --- ADDED STYLES FROM edit.html for selected questions --- */
+        .compact-question-item {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 5px;
+            width: 100%;
+        }
+
+        .question-answers {
+            width: 100%;
+            display: none;
+            margin-top: 10px;
+        }
+        .question-answers.show {
+            display: block;
+        }
+
+        .custom-switch {
+            width: 2.5rem;
+            height: 1.4rem;
+            transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out;
+        }
+
+        .custom-switch:checked {
+            background-color: #0d6efd !important;
+            border-color: #0d6efd !important;
+        }
+
+        .d-flex.align-items-center {
+            display: flex;
+            align-items: center;
+        }
+
+        .form-check-input {
+            transition: all 0.3s ease-in-out;
+        }
+        /* --- END ADDED STYLES --- */
 
     }
 </style>
@@ -674,47 +714,11 @@
                         } else {
                             // Tạo mục mới cho câu hỏi đã chọn
                             const listItem = document.createElement('li');
+                            listItem.className = "list-group-item compact-question-item p-2"; // ADDED CLASS HERE
+                            listItem.dataset.questionId = questionId; // ADDED DATA ATTRIBUTE
                             listItem.dataset.order = selectedQuestionsList.children.length + 1;
-                            listItem.className = 'list-group-item d-flex align-items-center justify-content-between';
-                            // Thêm style trực tiếp vào listItem.style
-                            listItem.style.border = '2px solid #ced4da'; // Thêm viền solid, màu xám nhạt
-                            listItem.style.borderRadius = '0.25rem'; // Thêm bo tròn góc nhẹ (tùy chọn)
-                            listItem.innerHTML = `
-                    <div class="question-content flex-grow-1">
-                         <div class="question-input d-flex align-items-center justify-content-between" style="padding: 8px; font-size: 1.1rem; border: 1px solid #ced4da; border-radius: 0.25rem; font-weight: 800; cursor: pointer;">  <!-- KEEP d-flex and justify-content-between -->
-            <span class="question-text-span flex-grow-1">
-                ${questionText}
-            </span>  <!-- Question text comes FIRST -->
-            <span class="answer-dropdown-icon" style="margin-left: 10px;">  <!-- Icon comes AFTER text -->
-                <i class="bi bi-chevron-down"></i>  <!-- Bootstrap Down Arrow Icon -->
-            </span>
-        </div>
 
-                        <div id="answerOptionsContainer" class="mt-2 answer_options_hidden"></div>
-                    </div>
-                    <div class="actions d-flex flex-column align-items-center" style="margin-left: 10px; gap: 5px;">
-                        <i class="fas fa-trash-alt remove-question text-danger" data-question-id="${questionId}" title="Remove question" style="cursor: pointer; font-size: 1.1rem;"></i>
-                        <button type="button"  class="move-up btn btn-light btn-sm d-flex justify-content-center align-items-center rounded-circle" style="width: 30px; height: 30px; font-size: 0.9rem;">
-                            <i class="fas fa-arrow-up" style="font-size: 0.8rem;"></i>
-                        </button>
-                        <span class="question-number d-flex justify-content-center align-items-center" style="font-size: 0.9rem; width: 30px; height: 30px; border-radius: 50%; background-color: #f8f9fa; color: #6c757d; font-weight: bold;">
-                            ${listItem.dataset.order}
-                        </span>
-                        <button type="button" class="move-down btn btn-light btn-sm d-flex justify-content-center align-items-center rounded-circle" style="width: 30px; height: 30px; font-size: 0.9rem;">
-                            <i class="fas fa-arrow-down" style="font-size: 0.8rem;"></i>
-                        </button>
-                    </div>
-                `;
-
-                            selectedQuestionsList.appendChild(listItem);
-                            questionMap.set(questionId, listItem);
-
-                            const questionInputDiv = listItem.querySelector('.question-input'); // Get the question-input element *after* it's created
-                            questionInputDiv.addEventListener('click', function() { // Attach click listener to it
-                                toggleAnswerVisibility(this); // Now 'this' will correctly refer to the questionInputDiv
-                            });
-                            // **ADD ANSWER OPTIONS TO SELECTED QUESTION**
-                            const answerOptionsContainer = listItem.querySelector('#answerOptionsContainer');
+                            let answersHtml = "";
                             answerOptions.forEach(optionElement => {
                                 const optionText = optionElement.querySelector('span:first-child').textContent;
 
@@ -733,27 +737,52 @@
                                 } else {
                                     correctnessClass = 'text-dark'; // Default if no span found (shouldn't happen based on HTML)
                                 }
+                                answersHtml += `
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span>${optionText}</span>
+                                        ${correctnessClass === 'text-success' ? '<span class="badge rounded-pill bg-success"><i class="bi bi-check-lg"></i></span>' : ''}
+                                    </li>
+                                `;
 
-                                const optionDiv = document.createElement('div');
-                                optionDiv.className = 'answer-option p-2 mb-1 rounded shadow-sm'; // KEEP THESE CLASSES
-
-                                // **ADD CLASS FOR CORRECT ANSWER OPTION DIV**
-                                if (correctnessClass === 'text-success') {
-                                    optionDiv.classList.add('correct-answer-option'); // Add the new class
-                                }
-
-                                optionDiv.innerHTML = `
-                        <span class="${correctnessClass}">${optionText}</span>
-                        ${correctnessClass === 'text-success' ? '<span class="text-success">     (is correct)</span>' : ''}
-                    `;
-                                answerOptionsContainer.appendChild(optionDiv);
                             });
+
+                            listItem.innerHTML = `
+                            <div class="d-flex justify-content-between align-items-center w-100">
+                                <span class="question-text text-truncate" title="${questionText}"
+                                      style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    ${listItem.dataset.order}. ${questionText}
+                                </span>
+                                <div class="d-flex align-items-center">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary move-up me-1">⬆</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary move-down me-2">⬇</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary toggle-answers me-2">
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-danger remove-question-selected">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <ul class="list-group mt-2 question-answers" style="display: none;">${answersHtml}</ul>
+                        `;
+
+
+                            selectedQuestionsList.appendChild(listItem);
+                            questionMap.set(questionId, listItem);
+
+                            // No need for questionInputDiv click listener anymore as answer toggle is now different
 
                             // NOW add the event listeners:
                             const moveUpButton = listItem.querySelector('.move-up');
                             const moveDownButton = listItem.querySelector('.move-down');
+                            const removeButtonSelected = listItem.querySelector('.remove-question-selected'); // Correct selector
+                            const toggleAnswersButton = listItem.querySelector('.toggle-answers'); // Correct selector
+
                             moveUpButton.addEventListener('click', () => moveQuestion(listItem, 'up'));
                             moveDownButton.addEventListener('click', () => moveQuestion(listItem, 'down'));
+                            removeButtonSelected.addEventListener('click', () => removeQuestionFromSelectedList(questionId, listItem)); // Pass listItem
+                            toggleAnswersButton.addEventListener('click', () => toggleAnswers(listItem));
+
 
                             saveButton.style.display = 'block'; // Show save button when question is added
 
@@ -766,17 +795,46 @@
                 });
             });
 
+            function toggleAnswers(listItem) {
+                const answersList = listItem.querySelector(".question-answers");
+                const icon = listItem.querySelector(".toggle-answers i");
+
+                if (answersList.style.display === "none") {
+                    answersList.style.display = "block";
+                    icon.classList.replace("fa-chevron-down", "fa-chevron-up");
+                } else {
+                    answersList.style.display = "none";
+                    icon.classList.replace("fa-chevron-up", "fa-chevron-down");
+                }
+            }
+
+            function removeQuestionFromSelectedList(questionId, listItem) { // Added listItem parameter
+                listItem.remove(); // Use the listItem parameter
+                questionMap.delete(questionId); // Remove from map as well
+                updateQuestionNumbers();
+                if (selectedQuestionsList.children.length === 0) {
+                    saveButton.style.display = 'none'; // Hide save button if no questions left
+                }
+            }
+
+
             function updateQuestionNumbers() {
                 const listItems = selectedQuestionsList.children;
                 for (let i = 0; i < listItems.length; i++) {
                     const listItem = listItems[i];
                     listItem.dataset.order = i + 1;
-                    const numberSpan = listItem.querySelector('.question-number');
-                    if (numberSpan) {
-                        numberSpan.textContent = i + 1;
+                    const questionTextSpan = listItem.querySelector('.question-text'); // Select question text span
+                    if (questionTextSpan) {
+                        const textParts = questionTextSpan.textContent.split('. '); // Split by ". "
+                        if (textParts.length > 1) {
+                            questionTextSpan.textContent = `${i + 1}. ${textParts.slice(1).join('. ')}`; // Reconstruct text
+                        } else {
+                            questionTextSpan.textContent = `${i + 1}. ${textParts[0]}`; // If no split, just prepend number
+                        }
                     }
                 }
             }
+
 
             function moveQuestion(listItem, direction) {
                 const currentOrder = parseInt(listItem.dataset.order);
@@ -851,7 +909,7 @@
                 const selectedQuestionItems = selectedQuestionsList.children; // Get list items in current order
                 for (let i = 0; i < selectedQuestionItems.length; i++) {
                     const listItem = selectedQuestionItems[i];
-                    const questionId = listItem.querySelector('.remove-question').getAttribute('data-question-id'); // Get questionId from the remove button
+                    const questionId = listItem.dataset.questionId; // Get questionId from data attribute
                     window.selectedQuestionIds.push(questionId); // Store question IDs in the global variable in the current order
                 }
 
