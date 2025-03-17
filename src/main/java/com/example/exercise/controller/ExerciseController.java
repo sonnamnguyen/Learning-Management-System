@@ -78,7 +78,7 @@ public class ExerciseController {
         List<Exercise> exercises;
         int totalPages;
 
-        // Search by title if provided
+        // Logic filtering
         if (title != null && !title.isEmpty()) {
             exercisesPage = exerciseService.searchExercises(title, pageable);
         } else if (descriptionKeyword != null && !descriptionKeyword.isEmpty()) {
@@ -122,9 +122,15 @@ public class ExerciseController {
             } else {
                 allExercises = exerciseService.getExercisesByLanguage(languageId, Pageable.unpaged());
             }
-            model.addAttribute("commonWords", getWordFrequency(allExercises.getContent()));
+            model.addAttribute("commonWords", getTfIdfScores(allExercises.getContent()));
         }
-
+        Map<String, List<Exercise>> duplicates = exerciseService.findDuplicates();
+        if (!duplicates.isEmpty()) {
+            int totalDuplicates = duplicates.values().stream().mapToInt(List::size).sum();
+            model.addAttribute("duplicateMessage",
+                    "There are " + totalDuplicates + " duplicate exercises found. " +
+                            "<a href=\"/exercises/check-duplicates\" class=\"alert-link\">View duplicates</a>");
+        }
         System.out.println("Language ID: " + languageId + ", Level: " + level +
                 ", Title: " + title + ", Description: " + descriptionKeyword);
         boolean isAdmin = authentication.getAuthorities().stream()
@@ -132,6 +138,250 @@ public class ExerciseController {
         return isAdmin ? "exercises/list" : "exercises/student-list";
     }
 
+    @GetMapping("/check-duplicates")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPERADMIN', 'STUDENT')")
+    public String checkDuplicates(
+            @RequestParam(value = "title", required = false) String title,
+            @RequestParam(value = "language", required = false) Long languageId,
+            @RequestParam(value = "level", required = false) String level,
+            @RequestParam(value = "description", required = false) String descriptionKeyword,
+            Model model, Authentication authentication, RedirectAttributes redirectAttributes) {
+
+        try {
+            System.out.println("Received parameters - title: " + title + ", languageId: " + languageId +
+                    ", level: " + level + ", description: " + descriptionKeyword);
+
+            // Kiểm tra dữ liệu đầu vào
+            if (level != null && !level.isEmpty()) {
+                if (!isValidLevel(level)) {
+                    redirectAttributes.addFlashAttribute("error", "Invalid level value: " + level + ". Valid values are: EASY, MEDIUM, HARD.");
+                    return "redirect:/exercises";
+                }
+            }
+
+            // Lấy toàn bộ dữ liệu từ database mà không phân trang
+            List<Exercise> allExercises;
+            if (title != null && !title.trim().isEmpty()) {
+                allExercises = exerciseService.searchExercisesAll(title.trim());
+            } else if (descriptionKeyword != null && !descriptionKeyword.trim().isEmpty()) {
+                if (languageId != null && level != null && !level.isEmpty()) {
+                    allExercises = exerciseService.searchByDescriptionAndLanguageAndLevelAll(descriptionKeyword.trim(), languageId, level);
+                } else if (languageId != null) {
+                    allExercises = exerciseService.searchByDescriptionAndLanguageAll(descriptionKeyword.trim(), languageId);
+                } else if (level != null && !level.isEmpty()) {
+                    allExercises = exerciseService.searchByDescriptionAndLevelAll(descriptionKeyword.trim(), level);
+                } else {
+                    allExercises = exerciseService.searchByDescriptionAll(descriptionKeyword.trim());
+                }
+            } else {
+                if (languageId != null && level != null && !level.isEmpty()) {
+                    allExercises = exerciseService.getExercisesByLanguageAndLevelAll(languageId, level);
+                } else if (languageId != null) {
+                    allExercises = exerciseService.getExercisesByLanguageAll(languageId);
+                } else {
+                    allExercises = exerciseService.getAllExercisesAll();
+                }
+            }
+
+            // Kiểm tra nếu không có dữ liệu
+            if (allExercises == null || allExercises.isEmpty()) {
+                model.addAttribute("error", "No exercises found with the given filters.");
+                model.addAttribute("languages", programmingLanguageService.findAll());
+                model.addAttribute("currentLanguage", languageId);
+                model.addAttribute("currentLevel", level);
+                model.addAttribute("paramTitle", title != null ? title.trim() : null);
+                model.addAttribute("paramDescription", descriptionKeyword != null ? descriptionKeyword.trim() : null);
+                boolean isAdmin = authentication.getAuthorities().stream()
+                        .anyMatch(auth -> auth.getAuthority().equals("ADMIN") || auth.getAuthority().equals("SUPERADMIN"));
+                return isAdmin ? "exercises/check-duplicates" : "exercises/student-check-duplicates";
+            }
+
+            // Nhóm bài tập theo ngôn ngữ trước
+            Map<String, List<Exercise>> exercisesByLanguage = allExercises.stream()
+                    .collect(Collectors.groupingBy(exercise -> exercise.getLanguage().getLanguage()));
+
+            // Nhóm bài tập trùng lặp theo mô tả trong từng ngôn ngữ
+            Map<String, Map<String, List<Exercise>>> groupedByLanguageAndDescription = new HashMap<>();
+            exercisesByLanguage.forEach((language, exercises) -> {
+                Map<String, List<Exercise>> duplicates = findDuplicates(exercises);
+                groupedByLanguageAndDescription.put(language, duplicates);
+            });
+
+
+            // Thêm các thuộc tính vào model
+            model.addAttribute("groupedByLanguageAndDescription", groupedByLanguageAndDescription);
+            model.addAttribute("exercises", allExercises);
+            model.addAttribute("languages", programmingLanguageService.findAll());
+            model.addAttribute("currentLanguage", languageId);
+            model.addAttribute("currentLevel", level);
+            model.addAttribute("paramTitle", title != null ? title.trim() : null);
+            model.addAttribute("paramDescription", descriptionKeyword != null ? descriptionKeyword.trim() : null);
+
+            // Calculate common words if languageId is provided
+            if (languageId != null) {
+                List<Exercise> filteredExercises;
+                if (level != null && !level.isEmpty()) {
+                    filteredExercises = exerciseService.getExercisesByLanguageAndLevelAll(languageId, level);
+                } else {
+                    filteredExercises = exerciseService.getExercisesByLanguageAll(languageId);
+                }
+                model.addAttribute("commonWords", getTfIdfScores(filteredExercises));
+            }
+
+            boolean isAdmin = authentication.getAuthorities().stream()
+                    .anyMatch(auth -> auth.getAuthority().equals("ADMIN") || auth.getAuthority().equals("SUPERADMIN"));
+            return isAdmin ? "exercises/check-duplicates" : "exercises/student-check-duplicates";
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("error", "Error occurred while checking duplicates: " + e.getMessage());
+            return "redirect:/exercises";
+        }
+    }
+
+    // Phương thức phụ để kiểm tra giá trị level hợp lệ
+    private boolean isValidLevel(String level) {
+        try {
+            Exercise.Level.valueOf(level.toUpperCase());
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    // Method phụ để tìm các bài tập trùng lặp
+    private Map<String, List<Exercise>> findDuplicates(List<Exercise> exercises) {
+        Map<String, List<Exercise>> duplicateGroups = new HashMap<>();
+        List<Exercise> processedExercises = new ArrayList<>();
+
+        // Chuẩn hóa description và lưu vào processedExercises
+        for (Exercise exercise : exercises) {
+            if (exercise.getDescription() != null && !exercise.getDescription().trim().isEmpty()) {
+                String normalizedDesc = exercise.getDescription()
+                        .toLowerCase()
+                        .replaceAll("[^a-zA-Z\\s]", "") // Bỏ ký tự đặc biệt
+                        .replaceAll("\\s+", " ") // Chuẩn hóa khoảng trắng
+                        .trim();
+                exercise.setDescription(normalizedDesc); // Tạm thời lưu description chuẩn hóa
+                processedExercises.add(exercise);
+            }
+        }
+
+        // So sánh từng cặp Exercise để tìm độ tương đồng
+        for (int i = 0; i < processedExercises.size(); i++) {
+            Exercise e1 = processedExercises.get(i);
+            String desc1 = e1.getDescription();
+            Set<String> words1 = new HashSet<>(Arrays.asList(desc1.split("\\s+")));
+            String groupKey = null;
+
+            // Kiểm tra xem e1 đã thuộc nhóm nào chưa
+            for (Map.Entry<String, List<Exercise>> entry : duplicateGroups.entrySet()) {
+                List<Exercise> group = entry.getValue();
+                Exercise representative = group.get(0); // Lấy bài tập đầu tiên trong nhóm làm đại diện
+                Set<String> words2 = new HashSet<>(Arrays.asList(representative.getDescription().split("\\s+")));
+
+                double similarity = calculateJaccardSimilarity(words1, words2);
+                if (similarity >= 0.7) { // Ngưỡng 70%
+                    groupKey = entry.getKey();
+                    break;
+                }
+            }
+
+            // Nếu không tìm thấy nhóm nào tương đồng, tạo nhóm mới
+            if (groupKey == null) {
+                groupKey = desc1; // Dùng description của bài tập đầu tiên làm key
+                duplicateGroups.put(groupKey, new ArrayList<>());
+            }
+
+            // Thêm bài tập vào nhóm
+            duplicateGroups.get(groupKey).add(e1);
+        }
+
+        // Lọc chỉ giữ lại các nhóm có từ 2 bài tập trở lên
+        return duplicateGroups.entrySet().stream()
+                .filter(entry -> entry.getValue().size() > 1)
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (e1, e2) -> e1,
+                        LinkedHashMap::new
+                ));
+    }
+
+    // Phương thức tính Jaccard Similarity
+    private double calculateJaccardSimilarity(Set<String> set1, Set<String> set2) {
+        Set<String> intersection = new HashSet<>(set1);
+        intersection.retainAll(set2); // Giao của 2 tập hợp
+
+        Set<String> union = new HashSet<>(set1);
+        union.addAll(set2); // Hợp của 2 tập hợp
+
+        if (union.isEmpty()) return 0.0; // Tránh chia cho 0
+        return (double) intersection.size() / union.size();
+    }
+
+    private Map<String, Double> getTfIdfScores(List<Exercise> exercises) {
+        // Bước 1: Tạo danh sách các chuỗi (documents) và tính document frequency
+        List<String> documents = new ArrayList<>();
+        Map<String, Integer> documentFrequency = new HashMap<>(); // Đếm số tài liệu chứa chuỗi
+
+        // Xử lý từng Exercise
+        for (Exercise exercise : exercises) {
+            if (exercise.getDescription() != null) {
+                String description = exercise.getDescription()
+                        .toLowerCase()
+                        .replaceAll("[^a-zA-Z\\s]", "")
+                        .trim();
+                String[] words = description.split("\\s+");
+                int originalLength = words.length;
+
+                // Giữ nguyên chuỗi nếu độ dài > 0
+                if (originalLength > 0) {
+                    String fullSequence = String.join(" ", words);
+                    documents.add(fullSequence);
+
+                    // Tính document frequency (IDF)
+                    documentFrequency.put(fullSequence, documentFrequency.getOrDefault(fullSequence, 0) + 1);
+                }
+            }
+        }
+
+        int totalDocuments = documents.size();
+        Map<String, Double> tfIdfScores = new HashMap<>();
+
+        // Bước 2: Tính TF-IDF cho từng chuỗi, chỉ lấy chuỗi xuất hiện từ 2 lần trở lên
+        for (String document : documents) {
+            int df = documentFrequency.getOrDefault(document, 1); // Số tài liệu chứa chuỗi
+            if (df < 2) { // Bỏ qua nếu chuỗi chỉ xuất hiện 1 lần
+                continue;
+            }
+
+            Map<String, Integer> termFrequency = new HashMap<>();
+            termFrequency.put(document, 1); // TF = 1 vì mỗi chuỗi chỉ xuất hiện 1 lần trong tài liệu của nó
+
+            // Tính TF-IDF cho chuỗi này
+            for (Map.Entry<String, Integer> entry : termFrequency.entrySet()) {
+                String sequence = entry.getKey();
+                int tf = entry.getValue(); // TF = 1
+                double idf = Math.log((double) totalDocuments / df); // IDF = log(N / df)
+                double tfIdf = tf * idf;
+
+                // Lưu giá trị TF-IDF cao nhất cho chuỗi này
+                tfIdfScores.put(sequence, Math.max(tfIdfScores.getOrDefault(sequence, 0.0), tfIdf));
+            }
+        }
+
+        // Bước 3: Sắp xếp và lấy top 10 chuỗi có TF-IDF cao nhất
+        return tfIdfScores.entrySet().stream()
+                .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
+                .limit(10)
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (e1, e2) -> e1,
+                        LinkedHashMap::new
+                ));
+    }
 
     private Map<String, Integer> getWordFrequency(List<Exercise> exercises) {
         Map<String, Integer> wordCount = new HashMap<>();
@@ -163,17 +413,90 @@ public class ExerciseController {
     }
 
     @GetMapping("/new-dashboard")
-    public String showDashboard(Model model, Authentication authentication, RedirectAttributes redirectAttributes) {
-        model.addAttribute("exercises", exerciseRepository.findAll());
+    public String showDashboard(@RequestParam(value = "languageId", required = false) Long languageId,Model model, Authentication authentication, RedirectAttributes redirectAttributes) {
+        // Lấy dữ liệu thống kê từ ExerciseService
+        int newExercises = exerciseService.countNewExercises(languageId);
+        double completionRate = exerciseService.getCompletionRate(languageId);
+        int totalExercises = exerciseService.countTotalExercises(languageId);
+        int totalLanguages = programmingLanguageService.countTotalLanguages();
+        int upcomingWorkouts = exerciseService.countUpcomingWorkouts(languageId);
+        int missedWorkouts = exerciseService.countMissedWorkouts(languageId);
 
+        List<ProgrammingLanguage> languages = programmingLanguageService.getAllProgrammingLanguages();
+
+        // Thêm dữ liệu vào model
+        model.addAttribute("newExercises", newExercises);
+        model.addAttribute("completionRate", completionRate);
+        model.addAttribute("totalExercises", totalExercises);
+        model.addAttribute("totalLanguages", totalLanguages);
+        model.addAttribute("upcomingWorkouts", upcomingWorkouts);
+        model.addAttribute("missedWorkouts", missedWorkouts);
+        model.addAttribute("languages", programmingLanguageService.findAll());
+        model.addAttribute("languages", languages);
+        model.addAttribute("selectedLanguage", languageId);
         model.addAttribute("content", "exercises/new-dashboard");
+
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(auth -> auth.getAuthority().equals("ADMIN") || auth.getAuthority().equals("SUPERADMIN"));
-        if(!isAdmin){
+        if (!isAdmin) {
             Long id = userService.getCurrentUser().getId();
             return "redirect:/exercises/profile/" + id;
         }
         return "exercises/dashboard-admin";
+    }
+
+
+    @GetMapping("/exercises/stats")
+    public ResponseEntity<Map<String, Integer>> getExerciseStats(@RequestParam(required = false) Long languageId) {
+        return ResponseEntity.ok(exerciseService.getExerciseStatistics(languageId));
+    }
+
+
+    @GetMapping("/dashboard-data")
+    @ResponseBody
+    public Map<String, Object> getDashboardData(@RequestParam(value = "languageId", required = false) Long languageId) {
+        Map<String, Object> response = new HashMap<>();
+
+        //response.put("newExercises", exerciseService.countNewExercises(languageId));
+        //response.put("completionRate", exerciseService.getCompletionRate(languageId));
+        response.put("totalExercises", exerciseService.countTotalExercises(languageId));
+        response.put("totalLanguages", programmingLanguageService.countTotalLanguages());
+
+        // Lấy dữ liệu biểu đồ
+        Map<String, Integer> topicChartData = exerciseService.getExercisesByLanguage();
+        Map<String, Integer> difficultyChartData = exerciseService.getLevelDistribution(languageId);
+
+        response.put("topicChartData", topicChartData != null ? topicChartData : new HashMap<>());
+        response.put("difficultyChartData", difficultyChartData != null ? difficultyChartData : new HashMap<>());
+
+        return response;
+    }
+
+    @GetMapping("/api/exercise-data")
+    @ResponseBody
+    public List<Map<String, Object>> getExerciseData() {
+        List<Map<String, Object>> response = new ArrayList<>();
+
+        List<Object[]> results = exerciseRepository.countExercisesByLevel(null); // Lấy dữ liệu tất cả ngôn ngữ
+        for (Object[] row : results) {
+            Map<String, Object> entry = new HashMap<>();
+            entry.put("month", row[0].toString());
+            entry.put("completedExercises", ((Number) row[1]).intValue());
+            response.add(entry);
+        }
+        return response;
+    }
+
+    @GetMapping("/api/difficulty-data")
+    @ResponseBody
+    public Map<String, Integer> getDifficultyData() {
+        return exerciseService.getLevelDistribution(null);
+    }
+
+    @GetMapping("/api/language-data")
+    @ResponseBody
+    public Map<String, Integer> getLanguageData() {
+        return exerciseService.getExercisesByLanguage();
     }
 
 
@@ -236,7 +559,8 @@ public class ExerciseController {
 
             try {
                 ObjectMapper objectMapper = new ObjectMapper();
-                List<Map<String, Object>> testCaseJsonList = objectMapper.readValue(testCasesJson, new TypeReference<>() {});
+                List<Map<String, Object>> testCaseJsonList = objectMapper.readValue(testCasesJson, new TypeReference<>() {
+                });
 
                 for (Map<String, Object> tcMap : testCaseJsonList) {
                     //moi
@@ -332,6 +656,7 @@ public class ExerciseController {
             return ResponseEntity.status(500).body("Error saving exercise: " + e.getMessage());
         }
     }
+
     // Show the edit form for a specific exercise
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable Long id, Model model) {
@@ -416,10 +741,9 @@ public class ExerciseController {
                     });
                     for (TestCase testCase : testCases) {
                         testCase.setExercise(existingExercise);
-                        if(testCase.isHidden()){
+                        if (testCase.isHidden()) {
                             hiddenTestCases.add(testCase);
-                        }
-                        else{
+                        } else {
                             normalTestCases.add(testCase);
                         }
                     }
@@ -497,9 +821,14 @@ public class ExerciseController {
     @GetMapping("/delete/{id}")
     public String deleteExercise(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
-            exerciseService.deleteExercise(id);
-            redirectAttributes.addFlashAttribute("successMessage", "Delete successful!");
-        }catch (Exception e) {
+            Exercise exercise = exerciseService.getExerciseById(id).get();
+            if (!exercise.getAssessments().isEmpty()) {
+                redirectAttributes.addFlashAttribute("error", "Exercise has been in an assessment!");
+            } else {
+                exerciseService.deleteExercise(id);
+                redirectAttributes.addFlashAttribute("successMessage", "Delete successful!");
+            }
+        } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Delete failed: " + e.getMessage());
         }
         return "redirect:/exercises";
@@ -621,56 +950,63 @@ public class ExerciseController {
 
     }
 
-        @GetMapping("/profile/{id}")
-        public String showChart(@PathVariable Long id,
-                                @RequestParam(value = "language", required = false) String language,
-                                @RequestParam(value = "year", required = false) Integer year,
-                                @RequestParam(defaultValue = "0") int page,
-                                @RequestParam(defaultValue = "5") int size,
-                                Model model) {
-            if (year == null) {
-                year = 2025; // Default value
-            }
-            if(language == null){
-                language = "";
-            }
-            Integer easyExercisesNoLanguage = exerciseService.countEasyExercises("");
-            Integer hardExercisesNoLanguage = exerciseService.countHardExercises("");
-            Integer mediumExercisesNoLanguage = exerciseService.countMediumExercises("");
-            Integer userEasyExercisesNoLanguage = exerciseService.countUserEasyExercises(id, "");
-            Integer userHardExercisesNoLanguage = exerciseService.countUserHardExercises(id, "");
-            Integer userMediumExercisesNoLanguage = exerciseService.countUserMediumExercises(id, "");
-            Integer easyExercises = exerciseService.countEasyExercises(language);
-            Integer hardExercises = exerciseService.countHardExercises(language);
-            Integer mediumExercises = exerciseService.countMediumExercises(language);
-            Integer userExercises = exerciseService.countUserExercises(id);
-            Integer perfectScoreUserExercises = exerciseService.countPerfectScoreUserExercises(id);
-            Integer userPassExercises = exerciseService.countUserPassedExercises(id);
-            Integer userEasyExercises = exerciseService.countUserEasyExercises(id, language);
-            Integer userHardExercises = exerciseService.countUserHardExercises(id, language);
-            Integer userMediumExercises = exerciseService.countUserMediumExercises(id, language);
-            Map<String, Integer> passedTestsPerMonth = exerciseService.countPassedTestsPerMonth(id, year);
-            Integer exercisesWithMoreThanFiveAttempts = exerciseService.countExercisesWithMoreThanFiveAttempts(id);
-            Integer exercisesSubmittedMidnight = exerciseService.countExercisesSubmittedMidnight(id);
-            Integer exercisesSubmittedEarly = exerciseService.countExercisesSubmittedEarly(id);
-            Page<StudentExerciseAttempt> studentAttempts = studentExerciseAttemptService.getStudentAttemptsByUser(id, page, size);
-            StudentExerciseResponse chartResponse = new StudentExerciseResponse(
-                    easyExercises, hardExercises, mediumExercises, userExercises,userPassExercises,
-                    perfectScoreUserExercises, userEasyExercises, userHardExercises,
-                    userMediumExercises, passedTestsPerMonth, exercisesWithMoreThanFiveAttempts,
-                    exercisesSubmittedMidnight, exercisesSubmittedEarly,easyExercisesNoLanguage,hardExercisesNoLanguage,
-                    mediumExercisesNoLanguage,userEasyExercisesNoLanguage,userHardExercisesNoLanguage,userMediumExercisesNoLanguage
-            );
-            model.addAttribute("languages", programmingLanguageService.findAll());
-            model.addAttribute("currentLanguage", language);
-            model.addAttribute("chartData", chartResponse);
-            model.addAttribute("studentAttempts", studentAttempts.getContent());
-            model.addAttribute("currentPage", studentAttempts.getNumber()+1);
-            model.addAttribute("totalPages", studentAttempts.getTotalPages());
-            return "exercises/profile"; // Ensure this view exists
+    //Access denied
+    @GetMapping("/access-denied")
+    public String accessDenied() {
+        return "exercises/access-denied";
+    }
 
+
+    //Dashboard for Student
+    @GetMapping("/profile/{id}")
+    public String showChart(@PathVariable Long id,
+                            @RequestParam(value = "language", required = false) String language,
+                            @RequestParam(value = "year", required = false) Integer year,
+                            @RequestParam(defaultValue = "0") int page,
+                            @RequestParam(defaultValue = "5") int size,
+                            Model model) {
+        if (year == null) {
+            year = 2025; // Default value
         }
+        if (language == null) {
+            language = "";
+        }
+        Integer easyExercisesNoLanguage = exerciseService.countEasyExercises("");
+        Integer hardExercisesNoLanguage = exerciseService.countHardExercises("");
+        Integer mediumExercisesNoLanguage = exerciseService.countMediumExercises("");
+        Integer userEasyExercisesNoLanguage = exerciseService.countUserEasyExercises(id, "");
+        Integer userHardExercisesNoLanguage = exerciseService.countUserHardExercises(id, "");
+        Integer userMediumExercisesNoLanguage = exerciseService.countUserMediumExercises(id, "");
+        Integer easyExercises = exerciseService.countEasyExercises(language);
+        Integer hardExercises = exerciseService.countHardExercises(language);
+        Integer mediumExercises = exerciseService.countMediumExercises(language);
+        Integer userExercises = exerciseService.countUserExercises(id);
+        Integer perfectScoreUserExercises = exerciseService.countPerfectScoreUserExercises(id);
+        Integer userPassExercises = exerciseService.countUserPassedExercises(id);
+        Integer userEasyExercises = exerciseService.countUserEasyExercises(id, language);
+        Integer userHardExercises = exerciseService.countUserHardExercises(id, language);
+        Integer userMediumExercises = exerciseService.countUserMediumExercises(id, language);
+        Map<String, Integer> passedTestsPerMonth = exerciseService.countPassedTestsPerMonth(id, year);
+        Integer exercisesWithMoreThanFiveAttempts = exerciseService.countExercisesWithMoreThanFiveAttempts(id);
+        Integer exercisesSubmittedMidnight = exerciseService.countExercisesSubmittedMidnight(id);
+        Integer exercisesSubmittedEarly = exerciseService.countExercisesSubmittedEarly(id);
+        Page<StudentExerciseAttempt> studentAttempts = studentExerciseAttemptService.getStudentAttemptsByUser(id, page, size);
+        StudentExerciseResponse chartResponse = new StudentExerciseResponse(
+                easyExercises, hardExercises, mediumExercises, userExercises, userPassExercises,
+                perfectScoreUserExercises, userEasyExercises, userHardExercises,
+                userMediumExercises, passedTestsPerMonth, exercisesWithMoreThanFiveAttempts,
+                exercisesSubmittedMidnight, exercisesSubmittedEarly, easyExercisesNoLanguage, hardExercisesNoLanguage,
+                mediumExercisesNoLanguage, userEasyExercisesNoLanguage, userHardExercisesNoLanguage, userMediumExercisesNoLanguage
+        );
+        model.addAttribute("languages", programmingLanguageService.findAll());
+        model.addAttribute("currentLanguage", language);
+        model.addAttribute("chartData", chartResponse);
+        model.addAttribute("studentAttempts", studentAttempts.getContent());
+        model.addAttribute("currentPage", studentAttempts.getNumber() + 1);
+        model.addAttribute("totalPages", studentAttempts.getTotalPages());
+        return "exercises/profile"; // Ensure this view exists
 
+    }
 
 
     // Export exercises to an Excel file

@@ -160,4 +160,71 @@ public interface ExerciseRepository extends PagingAndSortingRepository<Exercise,
             @Param("userId") Long userId,
             @Param("startHour") int startHour,
             @Param("endHour") int endHour);
+
+    //-----------Duplicate
+    @Query("SELECT e FROM Exercise e WHERE LOWER(e.name) LIKE LOWER(CONCAT('%', :name, '%'))")
+    List<Exercise> findByNameContainingIgnoreCase(@Param("name") String name);
+
+    @Query("SELECT e FROM Exercise e WHERE LOWER(e.description) LIKE LOWER(CONCAT('%', :description, '%'))")
+    List<Exercise> findByDescriptionContainingIgnoreCase(@Param("description") String description);
+
+    @Query("SELECT e FROM Exercise e WHERE LOWER(e.description) LIKE LOWER(CONCAT('%', :description, '%')) " +
+            "AND e.language.id = :languageId")
+    List<Exercise> findByDescriptionContainingIgnoreCaseAndLanguageId(@Param("description") String description,
+                                                                      @Param("languageId") Long languageId);
+
+    @Query("SELECT e FROM Exercise e WHERE LOWER(e.description) LIKE LOWER(CONCAT('%', :description, '%')) " +
+            "AND e.level = :level")
+    List<Exercise> findByDescriptionContainingIgnoreCaseAndLevel(@Param("description") String description,
+                                                                 @Param("level") Exercise.Level level);
+
+    @Query("SELECT e FROM Exercise e WHERE LOWER(e.description) LIKE LOWER(CONCAT('%', :description, '%')) " +
+            "AND e.language.id = :languageId " +
+            "AND e.level = :level")
+    List<Exercise> findByDescriptionContainingIgnoreCaseAndLanguageIdAndLevel(@Param("description") String description,
+                                                                              @Param("languageId") Long languageId,
+                                                                              @Param("level") Exercise.Level level);
+
+    @Query("SELECT e FROM Exercise e WHERE e.language.id = :languageId")
+    List<Exercise> findByLanguageId(@Param("languageId") Long languageId);
+
+    @Query("SELECT e FROM Exercise e WHERE e.language.id = :languageId AND e.level = :level")
+    List<Exercise> findByLanguageIdAndLevel(@Param("languageId") Long languageId,
+                                            @Param("level") Exercise.Level level);
+
+    //--------------Dashboard
+    @Query("SELECT e.level, COUNT(e) FROM Exercise e " +
+            "WHERE (:languageId IS NULL OR e.language.id = :languageId) " +
+            "GROUP BY e.level")
+    List<Object[]> countExercisesByLevel(@Param("languageId") Long languageId);
+
+
+    @Query("SELECT e.status, COUNT(e) FROM Exercise e WHERE (:languageId IS NULL OR e.language.id = :languageId) GROUP BY e.status")
+    List<Object[]> countExercisesByStatus(@Param("languageId") Long languageId);
+
+
+    @Query("SELECT COUNT(e) FROM Exercise e WHERE e.status = 'NEW' AND (:languageId IS NULL OR e.language.id = :languageId)")
+    int countNewExercises(@Param("languageId") Long languageId);
+
+    @Query("SELECT COUNT(e) FROM Exercise e WHERE e.status = 'COMPLETED' AND (:languageId IS NULL OR e.language.id = :languageId)")
+    int countCompletedExercises(@Param("languageId") Long languageId);
+
+    @Query("SELECT COUNT(e) FROM Exercise e WHERE (:languageId IS NULL OR e.language.id = :languageId)")
+    int countTotalExercises(@Param("languageId") Long languageId);
+
+    default double calculateCompletionRate(Long languageId) {
+        int total = countTotalExercises(languageId);
+        return total == 0 ? 0 : ((double) countCompletedExercises(languageId) / total) * 100;
+    }
+
+    @Query("SELECT COUNT(e) FROM Exercise e WHERE e.status = 'UPCOMING' AND (:languageId IS NULL OR e.language.id = :languageId)")
+    int countUpcomingWorkouts(@Param("languageId") Long languageId);
+
+    @Query("SELECT COUNT(e) FROM Exercise e WHERE e.status = 'MISSED' AND (:languageId IS NULL OR e.language.id = :languageId)")
+    int countMissedWorkouts(@Param("languageId") Long languageId);
+
+    @Query("SELECT e.language.language, COUNT(e) FROM Exercise e GROUP BY e.language.language")
+    List<Object[]> countExercisesByLanguage();
 }
+
+

@@ -55,6 +55,9 @@ public class SecurityConfig {
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
+                .exceptionHandling(exception
+                        -> exception.accessDeniedPage("/exercises/access-denied")
+                ) // config auth
                 .formLogin(form -> form.loginPage("/login").permitAll())
                 .logout(logout -> logout
                         .logoutUrl("/logout")

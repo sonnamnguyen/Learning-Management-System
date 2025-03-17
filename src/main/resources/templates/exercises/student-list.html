@@ -78,7 +78,7 @@
     }
 
     .page-item.active .page-link {
-      background-color: red ! highlight;
+      background-color: red;
       border-color: red;
       color: white;
     }
@@ -159,20 +159,6 @@
       height: auto !important;
     }
 
-    /* Cố định kích thước của các cột để tránh giãn không đều */
-    th:nth-child(2), td:nth-child(2) {
-      width: 20%;
-    }
-
-    /* Title */
-    th:nth-child(3), td:nth-child(3) {
-      width: auto !important; /* Cho phép mở rộng theo nội dung */
-      min-width: 20%; /* Đảm bảo không quá nhỏ */
-      max-width: 40%; /* Giới hạn độ rộng tối đa */
-      white-space: normal; /* Cho phép xuống dòng */
-      word-break: break-word; /* Chia từ nếu quá dài */
-      overflow-wrap: anywhere; /* Đảm bảo hiển thị đầy đủ */
-    }
 
     <!--
     .table-title {
@@ -204,19 +190,32 @@
       text-align: center;
     }
 
+    /* Title */
+    th:nth-child(1), td:nth-child(1) {
+      width: 25%; /* Cột tiêu đề có độ rộng lớn hơn */
+    }
+
     /* Language */
-    th:nth-child(4), td:nth-child(4) {
-      width: 10%;
+    th:nth-child(2), td:nth-child(2) {
+      width: 8%; /* Giảm bớt độ rộng */
+      text-align: center;
     }
 
     /* Difficulty */
-    th:nth-child(5), td:nth-child(5) {
-      width: 40%;
+    th:nth-child(3), td:nth-child(3) {
+      width: 12%;
+      text-align: center;
     }
 
     /* Description */
-    th:nth-child(6), td:nth-child(6) {
-      width: 15%;
+    th:nth-child(4), td:nth-child(4) {
+      width: 45%; /* Dành phần lớn không gian cho mô tả */
+    }
+
+    /* Action */
+    th:nth-child(5), td:nth-child(5) {
+      width: 5%;
+      text-align: center;
     }
 
     .toggle-details i {
@@ -519,7 +518,7 @@
             <div class="description" th:utext="${exercise.description}"></div>
           </td>
           <td class="text-center">
-            <a th:href="@{'/judgement/code_space/' + ${exercise.id}}"
+            <a th:href="@{'/judgement/practice/code_space/' + ${exercise.id}}"
                class="btn btn-outline-primary btn-sm">
               <i class="bi bi-info-circle"></i>
             </a>
@@ -555,7 +554,7 @@
 
           <!-- Các nút được căn dưới cùng với khoảng cách 10px -->
           <div class="d-flex justify-content-end mt-auto" style="padding-bottom: 10px;">
-            <a th:href="@{'/judgement/code_space/' + ${exercise.id}}"
+            <a th:href="@{'/judgement/practice/code_space/' + ${exercise.id}}"
                class="btn btn-outline-primary btn-sm me-2">
               <i class="bi bi-info-circle"></i>
             </a>
@@ -645,6 +644,7 @@
       updateView(viewMode);
     });
   });
+
   function updateView(mode) {
     let toggleButton = document.getElementById("toggleView");
 

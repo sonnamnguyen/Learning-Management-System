@@ -155,4 +155,8 @@ public class ProgrammingLanguageService {
     public List<ProgrammingLanguage> findAll() {
         return programmingLanguageRepository.findAll();
     }
+
+    public int countTotalLanguages() {
+        return (int) programmingLanguageRepository.count();
+    }
 }
