@@ -1240,21 +1240,9 @@
     <script th:inline="javascript">
         /*<![CDATA[*/
         // Đưa code phân trang ra ngoài document.addEventListener
-        const submissionsData = [
-            { id: 1, title: "Two Sum", timestamp: "9 months ago" },
-            { id: 2, title: "Add Two Numbers", timestamp: "8 months ago" },
-            { id: 3, title: "Longest Substring", timestamp: "7 months ago" },
-            { id: 4, title: "Median of Arrays", timestamp: "6 months ago" },
-            { id: 5, title: "Palindrome Number", timestamp: "5 months ago" },
-            { id: 6, title: "Container With Water", timestamp: "4 months ago" },
-            { id: 7, title: "Roman to Integer", timestamp: "3 months ago" },
-            { id: 8, title: "Common Prefix", timestamp: "2 months ago" },
-            { id: 9, title: "Valid Parentheses", timestamp: "1 month ago" },
-            { id: 10, title: "Merge Lists", timestamp: "2 weeks ago" }
-        ];
-
+        const submissionsData = /*[[${studentAttempts}]]*/[];
         const ITEMS_PER_PAGE = 5;
-        let currentPage = 1;
+        let currentPage = /*[[${currentPage}]]*/1;
 
         // Định nghĩa các hàm ở phạm vi toàn cục
         function displaySubmissions(page) {
@@ -1267,18 +1255,22 @@
 
             paginatedData.forEach(submission => {
                 submissionsList.innerHTML += `
-                    <div class="submission-item" onclick="window.location.href='/submission/${submission.id}'">
-                        <div class="submission-title">${submission.title}</div>
+            <div class="submission-item" onclick="submitExercise(${submission.id}, '${submission.code}')">
+                        <div class="submission-title">${submission.name}</div>
                         <div class="submission-meta">
-                            <span class="submission-time">${submission.timestamp}</span>
+                                <span class="submission-time">${submission.time}</span>
                         </div>
                     </div>
                 `;
             });
         }
 
+        function submitExercise(submissionId, submissionCode) {
+            window.location.href = `/judgement/get_exercise?exerciseId=${submissionId}&code=${encodeURIComponent(submissionCode)}`;
+        }
+
         function updatePagination() {
-            const totalPages = Math.ceil(submissionsData.length / ITEMS_PER_PAGE);
+            const totalPages = /*[[${totalPages}]]*/1
             const pageNumbers = document.getElementById('page-numbers');
             const prevBtn = document.getElementById('prev-btn');
             const nextBtn = document.getElementById('next-btn');
@@ -1380,16 +1372,18 @@
             // Function to update stats
             function updateStats(userData) {
                 // Calculate total solved problems
-                const totalSolved = userData.submissions.accepted;
+                const totalSubmittedSolved = userData.submissions.accepted;
                 const totalSubmitted = userData.submissions.total;
                 // Calculate total problems available
                 const totalProblems = userData.difficultyNoLanguage.totalEasyNoLanguage +
                     userData.difficultyNoLanguage.totalMediumNoLanguage +
                     userData.difficultyNoLanguage.totalHardNoLanguage;
-
+                const totalSolved = userData.difficultyNoLanguage.easyNoLanguage +
+                    userData.difficultyNoLanguage.mediumNoLanguage +
+                    userData.difficultyNoLanguage.hardNoLanguage;
                 // Calculate acceptance rate
                 const acceptanceRate = totalSubmitted > 0
-                    ? Math.round((totalSolved / totalSubmitted) * 100)
+                    ? Math.round((totalSubmittedSolved / totalSubmitted) * 100)
                     : 0;
 
                 // Update UI
@@ -1633,12 +1627,12 @@
                 const difficultyCtx = document.getElementById("difficultyChart").getContext("2d");
 
                 let stats = {
-                    easy: /*[[${chartData.userEasyExercises}]]*/0,
-                    medium: /*[[${chartData.userMediumExercises}]]*/0,
-                    hard: /*[[${chartData.userHardExercises}]]*/0,
-                    totalEasy: /*[[${chartData.easyExercises}]]*/0,
-                    totalMedium: /*[[${chartData.mediumExercises}]]*/0,
-                    totalHard: /*[[${chartData.hardExercises}]]*/0
+                    userEasy: /*[[${chartData.userEasyExercises}]]*/0,
+                    userMedium: /*[[${chartData.userMediumExercises}]]*/0,
+                    userHard: /*[[${chartData.userHardExercises}]]*/0,
+                    totalEasy: /*[[${chartData.easyExercises}]]*/1,  // Avoid division by zero
+                    totalMedium: /*[[${chartData.mediumExercises}]]*/1,
+                    totalHard: /*[[${chartData.hardExercises}]]*/1
                 };
 
                 new Chart(difficultyCtx, {
@@ -1646,7 +1640,7 @@
                     data: {
                         labels: ['Easy', 'Medium', 'Hard'],
                         datasets: [{
-                            data: [stats.easy, stats.medium, stats.hard],
+                            data: [stats.userEasy, stats.userMedium, stats.userHard],
                             backgroundColor: ['#2cbb5d', '#ffc01e', '#ef4743'],
                             borderWidth: 0,
                             borderRadius: 4,
@@ -1658,21 +1652,42 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
+                        animation: {
+                            duration: 1000,
+                            easing: 'easeOutCirc',
+                            animateRotate: true,
+                            animateScale: true
+                        },
                         plugins: {
                             legend: {
                                 position: 'right',
                                 labels: {
                                     color: '#FFFFFF',
-                                    font: { size: 15 }
+                                    font: { size: 15 },
+                                    generateLabels: function (chart) {
+                                        const data = chart.data;
+                                        return data.labels.map((label, i) => {
+                                            let key = `user${label}`; // 'userEasy', 'userMedium', 'userHard'
+                                            let totalKey = `total${label}`; // 'userTotalEasy', 'totalMedium', 'totalHard'
+                                            return {
+                                                text: `${label} ${stats[key]}/${stats[totalKey]}`,
+                                                fillStyle: data.datasets[0].backgroundColor[i],
+                                                hidden: false,
+                                                index: i,
+                                                fontColor: "#FFFFFF" // Ensures white text
+                                            };
+                                        });
+                                    }
                                 }
                             },
                             tooltip: {
                                 callbacks: {
                                     label: function (context) {
+                                        let label = context.label;
                                         let value = context.raw;
-                                        let total = stats.totalEasy + stats.totalMedium + stats.totalHard;
+                                        let total = stats[`user${label}`]; // Get correct total per category
                                         let percentage = Math.round((value / total) * 100);
-                                        return `${context.label}: ${value} (${percentage}%)`;
+                                        return `${label}: ${value}/${total} (${percentage}%)`;
                                     }
                                 }
                             }
@@ -1680,6 +1695,7 @@
                     }
                 });
             }
+
 
             // Gọi hàm để khởi tạo biểu đồ khi DOM đã tải
             document.addEventListener("DOMContentLoaded", function () {

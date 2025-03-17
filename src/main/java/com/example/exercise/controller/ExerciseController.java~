@@ -440,10 +440,10 @@ public class ExerciseController {
 
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(auth -> auth.getAuthority().equals("ADMIN") || auth.getAuthority().equals("SUPERADMIN"));
-//        if (!isAdmin) {
-//            Long id = userService.getCurrentUser().getId();
-//            return "redirect:/exercises/profile/" + id;
-//        }
+        if (!isAdmin) {
+            Long id = userService.getCurrentUser().getId();
+            return "redirect:/exercises/profile/" + id;
+        }
         return "exercises/dashboard-admin";
     }
 
