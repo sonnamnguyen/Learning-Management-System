@@ -54,6 +54,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.support.SessionStatus;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.reflect.Field;
 
 import java.time.Duration;
@@ -72,6 +75,10 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import weka.core.*;
+import weka.core.stemmers.IteratedLovinsStemmer;
+import weka.filters.Filter;
+import weka.filters.unsupervised.attribute.StringToWordVector;
 
 
 @Controller
@@ -181,8 +188,8 @@ public class AssessmentController {
         Assessment assessment = new Assessment();
         assessment.setTimeLimit(30);
         assessment.setQualifyScore(60);
-        assessment.setQuizScoreRatio(50);
         assessment.setExerciseScoreRatio(50);
+        assessment.setQuizScoreRatio(50);
         List<Quiz> allQuizzes = quizService.findAll();
         model.addAttribute("allQuizzes", allQuizzes);
         // Fetch questions for each quiz and store in a Map
@@ -213,13 +220,12 @@ public class AssessmentController {
 
     @PostMapping("/create")
     public String createAssessment(@ModelAttribute Assessment assessment, @RequestParam(value = "exercises-ids", required = false) List<String> exerciseIdsStr, @RequestParam(value = "questions-ids", required = false) List<String> questionIdsStr, Model model) {
-
-
         Set<Exercise> selectedExercisesSet = new LinkedHashSet<>();
         Set<Question> selectedQuestionsSet = new LinkedHashSet<>();
         // Get the current user
         User currentUser = userService.getCurrentUser();
         assessment.setCreatedBy(currentUser);
+
         if (exerciseIdsStr != null && !exerciseIdsStr.isEmpty()) {
             for (String exerciseIdStr : exerciseIdsStr) {
                 Long exerciseId = Long.parseLong(exerciseIdStr);
@@ -267,6 +273,92 @@ public class AssessmentController {
         System.out.println("duplicateAssessment");
         assessmentService.duplicateAssessment(id);
         return "redirect:/assessments";
+    }
+
+
+    @GetMapping("/check-similarQuestions")
+    public ResponseEntity<?> similarityQuiz(@RequestParam(value = "questions-ids", required = false) List<String> questionIdsStr) {
+        Set<Question> selectedQuestionsSet = new LinkedHashSet<>();
+        Map<Long, Integer> questionIdToPositionMap = new HashMap<>(); // Map to store questionId to its original position
+        if (questionIdsStr != null && !questionIdsStr.isEmpty()) {
+            int position = 1; // Start position from 1 (1-based indexing)
+            for (String questionIdStr : questionIdsStr) {
+                try {
+                    Long questionId = Long.parseLong(questionIdStr);
+                    Optional<Question> questionOptional = questionService.findById(questionId);
+                    Question question = questionOptional.orElse(null);
+                    if (question != null && question.getQuestionText() != null && !question.getQuestionText().trim().isEmpty()) {
+                        selectedQuestionsSet.add(question);
+                        questionIdToPositionMap.put(questionId, position); // Store position
+                    }
+                    position++; // Increment position for the next question
+                } catch (NumberFormatException e) {
+                    return ResponseEntity.badRequest().body("Invalid question ID: " + questionIdStr);
+                }
+            }
+        }
+        System.out.println("Checking similar questions...");
+
+        try {
+            // Create Weka Instances (keep this part as is)
+            FastVector attributes = new FastVector();
+            attributes.addElement(new Attribute("content", (FastVector) null));
+            Instances data = new Instances("questions", attributes, selectedQuestionsSet.size());
+            data.setClassIndex(0);
+            List<Question> selectedQuestionsList = new ArrayList<>(selectedQuestionsSet); // Convert Set to List for indexed access
+            for (Question question : selectedQuestionsList) {
+                Instance instance = new DenseInstance(1.0, new double[data.numAttributes()]);
+                instance.setDataset(data);
+                String processedContent = assessmentService.preprocessText(question.getQuestionText());
+                instance.setValue((Attribute) attributes.elementAt(0), processedContent);
+                data.add(instance);
+            }
+            StringToWordVector filter = new StringToWordVector();
+            filter.setTFTransform(true);
+            filter.setIDFTransform(true);
+            filter.setLowerCaseTokens(true);
+            filter.setStemmer(new IteratedLovinsStemmer()); // Set the stemmer
+            filter.setInputFormat(data);
+            Instances tfidfData = Filter.useFilter(data, filter);
+            // Group similar question positions (using 1-based numbering from input order)
+            List<List<Integer>> similarQuestionPositionsGroups = new ArrayList<>();
+            Set<Integer> questionIndicesGrouped = new HashSet<>(); // Track indices already grouped (still using indices for loop)
+            for (int i = 0; i < tfidfData.numInstances(); i++) {
+                if (questionIndicesGrouped.contains(i)) { // Skip if index already grouped
+                    continue;
+                }
+                List<Integer> currentGroupPositions = new ArrayList<>();
+                Question question1 = selectedQuestionsList.get(i);
+                currentGroupPositions.add(questionIdToPositionMap.get(question1.getId())); // Add 1-based position using the map
+
+                questionIndicesGrouped.add(i);
+                for (int j = i + 1; j < tfidfData.numInstances(); j++) {
+                    double similarity = assessmentService.cosineSimilarity(tfidfData.instance(i).toDoubleArray(), tfidfData.instance(j).toDoubleArray());
+                    System.out.println("similarity: Question " + questionIdToPositionMap.get(selectedQuestionsList.get(i).getId()) +
+                            " vs Question " + questionIdToPositionMap.get(selectedQuestionsList.get(j).getId()) +
+                            " = " + similarity);                    if (similarity >=0.80) { // % similarity threshold
+                        if (!questionIndicesGrouped.contains(j)) { // Add if index not yet grouped
+                            Question question2 = selectedQuestionsList.get(j);
+                            currentGroupPositions.add(questionIdToPositionMap.get(question2.getId())); // Add 1-based position using the map
+                            questionIndicesGrouped.add(j);
+                        }
+                    }
+                }
+                if (currentGroupPositions.size() > 1) { // Only add group if it has more than 1 position
+                    similarQuestionPositionsGroups.add(currentGroupPositions);
+                }
+            }
+            // Return response
+            if (similarQuestionPositionsGroups.isEmpty()) {
+                System.out.println("No duplicate questions found.");
+                return ResponseEntity.ok("No duplicate questions found.");
+            }
+            System.out.println("Duplicate question groups found (by position): " + similarQuestionPositionsGroups);
+            return ResponseEntity.ok(similarQuestionPositionsGroups); // Return list of position groups
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("An error occurred while processing similarity: " + e.getMessage());
+        }
     }
 
     @ModelAttribute
@@ -685,6 +777,7 @@ public class AssessmentController {
         model.addAttribute("updater", updater);
         if(updater != null) {
             String formattedUpdatedAt = assessment.getUpdatedAt().format(formatter);
+
             model.addAttribute("formattedUpdatedAt", formattedUpdatedAt);
         }
 
@@ -1021,12 +1114,19 @@ public class AssessmentController {
         if (attempt != null && attempt.isPresent()) {
             JsonNode proctoringData = attempt.get().getProctoringData();
             int tabLeaveCount = proctoringData.has("tabLeaveCount") ? proctoringData.get("tabLeaveCount").asInt() : 0;
+            int violationFaceCount = proctoringData.has("violationFaceCount") ? proctoringData.get("violationFaceCount").asInt() : 0;
 
             model.addAttribute("tabLeaveCount", tabLeaveCount);
+            model.addAttribute("violationFaceCount", violationFaceCount);
             model.addAttribute("attemptInfo", attempt.get());
         }
         model.addAttribute("content", "assessments/view_report");
         return "layout";
+    }
+
+    @PostMapping("/capture-image")
+    public ResponseEntity<Integer> captureImage(@RequestParam("file") MultipartFile file) throws IOException {
+        return ResponseEntity.ok(assessmentService.detectFace(file));
     }
 
     //Update attempt after user submit their assessment
@@ -1036,6 +1136,7 @@ public class AssessmentController {
                                    @RequestParam("elapsedTime") int elapsedTime,
                                    @RequestParam(value = "questionId", required = false) List<String> questionIds,
                                    @RequestParam("tabLeaveCount") int tabLeaveCount,
+                                   @RequestParam("violationFaceCount") int violationFaceCount,
                                    @RequestParam Map<String, String> responses,
                                    @RequestParam("hasExercise") boolean hasExercise,
                                    Principal principal,
@@ -1052,7 +1153,8 @@ public class AssessmentController {
         //Save cheating count
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode proctoringData = objectMapper.createObjectNode()
-                .put("tabLeaveCount", tabLeaveCount);
+                .put("tabLeaveCount", tabLeaveCount)
+                .put("violationFaceCount", violationFaceCount);
         if (hasExercise) {
             // Tính điểm phần Exercise
             ExerciseSession exerciseSession = (ExerciseSession) model.getAttribute("exerciseSession");

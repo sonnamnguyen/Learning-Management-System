@@ -23,7 +23,14 @@ import jakarta.transaction.Transactional;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.hashids.Hashids;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfByte;
+import org.opencv.core.MatOfRect;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.objdetect.CascadeClassifier;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -102,7 +109,6 @@ public class AssessmentService {
         }
     }
     public Assessment createAssessment(Assessment assessment) {
-
         return assessmentRepository.save(assessment);
     }
 
@@ -458,5 +464,49 @@ public class AssessmentService {
 
     public boolean existsByTitleAndAssessmentType(String title, Long assessmentTypeId, Long id) {
         return assessmentRepository.existsByTitleAndAssessmentTypeIdAndIdNot(title, assessmentTypeId, id);
+    }
+
+
+    public  double cosineSimilarity(double[] vec1, double[] vec2) {
+        double dotProduct = 0, norm1 = 0, norm2 = 0;
+        for (int i = 0; i < vec1.length; i++) {
+            dotProduct += vec1[i] * vec2[i];
+            norm1 += vec1[i] * vec1[i];
+            norm2 += vec2[i] * vec2[i];
+        }
+        if (norm1 == 0 || norm2 == 0) return 0;
+        return dotProduct / (Math.sqrt(norm1) * Math.sqrt(norm2));
+    }
+
+    public String preprocessText(String text) {
+        if (text == null) return "";
+        String processedText = text.toLowerCase()
+                .replaceAll("[^\\p{L}\\p{N}\\s]", "")
+                .replaceAll("\\s+", " ")
+                .trim();
+
+        Set<String> stopWords = new HashSet<>(Arrays.asList("what", "is", "the", "of", "a", "an", "in", "on", "at", "for", "to"));
+
+        String[] words = processedText.split("\\s+");
+        StringBuilder filteredText = new StringBuilder();
+        for (String word : words) {
+            if (!stopWords.contains(word)) {
+                filteredText.append(word).append(" ");
+            }
+        }
+        return filteredText.toString().trim();
+    }
+
+
+    private Resource faceResource = new ClassPathResource("haarcascades/haarcascade_frontalface_alt.xml");
+
+    public int detectFace(MultipartFile file) throws IOException {
+        MatOfRect faceDectections = new MatOfRect();
+        CascadeClassifier faceDetector = new CascadeClassifier(faceResource.getFile().getAbsolutePath());
+
+        Mat image = Imgcodecs.imdecode(new MatOfByte(file.getBytes()), Imgcodecs.IMREAD_UNCHANGED);
+        faceDetector.detectMultiScale(image, faceDectections);
+
+        return faceDectections.toArray().length;
     }
 }
