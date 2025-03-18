@@ -361,14 +361,16 @@
                             type="hidden"
                             name="tag"
                             id="tagIds"
-                            th:value="${#strings.listJoin(exercise.exerciseCategories.![category.id], ',')}"
-                    />
+                            value=""/>
+<!--                            th:value="${#strings.listJoin(exercise.exerciseCategories.![category.id], ',')}"-->
+
                     <input
                             type="hidden"
                             name="removedTagIds"
                             id="removedTagIds"
-                            th:value="${#strings.listJoin(exercise.exerciseCategories.![category.id], ',')}"
-                    />
+                            value=""/>
+<!--                            th:value="${#strings.listJoin(exercise.exerciseCategories.![category.id], ',')}"-->
+
                 </div>
 
                 <!-- Description -->
@@ -895,6 +897,16 @@
                 };
                 selectedTagsDiv.appendChild(tagSpan);
             });
+    });
+</script>
+<script th:if="${error}">
+    Swal.fire({
+        icon: 'error',
+        title: 'Error!',
+        text: '[[${error}]]',
+        timer: 2000,
+        timerProgressBar: true,
+        showConfirmButton: false,
     });
 </script>
 </body>
