@@ -958,57 +958,57 @@ public class ExerciseController {
 
     }
 
+
     @GetMapping("/profile/{id}")
     @PreAuthorize("#id == @userService.getCurrentUser().id and hasAuthority('STUDENT')")
     public String showChart(@PathVariable Long id,
-                                    @RequestParam(value = "language", required = false) String language,
-                                    @RequestParam(value = "year", required = false) Integer year,
-                                    @RequestParam(defaultValue = "0") int page,
-                                    @RequestParam(defaultValue = "5") int size,
-                                    Model model) {
+                            @RequestParam(value = "language", required = false) String language,
+                            @RequestParam(value = "year", required = false) Integer year,
+                            Model model) {
 
-                if (year == null) {
-                    year = 2025; // Default value
-                }
-                if(language == null){
-                    language = "";
-                }
-                Integer easyExercisesNoLanguage = exerciseService.countEasyExercises("");
-                Integer hardExercisesNoLanguage = exerciseService.countHardExercises("");
-                Integer mediumExercisesNoLanguage = exerciseService.countMediumExercises("");
-                Integer userEasyExercisesNoLanguage = exerciseService.countUserEasyExercises(id, "");
-                Integer userHardExercisesNoLanguage = exerciseService.countUserHardExercises(id, "");
-                Integer userMediumExercisesNoLanguage = exerciseService.countUserMediumExercises(id, "");
-                Integer easyExercises = exerciseService.countEasyExercises(language);
-                Integer hardExercises = exerciseService.countHardExercises(language);
-                Integer mediumExercises = exerciseService.countMediumExercises(language);
-                Integer userExercises = exerciseService.countUserExercises(id);
-                Integer perfectScoreUserExercises = exerciseService.countPerfectScoreUserExercises(id);
-                Integer userPassExercises = exerciseService.countUserPassedExercises(id);
-                Integer userEasyExercises = exerciseService.countUserEasyExercises(id, language);
-                Integer userHardExercises = exerciseService.countUserHardExercises(id, language);
-                Integer userMediumExercises = exerciseService.countUserMediumExercises(id, language);
-                Map<String, Integer> passedTestsPerMonth = exerciseService.countPassedTestsPerMonth(id, year);
-                Integer exercisesWithMoreThanFiveAttempts = exerciseService.countExercisesWithMoreThanFiveAttempts(id);
-                Integer exercisesSubmittedMidnight = exerciseService.countExercisesSubmittedMidnight(id);
-                Integer exercisesSubmittedEarly = exerciseService.countExercisesSubmittedEarly(id);
-                Page<StudentExerciseAttemptResponse> studentAttempts = studentExerciseAttemptService.getStudentAttemptsByUser(id, page, size);
-                StudentExerciseResponse chartResponse = new StudentExerciseResponse(
-                        easyExercises, hardExercises, mediumExercises, userExercises,userPassExercises,
-                        perfectScoreUserExercises, userEasyExercises, userHardExercises,
-                        userMediumExercises, passedTestsPerMonth, exercisesWithMoreThanFiveAttempts,
-                        exercisesSubmittedMidnight, exercisesSubmittedEarly,easyExercisesNoLanguage,hardExercisesNoLanguage,
-                        mediumExercisesNoLanguage,userEasyExercisesNoLanguage,userHardExercisesNoLanguage,userMediumExercisesNoLanguage
-                );
-                model.addAttribute("languages", programmingLanguageService.findAll());
-                model.addAttribute("currentLanguage", language);
-                model.addAttribute("chartData", chartResponse);
-                model.addAttribute("studentAttempts", studentAttempts.getContent());
-                model.addAttribute("currentPage", studentAttempts.getNumber()+1);
-                model.addAttribute("totalPages", studentAttempts.getTotalPages());
-                return "exercises/profile"; // Ensure this view exists
-            }
-                //Access denied
+        if (year == null) {
+            year = 2025; // Default value
+        }
+        if(language == null){
+            language = "";
+        }
+        Integer easyExercisesNoLanguage = exerciseService.countEasyExercises("");
+        Integer hardExercisesNoLanguage = exerciseService.countHardExercises("");
+        Integer mediumExercisesNoLanguage = exerciseService.countMediumExercises("");
+        Integer userEasyExercisesNoLanguage = exerciseService.countUserEasyExercises(id, "");
+        Integer userHardExercisesNoLanguage = exerciseService.countUserHardExercises(id, "");
+        Integer userMediumExercisesNoLanguage = exerciseService.countUserMediumExercises(id, "");
+        Integer easyExercises = exerciseService.countEasyExercises(language);
+        Integer hardExercises = exerciseService.countHardExercises(language);
+        Integer mediumExercises = exerciseService.countMediumExercises(language);
+        Integer userExercises = exerciseService.countUserExercises(id);
+        Integer perfectScoreUserExercises = exerciseService.countPerfectScoreUserExercises(id);
+        Integer userPassExercises = exerciseService.countUserPassedExercises(id);
+        Integer userEasyExercises = exerciseService.countUserEasyExercises(id, language);
+        Integer userHardExercises = exerciseService.countUserHardExercises(id, language);
+        Integer userMediumExercises = exerciseService.countUserMediumExercises(id, language);
+        Map<String, Integer> passedTestsPerMonth = exerciseService.countPassedTestsPerMonth(id, year);
+        Integer exercisesWithMoreThanFiveAttempts = exerciseService.countExercisesWithMoreThanFiveAttempts(id);
+        Integer exercisesSubmittedMidnight = exerciseService.countExercisesSubmittedMidnight(id);
+        Integer exercisesSubmittedEarly = exerciseService.countExercisesSubmittedEarly(id);
+        List<StudentExerciseAttemptResponse> studentAttempts = studentExerciseAttemptService.getStudentAttemptsByUser(id);
+
+        StudentExerciseResponse chartResponse = new StudentExerciseResponse(
+                easyExercises, hardExercises, mediumExercises, userExercises,userPassExercises,
+                perfectScoreUserExercises, userEasyExercises, userHardExercises,
+                userMediumExercises, passedTestsPerMonth, exercisesWithMoreThanFiveAttempts,
+                exercisesSubmittedMidnight, exercisesSubmittedEarly,easyExercisesNoLanguage,hardExercisesNoLanguage,
+                mediumExercisesNoLanguage,userEasyExercisesNoLanguage,userHardExercisesNoLanguage,userMediumExercisesNoLanguage
+        );
+        model.addAttribute("languages", programmingLanguageService.findAll());
+        model.addAttribute("currentLanguage", language);
+        model.addAttribute("chartData", chartResponse);
+        model.addAttribute("studentAttempts", studentAttempts);
+        return "exercises/profile"; // Ensure this view exists
+    }
+
+
+    //Access denied
     @GetMapping("/access-denied")
     public String accessDenied() {
         return "exercises/access-denied";

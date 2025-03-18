@@ -137,13 +137,11 @@ public interface ExerciseRepository extends PagingAndSortingRepository<Exercise,
     @Query("SELECT MONTH(sea.attemptDate) as month, COUNT(sea) as count " +
             "FROM StudentExerciseAttempt sea " +
             "WHERE YEAR(sea.attemptDate) = :year " +
-            "AND sea.score_exercise >= :passingScore " +
             "AND sea.attendant_user.id = :userId  AND sea.attendant_email is null " +
             "GROUP BY MONTH(sea.attemptDate) " +
             "ORDER BY MONTH(sea.attemptDate)")
     List<Object[]> countPassedTestsPerMonth(@Param("userId") Long userId,
-                                            @Param("year") int year,
-                                            @Param("passingScore") double passingScore);
+                                            @Param("year") int year);
 
 
     @Query("SELECT COUNT(DISTINCT e.id) FROM Exercise e " +

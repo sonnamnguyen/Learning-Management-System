@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <!-- Keep all your existing head content -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Submission UI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/gh/sindresorhus/github-markdown-css@4.0.0/github-markdown.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/sql/sql.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/clike/clike.min.js"></script>
+    <!-- Keep all your existing styles -->
+    <style>
+        /* All your existing styles */
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: #f0f2f5;
+            padding: 20px 20px;
+            margin: 10px !important;
+        }
+
+        .container {
+            max-width: 800px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            margin: 10px auto !important;
+        }
+
+        .title {
+            font-size: 30px;
+            font-weight: 600;
+            color: #1a73e8;
+            margin-bottom: 20px;
+            margin-top: 0px;
+        }
+
+        .score-box {
+            gap: 20px;
+        }
+
+        .score {
+            background: #f1f8ff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-align: left;
+            font-weight: 600;
+            margin: 10px;
+            display: flex;
+            align-items: center;
+            color: #1a73e8;
+            justify-content: space-between;
+        }
+
+        .score-left {
+            color: #ed4528;
+            display: flex;
+            align-items: center;
+        }
+
+        .score-number {
+            background: #ed4528;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-weight: 600;
+        }
+
+        .score-number-2 {
+            background: #1a73e8;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-weight: 600;
+        }
+
+        .score-left-2 {
+            color: #1a73e8;
+            display: flex;
+            align-items: center;
+        }
+
+        .message-box {
+            background: #fff8f0;
+            padding: 15px;
+            margin-top: 15px;
+            border-left: 5px solid #f5a623;
+            color: #664d03;
+            font-size: 14px;
+        }
+
+        .message-box strong {
+            color: #664d03;
+            font-weight: 600;
+        }
+
+        .code-area {
+            background: #1e1e1e;
+            color: #ffffff;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            margin-top: 15px;
+            overflow-x: auto;
+        }
+
+        .input-area {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #dfe1e5;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            border-color: #1a73e8;
+            outline: none;
+        }
+
+        /* Button styles */
+        button {
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        /* Primary action button - Run Code */
+        button[onclick*="runCode"] {
+            background: #1a73e8;
+            color: white;
+        }
+
+        button[onclick*="runCode"]:hover {
+            background: #1557b0;
+        }
+
+        /* Secondary action button - Review Code */
+        button[onclick*="reviewCode"] {
+            background: #f8f9fa;
+            color: #3c4043;
+            border: 1px solid #dadce0;
+        }
+
+        button[onclick*="reviewCode"]:hover {
+            background: #f1f3f4;
+            border-color: #d2d5d9;
+        }
+
+        /* Utility buttons - Copy & Download */
+        button[onclick*="copyCode"],
+        button[onclick*="downloadCode"] {
+            background: transparent;
+            color: #5f6368;
+            border: 1px solid #dadce0;
+            padding: 8px 12px;
+        }
+
+        button[onclick*="copyCode"]:hover,
+        button[onclick*="downloadCode"]:hover {
+            background: #f8f9fa;
+            color: #1a73e8;
+        }
+
+        /* Copy suggestion button */
+        .copy-suggestion {
+            background: rgba(255, 255, 255, 0.9) !important;
+            color: #5f6368 !important;
+            border: 1px solid #dadce0 !important;
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            z-index: 100;
+            padding: 4px 8px !important;
+        }
+
+        .copy-suggestion:hover {
+            background: rgba(255, 255, 255, 1) !important;
+            color: #1a73e8 !important;
+            border-color: #1a73e8 !important;
+        }
+
+        .output {
+            margin-top: 15px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #333;
+            border: 1px solid #dfe1e5;
+            /* white-space: pre-wrap;
+            word-wrap: break-word; */
+        }
+
+        .CodeMirror {
+            height: auto;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        /* Tooltip styles */
+        [data-tooltip] {
+            position: relative;
+        }
+
+        [data-tooltip]:hover::before {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 8px 12px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            font-size: 13px;
+            border-radius: 6px;
+            white-space: nowrap;
+            margin-bottom: 5px;
+            z-index: 1000;
+            animation: fadeIn 0.2s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, 10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translate(-50%, 0);
+            }
+        }
+
+        /* Styles cho markdown content */
+        .h2 {
+            margin: 0px !important;
+        }
+
+        .markdown-body {
+            box-sizing: border-box;
+            min-width: 200px;
+            max-width: 980px;
+            margin: 0 auto;
+        }
+
+        .review-section {
+            /* margin-bottom: 20px; */
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 0px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            font-weight: 600;
+        }
+
+        /*
+        .section-content {
+            padding: 20px;
+        } */
+
+        pre code {
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .hljs {
+            padding: 1em;
+            border-radius: 6px;
+        }
+
+        .language-select {
+            padding: 8px 12px;
+            border: 1px solid #dfe1e5;
+            border-radius: 6px;
+            font-size: 14px;
+            background-color: white;
+            cursor: pointer;
+            transition: border-color 0.2s;
+            margin-right: 10px;
+        }
+
+        .language-select:focus {
+            border-color: #1a73e8;
+            outline: none;
+        }
+
+        .language-select:hover {
+            border-color: #1a73e8;
+        }
+
+        /* Loading spinner styles */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #1a73e8;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        pre {
+            position: relative;
+            padding-top: 40px;
+
+        }
+
+        /* Thêm style cho test cases */
+        .test-cases {
+            margin-top: 10px;
+            padding: 15px;
+        }
+
+        .test-case {
+            justify-content: space-between;
+            display: flex;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            padding: 15px;
+
+        }
+
+        .test-case-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .test-number {
+            font-weight: 600;
+            color: black;
+        }
+
+        .test-status.success {
+            color: #0d904f;
+        }
+
+        .test-details {
+            margin: 0 10px;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 5px;
+        }
+
+        .test-input {
+            color: #1a73e8;
+        }
+
+        .test-expected {
+            color: #188038;
+        }
+
+        .test-output {
+            color: #c5221f;
+        }
+
+        /* Thêm animation cho mũi tên */
+        .fa-chevron-down {
+            transition: transform 0.3s ease;
+        }
+
+        .fa-chevron-down.rotate {
+            transform: rotate(180deg);
+        }
+
+        /* Thêm style cho mũi tên */
+        .score i {
+            margin-left: 10px;
+        }
+
+        /* Styles cho các nút action */
+        .action-buttons .btn {
+            margin-left: 10px;
+            font-size: 0.9rem;
+            padding: 0.4rem 0.8rem;
+        }
+
+        .btn-info {
+            background-color: #40b3ff !important;
+            border-color: #40b3ff !important;
+            color: white !important;
+        }
+
+        .btn-warning {
+            background-color: #f1b33f !important;
+            border-color: #f1b33f !important;
+            color: white !important;
+        }
+
+        /* Light theme adjustments */
+        body.light-theme .btn-info {
+            background-color: #17a2b8 !important;
+            border-color: #17a2b8 !important;
+        }
+
+        body.light-theme .btn-warning {
+            background-color: #ffc107 !important;
+            border-color: #ffc107 !important;
+        }
+
+        /* Styles cho test details */
+        .test-details {
+            margin: 0 10px;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 5px;
+        }
+
+        .test-input {
+            color: #1a73e8;
+        }
+
+        .test-expected {
+            color: #188038;
+        }
+
+        .test-output {
+            color: #c5221f;
+        }
+
+        /* Đảm bảo mỗi dòng chiếm full width */
+        .d-block {
+            display: block !important;
+            width: 100%;
+        }
+
+        .mb-2 {
+            margin-bottom: 0.5rem;
+        }
+
+        .error-compile {
+            display: block !important;
+            color: #c5221f;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/sql/sql.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/clike/clike.min.js"></script>
+    <!-- Add jQuery -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+</head>
+
+<body>
+<div class="container">
+    <div class="justify-content-between align-items-center" style="display: flex;">
+        <h1 style="font-weight: bold;" class="title">RESULT</h1>
+
+        <div class="action-buttons" style="margin-left: auto; margin-top: 7px;   ">
+            <button class="btn btn-success" onclick="backToExercises()">
+                <i class="fas fa-backward"></i> BACK TO EXERCISES
+            </button>
+        </div>
+    </div>
+    <p style="font-size: 14px; color: #6c757d; margin-left: 10px;">Viewing <a href="#"
+                                                                              style="color: #1a73e8; text-decoration: none;">user's </a>solution</p>
+
+    <div class="score-container">
+        <div class="test-cases" id="testCases" style="display: none;">
+            <span class="error-compile" th:text="${error}"></span>
+            <div class="test-case" th:each="result : ${testResults}" th:if="${!result.isCorrect}">
+                <div class="test-case-header">
+                    <span class="test-number">Test Case</span>
+                </div>
+                <div class="test-details">
+                    <div class="test-input d-block mb-2">
+                        Input: <span th:text="${result.testCase.input}"></span>
+                    </div>
+                    <div class="test-expected d-block mb-2">
+                        Expected Output: <span th:text="${result.testCase.expectedOutput}"></span>
+                    </div>
+                    <div class="test-output d-block">
+                        Your Output: <span th:text="${result.userOutput}"></span>
+                    </div>
+                </div>
+                <span class="test-status error"><i class="fas fa-times"></i></span>
+            </div>
+        </div>
+
+        <div class="score" style="margin-bottom: 30px;">
+            <div class="score-left-2">
+                <span class="score-number-2" th:text="${score}"></span> TOTAL SCORE
+            </div>
+        </div>
+    </div>
+    <input id="exerciseId" type="hidden" th:value="${exercise.id}" />
+    <textarea id="codeEditor" th:text="${code}" style=""></textarea>
+
+    <div class="input-area">
+        <input th:if="${exercise.language.language.toLowerCase()}!='sql'" type="text" id="inputText" placeholder='Enter input here...' th:value="${exercise.getTestCases().get(0).getInput()}">
+        <select id="languageSelect" class="language-select">
+            <option value="en">English</option>
+            <option value="vi">Vietnamese</option>
+        </select>
+        <button th:if="${exercise.language.language.toLowerCase()}!='sql'" onclick="runCode()">Run Code</button>
+        <button onclick="reviewCode()" data-tooltip="Review your code using AI">Review Code</button>
+        <button onclick="copyCode()" data-tooltip="Copy code to clipboard">
+            <i class="fas fa-copy"></i>
+        </button>
+        <button onclick="downloadCode()" data-tooltip="Download code as file">
+            <i class="fas fa-download"></i>
+        </button>
+    </div>
+    <div class="output" id="output">
+        <div th:if="${exercise.language.language.toLowerCase()}!='sql'">
+            Output logs will appear here
+        </div>
+        <div th:if="${exercise.language.language.toLowerCase()}=='sql'">
+            Review AI logs will appear here
+        </div>
+    </div>
+</div>
+
+<script>
+    let editor;
+
+    function detectLanguage(code) {
+        const lowerCode = code.toLowerCase();
+
+        if (lowerCode.includes('select') ||
+            lowerCode.includes('insert') ||
+            lowerCode.includes('update') ||
+            lowerCode.includes('delete') ||
+            lowerCode.includes('create table')) {
+            return "text/x-sql";
+        } else if (code.includes('class') && code.includes('public') && code.includes(';')) {
+            return "text/x-java";
+        } else if (code.includes('#include')) {
+            if (code.includes('cout') || code.includes('cin')) {
+                return "text/x-c++src";
+            }
+            return "text/x-csrc";
+        }
+        return "text/x-sql"; // Mặc định là SQL nếu không phát hiện được ngôn ngữ khác
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        editor = CodeMirror.fromTextArea(document.getElementById("codeEditor"), {
+            mode: detectLanguage(document.getElementById("codeEditor").value),
+            theme: "monokai",
+            lineNumbers: true,
+            autoCloseBrackets: true,
+            matchBrackets: true,
+            indentUnit: 4,
+            readOnly: false, // Đặt thành false để có thể chỉnh sửa
+            cursorBlinkRate: 530,
+            indentWithTabs: true,
+            smartIndent: true,
+            lineWrapping: true,
+            extraKeys: { "Ctrl-Space": "autocomplete" },
+            hintOptions: {
+                tables: {
+                    users: ["name", "score", "birthDate"],
+                    countries: ["name", "population", "size"]
+                }
+            }
+        });
+
+        editor.on("change", function () {
+            var newMode = detectLanguage(editor.getValue());
+            editor.setOption("mode", newMode);
+        });
+    });
+
+    function runCode() {
+        const customInput = document.getElementById("inputText").value;
+        if (!customInput.trim()) {
+            document.getElementById("output").innerHTML = `<span style="color: red">Error: Please enter your input!</span>`;
+            return;
+        }
+
+        const exerciseId = document.getElementById("exerciseId").value;
+        const code = editor.getValue();
+
+        $.ajax({
+            url: "/judgement/run-custom-code",
+            method: "POST",
+            data: {
+                exerciseId: exerciseId,
+                code: code,
+                customInput: customInput
+            },
+            success: function (response) {
+                document.getElementById("output").innerHTML = `<span style="color: green">Your output:  </span><span>${response}</span>`;
+            },
+            error: function (xhr) {
+                let errorMessage = xhr.responseText ? xhr.responseText : "Something went wrong!";
+                document.getElementById("output").innerHTML = `<span style='color: red;'>${errorMessage}</span>`;
+            }
+        });
+    }
+
+    async function reviewCode() {
+        try {
+            // Get code from the CodeMirror editor
+            const code = editor.getValue();
+            const selectedLanguage = document.getElementById('languageSelect').value;
+
+            // Show loading state
+            document.getElementById("output").innerHTML = `
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    ${selectedLanguage === 'vi' ? 'Đang phân tích code...' : 'Analyzing your code...'}
+                </div>
+            `;
+
+            // Send code to backend for AI review
+            const response = await fetch('/api/code/review', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    code: code,
+                    language: selectedLanguage
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(selectedLanguage === 'vi' ?
+                    'Không thể kết nối với dịch vụ AI' :
+                    'Failed to connect to AI service');
+            }
+
+            const data = await response.json();
+
+            if (!data.review) {
+                throw new Error(data.error || (selectedLanguage === 'vi' ?
+                    'Không nhận được phản hồi từ AI' :
+                    'No response from AI'));
+            }
+
+            // Render markdown content
+            const renderedHtml = marked.parse(data.review, {
+                gfm: true,
+                breaks: true,
+                highlight: function (code, lang) {
+                    if (lang && hljs.getLanguage(lang)) {
+                        return hljs.highlight(code, { language: lang }).value;
+                    }
+                    return code;
+                }
+            });
+
+            document.getElementById("output").innerHTML = `
+                <div class="markdown-body">
+                    ${renderedHtml}
+                </div>
+            `;
+
+            // Add copy buttons to code blocks
+            document.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightBlock(block);
+
+                const copyButton = document.createElement('button');
+                copyButton.className = 'copy-suggestion';
+                copyButton.innerHTML = '<i class="fas fa-copy"></i>';
+
+                copyButton.onclick = async () => {
+                    const codeText = block.textContent;
+                    try {
+                        await navigator.clipboard.writeText(codeText);
+                        copyButton.innerHTML = '<i class="fas fa-check"></i>';
+                        setTimeout(() => {
+                            copyButton.innerHTML = '<i class="fas fa-copy"></i>';
+                        }, 2000);
+                    } catch (err) {
+                        console.error('Failed to copy text: ', err);
+                        alert(selectedLanguage === 'vi' ?
+                            'Không thể sao chép code!' :
+                            'Failed to copy code!');
+                    }
+                };
+
+                block.parentElement.style.position = 'relative';
+                block.parentElement.appendChild(copyButton);
+            });
+        } catch (error) {
+            document.getElementById("output").innerHTML = `
+                <div class="error-message">
+                    <i class="fas fa-exclamation-circle"></i>
+                    Error: ${error.message || 'Unknown error occurred'}
+                </div>
+            `;
+        }
+    }
+
+    function copyCode() {
+        const code = editor.getValue();
+        navigator.clipboard.writeText(code).then(() => {
+            alert(document.getElementById('languageSelect').value === 'vi' ?
+                'Đã sao chép code!' :
+                'Code copied!');
+        });
+    }
+
+    function downloadCode() {
+        const code = editor.getValue().trim();
+        let fileName = 'code.txt';
+
+        // Danh sách ngôn ngữ và từ khóa đặc trưng
+        const patterns = {
+            java: {
+                pattern: /class\s+(\w+)/,
+                keywords: ['public class ', 'System.out.println', 'extends ', 'implements ', 'new ', 'public static void main'],
+                ext: '.java',
+                defaultName: 'Main'
+            },
+            cpp: {
+                pattern: /(class|struct)\s+(\w+)|void\s+(\w+)\s*\(/,
+                keywords: ['#include', 'using namespace', 'cout', 'cin', 'std::', '->', '::', 'template'],
+                ext: '.cpp',
+                defaultName: 'main'
+            },
+            csharp: {
+                pattern: /(class|interface)\s+(\w+)/,
+                keywords: ['namespace ', 'using ', 'Console.WriteLine', 'public class ', 'List<>', 'async ', 'await '],
+                ext: '.cs',
+                defaultName: 'Program'
+            },
+            c: {
+                pattern: /(void|int|char|double|float)\s+(\w+)\s*\(/,
+                keywords: ['#include', 'printf(', 'scanf(', 'main()', 'struct ', 'typedef ', 'malloc(', 'free('],
+                ext: '.c',
+                defaultName: 'main'
+            },
+            sql: {
+                pattern: /CREATE\s+(TABLE|PROCEDURE|FUNCTION|VIEW)\s+(\w+)/i,
+                keywords: ['SELECT ', 'INSERT INTO ', 'UPDATE ', 'DELETE ', 'JOIN ', 'GROUP BY ', 'ORDER BY '],
+                ext: '.sql',
+                defaultName: 'query'
+            },
+        };
+
+        let detectedLang = null;
+        let matchCounts = {};
+
+        // Ưu tiên kiểm tra từ khóa đặc trưng
+        for (const lang in patterns) {
+            let count = patterns[lang].keywords.reduce((acc, keyword) => acc + (code.split(keyword).length - 1), 0);
+            if (count > 0) {
+                matchCounts[lang] = count;
+            }
+        }
+
+        // Xác định ngôn ngữ có nhiều từ khóa xuất hiện nhất
+        if (Object.keys(matchCounts).length > 0) {
+            detectedLang = Object.keys(matchCounts).reduce((a, b) => matchCounts[a] > matchCounts[b] ? a : b);
+        }
+
+        // Nếu vẫn chưa xác định được, thử regex
+        if (!detectedLang) {
+            for (const lang in patterns) {
+                const match = code.match(patterns[lang].pattern);
+                if (match) {
+                    detectedLang = lang;
+                    fileName = (match[2] || match[1] || match[3]) + patterns[lang].ext;
+                    break;
+                }
+            }
+        }
+
+        // Nếu vẫn chưa tìm được tên, đặt tên mặc định
+        if (detectedLang && !fileName.endsWith(patterns[detectedLang].ext)) {
+            fileName = patterns[detectedLang].defaultName + patterns[detectedLang].ext;
+        }
+
+        // Tạo file và tải về
+        const blob = new Blob([code], { type: 'text/plain' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        window.URL.revokeObjectURL(url);
+    }
+
+
+    function toggleTestCases() {
+        const testCases = document.getElementById('testCases');
+        const chevron = document.querySelector('.fa-chevron-down');
+
+        if (testCases.style.display === 'none') {
+            testCases.style.display = 'block';
+            chevron.classList.add('rotate');
+        } else {
+            testCases.style.display = 'none';
+            chevron.classList.remove('rotate');
+        }
+    }
+
+    function viewSolutions() {
+        // TODO: Implement view solutions functionality
+        console.log("Viewing solutions...");
+    }
+
+    function backToExercises() {
+        window.location.href = '/exercises';
+    }
+
+    function redoChallenge() {
+        // TODO: Implement redo challenge functionality
+        console.log("Restarting challenge...");
+    }
+</script>
+</body>
+
+</html>

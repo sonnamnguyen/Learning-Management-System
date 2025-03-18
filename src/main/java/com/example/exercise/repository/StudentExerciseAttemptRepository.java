@@ -24,5 +24,5 @@ public interface StudentExerciseAttemptRepository extends JpaRepository<StudentE
             @Param("submittedExercise") Exercise submittedExercise);
 
     @Query("SELECT e FROM StudentExerciseAttempt e join e.submitted_exercise WHERE e.attendant_user.id =:userId AND e.attendant_email is NULL ORDER BY e.attemptDate DESC")
-    Page<StudentExerciseAttempt> getStudentExerciseAttemptByUser(@Param("userId") Long userId, Pageable pageable);
+    List<StudentExerciseAttempt> getStudentExerciseAttemptByUser(@Param("userId") Long userId);
 }
