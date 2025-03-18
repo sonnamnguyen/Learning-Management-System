@@ -559,50 +559,48 @@ public class ExerciseService {
     }
     public Map<String, List<Exercise>> findDuplicates() {
         List<Exercise> allExercises = exerciseRepository.findAll();
+        Map<String, List<Exercise>> byLanguage = allExercises.stream()
+                .collect(Collectors.groupingBy(ex -> ex.getLanguage().getLanguage()));
+
         Map<String, List<Exercise>> duplicates = new HashMap<>();
         LevenshteinDistance levenshtein = new LevenshteinDistance();
-        Set<String> processedPairs = new HashSet<>(); // Để tránh kiểm tra trùng lặp
 
-        for (int i = 0; i < allExercises.size(); i++) {
-            Exercise ex1 = allExercises.get(i);
-            String key1 = ex1.getDescription() + "-" + ex1.getLanguage().getLanguage();
+        for (List<Exercise> exercises : byLanguage.values()) {
+            if (exercises.size() <= 1) continue;
 
-            if (!duplicates.containsKey(key1)) {
-                duplicates.put(key1, new ArrayList<>());
-            }
-            List<Exercise> group = duplicates.get(key1);
-            if (!group.contains(ex1)) {
-                group.add(ex1);
-            }
+            Map<String, List<Exercise>> tempDuplicates = new HashMap<>();
 
-            for (int j = i + 1; j < allExercises.size(); j++) {
-                Exercise ex2 = allExercises.get(j);
-                String key2 = ex2.getDescription() + "-" + ex2.getLanguage().getLanguage();
+            for (int i = 0; i < exercises.size(); i++) {
+                Exercise ex1 = exercises.get(i);
+                String key = ex1.getDescription();
+                int len1 = ex1.getDescription().length();
 
-                if (!ex1.getLanguage().getLanguage().equals(ex2.getLanguage().getLanguage())) {
-                    continue; // Chỉ so sánh các bài cùng ngôn ngữ
+                List<Exercise> group = tempDuplicates.computeIfAbsent(key, k -> new ArrayList<>());
+                if (!group.contains(ex1)) {
+                    group.add(ex1);
                 }
 
-                // Tránh kiểm tra lại cặp đã xét
-                String pairKey = ex1.getDescription() + "|" + ex2.getDescription();
-                if (processedPairs.contains(pairKey)) continue;
-                processedPairs.add(pairKey);
+                for (int j = i + 1; j < exercises.size(); j++) {
+                    Exercise ex2 = exercises.get(j);
+                    int len2 = ex2.getDescription().length();
 
-                // Tính độ tương đồng Levenshtein
-                int maxLength = Math.max(ex1.getDescription().length(), ex2.getDescription().length());
-                int distance = levenshtein.apply(ex1.getDescription(), ex2.getDescription());
-                double similarity = 1.0 - ((double) distance / maxLength);
+                    if (Math.abs(len1 - len2) > len1 * 0.2) continue;
 
-                if (similarity >= 0.7) { // Nếu giống nhau trên 70%
-                    if (!group.contains(ex2)) {
-                        group.add(ex2);
+                    int distance = levenshtein.apply(ex1.getDescription(), ex2.getDescription());
+                    double similarity = 1.0 - ((double) distance / Math.max(len1, len2));
+
+                    if (similarity >= 0.7) {
+                        if (!group.contains(ex2)) {
+                            group.add(ex2);
+                        }
                     }
                 }
             }
-        }
 
-        // Chỉ giữ lại các nhóm có hơn 1 phần tử (bài trùng lặp thực sự)
-        duplicates.entrySet().removeIf(entry -> entry.getValue().size() <= 1);
+            tempDuplicates.entrySet().stream()
+                    .filter(entry -> entry.getValue().size() > 1)
+                    .forEach(entry -> duplicates.put(entry.getKey() + "-" + exercises.get(0).getLanguage().getLanguage(), entry.getValue()));
+        }
 
         return duplicates;
     }

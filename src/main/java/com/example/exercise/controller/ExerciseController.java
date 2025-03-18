@@ -494,7 +494,6 @@ public class ExerciseController {
             entry.put("completedExercises", ((Number) row[1]).intValue());
             response.add(entry);
         }
-//        return isAdmin ? "exercises/dashboard-admin":"exercises/profile/";
         return response;
     }
 

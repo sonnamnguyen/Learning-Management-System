@@ -1196,24 +1196,61 @@
                 .map(cb => cb.closest("tr").getAttribute("data-id"));
 
             if (selectedIds.length === 0) {
-                alert("No exercises selected.");
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No exercises selected!',
+                    text: 'Please select at least one exercise to delete.',
+                    confirmButtonText: 'OK'
+                });
                 return;
             }
 
-            if (confirm("Are you sure you want to delete selected exercises?")) {
-                fetch('/exercises/delete-batch', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ids: selectedIds})
-                }).then(response => {
-                    if (response.ok) {
-                        showToast();
-                        setTimeout(() => location.reload(), 1000);
-                    } else {
-                        alert("Failed to delete exercises.");
-                    }
-                });
-            }
+            Swal.fire({
+                title: "Are you sure?",
+                text: "You will not be able to recover the deleted exercises!",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#d33",
+                cancelButtonColor: "#3085d6",
+                confirmButtonText: "Yes, delete them!",
+                cancelButtonText: "Cancel"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch('/exercises/delete-batch', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ids: selectedIds })
+                    }).then(response => {
+                        if (response.ok) {
+                            Swal.fire({
+                                icon: "success",
+                                title: "Deleted!",
+                                text: "The selected exercises have been deleted.",
+                                timerProgressBar: true,
+                                timer: 2000,
+                                showConfirmButton: false
+                            });
+                            setTimeout(() => location.reload(), 1500);
+                        } else {
+                            Swal.fire({
+                                icon: "error",
+                                title: "Failed!",
+                                text: "Failed to delete exercises. Please try again.",
+                                timerProgressBar: true,
+                                timer: 10000,
+                                showConfirmButton: false
+                            });
+                        }
+                    }).catch(() => {
+                        Swal.fire({
+                            icon: "error",
+                            title: "Error!",
+                            text: "Something went wrong. Please try again later.",
+                            confirmButtonText: "OK"
+                        });
+                    });
+                }
+            });
         });
 
         // Hiển thị thông báo
@@ -1380,6 +1417,46 @@
         }
     });
 </script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        function closeAlert(alertId) {
+            const alert = document.getElementById(alertId);
+            if (alert) {
+                alert.style.animation = 'fadeOut 0.5s ease-out forwards';
+                setTimeout(() => {
+                    alert.style.display = 'none';
+                }, 500);
+            }
+        }
 
+        function setupAlertWithCooldown(alertId, cooldownMinutes = 10) {
+            const alert = document.getElementById(alertId);
+            if (!alert) return;
+
+            const lastShownKey = `lastShown_${alertId}`;
+            const now = Date.now();
+            const lastShown = localStorage.getItem(lastShownKey);
+            const cooldownMs = cooldownMinutes * 60 * 1000;
+
+            if (!lastShown || (now - lastShown >= cooldownMs)) {
+                alert.style.display = 'block';
+                localStorage.setItem(lastShownKey, now);
+
+                setTimeout(() => {
+                    closeAlert(alertId);
+                }, 2000);
+            } else {
+                alert.style.display = 'none';
+            }
+        }
+
+        setupAlertWithCooldown('duplicateAlert', 10);
+
+        const closeButton = document.querySelector('#duplicateAlert .alert-close');
+        if (closeButton) {
+            closeButton.addEventListener('click', () => closeAlert('duplicateAlert'));
+        }
+    });
+</script>
 </body>
 </html>
