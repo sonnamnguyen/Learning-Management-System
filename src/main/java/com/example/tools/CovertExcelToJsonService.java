@@ -7,7 +7,8 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 
 @Service
@@ -31,7 +32,7 @@ public class CovertExcelToJsonService {
 
                     try {
                         List<Object> curSheetData = processSheet(sheet);
-                        sheetData.put("mc_questions", curSheetData);
+                        sheetData.put("questions", curSheetData);
                         sheetData.put("total_questions", curSheetData.size());
 
                         result.put(file.getOriginalFilename() + " - " + sheet.getSheetName(), sheetData);
@@ -50,131 +51,100 @@ public class CovertExcelToJsonService {
         return result;
     }
 
-    private List<Object> processSheet(Sheet sheet) {
+    /*private List<Object> processSheet(Sheet sheet) {
         List<Object> mcQuestions = new ArrayList<>();
+        int questionTypeIndex = -1;
         int questionIndex = -1;
-        int correctAnswerIndex = -1;
-        int explanationIndex = -1;
-        List<Integer> answerIndexes = new ArrayList<>();
+        int correctAnswerIndex = -1; // Answer
+        int explanationIndex = -1; // Thêm explanation
+        Map<String, Integer> answerIndexes = new HashMap<>(); // Chứa <A, cột 1> <B, cột 2>, ....
 
-        DataFormatter formatter = new DataFormatter();
+        Row headerRow = sheet.getRow(0); // check row đầu (header)
+        if (headerRow == null) throw new RuntimeException("Sheet " + sheet.getSheetName() + " is empty!");
 
-        Row headerRow = sheet.getRow(0);
-        if (headerRow == null) {
-            throw new RuntimeException("Header row is missing in sheet: " + sheet.getSheetName());
-        }
+        for (Cell cell : headerRow) { // check từng cell của row đầu (header)
+            String header = getAndFormateStringFromCell(cell).trim().toLowerCase(); // Lấy tên header dưới dạng String và check
 
-        for( int rowIndex = 0; rowIndex < headerRow.getLastCellNum(); rowIndex++ ) {
-            String headerContent = headerRow.getCell(rowIndex).getStringCellValue();
-
-            // Check if it is the column index of question
-            if( headerContent.trim().toLowerCase().contains("correct")) {
-                correctAnswerIndex = rowIndex;
-            }
-
-            if( headerContent.trim().toLowerCase().contains("option")) {
-                if(!answerIndexes.contains(rowIndex)) {
-                    answerIndexes.add(rowIndex);
-                }
-            }
-
-            if( headerContent.trim().toLowerCase().contains("question")) {
-                questionIndex = rowIndex;
-            }
-
-            if( headerContent.trim().toLowerCase().contains("explanation")) {
-                explanationIndex = rowIndex;
+            if (header.equals("type")) {
+                questionTypeIndex = cell.getColumnIndex();
+            } else if (header.equals("question")) {
+                questionIndex = cell.getColumnIndex();
+            } else if (header.equals("correct")) {
+                correctAnswerIndex = cell.getColumnIndex();
+            } else if (header.equals("explanation")) {
+                explanationIndex = cell.getColumnIndex();
+            } else if (header.startsWith("answer option ")) {
+                String option = header.replace("answer option ", "").trim();
+                answerIndexes.put(option.toUpperCase(), cell.getColumnIndex()); // <A, 1> <B, 2> <C, 3>,...
             }
         }
 
-        if( questionIndex == -1) throw new RuntimeException("No question found in sheet: " + sheet.getSheetName());
+        if (questionIndex == -1) throw new RuntimeException("No question column found in sheet: " + sheet.getSheetName());
+        if (answerIndexes.isEmpty()) throw new RuntimeException("No answer options found in sheet: " + sheet.getSheetName());
 
-        if(answerIndexes.isEmpty()) throw new RuntimeException("No answer options found in sheet: " + sheet.getSheetName());
-
-        for (int rowIndex = 1; rowIndex <= sheet.getLastRowNum(); rowIndex++) { // Skip header row (rowIndex 0)
+        for (int rowIndex = 1; rowIndex <= sheet.getLastRowNum(); rowIndex++) { // check từng row (Question)
+            // QUESTION------------------------------------------
             try {
                 Row currentRow = sheet.getRow(rowIndex);
-                if(currentRow == null) continue;
+                if (currentRow == null) continue;
 
-                HashMap<String, Object> questionData = new HashMap<String, Object>();
+                String question = getAndFormateStringFromCell(currentRow.getCell(questionIndex)).trim(); // Lấy question text
+                if (question.isEmpty()) continue;
 
-                String question = getAndFormateStringFromCell(currentRow.getCell(questionIndex));
-                if(question.trim().isEmpty()) continue;
+                String questionType = questionTypeIndex != -1
+                        ? getAndFormateStringFromCell(currentRow.getCell(questionTypeIndex))
+                        : "Multiple Choice";  // Lấy question type
 
-                String correct_answer_list = "";
-                if( correctAnswerIndex != -1) {
-                    correct_answer_list = getAndFormateStringFromCell(currentRow.getCell(correctAnswerIndex));
-                }
+                String correctAnswerList = correctAnswerIndex != -1
+                        ? getAndFormateStringFromCell(currentRow.getCell(correctAnswerIndex))
+                        : "";    // Lấy answer (A; A, B, C; ....)
 
-                String explanation = "";
-                if( explanationIndex != -1) {
-                    explanation = getAndFormateStringFromCell(currentRow.getCell(explanationIndex));
-                }
+                String explanation = explanationIndex != -1
+                        ? getAndFormateStringFromCell(currentRow.getCell(explanationIndex))
+                        : ""; // Lấy explanation
 
-                List<String> answers = new ArrayList<>();
-                for (int answerIndex : answerIndexes) {
-                    String curAnswer = getAndFormateStringFromCell(currentRow.getCell(answerIndex));
-                    answers.add(curAnswer);
-                }
-
-                // Parse correct answers based on letter positions (e.g., A, B, C, D)
-                int cnt_correct = 0;
-                int max_index_answer = -1;
-                List<String> correctAnswers = new ArrayList<>();
-                if (!correct_answer_list.isEmpty()) {
-                    String[] correctSplit = correct_answer_list.split(",");
-                    for(String correctAnswer : correctSplit) {
-                        max_index_answer = Math.max(max_index_answer, correctAnswer.charAt(0) - 'A');
-                    }
-
-                    // Remove empty answer behind
-                    for (int i = answers.size() - 1; i > max_index_answer; i--) {
-                        if (answers.get(i).isEmpty()) {
-                            answers.remove(i); // Xóa phần tử rỗng
-                        }
-                    }
-
-                    for (String correctAnswer : correctSplit) {
-                        correctAnswer = correctAnswer.trim(); // Trim spaces around answers
-                        if (correctAnswer.isEmpty())
-                            continue;
-                        try {
-                            int index = correctAnswer.charAt(0) - 'A'; // Convert A/B/C/D to 0/1/2/3
-                            if (index >= 0 && index < answers.size()) {
-                                correctAnswers.add(answers.get(index));
-                                cnt_correct++;
-                            }
-                        } catch (Exception e) {
-                            // Skip invalid entries
-                        }
-                    }
-                } else {
-                    for( int i = answers.size() - 1; i > max_index_answer; i--) {
-                        if (answers.get(i).isEmpty()) {
-                            answers.remove(i);
+                Set<Integer> correctIndexes = new HashSet<>();
+                if (!correctAnswerList.isEmpty()) { // Lấy answer option
+                    for (String correctAnswer : correctAnswerList.split(", ")) {
+                        correctAnswer = correctAnswer.trim().toUpperCase();
+                        if (!correctAnswer.isEmpty() && correctAnswer.length() == 1) {
+                            correctIndexes.add(correctAnswer.charAt(0) - 'A');
                         }
                     }
                 }
 
-                // Remove correct answers from the original list to avoid duplication
-                answers.removeAll(correctAnswers);
+                List<Map<String, Object>> answers = new ArrayList<>();
+                for (Map.Entry<String, Integer> entry : answerIndexes.entrySet()) {
+                    int columnIndex = entry.getValue();
+                    String answerText = getAndFormateStringFromCell(currentRow.getCell(columnIndex));
 
-                // Combine correct answers at the front
-                correctAnswers.addAll(answers);
+                    if (!answerText.isEmpty()) {
+                        Map<String, Object> answerObj = new HashMap<>();
+                        answerObj.put("text", answerText);
 
-                questionData.put("question", question);
-                questionData.put("answers", correctAnswers);
-                questionData.put("total_correct", cnt_correct);
+                        String optionKey = entry.getKey(); // "A", "B", "C", ...
+                        int optionIndex = optionKey.charAt(0) - 'A';
+                        answerObj.put("correct", correctIndexes.contains(optionIndex)); // check đúng sai các câu A, B, C, D,...
+
+                        answers.add(answerObj); // 1 answerObj chứa text: "2"
+                    }                           //                  correct: true/false
+                }                                                // => Yêu cầu cùng 1 hàng
+
+                Map<String, Object> questionData = new HashMap<>();
+                questionData.put("questionText", question);
+                questionData.put("questionType", questionType);
+                questionData.put("answers", answers);
                 questionData.put("explanation", explanation);
 
                 mcQuestions.add(questionData);
             } catch (Exception e) {
-                throw new RuntimeException("Can't processing row " + rowIndex);
+                throw new RuntimeException("Error processing row " + rowIndex + ": " + e.getMessage());
             }
         }
 
         return mcQuestions;
-    }
+    }*/
+
 
     private String getAndFormateStringFromCell(Cell cell) {
         String cellStrValue = getCellValueAsString(cell);
@@ -216,6 +186,109 @@ public class CovertExcelToJsonService {
             default:
                 return cell.toString().trim();
         }
+    }
+
+
+    private List<Object> processSheet(Sheet sheet) {
+        List<Object> mcQuestions = new ArrayList<>();
+        int questionTypeIndex = -1;
+        int questionIndex = -1;
+        int correctAnswerIndex = -1; // Answer
+        Map<String, Integer> answerIndexes = new HashMap<>(); // Chứa <A, cột 1> <B, cột 2>, ....
+
+        Row headerRow = sheet.getRow(0); // check row đầu (header)
+        if (headerRow == null) throw new RuntimeException("Sheet " + sheet.getSheetName() + " is empty!");
+
+        for (Cell cell : headerRow) { // check từng cell của row đầu (header)
+            String header = getAndFormateStringFromCell(cell).trim().toLowerCase(); // Lấy tên header dưới dạng String và check
+
+            if (header.equals("type")) {
+                questionTypeIndex = cell.getColumnIndex();
+            } else if (header.equals("question")) {
+                questionIndex = cell.getColumnIndex();
+            } else if (header.equals("correct") || header.equals("answer")) {
+                correctAnswerIndex = cell.getColumnIndex();
+            } else if (header.startsWith("answer option ")) {
+                String option = header.replace("answer option ", "").trim();
+                answerIndexes.put(option.toUpperCase(), cell.getColumnIndex()); // <A, 1> <B, 2> <C, 3>,...
+            }
+        }
+
+        if (questionIndex == -1) throw new RuntimeException("No question column found in sheet: " + sheet.getSheetName());
+        if (answerIndexes.isEmpty()) throw new RuntimeException("No answer options found in sheet: " + sheet.getSheetName());
+
+        for (int rowIndex = 1; rowIndex <= sheet.getLastRowNum(); rowIndex++) { // check từng row (Question)
+            // QUESTION------------------------------------------
+            try {
+                Row currentRow = sheet.getRow(rowIndex);
+                if (currentRow == null) continue;
+
+                String question = getAndFormateStringFromCell(currentRow.getCell(questionIndex)).trim(); // Lấy question text
+                if (question.isEmpty()) continue;
+
+                String questionType = questionTypeIndex != -1
+                        ? getAndFormateStringFromCell(currentRow.getCell(questionTypeIndex))
+                        : "Multiple Choice";  // Lấy question type
+                if (questionType.equalsIgnoreCase("Multiple Choice")){
+                    questionType = "MCQ";
+                } else if (questionType.equalsIgnoreCase("Single Choice")) {
+                    questionType = "SCQ";
+                } else {
+                    questionType = "TEXT";
+                }
+
+                if (questionType.equalsIgnoreCase("Multiple Choice")){
+                    questionType = "MCQ";
+                } else if (questionType.equalsIgnoreCase("Single Choice")) {
+                    questionType = "SCQ";
+                } else {
+                    questionType = "TEXT";
+                }
+
+                String correctAnswerList = correctAnswerIndex != -1
+                        ? getAndFormateStringFromCell(currentRow.getCell(correctAnswerIndex))
+                        : "";    // Lấy answer (A; A, B, C; ....)
+
+                Set<Integer> correctIndexes = new HashSet<>();
+                if (!correctAnswerList.isEmpty()) { // Lấy answer option
+                    for (String correctAnswer : correctAnswerList.split(", ")) {
+                        correctAnswer = correctAnswer.trim().toUpperCase();
+                        if (!correctAnswer.isEmpty() && correctAnswer.length() == 1) {
+                            correctIndexes.add(correctAnswer.charAt(0) - 'A');
+                        }
+                    }
+                }
+
+                List<Map<String, Object>> answers = new ArrayList<>(); // Tạo answer data json
+                for (Map.Entry<String, Integer> entry : answerIndexes.entrySet()) {
+                    int columnIndex = entry.getValue();
+                    String answerText = getAndFormateStringFromCell(currentRow.getCell(columnIndex));
+
+                    if (!answerText.isEmpty()) {
+                        Map<String, Object> answerObj = new HashMap<>();
+
+                        answerObj.put("optionText", answerText);
+
+                        String optionKey = entry.getKey(); // "A", "B", "C", ...
+                        int optionIndex = optionKey.charAt(0) - 'A';
+
+                        answerObj.put("isCorrect", correctIndexes.contains(optionIndex)); // check đúng sai các câu A, B, C, D,...
+
+                        answers.add(answerObj); // 1 answerObj chứa text: "2"
+                    }                           //                  correct: true/false
+                }
+
+                Map<String, Object> questionData = new LinkedHashMap<>();
+                questionData.put("questionText", question);
+                questionData.put("questionType", questionType);
+                questionData.put("answerOptions", answers);
+                mcQuestions.add(questionData);
+            } catch (Exception e) {
+                throw new RuntimeException("Error processing row " + rowIndex + ": " + e.getMessage());
+            }
+        }
+
+        return mcQuestions;
     }
 
 }

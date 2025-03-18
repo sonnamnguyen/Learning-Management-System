@@ -225,6 +225,25 @@ public interface ExerciseRepository extends PagingAndSortingRepository<Exercise,
 
     @Query("SELECT e.language.language, COUNT(e) FROM Exercise e GROUP BY e.language.language")
     List<Object[]> countExercisesByLanguage();
+
+    @Query("SELECT pl.language, COUNT(e) FROM Exercise e JOIN e.language pl " +
+            "WHERE (:languageId IS NULL OR pl.id = :languageId) " +
+            "GROUP BY pl.language")
+    List<Object[]> countExercisesByLanguage(@Param("languageId") Long languageId);
+
+    @Query("SELECT DISTINCT e FROM Exercise e " +
+            "LEFT JOIN e.exerciseCategories ec " +
+            "WHERE (:languageId IS NULL OR e.language.id = :languageId) " +
+            "AND (:level IS NULL OR e.level = :level) " +
+            "AND (COALESCE(:tagIds, NULL) IS NULL OR EXISTS (" +
+            "    SELECT 1 FROM ExerciseCategory ec " +
+            "    WHERE ec.exercise = e " +
+            "    AND ec.category.id IN :tagIds))")
+    Page<Exercise> findByFiltersAndTags(
+            @Param("languageId") Long languageId,
+            @Param("level") Exercise.Level level,
+            @Param("tagIds") List<Long> tagIds,
+            Pageable pageable);
 }
 
 

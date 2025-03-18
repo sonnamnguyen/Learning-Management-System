@@ -5,7 +5,243 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        .cke_notification { display: none !important; }
+        .cke_notification {
+            display: none !important;
+        }
+
+        /*.tag-container {*/
+        /*    display: flex;*/
+        /*    flex-wrap: wrap;*/
+        /*    gap: 8px;*/
+        /*    margin-bottom: 10px;*/
+        /*    padding: 5px;*/
+        /*    min-height: 35px;*/
+        /*    border: 1px solid #ced4da;*/
+        /*    border-radius: 4px;*/
+        /*}*/
+
+        /*.tag-pill {*/
+        /*    display: inline-flex;*/
+        /*    align-items: center;*/
+        /*    background-color: #007bff;*/
+        /*    color: white;*/
+        /*    padding: 4px 8px;*/
+        /*    border-radius: 16px;*/
+        /*    margin-right: 5px;*/
+        /*    margin-bottom: 5px;*/
+        /*}*/
+
+        /*.remove-tag {*/
+        /*    margin-left: 8px;*/
+        /*    cursor: pointer;*/
+        /*    font-weight: bold;*/
+        /*    color: white;*/
+        /*}*/
+
+        /*.remove-tag:hover {*/
+        /*    color: #ff4444;*/
+        /*}*/
+
+        /* Container chính cho tags */
+        .tag-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px; /* Khoảng cách giữa các tags */
+            margin-bottom: 15px;
+            min-height: 38px; /* Chiều cao tối thiểu khi có tag */
+            position: relative;
+            transition: min-height 0.2s ease; /* Hiệu ứng mượt */
+        }
+
+        /* Class khi không có tag */
+        .tag-container.empty {
+            /*min-height: 0; !* Thu gọn khi không có tag *!*/
+            min-height: 0 !important;
+            margin-bottom: 0 !important;
+        }
+
+        /* Style cho mỗi tag pill */
+        .tag-pill {
+            display: inline-flex;
+            align-items: center;
+            background-color: #e9ecef;
+            color: #495057;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        /* Nút xóa trong tag */
+        .remove-tag {
+            margin-left: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            color: #6c757d;
+            width: 16px;
+            height: 16px;
+            line-height: 16px;
+            text-align: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        /* Hover effect cho tag */
+        .tag-pill:hover {
+            background-color: #dee2e6;
+        }
+
+        /* Hover effect cho nút xóa */
+        .remove-tag:hover {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        /* Style cho form select */
+        .form-select#tag {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #ced4da;
+            background-color: #fff;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            /* Điều chỉnh kích thước dựa trên trạng thái */
+            min-width: 150px; /* Kích thước mặc định khi có tag */
+            transition: min-width 0.3s ease; /* Hiệu ứng mượt */
+        }
+
+        /* Thu gọn select khi không có tag */
+        .tag-container.empty + .form-select#tag {
+            min-width: 120px; /* Kích thước nhỏ hơn khi không có tag */
+        }
+
+        /* Focus state cho select */
+        .form-select#tag:focus {
+            border-color: #86b7fe;
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+            outline: none;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 576px) {
+            .tag-pill {
+                font-size: 12px;
+                padding: 3px 8px;
+            }
+
+            .remove-tag {
+                margin-left: 4px;
+                font-size: 14px;
+                width: 14px;
+                height: 14px;
+                line-height: 14px;
+            }
+
+            .form-select#tag {
+                min-width: 100px;
+            }
+
+            .tag-container.empty + .form-select#tag {
+                min-width: 80px;
+            }
+        }
+
+        .tag-checkboxes {
+            margin-top: 10px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .form-check {
+            margin: 5px 0;
+        }
+
+        .form-check-input:checked {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+
+        .form-check-label {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        /* Style cho dropdown tags */
+        .tag-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tag-dropdown-btn {
+            background-color: #6c757d;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            cursor: pointer;
+            min-width: 150px;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .tag-dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 200px;
+            box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+            z-index: 1;
+            padding: 10px;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .tag-dropdown-content.show {
+            display: block;
+        }
+
+        .tag-checkbox-item {
+            padding: 8px;
+            display: block;
+            width: 100%;
+            text-align: left;
+            border: none;
+            background: none;
+            cursor: pointer;
+        }
+
+        .tag-checkbox-item:hover {
+            background-color: #f1f1f1;
+        }
+
+        /* Style for selected tags container */
+        #selected-tags {
+            min-height: 38px;
+            padding: 4px 8px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            background-color: #fff;
+        }
+
+        /* Style for each selected tag badge */
+        #selected-tags .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            background-color: #e9ecef;
+            color: #495057;
+            border: 1px solid #dee2e6;
+            transition: all 0.2s ease;
+        }
         td {
             text-align: center;
             vertical-align: middle;
@@ -15,7 +251,46 @@
             text-align: center;
             vertical-align: middle;
         }
+        #selected-tags .badge:hover {
+            background-color: #dee2e6;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
 
+        #selected-tags .badge::after {
+            content: "×";
+            margin-left: 8px;
+            font-size: 1.2rem;
+            line-height: 1;
+            color: #6c757d;
+        }
+
+        #selected-tags:empty::before {
+            content: "No tags selected";
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        /* Style cho nút + */
+        .tag-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background-color: #007bff;
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            text-decoration: none;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .tag-button:hover {
+            background-color: #0056b3;
+            transform: scale(1.1);
+        }
     </style>
 </head>
 <body>
@@ -25,12 +300,75 @@
             <h3 class="card-title mb-0">Update Exercise</h3>
         </div>
         <div class="card-body">
-            <form id="editForm" th:action="@{/exercises/edit/{id}(id=${exercise.id})}" th:object="${exercise}" method="post" class="needs-validation" novalidate>
+            <form
+                    th:action="@{/exercises/edit/{id}(id=${exercise.id})}"
+                    th:object="${exercise}"
+                    method="post"
+                    class="needs-validation"
+                    novalidate
+            >
                 <!-- Name -->
                 <div class="mb-3">
                     <label for="name" class="form-label">Name:</label>
-                    <input type="text" id="name" th:field="*{name}" class="form-control" placeholder="Enter exercise name" required />
+                    <input
+                            type="text"
+                            id="name"
+                            th:field="*{name}"
+                            class="form-control"
+                            placeholder="Enter exercise name"
+                            required
+                    />
                     <div class="invalid-feedback">Please enter a name.</div>
+                </div>
+
+                <!-- Tag Selection -->
+                <div class="mb-3">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <label for="tagIds" class="form-label mb-0">Tags</label>
+                        <a href="/category" class="tag-button">+</a>
+                    </div>
+                    <!-- Display selected tags -->
+                    <div id="selected-tags" class="mt-2"></div>
+                    <div class="tag-container">
+                        <div class="tag-dropdown">
+                            <button
+                                    type="button"
+                                    class="btn tag-dropdown-btn"
+                                    onclick="toggleTagDropdown(event)"
+                            >
+                                Select Tags <i class="bi bi-chevron-down"></i>
+                            </button>
+                            <div class="tag-dropdown-content" id="tagDropdown">
+                                <div th:each="t : ${tags}" class="tag-checkbox-item">
+                                    <input
+                                            class="form-check-input"
+                                            type="checkbox"
+                                            th:value="${t.id}"
+                                            th:id="'tag-' + ${t.id}"
+                                            th:checked="${exercise.exerciseCategories.![category.id].contains(t.id)}"
+                                            onchange="handleTagSelection(this)"
+                                    />
+                                    <label
+                                            class="form-check-label ms-2"
+                                            th:for="'tag-' + ${t.id}"
+                                            th:text="${t.tag}"
+                                    ></label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <input
+                            type="hidden"
+                            name="tag"
+                            id="tagIds"
+                            th:value="${#strings.listJoin(exercise.exerciseCategories.![category.id], ',')}"
+                    />
+                    <input
+                            type="hidden"
+                            name="removedTagIds"
+                            id="removedTagIds"
+                            th:value="${#strings.listJoin(exercise.exerciseCategories.![category.id], ',')}"
+                    />
                 </div>
 
                 <!-- Description -->
@@ -425,17 +763,138 @@
                     return false;
                 }
             }
-
-            // Show success message before submitting
-            await Swal.fire({
-                title: 'Edit Success!',
-                icon: 'success',
-                timer: 1000,
-                showConfirmButton: false
-            });
-
             return true;
         }
+    });
+
+    let removedTagIds = []; // Mảng lưu các tag ID đã bị xóa
+
+    function handleTagSelection(checkbox) {
+        let selectedTagsDiv = document.getElementById("selected-tags");
+        let tagIdsInput = document.getElementById("tagIds");
+        let tagLabel = checkbox.nextElementSibling.textContent;
+        const tagId = checkbox.value;
+
+        if (checkbox.checked) {
+            // Add tag badge
+            let tagSpan = document.createElement("span");
+            tagSpan.className = "badge me-2";
+            tagSpan.textContent = tagLabel;
+            tagSpan.setAttribute("data-value", tagId);
+            tagSpan.style.cursor = "pointer";
+            tagSpan.onclick = function () {
+                removeTag(tagSpan, checkbox);
+            };
+            selectedTagsDiv.appendChild(tagSpan);
+
+            // Remove from removedTagIds if it exists
+            const index = removedTagIds.indexOf(tagId);
+            if (index > -1) {
+                removedTagIds.splice(index, 1);
+            }
+        } else {
+            // Remove tag badge
+            let existingTag = selectedTagsDiv.querySelector(
+                `span[data-value="${tagId}"]`
+            );
+            if (existingTag) {
+                existingTag.remove();
+            }
+
+            // Add to removedTagIds if it's not a new tag
+            if (!removedTagIds.includes(tagId)) {
+                removedTagIds.push(tagId);
+            }
+        }
+
+        updateHiddenInput();
+    }
+
+    function removeTag(tagSpan, checkbox) {
+        // If checkbox is provided, uncheck it
+        if (checkbox) {
+            checkbox.checked = false;
+        } else {
+            // If checkbox not provided, find and uncheck it
+            let checkboxId = "tag-" + tagSpan.getAttribute("data-value");
+            let checkbox = document.getElementById(checkboxId);
+            if (checkbox) {
+                checkbox.checked = false;
+            }
+        }
+
+        const tagId = tagSpan.getAttribute("data-value");
+        // Add to removedTagIds if it's not already there
+        if (!removedTagIds.includes(tagId)) {
+            removedTagIds.push(tagId);
+        }
+
+        // Remove the tag span
+        tagSpan.remove();
+        updateHiddenInput();
+    }
+
+    function updateHiddenInput() {
+        let selectedTagsDiv = document.getElementById("selected-tags");
+        let tagIdsInput = document.getElementById("tagIds");
+        let removedTagIdsInput = document.getElementById("removedTagIds");
+
+        let selectedTags = [];
+        selectedTagsDiv.querySelectorAll("span").forEach(span => {
+            selectedTags.push(span.getAttribute("data-value"));
+        });
+
+        // Update tagIds input
+        tagIdsInput.value = selectedTags.join(",");
+
+        // Update removedTagIds input
+        removedTagIdsInput.value = removedTagIds.join(",");
+    }
+
+    function toggleTagDropdown(event) {
+        event.stopPropagation();
+        document.getElementById("tagDropdown").classList.toggle("show");
+    }
+
+    // Close dropdown when clicking outside
+    window.onclick = function (event) {
+        if (
+            !event.target.matches(".tag-dropdown-btn") &&
+            !event.target.matches(".tag-checkbox-item") &&
+            !event.target.matches(".form-check-input") &&
+            !event.target.matches(".form-check-label")
+        ) {
+            var dropdowns = document.getElementsByClassName(
+                "tag-dropdown-content"
+            );
+            for (var i = 0; i < dropdowns.length; i++) {
+                var openDropdown = dropdowns[i];
+                if (openDropdown.classList.contains("show")) {
+                    openDropdown.classList.remove("show");
+                }
+            }
+        }
+    };
+
+    // Initialize selected tags on page load
+    document.addEventListener("DOMContentLoaded", function () {
+        const selectedTagsDiv = document.getElementById("selected-tags");
+        document
+            .querySelectorAll(".tag-checkbox-item input:checked")
+            .forEach(checkbox => {
+                const tagLabel = checkbox.nextElementSibling.textContent;
+                const tagId = checkbox.value;
+
+                let tagSpan = document.createElement("span");
+                tagSpan.className = "badge me-2";
+                tagSpan.textContent = tagLabel;
+                tagSpan.setAttribute("data-value", tagId);
+                tagSpan.style.cursor = "pointer";
+                tagSpan.onclick = function () {
+                    removeTag(tagSpan, checkbox);
+                };
+                selectedTagsDiv.appendChild(tagSpan);
+            });
     });
 </script>
 </body>

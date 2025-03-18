@@ -23,11 +23,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -35,10 +38,14 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
+
 @Service
 public class QuizService {
 
-
+    @Autowired
+    private QuizTagRepository quizTagRepository;
+    @Autowired
+    private QuizTagService quizTagService;
     @Autowired
     private PracticeResultRepository practiceResultRepository;
     @Autowired
@@ -58,9 +65,10 @@ public class QuizService {
     private UserService userService;
     @Autowired
     private QuizRepository quizRepository;
-
     @Autowired
     private CourseRepository courseRepository;
+    @Autowired
+    private QuizParticipantRepository quizParticipantRepository;
 
     @Transactional
     public Optional<Quiz> findById(Long id) {
@@ -154,6 +162,7 @@ public class QuizService {
         return question;
     }
 
+
     @Transactional
     public void updateQuestionPosition(Long quizId, Long questionId, int newPosition) {
         Quiz quiz = quizRepository.findById(quizId)
@@ -217,7 +226,6 @@ public class QuizService {
     }
 
 
-
     /**
      * Hàm tạo optionLabel theo thứ tự (A, B, C, ..., Z, AA, AB, ...)
      */
@@ -235,7 +243,7 @@ public class QuizService {
     @Autowired
     private Scheduler scheduler; // Inject từ Spring, không dùng SchedulerUtil nữa
 
-    public void createQuiz(Quiz quiz) {
+    public void createQuiz(Quiz quiz, List<Long> tagIds, List<String> newTagNames) {
         User user = userService.getCurrentUser();
         if (user == null) {
             throw new RuntimeException("User not found");
@@ -254,6 +262,20 @@ public class QuizService {
         quiz.setCreatedAt(LocalDateTime.now());
         quiz.setCreatedBy(user);
         quiz.setQuizType(Quiz.QuizType.CLOSE);
+
+        // Create new tags if any
+        if (newTagNames != null) {
+            for (String tagName : newTagNames) {
+                QuizTag newTag = quizTagService.createTag(tagName);
+                quiz.getTags().add(newTag);
+            }
+        }
+
+        // Associate selected tags with the quiz
+        if (tagIds != null) {
+            Set<QuizTag> selectedTags = new HashSet<>(quizTagRepository.findAllById(tagIds));
+            quiz.getTags().addAll(selectedTags);
+        }
 
         Quiz savedQuiz = quizRepository.save(quiz);
 
@@ -277,8 +299,6 @@ public class QuizService {
             e.printStackTrace();
         }
     }
-
-
     public void scheduleClearCacheJob(Long quizId) {
         try {
             scheduleJob.scheduleClearCacheJob(quizId, LocalDateTime.now().plusMinutes(10));
@@ -363,7 +383,6 @@ public class QuizService {
                 return "";
         }
     }
-
 
 
     // Method to export roles to Excel
@@ -475,12 +494,9 @@ public class QuizService {
     }
 
 
-
-
-
     @Transactional
     public List<Quiz> findQuizzesIgnoreId(Long courseId, Long quizId) {
-        return courseId == null ? quizRepository.findByIdNot(quizId) : quizRepository.findByCourseIdAndIdNot(courseId, quizId) ;
+        return courseId == null ? quizRepository.findByIdNot(quizId) : quizRepository.findByCourseIdAndIdNot(courseId, quizId);
     }
 
     public List<User> getParticipants(Long quizId) {
@@ -531,99 +547,89 @@ public class QuizService {
         }
     }
 
-//    public double calculateScore(Long quizId, Map<String, String> responses) {
-//        Optional<Quiz> quizOptional = quizRepository.findById(quizId);
-//        if (quizOptional.isEmpty()) {
-//            throw new IllegalArgumentException("Quiz not found");
-//        }
-//
-//        Quiz quiz = quizOptional.get();
-//        List<Question> questions = questionRepository.findByQuizzes_Id(quizId);
-//
-//        if (questions.isEmpty()) return 0.0;
-//
-//        double totalPoints = 100.0;
-//        double pointsPerQuestion = totalPoints / questions.size();
-//        double score = 0;
-//
-//        for (Question question : questions) {
-//            String userAnswer = responses.get("question_" + question.getId());
-//            AnswerOption correctAnswer = answerOptionRepository.findCorrectAnswerByQuestionId(question.getId());
-//
-//            if (correctAnswer != null && correctAnswer.getOptionText().equals(userAnswer)) {
-//                score += pointsPerQuestion;
-//            }
-//        }
-//        return score;
-//    }
-public double calculateScore(List<String> questionId, Long assessmentId, Map<String, String> responses, User user) {
-    // Kiểm tra danh sách questionId
-    if (questionId == null || questionId.isEmpty()) {
-        throw new IllegalArgumentException("Question ID list cannot be null or empty");
-    }
+    public double calculateScore(List<String> questionId, Long assessmentId, MultiValueMap<String, String> responses, User user) {
+        if (questionId == null || questionId.isEmpty()) {
+            throw new IllegalArgumentException("Danh sách câu hỏi không được rỗng");
+        }
 
-    // Truy vấn danh sách câu hỏi từ questionId
-    List<Question> questions = questionRepository.findAllById(
-            questionId.stream().map(Long::parseLong).collect(Collectors.toList())
-    );
-    if (questions.isEmpty()) {
-        return 0.0;
-    }
+        List<Long> questionIds = questionId.stream().map(Long::parseLong).collect(Collectors.toList());
+        List<Question> questions = questionRepository.findAllById(questionIds);
+        if (questions.isEmpty()) {
+            return 0.0;
+        }
 
-    // Xác định checkPractice dựa trên assessmentId
-    // Nếu assessmentId là null, giả định là PRACTICE
-    boolean isPractice = (assessmentId == null);
+        boolean isPractice = (assessmentId == null);
 
-    // Tạo TestSession
-    TestSession session = new TestSession();
-    session.setUser(user);
-    session.setStartTime(LocalDateTime.now());
-    session.setAssessmentId(assessmentId);
-    session.setCheckPractice(isPractice);
-    testSessionRepository.save(session);
+        TestSession session = new TestSession();
+        session.setUser(user);
+        session.setStartTime(LocalDateTime.now());
+        session.setAssessmentId(assessmentId);
+        session.setCheckPractice(isPractice);
+        testSessionRepository.save(session);
 
-    double totalPoints = 100.0;
-    double pointsPerQuestion = totalPoints / questions.size();
-    double score = 0;
+        double totalPoints = 100.0;
+        double pointsPerQuestion = totalPoints / questions.size();
+        double score = 0;
 
-    for (Question question : questions) {
-        String userAnswerId = responses.get("answers[" + question.getId() + "]");
-        AnswerOption correctAnswer = answerOptionRepository.findCorrectAnswerByQuestionId(question.getId());
+        // Lấy tất cả đáp án đúng một lần duy nhất
+        List<AnswerOption> correctOptionsList = answerOptionRepository.findCorrectAnswersByQuestionIds(questionIds);
+        Map<Long, List<Long>> correctAnswersMap = correctOptionsList.stream()
+                .collect(Collectors.groupingBy(
+                        ao -> ao.getQuestion().getId(),
+                        Collectors.mapping(AnswerOption::getId, Collectors.toList())
+                ));
 
-        if (userAnswerId != null && correctAnswer != null) {
-            Long userAnswerIdLong = Long.parseLong(userAnswerId);
-            AnswerOption selectedOption = answerOptionRepository.findById(userAnswerIdLong).orElse(null);
+        for (Question question : questions) {
+            List<String> userAnswerIdsStr = responses.get("answers[" + question.getId() + "]");
+            List<Long> correctAnswerIds = correctAnswersMap.getOrDefault(question.getId(), Collections.emptyList());
 
-            if (selectedOption != null && selectedOption.getId().equals(correctAnswer.getId())) {
-                score += pointsPerQuestion;
+            if (userAnswerIdsStr != null && !userAnswerIdsStr.isEmpty()) {
+                List<Long> userAnswerIds = userAnswerIdsStr.stream()
+                        .map(Long::parseLong)
+                        .collect(Collectors.toList());
 
-                if (session.isCheckPractice()) {
-                    // Lưu vào practice_result cho PRACTICE
-                    PracticeResult practiceResult = new PracticeResult(session, question, true, pointsPerQuestion);
-                    practiceResultRepository.save(practiceResult);
+                int totalCorrect = correctAnswerIds.size();
+                int userCorrectCount = (int) userAnswerIds.stream().filter(correctAnswerIds::contains).count();
+
+                double questionScore = (totalCorrect > 0) ? (pointsPerQuestion / totalCorrect) * userCorrectCount : 0;
+                score += questionScore;
+
+                for (Long selectedOptionId : userAnswerIds) {
+                    AnswerOption selectedOption = answerOptionRepository.findById(selectedOptionId).orElse(null);
+                    if (selectedOption != null) {
+                        Answer answer = new Answer();
+                        answer.setSelectedOption(selectedOption);
+                        answer.setQuestion(question);
+                        answer.setAnswerText(selectedOption.getOptionText());
+                        answer.setIsCorrect(correctAnswerIds.contains(selectedOptionId));
+                        answerRepository.save(answer);
+                    }
+                }
+
+                if (isPractice) {
+                    practiceResultRepository.save(new PracticeResult(session, question, userCorrectCount == totalCorrect, questionScore));
                 } else {
-                    // Lưu vào result cho EXAM
-                    Result result = new Result(session, question, true, pointsPerQuestion);
-                    resultRepository.save(result);
+                    resultRepository.save(new Result(session, question, userCorrectCount == totalCorrect, questionScore));
                 }
             }
         }
+
+        // Làm tròn score đến 2 chữ số thập phân
+        return BigDecimal.valueOf(score).setScale(2, RoundingMode.HALF_UP).doubleValue();
     }
 
-    return score;
-}
+
     public Duration calculateQuizDuration(int numberOfQuestions) {
         long totalSeconds = numberOfQuestions * 90;
         return Duration.of(totalSeconds, ChronoUnit.SECONDS);
     }
 
     @Transactional
-    public Set<Question> getQuestionsOfQuiz(String quizName){
+    public Set<Question> getQuestionsOfQuiz(String quizName) {
         return findByName(quizName).getQuestions();
     }
 
-    public List<Question> totalQuestions(Long quizID)
-    {
+    public List<Question> totalQuestions(Long quizID) {
         return questionRepository.findQuestionsByQuizId(quizID);
     }
 
@@ -687,16 +693,214 @@ public double calculateScore(List<String> questionId, Long assessmentId, Map<Str
         return correctCount;
     }
 
-    /**
-     * find TestSession by assessmentId và userId.
-     *
-     * @param assessmentId ID of assessment
-     * @param userId ID of user
-     * Contact gr 2 if this function error
-     */
-    public Optional<TestSession> findTestSessionByAssessmentIdAndUserId(Long assessmentId, Long userId) {
-        return testSessionRepository.findByAssessmentIdAndUserId(assessmentId, userId);
+    public Map<String, Object> getScoreByQuiz(Long studentId) {
+        // Lấy danh sách Quiz của sinh viên
+        List<Quiz> quizzes = quizRepository.findByParticipants_Id(studentId);
+        if (quizzes.isEmpty()) {
+            throw new NotFoundException("Quiz not found!");
+        }
+        System.out.println("Số lượng quiz tìm thấy: " + quizzes.size());
+
+        // Lấy danh sách kết quả bài làm của sinh viên
+        List<PracticeResult> results = practiceResultRepository.findResultByTestSession_User_Id(studentId);
+        if (results.isEmpty()) {
+            throw new NotFoundException("No results found for this student!");
+        }
+        System.out.println("✅ Số lượng kết quả bài làm: " + results.size());
+
+        // Map lưu ID quiz và tên quiz
+        Map<Long, String> quizMap = quizzes.stream()
+                .collect(Collectors.toMap(Quiz::getId, Quiz::getName));
+        System.out.println("✅ Quiz Map: " + quizMap);
+
+        // Map lưu điểm số, thời gian hoàn thành và thời gian làm bài
+        Map<String, Integer> quizScores = new LinkedHashMap<>();
+        Map<String, String> quizTimestamps = new LinkedHashMap<>();
+        Map<String, Long> quizDurations = new LinkedHashMap<>(); // Đơn vị: phút
+        Map<String, String> quizCourses = new LinkedHashMap<>();
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy - HH:mm:ss");
+
+        for (PracticeResult result : results) {
+            Question question = result.getQuestion();
+            if (question != null) {
+                Quiz quiz = question.getQuizzes();
+                if (quiz != null) {
+                    String quizTitle = quizMap.get(quiz.getId());
+                    String courseName = quiz.getCourse() != null ? quiz.getCourse().getName() : "Unknown Course";
+                    if (quizTitle != null) {
+                        TestSession session = result.getTestSession();
+                        if (session != null && session.getEndTime() != null && session.getStartTime() != null) {
+                            String timestamp = session.getEndTime().format(formatter);
+                            long durationMinutes = Duration.between(session.getStartTime(), session.getEndTime()).toMinutes();
+
+                            String key = quizTitle + " | " + timestamp;
+
+                            quizScores.put(key, quizScores.getOrDefault(key, 0) + (int) result.getScore());
+                            quizTimestamps.put(key, timestamp);
+                            quizDurations.put(key, durationMinutes);
+                            quizCourses.put(key, courseName);
+                            System.out.println("Added to quizCourses -> Key: " + key + ", Course: " + courseName);
+                        }
+                    }
+                }
+            }
+        }
+
+        System.out.println("Final quizCourses: " + quizCourses);
+
+
+        // Tính chênh lệch điểm giữa các lần làm quiz
+        List<Integer> scoreDifferences = new ArrayList<>();
+        List<Integer> scores = new ArrayList<>(quizScores.values());
+
+        if (!scores.isEmpty()) {
+            scoreDifferences.add(0); // Quiz đầu tiên không có chênh lệch
+            for (int i = 1; i < scores.size(); i++) {
+                scoreDifferences.add(scores.get(i) - scores.get(i - 1));
+            }
+        }
+
+        // Trả về Map kết quả
+        Map<String, Object> response = new HashMap<>();
+        response.put("quizScores", quizScores);
+        response.put("scoreDifferences", scoreDifferences);
+        response.put("quizTimestamps", quizTimestamps);
+        response.put("quizDurations", quizDurations);
+        response.put("quizCourse",quizCourses);
+
+        System.out.println("Dữ liệu trả về: " + response);
+        return response;
     }
 
+    public Map<Long, String> getQuizCourses(Long studentId) {
+        // Lấy danh sách quiz mà sinh viên đã tham gia
+        List<Quiz> quizzes = quizRepository.findByParticipants_Id(studentId);
+
+        // Tạo một Map để lưu khóa học theo Quiz
+        Map<Long, String> quizCourses = new HashMap<>();
+
+        for (Quiz quiz : quizzes) {
+            if (quiz.getCourse() != null) {
+                quizCourses.put(quiz.getId(), quiz.getCourse().getName());
+            }
+        }
+
+        return quizCourses;
+    }
+
+    /**
+     * Lấy danh sách số lượng quiz theo từng khóa học mà sinh viên tham gia
+     */
+    public Map<String, Integer> getQuizFromCourse(Long studentId) {
+        User user = userService.getUserById(studentId);
+        if (user == null) {
+            throw new NotFoundException("User not found !");
+        }
+        System.out.println("✅ User tìm thấy: " + user.getId());
+
+        List<Quiz> quizzes = quizRepository.findByParticipants_Id(user.getId());
+        if (quizzes.isEmpty()) {
+            throw new NotFoundException("Quiz not found !");
+        }
+        System.out.println("✅ Số lượng quiz tìm thấy: " + quizzes.size());
+
+        // Map lưu số lượng quiz theo từng khóa học
+        Map<String, Integer> courseQuizCount = new HashMap<>();
+        for (Quiz quiz : quizzes) {
+            Course course = quiz.getCourse();
+            if (course != null) {
+                courseQuizCount.put(course.getName(), courseQuizCount.getOrDefault(course.getName(), 0) + 1);
+            }
+        }
+
+        System.out.println("✅ Số lượng quiz theo khóa học: " + courseQuizCount);
+        return courseQuizCount;
+    }
+
+
+    @Transactional
+    public Page<Quiz> findByCourseId(Long courseId, Pageable pageable) {
+        return quizRepository.findByCourseId(courseId, pageable);
+    }
+
+    @Transactional
+    public Page<Quiz> searchByCourseAndName(Long courseId, String searchQuery, Pageable pageable) {
+        return quizRepository.findByCourseIdAndNameContainingIgnoreCase(courseId, searchQuery, pageable);
+    }
+    @Transactional
+    public Question updateQuestion(Long questionId, QuestionRequestDTO request) {
+        Question question = questionRepository.findById(questionId)
+                .orElseThrow(() -> new RuntimeException("Question not found with id: " + questionId));
+
+        // Cập nhật thông tin cơ bản của câu hỏi
+        question.setQuestionText(request.getQuestionText());
+        question.setQuestionType(request.getQuestionType());
+
+        // Xóa tất cả các answer options cũ
+        answerOptionRepository.deleteAll(question.getAnswerOptions());
+        question.getAnswerOptions().clear();
+
+        // Thêm các answer options mới
+        if (request.getAnswerOptions() != null && !request.getAnswerOptions().isEmpty()) {
+            for (int i = 0; i < request.getAnswerOptions().size(); i++) {
+                AnswerOptionRequestDTO optionDTO = request.getAnswerOptions().get(i);
+                AnswerOption option = new AnswerOption();
+
+                option.setOptionLabel(generateOptionLabel(i));
+                option.setOptionText(optionDTO.getOptionText());
+                option.setIsCorrect(optionDTO.isCorrect());
+                option.setQuestion(question);
+
+                question.getAnswerOptions().add(option);
+            }
+        }
+
+        return questionRepository.save(question);
+    }
+
+    @Transactional
+    public Page<Quiz> filterByTags(List<Long> tagIds, Pageable pageable) {
+        return quizRepository.findDistinctByTags_IdIn(tagIds, pageable);
+    }
+
+
+
+    @Transactional
+    public void updateQuizTags(Long quizId, List<Long> tagIds) {
+        Quiz quiz = findById(quizId)
+                .orElseThrow(() -> new EntityNotFoundException("Quiz not found"));
+
+        // Nếu tagIds là null, xóa tất cả tags
+        if (tagIds == null) {
+            quiz.getTags().clear();
+        } else {
+            // Lấy tất cả tags từ danh sách ID
+            Set<QuizTag> tags = tagIds.stream()
+                    .map(tagId -> quizTagService.getQuizTagById(tagId))
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+
+            // Cập nhật tags cho quiz
+            quiz.setTags(tags);
+        }
+
+        quizRepository.save(quiz);
+    }
+
+
+
+    @Transactional(readOnly = true)
+    public Quiz getQuizWithTags(Long id) {
+        return quizRepository.findQuizWithTags(id)
+                .orElseThrow(() -> new NotFoundException("Quiz not found"));
+    }
+
+    @Transactional
+    public List<QuizTag> getQuizTags(Long quizId) {
+        Quiz quiz = findById(quizId)
+                .orElseThrow(() -> new EntityNotFoundException("Quiz not found"));
+        return new ArrayList<>(quiz.getTags());
+    }
 
 }

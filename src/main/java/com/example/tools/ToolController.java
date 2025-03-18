@@ -1,8 +1,11 @@
 package com.example.tools;
 
+import com.example.course.CourseService;
+import com.example.quiz.service.QuestionService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.ui.Model;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,24 +25,26 @@ public class ToolController {
     private final CovertExcelToJsonService covertExcelToJsonService;
     private final ConvertTxtToJsonService convertTxtToJsonService;
 
+    @Autowired
+    private CourseService courseService;
+
+    @Autowired
+    private QuestionService questionService;
+
     public ToolController(CovertExcelToJsonService covertExcelToJsonService, ConvertTxtToJsonService convertTxtToJsonService) {
         this.covertExcelToJsonService = covertExcelToJsonService;
         this.convertTxtToJsonService = convertTxtToJsonService;
     }
 
     @GetMapping()
-    public String tools() {
-        return "tools/convert_excel";
+    public String tools(Model model) {
+        model.addAttribute("content", "tools/convert_excel");
+        return "layout";
     }
 
     @GetMapping("/convert_txt")
     public String convertTxt() {
         return "tools/convert_txt";
-    }
-
-    @GetMapping("/generate_exam")
-    public String generateExam() {
-        return "tools/generate_exam";
     }
 
     @PostMapping("/upload_excel")
@@ -152,5 +157,35 @@ public class ToolController {
             return "redirect:/tools/convert_txt";
         }
     }
+
+    //Generate exam
+    @GetMapping("/generate_exam")
+    public String showGenerateExamPage(Model model) {
+        model.addAttribute("Courses", courseService.getAllCourses());
+        model.addAttribute("content", "tools/generate_exam");
+        return "layout";
+    }
+
+    @PostMapping("/generate_exams")
+    public String generateExams(@RequestParam String courseName,
+                                @RequestParam int numOfQuizzes,
+                                @RequestParam int questionsEachQuiz,
+                                Model model){
+        model.addAttribute("content", "tools/generate_exam");
+        model.addAttribute("Courses", courseService.getAllCourses());
+        model.addAttribute("numOfQuizzes", numOfQuizzes);
+        model.addAttribute("questionsEachQuiz", questionsEachQuiz);
+        model.addAttribute("courseName", courseName);
+        try{
+            //List<Quiz> exams = generateExamService.generateExams(testCourse().get(1), numOfQuizs, questionsEachQuiz);
+            model.addAttribute("Quizzes", questionService.generateQuizzes(courseName, numOfQuizzes, questionsEachQuiz));
+            model.addAttribute("Count", numOfQuizzes);
+        } catch (Exception e) {
+            model.addAttribute("errorMessage", e.getMessage());
+        }
+
+        return "layout";
+    }
+
 
 }

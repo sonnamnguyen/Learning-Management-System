@@ -2,11 +2,10 @@ package com.example.exercise.controller;
 
 import com.example.assessment.model.ProgrammingLanguage;
 import com.example.assessment.service.ProgrammingLanguageService;
-import com.example.exercise.model.Exercise;
-import com.example.exercise.model.StudentExerciseAttempt;
-import com.example.exercise.model.StudentExerciseAttemptResponse;
-import com.example.exercise.model.StudentExerciseResponse;
+import com.example.exercise.model.*;
 import com.example.exercise.repository.ExerciseRepository;
+import com.example.exercise.service.CategoryService;
+import com.example.exercise.service.ExerciseCategoryService;
 import com.example.exercise.service.ExerciseService;
 import com.example.exercise.service.StudentExerciseAttemptService;
 import com.example.testcase.*;
@@ -18,6 +17,7 @@ import jakarta.validation.Valid;
 import lombok.*;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -53,6 +53,12 @@ public class ExerciseController {
     private final StudentExerciseAttemptService studentExerciseAttemptService;
     private final UserService userService;
 
+    @Autowired
+    private CategoryService categoryService;
+
+    @Autowired
+    private ExerciseCategoryService exerciseCategoryService;
+
 
     // Common attributes for all views
 
@@ -71,6 +77,7 @@ public class ExerciseController {
             @RequestParam(value = "language", required = false) Long languageId,
             @RequestParam(value = "level", required = false) String level,
             @RequestParam(value = "description", required = false) String descriptionKeyword,
+            @RequestParam(value = "tags", required = false) List<Long> tagIds,
             @RequestParam(value = "page", defaultValue = "0") int page,
             Model model, Authentication authentication) {
 
@@ -79,27 +86,17 @@ public class ExerciseController {
         List<Exercise> exercises;
         int totalPages;
 
-        // Search by title if provided
+        // Logic filtering
         if (title != null && !title.isEmpty()) {
             exercisesPage = exerciseService.searchExercises(title, pageable);
-        } else if (descriptionKeyword != null && !descriptionKeyword.isEmpty()) {
-            if (languageId != null && level != null && !level.isEmpty()) {
-                exercisesPage = exerciseService.searchByDescriptionAndLanguageAndLevel(descriptionKeyword, languageId, level, pageable);
-            } else if (languageId != null) {
-                exercisesPage = exerciseService.searchByDescriptionAndLanguage(descriptionKeyword, languageId, pageable);
-            } else if (level != null && !level.isEmpty()) {
-                exercisesPage = exerciseService.searchByDescriptionAndLevel(descriptionKeyword, level, pageable);
-            } else {
-                exercisesPage = exerciseService.searchByDescriptionPaginated(descriptionKeyword, pageable);
-            }
         } else {
-            if (languageId != null && level != null && !level.isEmpty()) {
-                exercisesPage = exerciseService.getExercisesByLanguageAndLevel(languageId, level, pageable);
-            } else if (languageId != null) {
-                exercisesPage = exerciseService.getExercisesByLanguage(languageId, pageable);
+            if (tagIds != null && !tagIds.isEmpty()) {
+                exercisesPage = exerciseService.getExercisesByFilters(languageId, level, tagIds, pageable);
             } else {
-                exercisesPage = exerciseService.getAllExercises(pageable);
+                exercisesPage = exerciseService.getExercisesByLanguageAndLevel(languageId, level, pageable);
             }
+            exercises = exercisesPage.getContent();
+            totalPages = exercisesPage.getTotalPages();
         }
 
         exercises = exercisesPage.getContent();
@@ -113,6 +110,7 @@ public class ExerciseController {
         model.addAttribute("currentLanguage", languageId);
         model.addAttribute("currentLevel", level);
         model.addAttribute("paramTitle", title);
+        model.addAttribute("tags", categoryService.getAllCategory());
         model.addAttribute("paramDescription", descriptionKeyword);
 
         // Calculate common words if languageId is provided
@@ -471,7 +469,11 @@ public class ExerciseController {
         response.put("totalLanguages", programmingLanguageService.countTotalLanguages());
 
         // Lấy dữ liệu biểu đồ
-        Map<String, Integer> topicChartData = exerciseService.getExercisesByLanguage();
+//        Map<String, Integer> topicChartData = exerciseService.getExercisesByLanguage();
+        // Xử lý dữ liệu cho biểu đồ
+        Map<String, Integer> topicChartData = (languageId == null)
+                ? exerciseService.getExercisesByLanguage()  // Lấy dữ liệu của tất cả ngôn ngữ
+                : exerciseService.getExercisesByLanguage(languageId); // Lọc theo ngôn ngữ được chọn
         Map<String, Integer> difficultyChartData = exerciseService.getLevelDistribution(languageId);
 
         response.put("topicChartData", topicChartData != null ? topicChartData : new HashMap<>());
@@ -517,9 +519,13 @@ public class ExerciseController {
         model.addAttribute("testCaseFormList", testCaseFormList); // Initialize the wrapper
         List<ProgrammingLanguage> programmingLanguages = programmingLanguageService.getAllProgrammingLanguages();
         model.addAttribute("programmingLanguages", programmingLanguages);
+        List<Category> categories = categoryService.getAllCategory();
+        model.addAttribute("tags", categories);
         model.addAttribute("content", "exercises/create");
         return "layout";
     }
+
+
 
     @PostMapping("/create")
     @ResponseBody
@@ -527,6 +533,7 @@ public class ExerciseController {
             @Valid @ModelAttribute Exercise exercise, BindingResult result,
             @RequestParam("name") String name,
             @RequestParam("language") Integer languageId,
+            @RequestParam("tag") List<Integer> tagIds, // Chấp nhận danh sách tag
             @RequestParam(value = "setup_for_sql", required = false) String setupsql,
             @RequestParam("description") String description,
             @RequestParam("setup") String setup,
@@ -558,18 +565,31 @@ public class ExerciseController {
             exercise.setSetupsql(null);
         }
 
+        // Xử lý nhiều tag
+        List<ExerciseCategory> exerciseCategories = new ArrayList<>();
+        for (Integer tagId : tagIds) {
+            Optional<Category> categoryOpt = categoryService.getCategoryById(tagId);
+            if (categoryOpt.isEmpty()) {
+                return ResponseEntity.badRequest().body("Invalid tag ID: " + tagId);
+            }
+            Category category = categoryOpt.get();
+            ExerciseCategory exerciseCategory = new ExerciseCategory();
+            exerciseCategory.setExercise(exercise);
+            exerciseCategory.setCategory(category);
+            exerciseCategories.add(exerciseCategory);
+        }
+        exercise.setExerciseCategories(exerciseCategories);
+
         List<TestCase> testCasesFinal = new ArrayList<>();
 
         if ("json".equalsIgnoreCase(testCaseMethod)) {
             if (testCasesJson == null || testCasesJson.trim().isEmpty()) {
                 return ResponseEntity.badRequest().body("TestCases JSON is EMPTY!");
             }
-
             try {
                 ObjectMapper objectMapper = new ObjectMapper();
                 List<Map<String, Object>> testCaseJsonList = objectMapper.readValue(testCasesJson, new TypeReference<>() {
                 });
-
                 for (Map<String, Object> tcMap : testCaseJsonList) {
                     //moi
                     String input = (String) tcMap.get("input");
@@ -586,22 +606,17 @@ public class ExerciseController {
                     TestCase tc = new TestCase();
                     tc.setInput((String) tcMap.get("input"));
                     tc.setExpectedOutput((String) tcMap.get("expectedOutput"));
-                    tc.setHidden(Boolean.parseBoolean(String.valueOf(tcMap.getOrDefault("hidden", "false")))); // Dùng "hidden" thay vì "isHidden"
+                    tc.setHidden(Boolean.parseBoolean(String.valueOf(tcMap.getOrDefault("hidden", "false"))));
                     tc.setExercise(exercise);
-
                     if ("SQL".equalsIgnoreCase(language.getLanguage())) {
                         tc.setSqlTagNumber((String) tcMap.get("sqlTagNumber"));
                     } else {
                         tc.setSqlTagNumber(null);
                     }
-
                     testCasesFinal.add(tc);
                 }
             } catch (JsonProcessingException e) {
-                Map<String, String> errorResponse = new HashMap<>();
-                errorResponse.put("error", "Invalid JSON format!");
-                return ResponseEntity.badRequest().body(errorResponse);
-//                return ResponseEntity.badRequest().body("Invalid JSON format! Check console for details.");
+                return ResponseEntity.badRequest().body("Invalid JSON format! Check console for details.");
             }
         } else if ("ui".equalsIgnoreCase(testCaseMethod)) {
             int normalIndex = 0;
@@ -610,21 +625,17 @@ public class ExerciseController {
                 String expectedOutput = allParams.get("testCaseFormList.testCasesList[" + normalIndex + "].expectedOutput");
                 String sqlTagNumber = allParams.get("testCaseFormList.testCasesList[" + normalIndex + "].sqlTagNumber");
 
-                if (input == null || input.trim().isEmpty() || expectedOutput == null || expectedOutput.trim().isEmpty()) {
-//                    return ResponseEntity.badRequest().body("Test case input/output cannot be empty!");
-                    Map<String, String> errorResponse = new HashMap<>();
-                    errorResponse.put("error", "Test case input/output cannot be empty!");
-                    return ResponseEntity.badRequest().body(errorResponse);
+                if (input != null && !input.trim().isEmpty() && expectedOutput != null && !expectedOutput.trim().isEmpty()) {
+                    TestCase tc = new TestCase();
+                    tc.setInput(input);
+                    tc.setExpectedOutput(expectedOutput);
+                    tc.setHidden(false);
+                    tc.setExercise(exercise);
+                    if ("SQL".equalsIgnoreCase(language.getLanguage())) {
+                        tc.setSqlTagNumber(sqlTagNumber);
+                    }
+                    testCasesFinal.add(tc);
                 }
-                TestCase tc = new TestCase();
-                tc.setInput(input);
-                tc.setExpectedOutput(expectedOutput);
-                tc.setHidden(false);
-                tc.setExercise(exercise);
-                if ("SQL".equalsIgnoreCase(language.getLanguage())) {
-                    tc.setSqlTagNumber(sqlTagNumber);
-                }
-                testCasesFinal.add(tc);
                 normalIndex++;
             }
             int hiddenIndex = 0;
@@ -658,12 +669,17 @@ public class ExerciseController {
 
         try {
             exerciseService.saveExercise(exercise);
+            for (ExerciseCategory exerciseCategory : exerciseCategories) {
+                exerciseCategory.setExercise(exercise); // Đảm bảo có ID của exercise
+                exerciseCategoryService.savedExerciseCategory(exerciseCategory); // Lưu vào DB
+            }
             return ResponseEntity.ok("Exercise & Test Cases Saved!");
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body("Error saving exercise: " + e.getMessage());
         }
     }
+
 
     // Show the edit form for a specific exercise
     @GetMapping("/edit/{id}")
@@ -673,7 +689,7 @@ public class ExerciseController {
         if (exercise == null) {
             return "redirect:/exercises"; // Redirect nếu không tìm thấy
         }
-
+        List<Category> categories = categoryService.getAllCategory();
         List<ProgrammingLanguage> programmingLanguages = programmingLanguageService.getAllProgrammingLanguages();
         ObjectMapper objectMapper = new ObjectMapper();
         String testCasesJson = "[]";
@@ -687,6 +703,7 @@ public class ExerciseController {
         List<TestCase> hiddenTestCases = testCaseService.findHiddenTestCases(id);
 
         model.addAttribute("exercise", exercise);
+        model.addAttribute("tags", categories);
         model.addAttribute("programmingLanguages", programmingLanguages);
         model.addAttribute("testCasesJson", testCasesJson);
         model.addAttribute("testCases", exercise.getTestCases());
@@ -697,12 +714,16 @@ public class ExerciseController {
         return "layout";
     }
 
+
     @PostMapping("/edit/{id}")
     public String updateExercise(
+
             @PathVariable Long id,
             @ModelAttribute Exercise exercise,
             @RequestParam(name = "testCaseMethod") String testCaseMethod, // Thêm để xác định phương thức
             @RequestParam(name = "testCasesJson", required = false) String testCasesJson,
+            @RequestParam(name = "tag", required = false) List<Integer> categoryIds,
+            @RequestParam(name = "removedTagIds", required = false) List<Integer> removedTagIds,
             @RequestParam Map<String, String> allParams, // Lấy dữ liệu từ UI
             Model model,
             RedirectAttributes redirectAttributes) {
@@ -728,6 +749,34 @@ public class ExerciseController {
         existingExercise.setDescription(exercise.getDescription());
         existingExercise.setSetup(exercise.getSetup());
         existingExercise.setLevel(exercise.getLevel());
+
+        // xóa các tag đã removed trên UI
+        if (removedTagIds != null && !removedTagIds.isEmpty()) {
+            for (Integer tagId : removedTagIds) {
+                exerciseCategoryService.deleteByExerciseIdAndCategoryId(id, Long.valueOf(tagId));
+            }
+        }
+
+        if (categoryIds != null && !categoryIds.isEmpty()) {
+            List<ExerciseCategory> newCategories = new ArrayList<>();
+            for (Integer categoryId : categoryIds) {
+                if (!exerciseCategoryService.existsByExerciseIdAndCategoryId(id, categoryId.longValue())) {
+                    Category category = categoryService.getCategoryById(categoryId.longValue())
+                            .orElseThrow(() -> new RuntimeException("Category not found with id: " + categoryId));
+
+                    ExerciseCategory exerciseCategory = new ExerciseCategory();
+                    exerciseCategory.setExercise(existingExercise);
+                    exerciseCategory.setCategory(category);
+                    exerciseCategoryService.savedExerciseCategory(exerciseCategory);
+                }
+            }
+//            // Lưu các ExerciseCategory mới
+//            for (ExerciseCategory ec : newCategories) {
+//                exerciseCategoryService.savedExerciseCategory(ec);
+//            }
+        }
+
+
         // existingExercise.setLanguage(exercise.getLanguage()); // Đảm bảo ánh xạ language từ form
 
         if (exercise.getLanguage().getLanguage().equals("SQL")) {
@@ -894,7 +943,7 @@ public class ExerciseController {
 
         // Tạo tiêu đề
         Row headerRow = sheet.createRow(0);
-        String[] columns = {"ID", "Title", "Language", "Level", "Description", "Set Up Code", "Test Case", "Hidden Test Case"};
+        String[] columns = {"ID", "Title", "Language", "Level", "Description", "Set Up Code", "Test Case", "Hidden Test Case", "Tag"};
         for (int i = 0; i < columns.length; i++) {
             Cell cell = headerRow.createCell(i);
             cell.setCellValue(columns[i]);
@@ -938,7 +987,19 @@ public class ExerciseController {
             // Set the concatenated string in the cell
             row.createCell(6).setCellValue(visibleTestCases.toString().trim());
             row.createCell(7).setCellValue(hiddenTestCases.toString().trim());
+
+            StringBuilder tags = new StringBuilder();
+            if (exercise.getExerciseCategories() != null && !exercise.getExerciseCategories().isEmpty()) {
+                exercise.getExerciseCategories().forEach(ec -> {
+                    if (tags.length() > 0) {
+                        tags.append(", ");
+                    }
+                    tags.append(ec.getCategory().getTag());
+                });
+            }
+            row.createCell(8).setCellValue(tags.toString());
         }
+
 
         // Xuất dữ liệu ra mảng byte
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();

@@ -49,7 +49,6 @@ public class TestSession {
         setCheckPracticeBasedOnQuiz(quiz);
     }
 
-
     // Phương thức gán checkPractice dựa trên quizCategory
     private void setCheckPracticeBasedOnQuiz(Quiz quiz) {
         this.checkPractice = (quiz.getQuizCategory() == Quiz.QuizCategory.PRACTICE);

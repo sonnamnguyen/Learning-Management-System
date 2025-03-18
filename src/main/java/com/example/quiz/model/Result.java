@@ -25,7 +25,6 @@ public class Result {
     @JoinColumn(name = "test_session_id", nullable = false)
     @JsonIgnore
     private TestSession testSession;
-
     @Column(name = "score")
     private double score;
 

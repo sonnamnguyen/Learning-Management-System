@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Sinh Viên</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        .dashboard-header {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .dashboard-header h1 {
+            color: #333;
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .student-info {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .student-info h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 20px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .info-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .info-item strong {
+            display: block;
+            margin-bottom: 5px;
+            color: #495057;
+        }
+
+        .info-item span {
+            color: #333;
+            font-size: 16px;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .chart-container h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 20px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .stats-table th, .stats-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .stats-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .stats-table tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .stats-table td {
+            color: #333;
+        }
+
+        .error-message {
+            color: #dc3545;
+            padding: 10px;
+            background: #f8d7da;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .chart-container canvas {
+            width: 100% !important;
+            height: 500px !important;
+        }
+
+
+        @media (max-width: 768px) {
+            .dashboard-container {
+                padding: 10px;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <h1>Dashboard Sinh Viên</h1>
+        </div>
+
+        <!-- Thông báo lỗi nếu có -->
+        <div th:if="${error}" class="error-message" th:text="${error}"></div>
+
+        <!-- Thông tin sinh viên -->
+        <div class="student-info">
+            <h2>Thông tin sinh viên</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <strong>Họ và tên:</strong>
+                    <span th:text="${student != null ? student.lastName + ' ' + student.firstName : 'N/A'}">Nguyễn Văn A</span>
+                </div>
+                <div class="info-item">
+                    <strong>MSSV:</strong>
+                    <span th:text="${student != null ? student.id : 'N/A'}">12345678</span>
+                </div>
+                <div class="info-item">
+                    <strong>Email:</strong>
+                    <span th:text="${student != null ? student.email : 'N/A'}">example@email.com</span>
+                </div>
+                <div class="info-item">
+                    <strong>Username:</strong>
+                    <span th:text="${student != null ? student.username : 'N/A'}">username</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Biểu đồ điểm số -->
+        <div class="chart-container">
+            <h2>Biểu đồ điểm số và chênh lệch</h2>
+            <canvas id="quizChart" width="600" height="500"></canvas>
+        </div>
+
+        <!-- Bảng thống kê chi tiết -->
+        <div class="chart-container">
+            <h2>Chi tiết kết quả Quiz</h2>
+            <table class="stats-table">
+                <thead>
+                <tr>
+                    <th>Quiz</th>
+                    <th>Khóa học</th>
+                    <th>Điểm số</th>
+                    <th>Thời gian làm bài (phút)</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="score : ${quizScores}">
+                    <td th:text="${score.key}">Quiz Name</td>
+                    <td th:text="${quizCourses[score.key.split(' \\| ')[0]]}">Course Name</td>
+                    <td th:text="${score.value}">Score</td>
+                    <td th:text="${quizDurations[score.key]}">Duration</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Thống kê theo khóa học -->
+        <div class="chart-container">
+            <h2>Thống kê Quiz theo khóa học</h2>
+            <table class="stats-table">
+                <thead>
+                <tr>
+                    <th>Khóa học</th>
+                    <th>Số bài Quiz</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="course : ${courseQuizCount}">
+                    <td th:text="${course.key}">Course Name</td>
+                    <td th:text="${course.value}">Quiz Count</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        document.addEventListener("DOMContentLoaded", function() {
+            // Lấy dữ liệu từ Thymeleaf
+            const quizScores = /*[[${quizScores}]]*/ {};
+            const scoreDifferences = /*[[${scoreDifferences}]]*/ [];
+
+            if (quizScores && Object.keys(quizScores).length > 0) {
+                createChart(quizScores, scoreDifferences);
+            } else {
+                console.warn("Dữ liệu Quiz trống hoặc không hợp lệ");
+            }
+        });
+
+
+        function createChart(quizScores, scoreDifferences) {
+    const ctx = document.getElementById("quizChart").getContext("2d");
+    const labels = Object.keys(quizScores).map(key => {
+        // Chỉ lấy tên quiz, cắt bỏ phần timestamp nếu có
+        return key.split(' (')[0];
+    });
+    const scores = Object.values(quizScores);
+    // Kiểm tra dữ liệu hợp lệ
+    if (!labels.length || !scores.length) {
+        console.error("Dữ liệu biểu đồ không hợp lệ");
+        return;
+    }
+
+    new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: "Điểm số",
+                    data: scores,
+                    backgroundColor: "#4CAF50",
+                    borderColor: "#388E3C",
+                    borderWidth: 1,
+                    order: 2
+                },
+                {
+                    label: "Chênh lệch điểm",
+                    data: scoreDifferences || new Array(scores.length).fill(0),
+                    type: "line",
+                    borderColor: "#FF9800",
+                    backgroundColor: "rgba(255, 152, 0, 0.2)",
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.4,
+                    order: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        drawBorder: false
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: true,
+                    text: 'Biểu đồ điểm số và chênh lệch qua các bài Quiz'
+                }
+            }
+        }
+    });
+}
+    </script>
+</div>
+</body>
+</html>

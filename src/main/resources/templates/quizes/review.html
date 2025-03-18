@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Review</title>
+    <!--<style>
+        .centered {
+            text-align: center; /* Căn giữa ngang */
+            vertical-align: middle; /* Căn giữa dọc */
+            padding: 10px; /* Đệm nội dung cho đẹp */
+        }
+    </style>-->
+    <style>
+        .highlight-row {
+            background-color: red; !important
+            color: white; !important
+        }
+        .highlight-row td {
+            background-color: red !important; /* Màu đỏ cho cả hàng */
+        }
+    </style>
+</head>
+<body>
+<div>
+    <h1>Review quiz</h1>
+    <div>
+        <form th:action="@{/quizes/importFromReview}" method="post">
+            <table border="1">
+                <thead>
+                <tr>
+                    <th>No.</th>
+                    <th>Question</th>
+                    <th>A</th>
+                    <th>B</th>
+                    <th>C</th>
+                    <th>D</th>
+                    <th>E</th>
+                    <th>F</th>
+                    <th>G</th>
+                    <th>H</th>
+                    <th>I</th>
+                    <!--<th>Answer</th>-->
+                    <th>Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="question : ${session.Questions}"
+                    th:class="${#lists.contains(session.DuplicateQuestionNos, #strings.toString(question.questionNo)) ? 'highlight-row' : ''}">
+                    <td th:text="${question.questionNo}"></td>
+                    <td><pre th:text="${question.questionText}"></pre></td>
+                    <td th:text="${question.answerOptions.size() > 0 ? question.answerOptions[0].optionText : ''}"></td>
+                    <td th:text="${question.answerOptions.size() > 1 ? question.answerOptions[1].optionText : ''}"></td>
+                    <td th:text="${question.answerOptions.size() > 2 ? question.answerOptions[2].optionText : ''}"></td>
+                    <td th:text="${question.answerOptions.size() > 3 ? question.answerOptions[3].optionText : ''}"></td>
+                    <td th:text="${question.answerOptions.size() > 4 ? question.answerOptions[4].optionText : ''}"></td>
+                    <td th:text="${question.answerOptions.size() > 5 ? question.answerOptions[5].optionText : ''}"></td>
+                    <td th:text="${question.answerOptions.size() > 6 ? question.answerOptions[6].optionText : ''}"></td>
+                    <td th:text="${question.answerOptions.size() > 7 ? question.answerOptions[7].optionText : ''}"></td>
+                    <td th:text="${question.answerOptions.size() > 8 ? question.answerOptions[8].optionText : ''}"></td>
+                    <!--<td th:if="${session.Correct[question.questionNo - 1]} != null"
+                        th:text="${session.Correct[question.questionNo - 1]}"></td>-->
+                    <td>
+                        <button type="button" th:attr="onclick= |deleteQuestionInReview(${question.questionNo})|">Delete</button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+            <input type="hidden" name="fileType" th:value="${session.fileType}">
+            <!--<input type="hidden" name="dataJson" th:value="${session.dataJson != null ? session.dataJson : ''}">-->
+            <input type="hidden" name="questionsJson" id="questionsJson">
+            <input type="hidden" name="fileName" th:value="${session.fileName}">
+            <input type="hidden" name="courseName" th:value="${session.courseName}">
+            <button type="submit">Import</button>
+        </form>
+    </div>
+</div>
+
+<!--<div>
+    <h1>Review Quiz</h1>
+</div>
+<div>
+    <form th:action="@{/quizes/importFromReview}" method="post">
+        <ul>
+            <li th:each="question : ${session.Questions}">
+                <div>
+                    <span th:text="${question.questionNo}"></span><br>
+                    <pre th:text="${question.questionText}"></pre><br>
+                    <div th:if="${session.warnings[question.questionNo - 1] != null}">
+                        <span th:text="${session.warnings[question.questionNo - 1]}" style="color:red;"></span>
+                    </div>
+
+                    &lt;!&ndash;Action&ndash;&gt;
+                    <div>
+                        <button type="button" th:attr="onclick= |deleteQuestionInReview(${question.questionNo})|">Delete</button>
+                    </div>
+                </div>
+            </li>
+        </ul>
+        <input type="hidden" name="questionsJson" id="questionsJson">
+        <input type="hidden" name="fileName" value="${session.fileName}">
+        <input type="hidden" name="courseName" value="${session.courseName}">
+        <button type="submit">Import</button>
+    </form>
+
+</div>-->
+</body>
+
+<script>
+    function deleteQuestionInReview(index) {
+        if (confirm("Bạn có chắc chắn muốn xóa?")) {
+            window.location.href = "/quizes/review/delete/" + index;
+        }
+    }
+</script>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    var questions = /*[[${session.Questions}]]*/ [];
+    document.getElementById("questionsJson").value = JSON.stringify(questions);
+    console.log("JSON Data:", document.getElementById("questionsJson").value);
+    /*]]>*/
+</script>
+
+</html>
+
+

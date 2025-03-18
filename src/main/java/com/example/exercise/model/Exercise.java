@@ -44,6 +44,10 @@ public class Exercise {
     @JoinColumn(name = "programming_language_id", nullable = false)
     private ProgrammingLanguage language;
 
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<ExerciseCategory> exerciseCategories;
+
     @Column(columnDefinition = "TEXT")
     private String setup;
 

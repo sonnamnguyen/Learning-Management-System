@@ -4,10 +4,8 @@ import com.example.assessment.model.*;
 import com.example.assessment.repository.AssessmentRepository;
 import com.example.assessment.repository.InvitedCandidateRepository;
 import com.example.assessment.service.*;
-import com.example.config.AppConfig;
 import com.example.course.CourseService;
 import com.example.email.EmailService;
-import com.example.quiz.model.*;
 import com.example.exercise.model.Exercise;
 import com.example.assessment.model.Assessment;
 import com.example.assessment.service.AssessmentService;
@@ -22,10 +20,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.hashids.Hashids;
@@ -50,19 +45,16 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.support.SessionStatus;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.FileOutputStream;
+
 import java.io.IOException;
 import java.lang.reflect.Field;
 
 import java.time.Duration;
-import org.springframework.format.annotation.DateTimeFormat;
-
-import java.time.LocalDate;
 import java.security.Principal;
 import java.time.LocalDateTime;
 import java.io.ByteArrayInputStream;
@@ -1137,7 +1129,7 @@ public class AssessmentController {
                                    @RequestParam(value = "questionId", required = false) List<String> questionIds,
                                    @RequestParam("tabLeaveCount") int tabLeaveCount,
                                    @RequestParam("violationFaceCount") int violationFaceCount,
-                                   @RequestParam Map<String, String> responses,
+                                   @RequestParam MultiValueMap<String, String> responses,
                                    @RequestParam("hasExercise") boolean hasExercise,
                                    Principal principal,
                                    SessionStatus sessionStatus,

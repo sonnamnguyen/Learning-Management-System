@@ -22,8 +22,8 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
     Page<Question> search(String searchQuery, Pageable pageable);
 
     // Find questions based on the name of their associated quiz
-    @Query("SELECT q FROM Question q JOIN q.quizzes quiz WHERE quiz.id = :quizId")
-    public abstract List<Question> findQuestionsByQuizId(@Param("quizId") Long quizId);
+    //@Query("SELECT q FROM Question q JOIN q.quizzes quiz WHERE quiz.id = :quizId")
+    //public abstract List<Question> findQuestionsByQuizId(@Param("quizId") Long quizId);
 
     List<Question> findByQuizzes_Name(String name);
 
@@ -45,7 +45,6 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
     @Query("UPDATE Question q SET q.questionNo = q.questionNo - 1 WHERE q.quizzes = :quiz AND q.questionNo > :oldPos AND q.questionNo <= :newPos")
     void decrementQuestionNo(@Param("quiz") Quiz quiz, @Param("oldPos") int oldPos, @Param("newPos") int newPos);
 
-    @Query("SELECT q FROM Question q JOIN FETCH q.answerOptions WHERE q.id IN " +
-            "(SELECT aq.question.id FROM AssessmentQuestion aq WHERE aq.assessment.id = :id)")
-    List<Question> findQuestionsWithAnswersByAssessmentId(@Param("id") Long id);
+    @Query("SELECT q FROM Question q JOIN q.quizzes quiz WHERE quiz.id = :quizId")
+    public abstract List<Question> findQuestionsByQuizId(@Param("quizId") Long quizId);
 }

@@ -1,4 +1,17 @@
-<div class="container-fluid mt-5">
+<head>
+    <style>
+        html, body {
+            overflow: hidden;
+        }
+    </style>
+    <!-- Thêm các script và CSS của Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+<div class="container-fluid">
     <div class="card shadow-lg">
         <div class="card-header bg-primary text-white">
             <h3 class="card-title mb-0 text-center">Edit Quiz</h3>
@@ -9,12 +22,12 @@
                 <!-- Nhóm thông tin chung -->
                 <h5 class="text-primary">Quiz Information</h5>
                 <div class="row">
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6 mb-1">
                         <label for="quizName" class="form-label fw-bold">Quiz Name</label>
                         <input type="text" id="quizName" th:field="*{name}" class="form-control" placeholder="Enter quiz name" required>
                         <div class="invalid-feedback">Quiz name is required.</div>
                     </div>
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6 mb-1">
                         <label for="quizDescription" class="form-label fw-bold">Description</label>
                         <textarea id="quizDescription" th:field="*{description}" class="form-control" placeholder="Enter quiz description" rows="3" required></textarea>
                         <div class="invalid-feedback">Quiz description is required.</div>
@@ -24,14 +37,14 @@
                 <!-- Nhóm thời gian -->
                 <h5 class="text-primary mt-4">Schedule</h5>
                 <div class="row">
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6 mb-1">
                         <label for="startTime" class="form-label fw-bold">Start Time</label>
                         <input type="datetime-local" id="startTime"
                                th:value="${#temporals.format(quiz.startTime, 'yyyy-MM-dd''T''HH:mm')}"
                                name="startTime" class="form-control" required>
                         <div class="invalid-feedback">Start time is required.</div>
                     </div>
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6 mb-1">
                         <label for="endTime" class="form-label fw-bold">End Time</label>
                         <input type="datetime-local" id="endTime"
                                th:value="${#temporals.format(quiz.endTime, 'yyyy-MM-dd''T''HH:mm')}"
@@ -43,7 +56,7 @@
                 <!-- Nhóm cài đặt Quiz -->
                 <h5 class="text-primary mt-4">Quiz Settings</h5>
                 <div class="row">
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6 mb-1">
                         <label for="course" class="form-label fw-bold">Course</label>
                         <select id="course" th:field="*{course}" class="form-select" required>
                             <option value="" disabled>-- Select a Course --</option>
@@ -51,7 +64,7 @@
                         </select>
                         <div class="invalid-feedback">Course is required.</div>
                     </div>
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6 mb-1">
                         <label for="attemptLimit" class="form-label fw-bold">Attempt Limit</label>
                         <input type="number" id="attemptLimit" th:field="*{attemptLimit}" class="form-control" placeholder="Enter attempt limit" min="1" required>
                         <div class="invalid-feedback">Attempt limit is required and must be at least 1.</div>
@@ -59,7 +72,7 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6 mb-1">
                         <label for="quizType" class="form-label fw-bold">Quiz Type</label>
                         <select id="quizType" th:field="*{quizCategory}" class="form-select" required>
                             <option value="" disabled>-- Select Quiz Type --</option>
@@ -68,10 +81,29 @@
                         </select>
                         <div class="invalid-feedback">Quiz type is required.</div>
                     </div>
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-6 mb-1">
                         <label for="createdBy" class="form-label fw-bold">Created By</label>
                         <div id="createdBy" th:text="${user.username}" class="form-control-plaintext"></div>
                         <input type="hidden" th:field="*{createdBy}" th:value="${user.id}" />
+                    </div>
+                </div>
+
+                <!-- Thêm vào sau phần Quiz Settings và trước phần Buttons -->
+                <h5 class="text-primary mt-4">Tags</h5>
+                <div class="row">
+                    <div class="col-md-12 mb-1">
+                        <button type="button" class="btn btn-secondary mt-4" data-bs-toggle="modal" data-bs-target="#tagsModal">
+                            Manage Tags
+                        </button>
+                        <span id="selectedTagsCount" class="ms-2 text-muted">
+                            <th:block th:if="${quiz != null && quiz.tags != null}">
+                                <span th:each="tag : ${quiz.tags}"
+                                      class="badge bg-secondary me-1"
+                                      th:text="${tag.name}"
+                                      th:data-tag-id="${tag.id}">
+                                </span>
+                            </th:block>
+                        </span>
                     </div>
                 </div>
 
@@ -88,3 +120,428 @@
         </div>
     </div>
 </div>
+
+<!-- Thêm Modal vào cuối file, trước đóng thẻ body -->
+<!-- Modal for managing tags -->
+<div class="modal fade" id="tagsModal" tabindex="-1" aria-labelledby="tagsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="tagsModalLabel">
+                    <i class="fas fa-tags me-2"></i>Manage Tags
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <!-- Left column: Search and Create -->
+                    <div class="col-md-5 border-end">
+                        <!-- Create New Tag -->
+                        <form th:action="@{/quizes/tags/create}" method="post" id="createTagForm" class="mb-4" onsubmit="createTag(event)">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="tagName" name="name" placeholder="New tag name" required>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Add
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Search Tags -->
+                        <div class="mb-3">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" class="form-control" id="searchTags"
+                                       placeholder="Search tags" oninput="searchTags()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right column: Tags List -->
+                    <div class="col-md-7">
+                        <div class="mb-3">
+                            <button type="button" class="btn btn-danger" onclick="deleteSelectedTags()" id="deleteSelectedBtn" disabled>
+                                <i class="fas fa-trash-alt me-1"></i>Delete Selected
+                                <span class="badge bg-light text-danger ms-1" id="selectedCount">0</span>
+                            </button>
+                        </div>
+
+                        <div class="tags-scroll" style="max-height: 400px; overflow-y: auto;">
+                            <div id="tagsContainer" class="d-flex flex-wrap gap-2">
+                                <!-- Tags will be rendered here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="saveSelectedTags()">
+                    <i class="fas fa-check me-1"></i>Done
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Thêm styles -->
+<style>
+.tag-item {
+    transition: all 0.3s ease;
+}
+
+.tag-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.tags-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+
+.tags-scroll::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.tags-scroll::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+
+.tags-scroll::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+</style>
+
+<!-- Thêm script -->
+<script>
+// Định nghĩa các hàm utility
+function handleResponse(response) {
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+}
+
+function handleError(error) {
+    console.error('Error:', error);
+    const tagsContainer = document.getElementById('tagsContainer');
+    tagsContainer.innerHTML = `
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-circle"></i>
+            Unable to load tags. Please try refreshing the page.
+        </div>`;
+}
+
+// Hàm search tags
+function searchTags() {
+    const query = document.getElementById('searchTags').value.trim();
+    const tagsContainer = document.getElementById('tagsContainer');
+
+    // Nếu query rỗng, load lại tất cả tags
+    if (!query) {
+        loadAllTags();
+        return;
+    }
+
+    // Show loading state
+    tagsContainer.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+
+    fetch(`/quizes/tags/search?name=${encodeURIComponent(query)}`, {
+        headers: {
+            'Accept': 'application/json'
+        }
+    })
+    .then(handleResponse)
+    .then(tags => {
+        renderTags(tags, getExistingTagIds());
+    })
+    .catch(handleError);
+}
+
+// Hàm tạo tag mới
+function createTag(event) {
+    event.preventDefault();
+    const formData = new FormData(document.getElementById('createTagForm'));
+
+    fetch('/quizes/tags/create', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.text())
+    .then(message => {
+        // Hiển thị thông báo thành công
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-success alert-dismissible fade show';
+        alertDiv.innerHTML = `
+            <strong>Success!</strong> Tag created successfully.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+
+        const modalBody = document.querySelector('.modal-body');
+        modalBody.insertBefore(alertDiv, modalBody.firstChild);
+
+        setTimeout(() => alertDiv.remove(), 3000);
+
+        document.getElementById('tagName').value = ''; // Xóa input
+        loadAllTags(); // Làm mới danh sách tag
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+        alertDiv.innerHTML = `
+            <strong>Error!</strong> Failed to create tag.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        const modalBody = document.querySelector('.modal-body');
+        modalBody.insertBefore(alertDiv, modalBody.firstChild);
+    });
+}
+
+// Thay thế hàm deleteSelectedTags hiện tại bằng hàm này
+async function deleteSelectedTags() {
+    const selectedTags = Array.from(document.querySelectorAll('.tag-checkbox:checked'))
+        .map(checkbox => ({
+            id: checkbox.value,
+            name: checkbox.nextElementSibling.textContent.trim()
+        }));
+
+    if (selectedTags.length === 0) return;
+
+    if (!confirm(`Are you sure you want to delete ${selectedTags.length} selected tags?`)) {
+        return;
+    }
+
+    // Kiểm tra tất cả các tags trước khi xóa
+    try {
+        // Kiểm tra xem có tag nào đang được sử dụng không
+        const checkResults = await Promise.all(selectedTags.map(tag =>
+            fetch(`/quizes/tags/check/${tag.id}`)
+                .then(response => response.json())
+                .then(data => ({
+                    tagName: tag.name,
+                    isUsed: data.isUsed
+                }))
+        ));
+
+        // Nếu có bất kỳ tag nào đang được sử dụng
+        const usedTags = checkResults.filter(result => result.isUsed);
+        if (usedTags.length > 0) {
+            const usedTagNames = usedTags.map(tag => tag.tagName).join('", "');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+            alertDiv.innerHTML = `
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <strong>Cannot delete any tags:</strong><br>
+                The following tags are being used in quizzes: "${usedTagNames}"<br>
+                No tags were deleted to maintain data integrity.
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+
+            const modalBody = document.querySelector('.modal-body');
+            modalBody.insertBefore(alertDiv, modalBody.firstChild);
+            setTimeout(() => alertDiv.remove(), 5000);
+            return;
+        }
+
+        // Nếu không có tag nào đang được sử dụng, tiến hành xóa
+        const deleteResults = await Promise.all(selectedTags.map(tag =>
+            fetch(`/quizes/tags/delete/${tag.id}`, {
+                method: 'DELETE'
+            }).then(response => {
+                if (!response.ok) throw new Error(`Failed to delete tag: ${tag.name}`);
+                return tag.name;
+            })
+        ));
+
+        // Hiển thị thông báo thành công
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-success alert-dismissible fade show';
+        alertDiv.innerHTML = `
+            <i class="fas fa-check-circle me-2"></i>
+            Successfully deleted ${deleteResults.length} tags
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+
+        const modalBody = document.querySelector('.modal-body');
+        modalBody.insertBefore(alertDiv, modalBody.firstChild);
+        setTimeout(() => alertDiv.remove(), 3000);
+
+        // Refresh tag list
+        searchTags();
+        updateDeleteButton();
+
+    } catch (error) {
+        console.error('Error:', error);
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+        alertDiv.innerHTML = `
+            <i class="fas fa-exclamation-circle me-2"></i>
+            <strong>Error:</strong> Failed to delete tags.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+
+        const modalBody = document.querySelector('.modal-body');
+        modalBody.insertBefore(alertDiv, modalBody.firstChild);
+        setTimeout(() => alertDiv.remove(), 5000);
+    }
+}
+
+// Hàm cập nhật trạng thái nút Delete Selected
+function updateDeleteButton() {
+    const selectedTags = document.querySelectorAll('.tag-checkbox:checked');
+    const deleteBtn = document.getElementById('deleteSelectedBtn');
+    const selectedCount = document.getElementById('selectedCount');
+
+    deleteBtn.disabled = selectedTags.length === 0;
+    selectedCount.textContent = selectedTags.length;
+}
+
+// Sửa lại hàm getExistingTagIds để lấy tag IDs từ quiz hiện tại
+function getExistingTagIds() {
+    const quizId = document.querySelector('form').getAttribute('action').split('/').pop();
+    return new Promise((resolve, reject) => {
+        fetch(`/quizes/${quizId}/tags`)
+            .then(handleResponse)
+            .then(tags => {
+                const tagIds = new Set(tags.map(tag => tag.id.toString()));
+                resolve(tagIds);
+            })
+            .catch(error => {
+                console.error('Error fetching existing tags:', error);
+                resolve(new Set());
+            });
+    });
+}
+
+// Cập nhật lại hàm loadAllTags để sử dụng Promise
+async function loadAllTags() {
+    try {
+        const [tags, existingTagIds] = await Promise.all([
+            fetch('/quizes/tags', {
+                headers: {
+                    'Accept': 'application/json'
+                }
+            }).then(handleResponse),
+            getExistingTagIds()
+        ]);
+        renderTags(tags, existingTagIds);
+    } catch (error) {
+        handleError(error);
+    }
+}
+
+// Khi trang load, lấy các tag hiện tại của quiz
+document.addEventListener('DOMContentLoaded', function() {
+    // Load tất cả tags và đánh dấu những tag đã được chọn
+    loadAllTags();
+});
+
+function renderTags(tags, existingTagIds) {
+    const tagsContainer = document.getElementById('tagsContainer');
+    tagsContainer.innerHTML = '';
+
+    if (!tags || tags.length === 0) {
+        tagsContainer.innerHTML = '<div class="alert alert-info">No tags found</div>';
+        return;
+    }
+
+    const tagsArray = Array.isArray(tags) ? tags : [tags];
+    tagsArray.forEach(tag => {
+        if (tag && tag.id) {
+            const sanitizedName = tag.name
+                ? tag.name.replace(/[<>]/g, '')
+                : 'Unnamed Tag';
+
+            const isChecked = existingTagIds.has(tag.id.toString());
+
+            tagsContainer.innerHTML += `
+                <div class="tag-item">
+                    <div class="d-flex align-items-center bg-light rounded p-2">
+                        <div class="form-check mb-0">
+                            <input class="form-check-input tag-checkbox" type="checkbox"
+                                   id="tag-${tag.id}" name="tagIds" value="${tag.id}"
+                                   onchange="updateDeleteButton()"
+                                   ${isChecked ? 'checked' : ''}>
+                            <label class="form-check-label" for="tag-${tag.id}">
+                                ${sanitizedName}
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    });
+    updateDeleteButton();
+}
+
+// Sửa đổi hàm saveSelectedTags để cập nhật tags của quiz
+function saveSelectedTags() {
+    const selectedTags = Array.from(document.querySelectorAll('input[name="tagIds"]:checked'))
+        .map(checkbox => ({
+            id: checkbox.value,
+            name: checkbox.nextElementSibling.textContent.trim()
+        }));
+
+    const quizId = document.querySelector('form').getAttribute('action').split('/').pop();
+
+    // Gọi API để cập nhật tags cho quiz
+    fetch(`/quizes/${quizId}/tags/update`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            tagIds: selectedTags.map(tag => tag.id)
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to update tags');
+        }
+        return response.text();
+    })
+    .then(() => {
+        // Cập nhật hiển thị tags
+        const countDisplay = document.getElementById('selectedTagsCount');
+        if (selectedTags.length > 0) {
+            const tagsList = selectedTags.map(tag =>
+                `<span class="badge bg-secondary me-1" data-tag-id="${tag.id}">${tag.name}</span>`
+            ).join('');
+            countDisplay.innerHTML = tagsList;
+        } else {
+            countDisplay.innerHTML = '';
+        }
+
+        // Đóng modal
+        const closeButton = document.querySelector('#tagsModal .btn-secondary[data-bs-dismiss="modal"]');
+        if (closeButton) {
+            closeButton.click();
+        }
+
+        // Hiển thị thông báo thành công
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-success alert-dismissible fade show';
+        alertDiv.innerHTML = `
+            <i class="fas fa-check-circle me-2"></i>
+            Tags updated successfully
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        document.querySelector('.card-body').insertBefore(alertDiv, document.querySelector('form'));
+        setTimeout(() => alertDiv.remove(), 3000);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+        alertDiv.innerHTML = `
+            <i class="fas fa-exclamation-circle me-2"></i>
+            Failed to update tags
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        document.querySelector('.card-body').insertBefore(alertDiv, document.querySelector('form'));
+    });
+}
+</script>
