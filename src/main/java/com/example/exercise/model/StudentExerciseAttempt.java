@@ -25,7 +25,6 @@ public class StudentExerciseAttempt {
     private Integer id;
 
     // có thể null nếu như participant truy cập assessment bằng email
-    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User attendant_user;
@@ -34,15 +33,9 @@ public class StudentExerciseAttempt {
     @Column(nullable = true)
     private String attendant_email;
 
-    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "exercise_id", referencedColumnName = "id",nullable = false)
     private Exercise submitted_exercise;
-
-    @JsonProperty("name") // Expose only exercise name
-    public String getExerciseName() {
-        return submitted_exercise != null ? submitted_exercise.getName() : null;
-    }
 
     // có thể null
     @ManyToOne(fetch = FetchType.LAZY)

@@ -7,6 +7,7 @@ import com.example.exercise.repository.ExerciseRepository;
 import com.example.testcase.TestCase;
 import com.example.testcase.TestCaseRepository;
 import jakarta.transaction.Transactional;
+import org.apache.commons.text.similarity.LevenshteinDistance;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -22,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.DateFormatSymbols;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.example.utils.Helper.getCellValueAsString;
 
@@ -410,7 +412,7 @@ public class ExerciseService {
     public List<Exercise> getExercisesByAssessmentId(Long assessmentId) {
         return exerciseRepository.findExercisesByAssessmentId(assessmentId);
     }
-//                      COOKING DASHBOARD
+    //                      COOKING DASHBOARD
     double min_score = 0.0;
     double pass_score = 70.0;
     double max_score = 100.0;
@@ -485,6 +487,11 @@ public class ExerciseService {
         return passedTestsPerMonth;
     }
 
+    //Cai method nay cua nhom 2 dung de lay list exercise theo id
+    public List<Exercise> findByIds(List<Long> ids) {
+        return exerciseRepository.findAllById(ids);
+    }
+
     public List<Exercise> findAll() {
         return exerciseRepository.findAll();
     }
@@ -509,4 +516,202 @@ public class ExerciseService {
         return exerciseRepository.findByDescriptionContainingIgnoreCaseAndLanguageIdAndLevel(keyword, languageId, exerciseLevel, pageable);
     }
 
+    // Các phương thức mới được bổ sung
+    public List<Exercise> searchExercisesAll(String title) {
+        return exerciseRepository.findByNameContainingIgnoreCase(title);
+    }
+
+    public List<Exercise> searchByDescriptionAll(String description) {
+        return exerciseRepository.findByDescriptionContainingIgnoreCase(description);
+    }
+
+    public List<Exercise> searchByDescriptionAndLanguageAll(String description, Long languageId) {
+        return exerciseRepository.findByDescriptionContainingIgnoreCaseAndLanguageId(description, languageId);
+    }
+
+    public List<Exercise> searchByDescriptionAndLevelAll(String description, String level) {
+        Exercise.Level exerciseLevel = (level == null || level.trim().isEmpty())
+                ? null
+                : Exercise.Level.valueOf(level.toUpperCase());
+        return exerciseRepository.findByDescriptionContainingIgnoreCaseAndLevel(description, exerciseLevel);
+    }
+
+    public List<Exercise> searchByDescriptionAndLanguageAndLevelAll(String description, Long languageId, String level) {
+        Exercise.Level exerciseLevel = (level == null || level.trim().isEmpty())
+                ? null
+                : Exercise.Level.valueOf(level.toUpperCase());
+        return exerciseRepository.findByDescriptionContainingIgnoreCaseAndLanguageIdAndLevel(description, languageId, exerciseLevel);
+    }
+
+    public List<Exercise> getExercisesByLanguageAll(Long languageId) {
+        return exerciseRepository.findByLanguageId(languageId);
+    }
+
+    public List<Exercise> getExercisesByLanguageAndLevelAll(Long languageId, String level) {
+        Exercise.Level exerciseLevel = (level == null || level.trim().isEmpty())
+                ? null
+                : Exercise.Level.valueOf(level.toUpperCase());
+        return exerciseRepository.findByLanguageIdAndLevel(languageId, exerciseLevel);
+    }
+
+    public List<Exercise> getAllExercisesAll() {
+        return exerciseRepository.findAll();
+    }
+    public Map<String, List<Exercise>> findDuplicates() {
+        List<Exercise> allExercises = exerciseRepository.findAll();
+        Map<String, List<Exercise>> duplicates = new HashMap<>();
+        LevenshteinDistance levenshtein = new LevenshteinDistance();
+        Set<String> processedPairs = new HashSet<>(); // Để tránh kiểm tra trùng lặp
+
+        for (int i = 0; i < allExercises.size(); i++) {
+            Exercise ex1 = allExercises.get(i);
+            String key1 = ex1.getDescription() + "-" + ex1.getLanguage().getLanguage();
+
+            if (!duplicates.containsKey(key1)) {
+                duplicates.put(key1, new ArrayList<>());
+            }
+            List<Exercise> group = duplicates.get(key1);
+            if (!group.contains(ex1)) {
+                group.add(ex1);
+            }
+
+            for (int j = i + 1; j < allExercises.size(); j++) {
+                Exercise ex2 = allExercises.get(j);
+                String key2 = ex2.getDescription() + "-" + ex2.getLanguage().getLanguage();
+
+                if (!ex1.getLanguage().getLanguage().equals(ex2.getLanguage().getLanguage())) {
+                    continue; // Chỉ so sánh các bài cùng ngôn ngữ
+                }
+
+                // Tránh kiểm tra lại cặp đã xét
+                String pairKey = ex1.getDescription() + "|" + ex2.getDescription();
+                if (processedPairs.contains(pairKey)) continue;
+                processedPairs.add(pairKey);
+
+                // Tính độ tương đồng Levenshtein
+                int maxLength = Math.max(ex1.getDescription().length(), ex2.getDescription().length());
+                int distance = levenshtein.apply(ex1.getDescription(), ex2.getDescription());
+                double similarity = 1.0 - ((double) distance / maxLength);
+
+                if (similarity >= 0.7) { // Nếu giống nhau trên 70%
+                    if (!group.contains(ex2)) {
+                        group.add(ex2);
+                    }
+                }
+            }
+        }
+
+        // Chỉ giữ lại các nhóm có hơn 1 phần tử (bài trùng lặp thực sự)
+        duplicates.entrySet().removeIf(entry -> entry.getValue().size() <= 1);
+
+        return duplicates;
+    }
+
+
+    //---------------------Dashboard
+    public Map<String, Integer> getExerciseStatistics(Long languageId) {
+        Map<String, Integer> stats = new HashMap<>();
+        stats.put("total", exerciseRepository.countTotalExercises(languageId));
+        stats.put("new", exerciseRepository.countNewExercises(languageId));
+        stats.put("completed", exerciseRepository.countCompletedExercises(languageId));
+        stats.put("missed", exerciseRepository.countMissedWorkouts(languageId));
+        return stats;
+    }
+
+
+    public Map<String, Integer> getLevelDistribution(Long languageId) {
+        Map<String, Integer> levelDistribution = new HashMap<>(Map.of("EASY", 0, "MEDIUM", 0, "HARD", 0));
+        List<Object[]> levelCounts = exerciseRepository.countExercisesByLevel(languageId);
+
+        if (levelCounts != null) {
+            for (Object[] row : levelCounts) {
+                if (row.length >= 2 && row[0] != null && row[1] != null) {
+                    String level = row[0].toString();
+                    int count = ((Number) row[1]).intValue();
+                    levelDistribution.put(level, count);
+                }
+            }
+        }
+        return levelDistribution;
+    }
+
+
+
+
+    public Map<String, Integer> getStatusDistribution(Long languageId) {
+        Map<String, Integer> statusDistribution = new HashMap<>(Map.of("COMPLETED", 0, "PENDING", 0));
+        List<Object[]> statusCounts = exerciseRepository.countExercisesByStatus(languageId);
+        if (statusCounts != null) {
+            for (Object[] row : statusCounts) {
+                if (row.length >= 2 && row[0] != null && row[1] != null) {
+                    statusDistribution.put(row[0].toString(), ((Number) row[1]).intValue());
+                }
+            }
+        }
+        return statusDistribution;
+    }
+
+
+    public int countNewExercises(Long languageId) {
+        return exerciseRepository.countNewExercises(languageId);
+    }
+
+    public double getCompletionRate(Long languageId) {
+        return exerciseRepository.calculateCompletionRate(languageId);
+    }
+
+    public int countUpcomingWorkouts(Long languageId) {
+        return exerciseRepository.countUpcomingWorkouts(languageId);
+    }
+
+    public int countMissedWorkouts(Long languageId) {
+        return exerciseRepository.countMissedWorkouts(languageId);
+    }
+
+    public Map<String, Integer> getExercisesByLanguage() {
+        Map<String, Integer> data = new HashMap<>();
+        List<Object[]> results = exerciseRepository.countExercisesByLanguage();
+
+        for (Object[] row : results) {
+            data.put(row[0].toString(), ((Number) row[1]).intValue());
+        }
+
+        return data;
+    }
+    public int countTotalExercises(Long languageId) {
+        return exerciseRepository.countTotalExercises(languageId);
+    }
+
+    public Map<String, Integer> getExercisesByLanguage(Long languageId) {
+        Map<String, Integer> data = new HashMap<>();
+        List<Object[]> results;
+
+        if (languageId == null) {
+            results = exerciseRepository.countExercisesByLanguage();
+        } else {
+            results = exerciseRepository.countExercisesByLanguage(languageId);
+        }
+
+        for (Object[] row : results) {
+            data.put(row[0].toString(), ((Number) row[1]).intValue());
+        }
+
+        return data;
+    }
+    public Page<Exercise> getExercisesByFilters(Long languageId, String level, List<Long> tagIds, Pageable pageable) {
+//        Exercise.Level levelEnum = null;
+//        if (level != null && !level.isEmpty()) {
+//            levelEnum = Exercise.Level.valueOf(level);
+//        }
+//        return exerciseRepository.findByFiltersAndTags(languageId, levelEnum, tagIds, pageable);
+        Exercise.Level exerciseLevel = (level == null || level.trim().isEmpty())
+                ? null
+                : Exercise.Level.valueOf(level.toUpperCase());
+
+        if (tagIds != null && tagIds.isEmpty()) {
+            tagIds = null;
+        }
+
+        return exerciseRepository.findByFiltersAndTags(languageId, exerciseLevel, tagIds, pageable);
+    }
 }

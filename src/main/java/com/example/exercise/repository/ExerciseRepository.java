@@ -96,13 +96,13 @@ public interface ExerciseRepository extends PagingAndSortingRepository<Exercise,
             "StudentExerciseAttempt sea " +
             "JOIN sea.attendant_user " +
             "WHERE " +
-            "sea.attendant_user.id = :id and sea.score_exercise >= :passingScore ")
+            "sea.attendant_user.id = :id AND sea.score_exercise >= :passingScore  AND sea.attendant_email is null")
     Integer countUserNumberExercises(@Param("id") Long userId,
                                      @Param("passingScore") double passingScore );
 
     @Query("SELECT COUNT(DISTINCT e.id) FROM Exercise e " +
             "JOIN e.studentExerciseAttempts sea " +
-            "WHERE sea.attendant_user.id = :id AND sea.score_exercise >= :passingScore " +
+            "WHERE sea.attendant_user.id = :id AND sea.score_exercise >= :passingScore  AND sea.attendant_email is null " +
             "AND sea.attemptDate = (SELECT MIN(sea2.attemptDate) FROM StudentExerciseAttempt sea2 " +
             "WHERE sea2.submitted_exercise.id = e.id AND sea2.attendant_user.id = sea.attendant_user.id)")
     Integer countUserNumberPerfectExercises(@Param("id") Long userId,
@@ -112,15 +112,15 @@ public interface ExerciseRepository extends PagingAndSortingRepository<Exercise,
 
     @Query("Select COUNT(DISTINCT e.id) FROM Exercise e " +
             "JOIN e.studentExerciseAttempts sea " +
-            "JOIN e.language WHERE e.level  = 'EASY' " +
-            "AND sea.attendant_user.id = :id  and e.language.language like %:language% and sea.score_exercise >= :passingScore ")
+            "JOIN e.language WHERE e.level  = 'EASY'  AND sea.attendant_email is null " +
+            "AND sea.attendant_user.id = :id  and e.language.language like %:language% and sea.score_exercise >= :passingScore")
     Integer countUserNumberEasyExercises(@Param("id") Long userId,
                                          @Param("language") String language,
                                          @Param("passingScore") double passingScore );
 
     @Query("Select COUNT(DISTINCT e.id) FROM Exercise e " +
             "JOIN e.studentExerciseAttempts sea " +
-            "JOIN e.language WHERE e.level =  'HARD' " +
+            "JOIN e.language WHERE e.level =  'HARD'  AND sea.attendant_email is null " +
             "AND sea.attendant_user.id =:id  and e.language.language like %:language% and sea.score_exercise >= :passingScore")
     Integer countUserNumberHardExercises(@Param("id") Long userId,
                                          @Param("language") String language,
@@ -128,7 +128,7 @@ public interface ExerciseRepository extends PagingAndSortingRepository<Exercise,
 
     @Query("Select COUNT(DISTINCT e.id) FROM Exercise e " +
             "JOIN e.studentExerciseAttempts sea " +
-            "JOIN e.language WHERE e.level = 'MEDIUM' " +
+            "JOIN e.language WHERE e.level = 'MEDIUM'  AND sea.attendant_email is null " +
             "AND sea.attendant_user.id =:id  and e.language.language like %:language% and sea.score_exercise >= :passingScore")
     Integer countUserNumberMediumExercises(@Param("id") Long userId,
                                            @Param("language") String language,
@@ -138,7 +138,7 @@ public interface ExerciseRepository extends PagingAndSortingRepository<Exercise,
             "FROM StudentExerciseAttempt sea " +
             "WHERE YEAR(sea.attemptDate) = :year " +
             "AND sea.score_exercise >= :passingScore " +
-            "AND sea.attendant_user.id = :userId " +
+            "AND sea.attendant_user.id = :userId  AND sea.attendant_email is null " +
             "GROUP BY MONTH(sea.attemptDate) " +
             "ORDER BY MONTH(sea.attemptDate)")
     List<Object[]> countPassedTestsPerMonth(@Param("userId") Long userId,
@@ -148,16 +148,102 @@ public interface ExerciseRepository extends PagingAndSortingRepository<Exercise,
 
     @Query("SELECT COUNT(DISTINCT e.id) FROM Exercise e " +
             "JOIN e.studentExerciseAttempts sea " +
-            "WHERE sea.attendant_user.id = :userId " +
+            "WHERE sea.attendant_user.id = :userId  AND sea.attendant_email is null " +
             "GROUP BY e.id " +
             "HAVING COUNT(sea.id) >= 5 AND SUM(CASE WHEN sea.score_exercise >= 70 THEN 1 ELSE 0 END) > 0")
     Integer countExercisesWithMoreThanFiveAttemptsAndAtLeastOneAbove70(@Param("userId") Long userId);
 
     @Query("SELECT COUNT(sea.id) FROM StudentExerciseAttempt sea " +
-            "WHERE sea.attendant_user.id = :userId " +
+            "WHERE sea.attendant_user.id = :userId  AND sea.attendant_email is null " +
             "AND HOUR(sea.attemptDate) BETWEEN :startHour AND :endHour")
     Integer countExercisesSubmittedBetweenHours(
             @Param("userId") Long userId,
             @Param("startHour") int startHour,
             @Param("endHour") int endHour);
+
+    //-----------Duplicate
+    @Query("SELECT e FROM Exercise e WHERE LOWER(e.name) LIKE LOWER(CONCAT('%', :name, '%'))")
+    List<Exercise> findByNameContainingIgnoreCase(@Param("name") String name);
+
+    @Query("SELECT e FROM Exercise e WHERE LOWER(e.description) LIKE LOWER(CONCAT('%', :description, '%'))")
+    List<Exercise> findByDescriptionContainingIgnoreCase(@Param("description") String description);
+
+    @Query("SELECT e FROM Exercise e WHERE LOWER(e.description) LIKE LOWER(CONCAT('%', :description, '%')) " +
+            "AND e.language.id = :languageId")
+    List<Exercise> findByDescriptionContainingIgnoreCaseAndLanguageId(@Param("description") String description,
+                                                                      @Param("languageId") Long languageId);
+
+    @Query("SELECT e FROM Exercise e WHERE LOWER(e.description) LIKE LOWER(CONCAT('%', :description, '%')) " +
+            "AND e.level = :level")
+    List<Exercise> findByDescriptionContainingIgnoreCaseAndLevel(@Param("description") String description,
+                                                                 @Param("level") Exercise.Level level);
+
+    @Query("SELECT e FROM Exercise e WHERE LOWER(e.description) LIKE LOWER(CONCAT('%', :description, '%')) " +
+            "AND e.language.id = :languageId " +
+            "AND e.level = :level")
+    List<Exercise> findByDescriptionContainingIgnoreCaseAndLanguageIdAndLevel(@Param("description") String description,
+                                                                              @Param("languageId") Long languageId,
+                                                                              @Param("level") Exercise.Level level);
+
+    @Query("SELECT e FROM Exercise e WHERE e.language.id = :languageId")
+    List<Exercise> findByLanguageId(@Param("languageId") Long languageId);
+
+    @Query("SELECT e FROM Exercise e WHERE e.language.id = :languageId AND e.level = :level")
+    List<Exercise> findByLanguageIdAndLevel(@Param("languageId") Long languageId,
+                                            @Param("level") Exercise.Level level);
+
+    //--------------Dashboard
+    @Query("SELECT e.level, COUNT(e) FROM Exercise e " +
+            "WHERE (:languageId IS NULL OR e.language.id = :languageId) " +
+            "GROUP BY e.level")
+    List<Object[]> countExercisesByLevel(@Param("languageId") Long languageId);
+
+
+    @Query("SELECT e.status, COUNT(e) FROM Exercise e WHERE (:languageId IS NULL OR e.language.id = :languageId) GROUP BY e.status")
+    List<Object[]> countExercisesByStatus(@Param("languageId") Long languageId);
+
+
+    @Query("SELECT COUNT(e) FROM Exercise e WHERE e.status = 'NEW' AND (:languageId IS NULL OR e.language.id = :languageId)")
+    int countNewExercises(@Param("languageId") Long languageId);
+
+    @Query("SELECT COUNT(e) FROM Exercise e WHERE e.status = 'COMPLETED' AND (:languageId IS NULL OR e.language.id = :languageId)")
+    int countCompletedExercises(@Param("languageId") Long languageId);
+
+    @Query("SELECT COUNT(e) FROM Exercise e WHERE (:languageId IS NULL OR e.language.id = :languageId)")
+    int countTotalExercises(@Param("languageId") Long languageId);
+
+    default double calculateCompletionRate(Long languageId) {
+        int total = countTotalExercises(languageId);
+        return total == 0 ? 0 : ((double) countCompletedExercises(languageId) / total) * 100;
+    }
+
+    @Query("SELECT COUNT(e) FROM Exercise e WHERE e.status = 'UPCOMING' AND (:languageId IS NULL OR e.language.id = :languageId)")
+    int countUpcomingWorkouts(@Param("languageId") Long languageId);
+
+    @Query("SELECT COUNT(e) FROM Exercise e WHERE e.status = 'MISSED' AND (:languageId IS NULL OR e.language.id = :languageId)")
+    int countMissedWorkouts(@Param("languageId") Long languageId);
+
+    @Query("SELECT e.language.language, COUNT(e) FROM Exercise e GROUP BY e.language.language")
+    List<Object[]> countExercisesByLanguage();
+
+    @Query("SELECT pl.language, COUNT(e) FROM Exercise e JOIN e.language pl " +
+            "WHERE (:languageId IS NULL OR pl.id = :languageId) " +
+            "GROUP BY pl.language")
+    List<Object[]> countExercisesByLanguage(@Param("languageId") Long languageId);
+
+    @Query("SELECT DISTINCT e FROM Exercise e " +
+            "LEFT JOIN e.exerciseCategories ec " +
+            "WHERE (:languageId IS NULL OR e.language.id = :languageId) " +
+            "AND (:level IS NULL OR e.level = :level) " +
+            "AND (COALESCE(:tagIds, NULL) IS NULL OR EXISTS (" +
+            "    SELECT 1 FROM ExerciseCategory ec " +
+            "    WHERE ec.exercise = e " +
+            "    AND ec.category.id IN :tagIds))")
+    Page<Exercise> findByFiltersAndTags(
+            @Param("languageId") Long languageId,
+            @Param("level") Exercise.Level level,
+            @Param("tagIds") List<Long> tagIds,
+            Pageable pageable);
 }
+
+

@@ -26,7 +26,7 @@ public interface InvitedCandidateRepository extends JpaRepository<InvitedCandida
     Page<InvitedCandidate> findAll(Pageable pageable);
 
     // Find an invited candidate by email
-    Optional<InvitedCandidate> findByEmail(String email);
+    List<InvitedCandidate> findByEmail(String email);
 
     // Find all invited candidates for a specific assessment (non-paged)
     List<InvitedCandidate> findByAssessmentId(Long assessmentId);
@@ -62,4 +62,9 @@ public interface InvitedCandidateRepository extends JpaRepository<InvitedCandida
             "AND ic.email = :email")
     Optional<InvitedCandidate> findByAssessmentIdAndEmail(@Param("assessmentId") Long assessmentId,
                                                           @Param("email") String email);
+    @Query("SELECT i FROM InvitedCandidate i WHERE i.email = :email")
+    List<InvitedCandidate> findByUserEmail(@Param("email") String email);
+
+    @Query("SELECT ic FROM InvitedCandidate ic WHERE ic.assessment.id = :userId")
+    List<InvitedCandidate> findByUserId(@Param("userId") Long userId);
 }

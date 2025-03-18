@@ -73,7 +73,7 @@ public class Assessment {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    @Column(nullable = false, name = "updatedAt")
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt = LocalDateTime.now();
 
     @PreUpdate

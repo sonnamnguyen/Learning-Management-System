@@ -25,6 +25,7 @@ import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final CustomUserDetailsService customUserDetailsService;
@@ -53,8 +54,13 @@ public class SecurityConfig {
                                 "assessments/{id}/preview"
                                 // Allow all invite-related links (Take Assessment)
                         ).permitAll()
+                        .requestMatchers("exercises/profile/**").authenticated()
                         .anyRequest().authenticated()
+
                 )
+                .exceptionHandling(exception
+                        -> exception.accessDeniedPage("/exercises/access-denied")
+                ) // config auth
                 .formLogin(form -> form.loginPage("/login").permitAll())
                 .logout(logout -> logout
                         .logoutUrl("/logout")

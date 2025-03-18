@@ -17,7 +17,7 @@
 
         /* Dòng tiêu đề với màu xanh nhạt */
         table.table-bordered thead tr {
-            background-color: #e3f2fd;
+            background-color: #e3f2fd; /* Màu xanh nhạt */
             color: #000;
         }
 
@@ -305,6 +305,34 @@
             transition: transform 0.3s ease;
         }
 
+        .toggle-details[aria-expanded="true"] i {
+            transform: rotate(180deg);
+        }
+
+        /*!* Danh sách cảnh báo *!*/
+        /*.warning-list {*/
+        /*    color: #b71c1c;*/
+        /*    background-color: #fff3cd;*/
+        /*    border-left: 4px solid #ffa000;*/
+        /*    padding: 10px;*/
+        /*    border-radius: 5px;*/
+        /*    list-style-type: none;*/
+        /*    margin: 0;*/
+        /*}*/
+
+        /*.warning-list li {*/
+        /*    padding: 5px 0;*/
+        /*    font-weight: 500;*/
+        /*}*/
+
+        /*!* Card chứa chi tiết *!*/
+        /*.card.card-body {*/
+        /*    background-color: #fffbee;*/
+        /*    border: 1px solid #ffc107;*/
+        /*    border-radius: 5px;*/
+        /*    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);*/
+        /*}*/
+
         .warning-list {
             list-style: none;
             padding: 0;
@@ -438,12 +466,15 @@
             background: transparent;
         }
 
+        /* Footer của modal */
         .modal-footer {
             border-top: 2px solid #ddd;
             border-radius: 0 0 10px 10px;
             background-color: #f8f9fa;
         }
 
+
+        /*Delete Notification*/
         #deleteSuccessToast {
             min-width: 250px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -462,28 +493,105 @@
             font-size: 1rem;
         }
 
-        /*@keyframes slideIn {*/
-        /*    from {*/
-        /*        transform: translateX(100%);*/
-        /*        opacity: 0;*/
-        /*    }*/
-        /*    to {*/
-        /*        transform: translateX(0);*/
-        /*        opacity: 1;*/
-        /*    }*/
+        .alert-warning {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffca2c;
+            color: #664d03;
+        }
+
+        .tag-dropdown {
+            position: relative;
+        }
+
+        .tag-dropdown .dropdown-menu {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid rgba(0, 0, 0, .15);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .15);
+        }
+
+        .tag-dropdown .form-check {
+            padding: 8px 12px;
+            margin: 0;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .tag-dropdown .form-check:hover {
+            background-color: #f8f9fa;
+        }
+
+        .tag-dropdown .form-check-input:checked + .form-check-label {
+            font-weight: 500;
+        }
+
+        /*Badge css*/
+        /*.badge {*/
+        /*    font-size: 14px;*/
+        /*    padding: 8px 12px;*/
+        /*    border-radius: 12px;*/
+        /*    margin: 4px; !* Tăng khoảng cách giữa các badge *!*/
+        /*    display: inline-block; !* Giúp badge không bị dính vào nhau *!*/
         /*}*/
 
-
-        /*@keyframes slideOut {*/
-        /*    from {*/
-        /*        transform: translateX(0);*/
-        /*        opacity: 1;*/
-        /*    }*/
-        /*    to {*/
-        /*        transform: translateX(100%);*/
-        /*        opacity: 0;*/
-        /*    }*/
+        /*.bg-dark {*/
+        /*    background-color: #6c757d !important;*/
+        /*    color: #ffffff !important;*/
         /*}*/
+
+        /*.bg-secondary {*/
+        /*    background-color: #dee2e6 !important;*/
+        /*    color: #495057 !important;*/
+        /*}*/
+
+        /*#toggleTags {*/
+        /*    cursor: pointer;*/
+        /*    font-weight: bold;*/
+        /*    padding: 8px 14px;*/
+        /*    border-radius: 12px;*/
+        /*    background-color: #adb5bd !important;*/
+        /*    color: #343a40 !important;*/
+        /*    border: none;*/
+        /*}*/
+
+        /*#toggleTags:hover {*/
+        /*    background-color: #868e96 !important;*/
+        /*}*/
+        .badge {
+            font-size: 14px;
+            padding: 8px 12px;
+            border-radius: 12px;
+            margin: 4px; /* Tăng khoảng cách giữa các badge */
+            display: inline-block; /* Giúp badge không bị dính vào nhau */
+        }
+
+        /* Màu xanh lá nhạt */
+        .bg-dark {
+            background-color: #b5e7a0 !important; /* Xanh lá nhạt */
+            color: #155724 !important; /* Chữ xanh đậm */
+        }
+
+        /* Màu xanh lá hơi xám */
+        .bg-secondary {
+            background-color: #d4edda !important; /* Xanh lá pastel */
+            color: #155724 !important;
+        }
+
+        /* Nút toggle */
+        #toggleTags {
+            cursor: pointer;
+            font-weight: bold;
+            padding: 8px 14px;
+            border-radius: 12px;
+            background-color: #a3cfbb !important; /* Xanh lá dịu */
+            color: #155724 !important;
+            border: none;
+        }
+
+        #toggleTags:hover {
+            background-color: #8bc5a3 !important; /* Xanh lá hơi đậm khi hover */
+        }
+
     </style>
 </head>
 <body>
@@ -494,6 +602,13 @@
 
     <!--Import -->
     <div class="alert-container">
+        <div th:if="${duplicateMessage}" class="custom-alert alert-warning" role="alert" id="duplicateAlert">
+            <i class="bi bi-exclamation-triangle-fill alert-icon"></i>
+            <span class="alert-message" th:utext="${duplicateMessage}"></span>
+            <button type="button" class="alert-close" onclick="closeAlert('duplicateAlert')">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
 
 
         <!--        <div th:if="${editSuccess}" class="custom-alert alert-success" role="alert" id="editSuccessAlert">&ndash;&gt;-->
@@ -505,23 +620,21 @@
         <!--        </div>-->
 
         <!--        Success Alert-->
-        <div th:if="${successMessage}" class="custom-alert alert-success" role="alert" id="successAlert">
-            <i class="bi bi-check-circle-fill alert-icon"></i>
-            <span class="alert-message" th:text="${successMessage}">Success message</span>
-            <button type="button" class="alert-close" onclick="closeAlert('successAlert')">
-                <i class="bi bi-x"></i>
-            </button>
-        </div>
-
-
-        <!-- &lt;!&ndash; Error Alert &ndash;&gt;-->
-        <div th:if="${error}" class="custom-alert alert-danger" role="alert" id="errorAlert">
-            <i class="bi bi-exclamation-circle-fill alert-icon"></i>
-            <span class="alert-message" th:text="${error}">Error message</span>
-            <button type="button" class="alert-close" onclick="closeAlert('errorAlert')">
-                <i class="bi bi-x"></i>
-            </button>
-        </div>
+        <!--        <div th:if="${successMessage}" class="custom-alert alert-success" role="alert" id="successAlert">-->
+        <!--            <i class="bi bi-check-circle-fill alert-icon"></i>-->
+        <!--            <span class="alert-message" th:text="${successMessage}">Success message</span>-->
+        <!--            <button type="button" class="alert-close" onclick="closeAlert('successAlert')">-->
+        <!--                <i class="bi bi-x"></i>-->
+        <!--            </button>-->
+        <!--        </div>-->
+        <!--        &lt;!&ndash; &lt;!&ndash; Error Alert &ndash;&gt;&ndash;&gt;-->
+        <!--        <div th:if="${error}" class="custom-alert alert-danger" role="alert" id="errorAlert">-->
+        <!--            <i class="bi bi-exclamation-circle-fill alert-icon"></i>-->
+        <!--            <span class="alert-message" th:text="${error}">Error message</span>-->
+        <!--            <button type="button" class="alert-close" onclick="closeAlert('errorAlert')">-->
+        <!--                <i class="bi bi-x"></i>-->
+        <!--            </button>-->
+        <!--        </div>-->
     </div>
     <!-- Modal Thông Báo -->
     <div class="modal fade" id="importResultModal" tabindex="-1" aria-labelledby="importResultModalLabel"
@@ -591,7 +704,6 @@
         <div class="px-5">
             <!-- Title -->
             <h1 class="text-center mb-4">Exercises</h1>
-
             <!-- Combined Filter and Toolbar Section -->
             <div class="container-fluid mt-4">
                 <div class="row gx-2 align-items-center mb-3">
@@ -603,14 +715,17 @@
                                 <form id="filterForm" method="get" action="/exercises" class="row g-3">
                                     <!-- Search Input -->
                                     <div class="col-12">
-                                        <label for="searchInput" class="form-label fw-semibold text-muted mb-1">Search by Title</label>
+                                        <label for="searchInput" class="form-label fw-semibold text-muted mb-1">Search
+                                            by Title</label>
                                         <div class="input-group">
-                                            <input type="text" id="searchInput" name="title" class="form-control shadow-sm border-0"
-                                                   placeholder="Search exercises by title..." th:value="${paramTitle}">
+                                            <input type="text" id="searchInput" name="title"
+                                                   class="form-control shadow-sm border-1"
+                                                   placeholder="Search by title..." th:value="${paramTitle}">
                                             <button type="submit" class="btn btn-primary">
                                                 <i class="bi bi-search me-1"></i> Search
                                             </button>
-                                            <button type="button" class="btn btn-outline-secondary ms-2" onclick="clearFilters()">
+                                            <button type="button" class="btn btn-outline-secondary ms-2"
+                                                    onclick="clearFilters()">
                                                 <i class="bi bi-x-circle me-1"></i> Clear
                                             </button>
                                         </div>
@@ -621,9 +736,14 @@
                                         <div class="row g-3">
                                             <!-- Language Filter -->
                                             <div class="col-md-4">
-                                                <label for="languageFilter" class="form-label fw-semibold text-muted mb-1">Language</label>
-                                                <select id="languageFilter" name="language" class="form-select shadow-sm border-0" onchange="this.form.submit()">
-                                                    <option value="" th:selected="${currentLanguage == null}">All Languages</option>
+                                                <label for="languageFilter"
+                                                       class="form-label fw-semibold text-muted mb-1">Language</label>
+                                                <select id="languageFilter" name="language"
+                                                        class="form-select shadow-sm border-0"
+                                                        onchange="this.form.submit()">
+                                                    <option value="" th:selected="${currentLanguage == null}">All
+                                                        Languages
+                                                    </option>
                                                     <option th:each="lang : ${languages}"
                                                             th:value="${lang.id}"
                                                             th:text="${lang.language}"
@@ -635,33 +755,52 @@
                                             <!-- Difficulty Filter -->
                                             <div class="col-md-4">
                                                 <label for="levelFilter" class="form-label fw-semibold text-muted mb-1">Difficulty</label>
-                                                <select id="levelFilter" name="level" class="form-select shadow-sm border-0" onchange="this.form.submit()">
-                                                    <option value="" th:selected="${currentLevel == null or currentLevel == ''}">
+                                                <select id="levelFilter" name="level"
+                                                        class="form-select shadow-sm border-0"
+                                                        onchange="this.form.submit()">
+                                                    <option value=""
+                                                            th:selected="${currentLevel == null or currentLevel == ''}">
                                                         All Levels
                                                     </option>
-                                                    <option value="EASY" th:selected="${currentLevel == 'EASY'}">Easy</option>
-                                                    <option value="MEDIUM" th:selected="${currentLevel == 'MEDIUM'}">Medium</option>
-                                                    <option value="HARD" th:selected="${currentLevel == 'HARD'}">Hard</option>
+                                                    <option value="EASY" th:selected="${currentLevel == 'EASY'}">Easy
+                                                    </option>
+                                                    <option value="MEDIUM" th:selected="${currentLevel == 'MEDIUM'}">
+                                                        Medium
+                                                    </option>
+                                                    <option value="HARD" th:selected="${currentLevel == 'HARD'}">Hard
+                                                    </option>
                                                 </select>
                                             </div>
 
-                                            <!-- Common Words Filter -->
-                                            <div class="col-md-4">
-                                                <label for="descriptionFilter" class="form-label fw-semibold text-muted mb-1">Common Words</label>
-                                                <select id="descriptionFilter" name="description" class="form-select shadow-sm border-0"
-                                                        onchange="this.form.submit()">
-                                                    <option value="">Select a common word</option>
-                                                    <option th:each="word : ${commonWords}"
-                                                            th:value="${word.key}"
-                                                            th:text="${word.key + ' (' + word.value + ' times)'}"
-                                                            th:selected="${word.key == paramDescription}">
-                                                    </option>
-                                                </select>
+                                            <!-- Tag Filter -->
+                                            <div class="col-md-4 ">
+                                                <div class="dropdown">
+                                                    <button class="btn btn-secondary dropdown-toggle w-100"
+                                                            type="button"
+                                                            id="tagDropdown" data-bs-toggle="dropdown"
+                                                            aria-expanded="false">
+                                                        Select Tags
+                                                    </button>
+                                                    <div class="dropdown-menu p-2"
+                                                         style="max-height: 200px; overflow-y: auto; width: 100%;">
+                                                        <div class="d-flex flex-column gap-2">
+                                                            <div th:each="tag : ${tags}" class="form-check"
+                                                                 id="tagFilter">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                       th:id="'tag-' + ${tag.id}"
+                                                                       name="tags" th:value="${tag.id}"
+                                                                       th:checked="${selectedTags != null and selectedTags.contains(tag.id)}">
+                                                                <label class="form-check-label"
+                                                                       th:for="'tag-' + ${tag.id}"
+                                                                       th:text="${tag.tag}"></label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </form>
-
                             </div>
                         </div>
                     </div>
@@ -686,12 +825,6 @@
                             <a href="/exercises/create" class="btn btn-primary me-2">
                                 <i class="bi bi-plus-circle me-1"></i> Add
                             </a>
-<!--                            <a th:href="@{/exercises/profile/{id}(id=${user.id})}" class="btn btn-primary me-2">-->
-<!--                                <i class="bi bi-plus-circle me-1"></i> Profile-->
-<!--                            </a>-->
-
-
-
                             <!-- Delete Button -->
                             <button id="deleteSelected" class="btn btn-danger">
                                 <i class="bi bi-trash me-1"></i> Delete
@@ -704,6 +837,11 @@
                                 <!-- Button Dashboard -->
                                 <a href="/exercises/new-dashboard" class="btn btn-outline-primary btn-sm border">
                                     <i class="bi bi-speedometer2 me-2"></i> Dashboard
+                                </a>
+                                <!-- Button Duplicate -->
+                                <a href="/exercises/check-duplicates"
+                                   class="btn btn-outline-primary btn-sm border ms-2">
+                                    <i class="bi bi-files me-2"></i> Duplicate
                                 </a>
                                 <!-- Button Switch view card -->
                                 <button id="toggleView" class="btn btn-primary btn-sm ms-2">
@@ -768,7 +906,8 @@
                         <th style="width: 20%;">Title</th>
                         <th class="text-center" style="width: 10%;">Language</th>
                         <th class="text-center" style="width: 10%;">Difficulty</th>
-                        <th style="width: 40%;">Description</th>
+                        <th style="width: 30%;">Description</th>
+                        <th style="width: 10%;">Tag</th>
                         <th class="text-center" style="width: 15%;">Action</th>
                     </tr>
                     </thead>
@@ -787,18 +926,34 @@
                 </span>
                         </td>
                         <td>
-                            <div class="description" th:utext="${exercise.description}"></div>
+                            <div class="description" th:text="${exercise.description}"></div>
+                        </td>
+                        <td>
+                            <!--                            <span th:each="tag : ${exercise.exerciseCategories}" th:text="${tag.category.tag}" class="badge bg-dark text-light me-2"></span>-->
+                            <!--                            <span th:if="${#lists.size(exercise.exerciseCategories) > 2}" class="badge bg-secondary text-light">...</span>-->
+                            <div id="tagContainer">
+        <span th:each="tag, iterStat : ${exercise.exerciseCategories}"
+              th:text="${tag.category.tag}"
+              th:classappend="${iterStat.index >= 2} ? 'd-none extra-tag'"
+              class="badge bg-dark text-light me-2">
+        </span>
+                                <span th:if="${#lists.size(exercise.exerciseCategories) > 2}"
+                                      id="toggleTags" class="badge bg-secondary text-light"
+                                      role="button" onclick="toggleTags()">...</span>
+                            </div>
                         </td>
                         <td class="text-center">
                             <a th:href="@{'/judgement/practice/code_space/' + ${exercise.id}}"
                                class="btn btn-outline-primary btn-sm" title="Information">
                                 <i class="bi bi-info-circle"></i>
                             </a>
-                            <a th:href="@{'/exercises/edit/' + ${exercise.id}}" class="btn btn-outline-primary btn-sm" title="Edit">
+                            <a th:href="@{'/exercises/edit/' + ${exercise.id}}" class="btn btn-outline-primary btn-sm"
+                               title="Edit">
                                 <i class="bi bi-pencil"></i>
                             </a>
                             <a th:href="@{'/exercises/delete/' + ${exercise.id}}" class="btn btn-outline-danger btn-sm"
-                               onclick="return confirm('Are you sure you want to delete this exercise?')" title="Delete">
+                               onclick="return confirm('Are you sure you want to delete this exercise?')"
+                               title="Delete">
                                 <i class="bi bi-trash"></i>
                             </a>
                         </td>
@@ -828,6 +983,13 @@
                             </p>
                             <p class="mb-2"><strong>Description:</strong>
                                 <span class="description" th:utext="${exercise.description}"></span>
+                            </p>
+                            <p class="mb-2"><strong>Tags:</strong>
+                                <span th:each="tag : ${exercise.exerciseCategories}"
+                                      class="badge bg-dark text-light me-2"
+                                      th:text="${tag.category.tag}">
+                                </span>
+
                             </p>
                         </div>
 
@@ -899,29 +1061,36 @@
         </div>
     </div>
 
+</div>
 
-    <!-- Toast Notification -->
-    <!--<div id="deleteSuccessToast" class="toast position-fixed top-50 start-50 translate-middle" role="alert"-->
-    <!--     aria-live="assertive" aria-atomic="true" style="z-index: 1050; display: none;">-->
-    <!--    <div class="toast-header bg-success text-white">-->
-    <!--        <strong class="me-auto">Success</strong>-->
-    <!--        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>-->
-    <!--    </div>-->
-    <!--    <div class="toast-body text-center">-->
-    <!--        Deleted Successfully!-->
-    <!--    </div>-->
-    <!--</div>-->
+<!-- Toast Notification -->
+<!--<div id="deleteSuccessToast" class="toast position-fixed top-50 start-50 translate-middle" role="alert"-->
+<!--     aria-live="assertive" aria-atomic="true" style="z-index: 1050; display: none;">-->
+<!--    <div class="toast-header bg-success text-white">-->
+<!--        <strong class="me-auto">Success</strong>-->
+<!--        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>-->
+<!--    </div>-->
+<!--    <div class="toast-body text-center">-->
+<!--        Deleted Successfully!-->
+<!--    </div>-->
+<!--</div>-->
 
-    <div id="deleteSuccessToast" class="toast position-fixed" role="alert"
-         aria-live="assertive" aria-atomic="true" style="z-index: 1050; display: none; top: 70px; right: 20px;">
-        <div class="toast-body text-center">
-            Deleted Successfully!
-        </div>
+<div id="deleteSuccessToast" class="toast position-fixed" role="alert"
+     aria-live="assertive" aria-atomic="true" style="z-index: 1050; display: none; top: 70px; right: 20px;">
+    <div class="toast-body text-center">
+        Deleted Successfully!
     </div>
+</div>
+<div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+    <i class="bi bi-check-circle-fill"></i>
+    <span th:text="${successMessage}"></span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
 </div>
 
 <!-- Footer -->
 <div th:replace="~{fragments :: footer}" class="mt-auto"></div>
+</div>
 <!-- Limit description in 20 words -->
 <script>
     document.addEventListener("DOMContentLoaded", function () {
@@ -1004,6 +1173,7 @@
         // Setup auto-dismiss for both alerts
         setupAlertAutoDismiss('successAlert');
         setupAlertAutoDismiss('errorAlert');
+        setupAlertAutoDismiss('duplicateAlert');
 
 
         // Chọn tất cả checkbox
@@ -1067,6 +1237,12 @@
             filterForm.submit();
         });
 
+        document.querySelectorAll('input[name="tags"]').forEach(checkbox => {
+            checkbox.addEventListener("change", function () {
+                filterForm.submit();
+            });
+        });
+
     });
 
     function clearFilters() {
@@ -1075,8 +1251,14 @@
         document.getElementById("levelFilter").value = "";
         document.getElementById("descriptionFilter").value = "";
         document.getElementById("filterForm").submit();
-    }
 
+
+        document.querySelectorAll('#tagFilter input[type="checkbox"]').forEach(checkbox => {
+            checkbox.checked = false;
+        })
+        // Submit the form without filters
+        document.getElementById('filterForm').submit();
+    }
 
     function showDetails(index) {
         const details = document.getElementById(`details-${index}`);
@@ -1098,6 +1280,104 @@
             detail.classList.remove('active');
         });
         this.classList.remove('active');
+    });
+
+    function updateSelectedTags() {
+        selectedTagsContainer.innerHTML = '';
+        let selectedCount = 0;
+        let selectedTags = [];
+
+        tagCheckboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                selectedCount++;
+                selectedTags.push(checkbox.value);
+                const tag = document.createElement('span');
+                tag.className = 'selected-tag';
+                const label = checkbox.nextElementSibling.textContent;
+                tag.innerHTML = `${label} <span class="remove-tag" data-id="${checkbox.value}">&times;</span>`;
+                selectedTagsContainer.appendChild(tag);
+            }
+        });
+
+        dropdownButton.textContent = selectedCount > 0 ? `${selectedCount} tag(s) selected` : 'Select Tags';
+
+        // Update form's hidden input for tags
+        let form = document.getElementById('filterForm');
+        // Remove existing tag inputs
+        form.querySelectorAll('input[name="tags"]').forEach(input => {
+            if (!input.checked) {
+                input.remove();
+            }
+        });
+
+        // Add selected tags as hidden inputs
+        selectedTags.forEach(tagId => {
+            if (!form.querySelector(`input[name="tags"][value="${tagId}"]`)) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'tags';
+                input.value = tagId;
+                form.appendChild(input);
+            }
+        });
+    }
+
+    tagCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+            updateSelectedTags();
+            document.getElementById('filterForm').submit();
+        });
+    });
+
+    selectedTagsContainer.addEventListener('click', (e) => {
+        if (e.target.classList.contains('remove-tag')) {
+            const tagId = e.target.dataset.id;
+            const checkbox = document.querySelector(`input[value="${tagId}"]`);
+            if (checkbox) {
+                checkbox.checked = false;
+                updateSelectedTags();
+                document.getElementById('filterForm').submit();
+            }
+        }
+    });
+
+    // Initialize selected tags
+    updateSelectedTags();
+
+    function toggleTags() {
+        let extraTags = document.querySelectorAll('.extra-tag');
+        extraTags.forEach(tag => tag.classList.toggle('d-none'));
+
+        let toggleBtn = document.getElementById('toggleTags');
+        toggleBtn.textContent = toggleBtn.textContent === "..." ? "Show less" : "...";
+    }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script th:if="${successMessage}">
+    Swal.fire({
+        icon: 'success',
+        title: '[[${successMessage}]]!',
+        text: '  ',
+        timer: 2000,  // Tự động đóng sau 2 giây
+        timerProgressBar: true,  // Hiển thị thanh thời gian chạy
+        showConfirmButton: false, // Ẩn nút "OK"
+        willClose: () => {
+            window.location.href = '/exercises';  // Điều hướng về trang mong muốn
+        }
+    });
+</script>
+
+<script th:if="${error}">
+    Swal.fire({
+        icon: 'error',
+        title: 'Error!',
+        text: '[[${error}]]',
+        timer: 2000,
+        timerProgressBar: true,
+        showConfirmButton: false,
+        willClose: () => {
+            window.location.href = '/exercises';  // Điều hướng về trang mong muốn
+        }
     });
 </script>
 

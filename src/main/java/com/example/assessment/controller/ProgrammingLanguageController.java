@@ -121,4 +121,10 @@ public class ProgrammingLanguageController {
         model.addAttribute("programmingLanguages", programmingLanguages);
         return "programmingLanguage/print";
     }
+
+    @GetMapping("/list")
+    @ResponseBody
+    public List<ProgrammingLanguage> getAllLanguages() {
+        return programmingLanguageService.getAllProgrammingLanguages();
+    }
 }

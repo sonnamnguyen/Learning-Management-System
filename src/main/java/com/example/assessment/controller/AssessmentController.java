@@ -4,9 +4,9 @@ import com.example.assessment.model.*;
 import com.example.assessment.repository.AssessmentRepository;
 import com.example.assessment.repository.InvitedCandidateRepository;
 import com.example.assessment.service.*;
+import com.example.config.AppConfig;
 import com.example.course.CourseService;
 import com.example.email.EmailService;
-import com.example.quiz.model.*;
 import com.example.exercise.model.Exercise;
 import com.example.assessment.model.Assessment;
 import com.example.assessment.service.AssessmentService;
@@ -16,10 +16,15 @@ import com.example.assessment.service.InvitedCandidateService;
 import com.example.exercise.model.ExerciseSession;
 import com.example.exercise.model.StudentExerciseAttempt;
 import com.example.exercise.service.ExerciseSessionService;
+import com.example.utils.CalendarEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.hashids.Hashids;
@@ -39,6 +44,8 @@ import org.springframework.data.domain.*;
 import org.springframework.http.HttpHeaders;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
@@ -46,7 +53,12 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.support.SessionStatus;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.reflect.Field;
+
+import java.time.Duration;
 
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -63,12 +75,18 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import weka.core.*;
+import weka.core.stemmers.IteratedLovinsStemmer;
+import weka.filters.Filter;
+import weka.filters.unsupervised.attribute.StringToWordVector;
 
 
 @Controller
 @RequestMapping("/assessments")
 @SessionAttributes("exerciseSession")
 public class AssessmentController {
+    @Value("${invite.url.header}")
+    private String inviteUrlHeader;
 
     @ModelAttribute("exerciseSession")
     public ExerciseSession createExerciseSession() {
@@ -82,13 +100,13 @@ public class AssessmentController {
 
     @PostMapping("/save_data")
     public ResponseEntity<String> saveData(@ModelAttribute("exerciseSession") ExerciseSession exerciseSession,
-                         Model model,
-                         @RequestBody Map<String, String> requestBody) {
-        try{
+                                           Model model,
+                                           @RequestBody Map<String, String> requestBody) {
+        try {
             Long exerciseId = Long.parseLong(requestBody.get("exerciseId"));
             String code = requestBody.get("code");
-            for(StudentExerciseAttempt attempt: exerciseSession.getStudentExerciseAttempts()){
-                if(Objects.equals(attempt.getSubmitted_exercise().getId(), exerciseId)){
+            for (StudentExerciseAttempt attempt : exerciseSession.getStudentExerciseAttempts()) {
+                if (Objects.equals(attempt.getSubmitted_exercise().getId(), exerciseId)) {
                     attempt.setSubmitted_code(code);
                 }
             }
@@ -157,6 +175,8 @@ public class AssessmentController {
     private StudentAssessmentAttemptService studentAssessmentAttemptService;
     @Autowired
     private AssessmentRepository assessmentRepository;
+    @Autowired
+    private AssessmentQuestionService assessmentQuestionService;
 
     @Autowired
     private ExerciseSessionService exerciseSessionService;
@@ -201,8 +221,6 @@ public class AssessmentController {
 
     @PostMapping("/create")
     public String createAssessment(@ModelAttribute Assessment assessment, @RequestParam(value = "exercises-ids", required = false) List<String> exerciseIdsStr, @RequestParam(value = "questions-ids", required = false) List<String> questionIdsStr, Model model) {
-
-
         Set<Exercise> selectedExercisesSet = new LinkedHashSet<>();
         Set<Question> selectedQuestionsSet = new LinkedHashSet<>();
         // Get the current user
@@ -254,7 +272,98 @@ public class AssessmentController {
     public String duplicateAssessment(@PathVariable("id") Long id) {
         System.out.println("duplicateAssessment");
         assessmentService.duplicateAssessment(id);
-            return "redirect:/assessments";
+        return "redirect:/assessments";
+    }
+
+
+    @GetMapping("/check-similarQuestions")
+    public ResponseEntity<?> similarityQuiz(@RequestParam(value = "questions-ids", required = false) List<String> questionIdsStr) {
+        Set<Question> selectedQuestionsSet = new LinkedHashSet<>();
+        Map<Long, Integer> questionIdToPositionMap = new HashMap<>(); // Map to store questionId to its original position
+        if (questionIdsStr != null && !questionIdsStr.isEmpty()) {
+            int position = 1; // Start position from 1 (1-based indexing)
+            for (String questionIdStr : questionIdsStr) {
+                try {
+                    Long questionId = Long.parseLong(questionIdStr);
+                    Optional<Question> questionOptional = questionService.findById(questionId);
+                    Question question = questionOptional.orElse(null);
+                    if (question != null && question.getQuestionText() != null && !question.getQuestionText().trim().isEmpty()) {
+                        selectedQuestionsSet.add(question);
+                        questionIdToPositionMap.put(questionId, position); // Store position
+                    }
+                    position++; // Increment position for the next question
+                } catch (NumberFormatException e) {
+                    return ResponseEntity.badRequest().body("Invalid question ID: " + questionIdStr);
+                }
+            }
+        }
+        System.out.println("Checking similar questions...");
+        // If no valid questions are provided, return bad request
+        if (selectedQuestionsSet.isEmpty()) {
+            System.out.println("selectedQuestionsSet.isEmpty");
+            return ResponseEntity.badRequest().body("No valid questions provided or found.");
+        }
+        try {
+            // Create Weka Instances (keep this part as is)
+            FastVector attributes = new FastVector();
+            attributes.addElement(new Attribute("content", (FastVector) null));
+            Instances data = new Instances("questions", attributes, selectedQuestionsSet.size());
+            data.setClassIndex(0);
+            List<Question> selectedQuestionsList = new ArrayList<>(selectedQuestionsSet); // Convert Set to List for indexed access
+            for (Question question : selectedQuestionsList) {
+                Instance instance = new DenseInstance(1.0, new double[data.numAttributes()]);
+                instance.setDataset(data);
+                String processedContent = assessmentService.preprocessText(question.getQuestionText());
+                instance.setValue((Attribute) attributes.elementAt(0), processedContent);
+                data.add(instance);
+            }
+            StringToWordVector filter = new StringToWordVector();
+            filter.setTFTransform(true);
+            filter.setIDFTransform(true);
+            filter.setLowerCaseTokens(true);
+            filter.setStemmer(new IteratedLovinsStemmer()); // Set the stemmer
+            filter.setInputFormat(data);
+            Instances tfidfData = Filter.useFilter(data, filter);
+            // Group similar question positions (using 1-based numbering from input order)
+            List<List<Integer>> similarQuestionPositionsGroups = new ArrayList<>();
+            Set<Integer> questionIndicesGrouped = new HashSet<>(); // Track indices already grouped (still using indices for loop)
+            for (int i = 0; i < tfidfData.numInstances(); i++) {
+                if (questionIndicesGrouped.contains(i)) { // Skip if index already grouped
+                    continue;
+                }
+                List<Integer> currentGroupPositions = new ArrayList<>();
+                Question question1 = selectedQuestionsList.get(i);
+                currentGroupPositions.add(questionIdToPositionMap.get(question1.getId())); // Add 1-based position using the map
+
+                questionIndicesGrouped.add(i);
+                for (int j = i + 1; j < tfidfData.numInstances(); j++) {
+                    double similarity = assessmentService.cosineSimilarity(tfidfData.instance(i).toDoubleArray(), tfidfData.instance(j).toDoubleArray());
+                    System.out.println("similarity: Question " + questionIdToPositionMap.get(selectedQuestionsList.get(i).getId()) +
+                            " vs Question " + questionIdToPositionMap.get(selectedQuestionsList.get(j).getId()) +
+                            " = " + similarity);
+                    if (similarity >= 0.80) { // % similarity threshold
+                        if (!questionIndicesGrouped.contains(j)) { // Add if index not yet grouped
+                            Question question2 = selectedQuestionsList.get(j);
+                            currentGroupPositions.add(questionIdToPositionMap.get(question2.getId())); // Add 1-based position using the map
+                            questionIndicesGrouped.add(j);
+                        }
+                    }
+                }
+                if (currentGroupPositions.size() > 1) { // Only add group if it has more than 1 position
+                    similarQuestionPositionsGroups.add(currentGroupPositions);
+                }
+            }
+            // Return response
+            if (similarQuestionPositionsGroups.isEmpty()) {
+                System.out.println("No duplicate questions found.");
+                return ResponseEntity.ok("No duplicate questions found.");
+            }
+            System.out.println("Duplicate question groups found (by position): " + similarQuestionPositionsGroups);
+            return ResponseEntity.ok(similarQuestionPositionsGroups); // Return list of position groups
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("An error occurred while processing similarity: " + e.getMessage());
+        }
     }
 
     @ModelAttribute
@@ -301,8 +410,6 @@ public class AssessmentController {
     }
 
 
-
-
     @GetMapping("/create/check-duplicate")
     public ResponseEntity<Map<String, Boolean>> checkDuplicateTitle(
             @RequestParam String title,
@@ -328,6 +435,7 @@ public class AssessmentController {
         return "assessments/invite";
     }
 
+
     @GetMapping("/detail/{id}")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPERADMIN')")
     @Transactional(readOnly = true)
@@ -342,67 +450,107 @@ public class AssessmentController {
         List<String> errorMessages = new ArrayList<>();
 
         // 1. Retrieve the assessment
-        Assessment assessment = null;
+        Assessment assessment;
         try {
             assessment = assessmentService.findById(id)
                     .orElseThrow(() -> new Exception("Assessment not found with id: " + id));
         } catch (Exception e) {
-            logger.error("Error retrieving assessment with id: " + id, e);
+            logger.error("Error retrieving assessment with id: {}", id, e);
             errorMessages.add("Error retrieving assessment: " + e.getMessage());
             // Fallback: create an empty Assessment
             assessment = new Assessment();
         }
         model.addAttribute("assessment", assessment);
 
-        // 2. Retrieve registered attempts with pagination
+        // 2. Retrieve registered attempts with pagination (để hiển thị bảng)
         Page<StudentAssessmentAttempt> registeredAttemptsPage;
         try {
             Pageable pageableReg = PageRequest.of(pageReg, 10);
             registeredAttemptsPage = assessmentAttemptService.findByAssessment_Id(id, pageableReg);
         } catch (Exception e) {
-            logger.error("Error retrieving registered attempts for assessment id: " + id, e);
-            errorMessages.add("Error retrieving registered attempts: " + e.getMessage());
+            logger.error("Error retrieving registered attempts (paged) for assessment id: {}", id, e);
+            errorMessages.add("Error retrieving paged attempts: " + e.getMessage());
             registeredAttemptsPage = Page.empty();
         }
 
-        // 3. Process registered attempts into a list of maps, including candidate username via reflection
+        // 2a. Xây dựng dữ liệu cho bảng (paged) - attemptViewList
         List<Map<String, Object>> attemptViewList = new ArrayList<>();
         try {
-            attemptViewList = registeredAttemptsPage.getContent().stream().map(attempt -> {
+            for (StudentAssessmentAttempt attempt : registeredAttemptsPage.getContent()) {
                 Map<String, Object> map = new HashMap<>();
+                map.put("id", attempt.getId());
+                map.put("email", attempt.getEmail());
+                map.put("attemptDate", attempt.getAttemptDate());
+                map.put("scoreQuiz", attempt.getScoreQuiz());
+                map.put("scoreEx", attempt.getScoreEx());
+
+                // Lấy candidateUsername (via reflection) - tuỳ bạn giữ hay bỏ
+                String candidateUsername = "N/A";
                 try {
-                    map.put("id", attempt.getId());
-                    map.put("email", attempt.getEmail());
-                    map.put("attemptDate", attempt.getAttemptDate());
-                    map.put("scoreQuiz", attempt.getScoreQuiz());
-                    map.put("scoreAss", attempt.getScoreAss());
-                    String candidateUsername = "N/A";
-                    try {
-                        Field field = attempt.getClass().getDeclaredField("user");
-                        field.setAccessible(true);
-                        Object userObj = field.get(attempt);
-                        if (userObj != null) {
-                            candidateUsername = (String) userObj.getClass().getMethod("getUsername").invoke(userObj);
-                        }
-                    } catch (Exception ex) {
-                        logger.error("Error retrieving candidate username for attempt id " + attempt.getId(), ex);
-                        errorMessages.add("Error retrieving candidate username for attempt id " + attempt.getId() + ": " + ex.getMessage());
+                    Field field = attempt.getClass().getDeclaredField("user");
+                    field.setAccessible(true);
+                    Object userObj = field.get(attempt);
+                    if (userObj != null) {
+                        candidateUsername = (String) userObj.getClass()
+                                .getMethod("getUsername")
+                                .invoke(userObj);
                     }
-                    map.put("candidateUsername", candidateUsername);
                 } catch (Exception ex) {
-                    logger.error("Error processing attempt id " + attempt.getId(), ex);
-                    errorMessages.add("Error processing attempt id " + attempt.getId() + ": " + ex.getMessage());
+                    logger.error("Error retrieving candidate username for attempt id {}", attempt.getId(), ex);
+                    errorMessages.add("Error retrieving candidate username for attempt id "
+                            + attempt.getId() + ": " + ex.getMessage());
                 }
-                return map;
-            }).collect(Collectors.toList());
+                map.put("candidateUsername", candidateUsername);
+
+                attemptViewList.add(map);
+            }
         } catch (Exception e) {
-            logger.error("Error processing registered attempts", e);
-            errorMessages.add("Error processing registered attempts: " + e.getMessage());
+            logger.error("Error processing registered attempts for table", e);
+            errorMessages.add("Error processing attempts (table): " + e.getMessage());
         }
+        // Đưa danh sách attempt (bảng) vào model
         model.addAttribute("registeredAttempts", attemptViewList);
         model.addAttribute("registeredAttemptsPage", registeredAttemptsPage);
 
-        // 4. Retrieve invited candidates with pagination and search
+        // 3. Lấy toàn bộ attempts (KHÔNG phân trang) cho chart
+        List<StudentAssessmentAttempt> allAttempts;
+        try {
+            allAttempts = assessmentAttemptService.findByAssessment_Id(id);
+        } catch (Exception e) {
+            allAttempts = new ArrayList<>();
+            errorMessages.add("Error retrieving all attempts for chart: " + e.getMessage());
+        }
+
+        // 3a. Xây dựng quizScores, exerciseScores, dateLabels từ allAttempts
+        List<Integer> quizScores = new ArrayList<>();
+        List<Integer> exerciseScores = new ArrayList<>();
+        List<String> dateLabels = new ArrayList<>();
+
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        if (allAttempts != null) {
+            for (StudentAssessmentAttempt att : allAttempts) {
+                // quiz score
+                Integer qScore = att.getScoreQuiz();
+                quizScores.add(qScore);
+
+                // exercise score
+                Integer eScore = att.getScoreEx();
+                exerciseScores.add(eScore);
+
+                // date label
+                if (att.getAttemptDate() != null) {
+                    dateLabels.add(att.getAttemptDate().format(dtf));
+                } else {
+                    dateLabels.add("N/A");
+                }
+            }
+        }
+
+        model.addAttribute("quizScores", quizScores);
+        model.addAttribute("exerciseScores", exerciseScores);
+        model.addAttribute("dateLabels", dateLabels);
+
+        // 4. Retrieve invited candidates with pagination + search
         Page<?> invitedCandidatesPage;
         try {
             Pageable pageableInv = PageRequest.of(pageInv, 10);
@@ -412,7 +560,7 @@ public class AssessmentController {
                 invitedCandidatesPage = candidateService.findByAssessmentId(id, pageableInv);
             }
         } catch (Exception e) {
-            logger.error("Error retrieving invited candidates for assessment id: " + id, e);
+            logger.error("Error retrieving invited candidates for assessment id: {}", id, e);
             errorMessages.add("Error retrieving invited candidates: " + e.getMessage());
             invitedCandidatesPage = Page.empty();
         }
@@ -420,7 +568,7 @@ public class AssessmentController {
         model.addAttribute("invitedCandidatesPage", invitedCandidatesPage);
         model.addAttribute("searchEmail", searchEmail);
 
-        // 5. Retrieve and sort questions from the assessment
+        // 5. Retrieve & sort questions
         List<Question> orderedQuestions = new ArrayList<>();
         try {
             orderedQuestions = assessment.getAssessmentQuestions()
@@ -429,35 +577,35 @@ public class AssessmentController {
                     .map(AssessmentQuestion::getQuestion)
                     .collect(Collectors.toList());
         } catch (Exception e) {
-            logger.error("Error retrieving questions for assessment id: " + id, e);
+            logger.error("Error retrieving questions for assessment id: {}", id, e);
             errorMessages.add("Error retrieving questions: " + e.getMessage());
         }
         model.addAttribute("questions", orderedQuestions);
 
-        // 6. Map each question to its answer options (to support modal view)
+        // 6. Map each question to answer options
         Map<Long, List<AnswerOption>> questionAnswerOptionsMap = new HashMap<>();
         for (Question q : orderedQuestions) {
             try {
                 List<AnswerOption> answerOptions = answerOptionService.getAnswerOptionByid(q.getId());
                 questionAnswerOptionsMap.put(q.getId(), answerOptions);
             } catch (Exception e) {
-                logger.error("Error retrieving answer options for question id " + q.getId(), e);
+                logger.error("Error retrieving answer options for question id {}", q.getId(), e);
                 errorMessages.add("Error retrieving answer options for question id " + q.getId() + ": " + e.getMessage());
                 questionAnswerOptionsMap.put(q.getId(), new ArrayList<>());
             }
         }
         model.addAttribute("questionAnswerOptionsMap", questionAnswerOptionsMap);
 
-        // 7. Retrieve exercises from the assessment
+        // 7. Retrieve exercises
         try {
             model.addAttribute("exercises", assessment.getExercises());
         } catch (Exception e) {
-            logger.error("Error retrieving exercises for assessment id: " + id, e);
+            logger.error("Error retrieving exercises for assessment id: {}", id, e);
             errorMessages.add("Error retrieving exercises: " + e.getMessage());
             model.addAttribute("exercises", new ArrayList<>());
         }
 
-        // 7. Retrieve current user information for display
+        // 8. Current user
         try {
             model.addAttribute("currentUser", userService.getCurrentUser());
         } catch (Exception e) {
@@ -465,17 +613,15 @@ public class AssessmentController {
             errorMessages.add("Error retrieving current user: " + e.getMessage());
         }
 
-        // 8. Add collected error messages to model, if any
+        // 9. Errors
         if (!errorMessages.isEmpty()) {
             model.addAttribute("errorMessage", String.join(" | ", errorMessages));
         }
 
-        // 9. Set the content template for the common layout and return the view
+        // 10. Return the view
         model.addAttribute("content", "assessments/detail");
         return "layout";
     }
-
-
 
 
 //    @GetMapping("/invite/{id}")
@@ -529,9 +675,20 @@ public class AssessmentController {
         return "redirect:/assessments";
     }
 
+    /**
+     * Displays the edit form for an assessment.
+     * <p>
+     * This method retrieves an assessment by its ID and prepares all necessary data
+     * for rendering the edit page. It includes fetching related quizzes, questions,
+     * answer options, exercises, and other assessment-related attributes.
+     *
+     * @param id    The ID of the assessment to edit.
+     * @param model The model to hold attributes for the view.
+     * @return The name of the Thymeleaf template to render.
+     * @throws JsonProcessingException If there is an error converting objects to JSON.
+     */
     @GetMapping("/edit/{id}")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPERADMIN')")
-
     public String showEditForm(@PathVariable("id") Long id, Model model) throws JsonProcessingException {
         Assessment assessment = assessmentService.findById(id).orElse(null);
 
@@ -553,31 +710,85 @@ public class AssessmentController {
         }
 
         // Fetch answer options for all questions
-        Map<Long, List<AnswerOption>> questionAnswerOptionsMap = new HashMap<>();
         List<Question> allQuestions = Optional.ofNullable(questionService.findAll()).orElse(new ArrayList<>());
+
+
+        //Selected question list
+        List<Map<String, Object>> selectedQuestionList = assessment.getAssessmentQuestions()
+                .stream()
+                .sorted(Comparator.comparing(AssessmentQuestion::getOrderIndex))
+                .map(aq -> {
+                    Map<String, Object> questionData = new HashMap<>();
+                    questionData.put("questionId", aq.getQuestion().getId());
+                    questionData.put("text", aq.getQuestion().getQuestionText());
+                    questionData.put("orderIndex", aq.getOrderIndex());
+
+                    Quiz quiz = aq.getQuestion().getQuizzes();
+                    Long quizId = (quiz != null) ? quiz.getId() : null;
+
+                    questionData.put("quizId", quizId);
+
+                    return questionData;
+                })
+                .collect(Collectors.toList());
+
+        //Answer list
+        Map<Long, List<AnswerOption>> questionAnswerOptionsMap = new HashMap<>();
 
         for (Question question : allQuestions) {
             questionAnswerOptionsMap.put(question.getId(), answerOptionService.getAnswerOptionByid(question.getId()));
         }
 
-        List<Question> orderedQuestions = assessment.getAssessmentQuestions()
-                .stream()
-                .map(AssessmentQuestion::getQuestion)
-                .collect(Collectors.toList());
-        List<Map<String, Object>> selectedQuestionList = new ArrayList<>();
-        for (Question q : orderedQuestions) {
-            Map<String, Object> questionData = new HashMap<>();
-            questionData.put("id", q.getId());
-            questionData.put("text", q.getQuestionText());
-            selectedQuestionList.add(questionData);
+        Map<Long, List<Map<String, Object>>> answersJsonMap = new HashMap<>();
+        for (Question question : allQuestions) {
+            List<Map<String, Object>> answerList = questionAnswerOptionsMap.getOrDefault(question.getId(), new ArrayList<>())
+                    .stream()
+                    .map(answer -> {
+                        Map<String, Object> answerData = new HashMap<>();
+                        answerData.put("questionId", question.getId());
+                        answerData.put("answerId", answer.getId());
+                        answerData.put("text", answer.getOptionText());
+                        answerData.put("isCorrect", answer.getIsCorrect());
+                        return answerData;
+                    })
+                    .collect(Collectors.toList());
+            answersJsonMap.put(question.getId(), answerList);
         }
 
         ObjectMapper objectMapper = new ObjectMapper();
         String selectedQuestionsJson = objectMapper.writeValueAsString(selectedQuestionList);
-        System.out.println("Selected Questions JSON: " + selectedQuestionsJson);
+        String answersJson = objectMapper.writeValueAsString(answersJsonMap);
+
+//        DEBUG: log selected question list json
+//        System.out.println("-------------------------------------------------------");
+//        selectedQuestionList.forEach(item -> {
+//            String json = item.entrySet()
+//                    .stream()
+//                    .map(entry -> String.format("\"%s\":%s", entry.getKey(),
+//                            entry.getValue() instanceof String ? "\"" + entry.getValue() + "\"" : entry.getValue()))
+//                    .collect(Collectors.joining(", "));
+//
+//            System.out.println("{" + json + "}");
+//        });
+
+//        DEBUG: log answer of the question json
+//        System.out.println("-------------------------------------------------------");
+//        answersJsonMap.forEach((questionId, answerList) -> {
+//            System.out.println("Answers for Question ID " + questionId + ":");
+//            answerList.forEach(answer -> {
+//                String json = answer.entrySet()
+//                        .stream()
+//                        .map(entry -> String.format("\"%s\":%s", entry.getKey(),
+//                                entry.getValue() instanceof String ? "\"" + entry.getValue() + "\"" : entry.getValue()))
+//                        .collect(Collectors.joining(", "));
+//
+//                System.out.println("  {" + json + "}");
+//            });
+//        });
+
         model.addAttribute("selectedQuestionsJson", selectedQuestionsJson);
         model.addAttribute("quizQuestionsMap", quizQuestionsMap);
-        model.addAttribute("questionAnswerOptionsMap", questionAnswerOptionsMap);
+        model.addAttribute("answersJson", answersJson);
         model.addAttribute("questions", allQuestions);
 
         // Fetch selected exercises & ensure it's not null
@@ -600,10 +811,120 @@ public class AssessmentController {
         model.addAttribute("creator", assessment.getCreatedBy());
         model.addAttribute("currentUser", userService.getCurrentUser());
 
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+        User updater = assessment.getUpdatedBy();
+        model.addAttribute("updater", updater);
+        if (updater != null) {
+            String formattedUpdatedAt = assessment.getUpdatedAt().format(formatter);
+
+            model.addAttribute("formattedUpdatedAt", formattedUpdatedAt);
+        }
+
+        String formattedCreateAt = assessment.getCreatedAt().format(formatter);
+        model.addAttribute("formattedCreateAt", formattedCreateAt);
+
         // Set the content for the edit view
         model.addAttribute("content", "assessments/edit");
 
         return "layout";
+    }
+
+    @GetMapping("/questionList/{assessmentId}")
+    @ResponseBody
+    public List<Map<String, Object>> getQuestionsByAssessment(@PathVariable Long assessmentId) {
+        List<AssessmentQuestion> assessmentQuestions = assessmentQuestionService.findByAssessmentId(assessmentId);
+
+        return assessmentQuestions.stream().map(aq -> {
+            Map<String, Object> questionMap = new HashMap<>();
+            questionMap.put("id", aq.getQuestion().getId());  // Lấy ID từ Question
+            questionMap.put("orderIndex", aq.getOrderIndex()); // Lấy orderIndex từ AssessmentQuestion
+            return questionMap;
+        }).collect(Collectors.toList());
+    }
+
+    @PostMapping("/update/{id}")
+    public String updateAssessment(
+            @PathVariable Long id,
+            @ModelAttribute Assessment assessment,
+            @RequestParam(value = "exerciseIds", required = false) List<Long> exerciseIds,
+            @RequestParam(value = "newAddedQuestions", required = false) String newAddedQuestionsJson,
+            RedirectAttributes redirectAttributes) {
+
+        System.out.println("[Controller] Updating Assessment ID: " + id);
+
+        Assessment existingAssessment = assessmentService.findById(id)
+                .orElseThrow(() -> {
+                    System.out.println("Assessment not found with ID: " + id);
+                    return new RuntimeException("Assessment not found with ID: " + id);
+                });
+
+        // ✅ Cập nhật thông tin cơ bản
+        existingAssessment.setTitle(assessment.getTitle());
+        existingAssessment.setAssessmentType(assessment.getAssessmentType());
+        existingAssessment.setCourse(assessment.getCourse());
+        existingAssessment.setTimeLimit(assessment.getTimeLimit());
+        existingAssessment.setQualifyScore(assessment.getQualifyScore());
+        existingAssessment.setShuffled(assessment.isShuffled());
+        existingAssessment.setQuizScoreRatio(assessment.getQuizScoreRatio());
+        existingAssessment.setExerciseScoreRatio(assessment.getExerciseScoreRatio());
+
+        User currentUser = userService.getCurrentUser();
+        existingAssessment.setUpdatedBy(currentUser);
+
+        // ✅ Cập nhật danh sách bài tập
+        if (exerciseIds != null && !exerciseIds.isEmpty()) {
+            Set<Exercise> selectedExercises = new HashSet<>(exerciseService.findByIds(exerciseIds));
+            existingAssessment.setExercises(selectedExercises);
+            System.out.println("Updated " + selectedExercises.size() + " exercises in the assessment.");
+        } else {
+            existingAssessment.getExercises().clear();
+            System.out.println("No exercises selected.");
+        }
+
+        // ✅ Xử lý danh sách câu hỏi mới
+        List<AssessmentQuestionService.QuestionOrder> questionOrders = new ArrayList<>();
+        if (newAddedQuestionsJson != null && !newAddedQuestionsJson.isEmpty()) {
+            try {
+                ObjectMapper objectMapper = new ObjectMapper();
+                questionOrders = objectMapper.readValue(newAddedQuestionsJson, new TypeReference<>() {
+                });
+                System.out.println("Parsed " + questionOrders.size() + " questions from JSON.");
+            } catch (Exception e) {
+                System.out.println("❌ Lỗi khi parse JSON: " + e.getMessage());
+                redirectAttributes.addFlashAttribute("error", "Invalid question data format.");
+                return "redirect:/assessments";
+            }
+        } else {
+            System.out.println("No new questions provided.");
+        }
+
+        // Update the list of questions in the assessment if new data is available
+        if (!questionOrders.isEmpty()) {
+            assessmentQuestionService.updateAssessmentQuestions(id, questionOrders);
+            System.out.println("Updated question list in the assessment.");
+        }
+
+        // Save the updated assessment in the database
+        assessmentService.saveAssessment(existingAssessment);
+        System.out.println("Assessment ID " + id + " has been successfully updated.");
+
+        // Redirect with success message
+        redirectAttributes.addFlashAttribute("message", "Assessment updated successfully!");
+        return "redirect:/assessments";
+    }
+
+    @GetMapping("/edit/check-duplicate")
+    public ResponseEntity<Map<String, Boolean>> checkDuplicateTitle(
+            @RequestParam String title,
+            @RequestParam Long assessmentTypeId,
+            @RequestParam Long id) {
+
+        boolean exists = assessmentService.existsByTitleAndAssessmentType(title, assessmentTypeId, id);
+        Map<String, Boolean> response = new HashMap<>();
+        response.put("isDuplicate", exists);
+
+        return ResponseEntity.ok(response);
     }
 
     //Preview assessment
@@ -639,9 +960,6 @@ public class AssessmentController {
     public String verifyEmail(@PathVariable("id") String rawId, @RequestParam("email") String email, Model model) {
         email = email.toLowerCase();
         // Decode the ID (but don't overwrite rawId)
-        System.out.println("");
-        System.out.println("");
-        System.out.println("Take exam get id: " + rawId);
         long id;
         try {
             long[] temp = assessmentService.decodeId(rawId);
@@ -659,7 +977,7 @@ public class AssessmentController {
         // Check expiration date for the specific email
         Optional<LocalDateTime> expireDateOpt = invitedCandidateRepository.findExpireDateByAssessmentIdAndEmail(id, email);
         if (expireDateOpt.isEmpty()) {
-            return "redirect:/invalid-link";
+            return "assessments/invalid-link";
         }
 
         LocalDateTime nowUtc = LocalDateTime.now();
@@ -727,7 +1045,10 @@ public class AssessmentController {
         model.addAttribute("attempt", attempt);
         return "assessments/TakeAssessment";
     }
-
+    @GetMapping("/invalid-link")
+    public String showInvalidLinkPage() {
+        return "assessments/invalid-link"; // Directly returns the invalid-link.html page
+    }
 
     @GetMapping("/expired-link")
     public String showExpiredPage(@RequestParam("time") String expireTime, Model model) {
@@ -820,11 +1141,9 @@ public class AssessmentController {
             return "assessments/view_score";
         } catch (Exception e) {
             model.addAttribute("errorMessage", "Unexpected error occurred: " + e.getMessage());
-            return "error"; // Fallback error page if something catastrophic happens
+            return "error";
         }
     }
-
-
 
     @GetMapping("/viewReport/{assessmentId}")
     public String viewReport(@PathVariable Long assessmentId, @RequestParam("attempt-id") Long attemptId, Model model) {
@@ -834,12 +1153,19 @@ public class AssessmentController {
         if (attempt != null && attempt.isPresent()) {
             JsonNode proctoringData = attempt.get().getProctoringData();
             int tabLeaveCount = proctoringData.has("tabLeaveCount") ? proctoringData.get("tabLeaveCount").asInt() : 0;
+            int violationFaceCount = proctoringData.has("violationFaceCount") ? proctoringData.get("violationFaceCount").asInt() : 0;
 
             model.addAttribute("tabLeaveCount", tabLeaveCount);
+            model.addAttribute("violationFaceCount", violationFaceCount);
             model.addAttribute("attemptInfo", attempt.get());
         }
         model.addAttribute("content", "assessments/view_report");
         return "layout";
+    }
+
+    @PostMapping("/capture-image")
+    public ResponseEntity<Integer> captureImage(@RequestParam("file") MultipartFile file) throws IOException {
+        return ResponseEntity.ok(assessmentService.detectFace(file));
     }
 
     //Update attempt after user submit their assessment
@@ -849,10 +1175,11 @@ public class AssessmentController {
                                    @RequestParam("elapsedTime") int elapsedTime,
                                    @RequestParam(value = "questionId", required = false) List<String> questionIds,
                                    @RequestParam("tabLeaveCount") int tabLeaveCount,
+                                   @RequestParam("violationFaceCount") int violationFaceCount,
                                    @RequestParam Map<String, String> responses,
                                    @RequestParam("hasExercise") boolean hasExercise,
-                                   Principal principal,
                                    SessionStatus sessionStatus,
+                                   Principal principal,
                                    Model model) {
         // Lấy thông tin user
         User user = userService.findByUsername(principal.getName());
@@ -865,7 +1192,8 @@ public class AssessmentController {
         //Save cheating count
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode proctoringData = objectMapper.createObjectNode()
-                .put("tabLeaveCount", tabLeaveCount);
+                .put("tabLeaveCount", tabLeaveCount)
+                .put("violationFaceCount", violationFaceCount);
         if (hasExercise) {
             // Tính điểm phần Exercise
             ExerciseSession exerciseSession = (ExerciseSession) model.getAttribute("exerciseSession");
@@ -881,8 +1209,95 @@ public class AssessmentController {
     }
 
     @GetMapping("/calendar")
-    public String showAssessmentCalendar() {
-        return "assessments/Calendar";  // This will load the calendar.html template
+    public String showAssessmentCalendar(Model model) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userEmail = authentication.getName();
+
+        List<InvitedCandidate> userAssessments = invitedCandidateRepository.findByEmail(userEmail);
+
+        DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+
+        // Convert to JSON-friendly format
+        List<CalendarEvent> events = userAssessments.stream()
+                .map(ic -> {
+                    String encodedId = hashids.encode(ic.getAssessment().getId());
+                    String inviteLink = inviteUrlHeader + encodedId + "/verify-email"; // ✅ Pass invite link
+
+                    return new CalendarEvent(
+                            ic.getAssessment().getTitle(),
+                            ic.getInvitationDate().format(formatter),
+                            ic.getExpirationDate().format(formatter),
+                            inviteLink // ✅ Include inviteLink
+                    );
+                })
+                .toList();
+
+        // 🔍 Debugging: Log data before passing it to the view
+        System.out.println("📝 Sending events to Thymeleaf: " + events);
+
+        model.addAttribute("events", events);
+        model.addAttribute("assessments", userAssessments);
+
+        return "assessments/Calendar";
+
+
+    }
+
+    @GetMapping("/calendar/events")
+    @ResponseBody
+    public List<CalendarEvent> getCalendarEvents() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        Optional<User> user = userRepository.findByUsername(username);
+        if (user.isEmpty()) {
+            System.out.println("❌ User not found: " + username);
+            return Collections.emptyList();
+        }
+
+        String userEmail = user.get().getEmail();
+        System.out.println("🔍 Fetching events for email: " + userEmail);
+
+        String inviteUrlHeader = "https://java02.fsa.io.vn/assessments/invite/";
+        List<InvitedCandidate> invitedAssessments = invitedCandidateRepository.findByEmail(userEmail);
+
+        DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+        LocalDateTime now = LocalDateTime.now();
+
+        List<CalendarEvent> events = invitedAssessments.stream()
+                .map(a -> {
+                    String encodedId = hashids.encode(a.getAssessment().getId());
+                    String inviteLink = inviteUrlHeader + encodedId + "/verify-email";
+
+                    boolean hasAssessed = a.isHasAssessed();
+                    LocalDateTime expirationDate = a.getExpirationDate();
+                    long hoursLeft = Duration.between(now, expirationDate).toHours();
+
+                    // 📝 New logic to fix expired events
+                    String title = hasAssessed
+                            ? "<del>" + a.getAssessment().getTitle() + "</del>" // ✅ Completed = strikethrough
+                            : a.getAssessment().getTitle();
+
+                    CalendarEvent event = new CalendarEvent(
+                            title,
+                            a.getInvitationDate().format(formatter),
+                            expirationDate.format(formatter),
+                            inviteLink
+                    );
+
+                    // ✅ If event is expired, override the color to gray
+                    if (hoursLeft <= 0) {
+                        event.setColor("#6c757d"); // Gray for expired events
+                    } else if (hoursLeft < 24) {
+                        event.setColor("#dc3545"); // Red for soon-to-expire events
+                    }
+
+                    return event;
+                })
+                .toList();
+
+        System.out.println("📅 Events to return: " + events);
+        return events;
     }
 
     @GetMapping("/already-assessed")
@@ -890,4 +1305,3 @@ public class AssessmentController {
         return "assessments/already-assessed";  // This will load the calendar.html template
     }
 }
-

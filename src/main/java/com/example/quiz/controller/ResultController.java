@@ -20,7 +20,7 @@ public class ResultController {
     public String list(Model model) {
         List<Result> results = resultService.findAll();
         model.addAttribute("results", results);
-        model.addAttribute("content", "quizes/results");
+        model.addAttribute("content", "templates/quizes/results");
         return "layout";
     }
 
@@ -33,7 +33,7 @@ public class ResultController {
         }
 
         model.addAttribute("result", result);
-        model.addAttribute("content", "quizes/result-detail");
+        model.addAttribute("content", "templates/quizes/result-detail");
         return "layout";
     }
 
@@ -41,7 +41,7 @@ public class ResultController {
     @GetMapping("/create")
     public String showCreateForm(Model model) {
         model.addAttribute("result", new Result());
-        model.addAttribute("content", "quizes/result-create");
+        model.addAttribute("content", "templates/quizes/result-create");
         return "layout";
     }
 
@@ -55,7 +55,7 @@ public class ResultController {
     public String showEditForm(@PathVariable("id") Long id, Model model) {
         Result result = resultService.findById(id).orElse(null);
         model.addAttribute("result", result);
-        model.addAttribute("content", "quizes/result-edit");
+        model.addAttribute("content", "templates/quizes/result-edit");
         return "layout";
     }
 

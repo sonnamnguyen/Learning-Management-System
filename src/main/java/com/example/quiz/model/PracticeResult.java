@@ -22,7 +22,7 @@ public class PracticeResult {
     @JoinColumn(name = "test_session_id", nullable = false)
     private TestSession testSession;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY,cascade = CascadeType.MERGE)
     @JoinColumn(name = "question_id", nullable = false)
     private Question question;
 

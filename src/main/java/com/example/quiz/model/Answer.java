@@ -17,7 +17,6 @@ public class Answer {
 
     private String answerText;
 
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "answer_option_id", nullable = false)
     private AnswerOption selectedOption;
@@ -34,3 +33,5 @@ public class Answer {
     private Boolean isCorrect;
 
 }
+
+// ANSWER LÀ ĐÁP ÁN CỦA NGƯỜI DÙNG

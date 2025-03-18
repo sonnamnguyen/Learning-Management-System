@@ -23,7 +23,14 @@ import jakarta.transaction.Transactional;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.hashids.Hashids;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfByte;
+import org.opencv.core.MatOfRect;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.objdetect.CascadeClassifier;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -102,12 +109,15 @@ public class AssessmentService {
         }
     }
     public Assessment createAssessment(Assessment assessment) {
-
         return assessmentRepository.save(assessment);
     }
 
     public boolean existsByTitleAndAssessmentTypeId(String title, Long assessmentTypeId) {
         return assessmentRepository.existsByTitleAndAssessmentTypeId(title, assessmentTypeId);
+    }
+
+    public Assessment saveAssessment(Assessment assessment) {
+        return assessmentRepository.save(assessment);
     }
 
     public boolean duplicateAss(String name) {
@@ -240,6 +250,7 @@ public class AssessmentService {
 
         return new ByteArrayInputStream(out.toByteArray());
     }
+
     public void increaseInvitedCount(long assessmentId, int count) {
         Optional<Assessment> assessmentOpt = assessmentRepository.findById(assessmentId);
         if (assessmentOpt.isPresent()) {
@@ -325,10 +336,6 @@ public class AssessmentService {
         return hashids.decode(hash);
     }
 
-    public String generateInviteLink(long id) {
-        return inviteUrlHeader + encodeId(id) + "/take";
-    }
-
     public Assessment getAssessmentByIdForPreview(Long id) {
         return assessmentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Assessment not found!"));
@@ -371,6 +378,7 @@ public class AssessmentService {
     public long countAttemptsByAssessmentId(Long assessmentId) {
         return attemptRepository.countByAssessmentId(assessmentId);
     }
+
 
     @Transactional // Add transactional annotation
     public Assessment duplicateAssessment(Long assessmentId) {
@@ -429,12 +437,10 @@ public class AssessmentService {
         duplicatedAssessment.setQuizScoreRatio(originalAssessment.getQuizScoreRatio());
         duplicatedAssessment.setExerciseScoreRatio(originalAssessment.getExerciseScoreRatio());
         duplicatedAssessment.setShuffled(originalAssessment.isShuffled());
-        duplicatedAssessment.setInvitedEmails(originalAssessment.getInvitedEmails()); // Decide if you want to copy this
-        duplicatedAssessment.setCreatedBy(userService.getCurrentUser()); // Set current user as creator
-        duplicatedAssessment.setUpdatedBy(userService.getCurrentUser()); // Set current user as updater
-        duplicatedAssessment.setCreatedAt(LocalDateTime.now()); //New created time
-        duplicatedAssessment.setUpdatedAt(LocalDateTime.now()); //New updated time
-        duplicatedAssessment.setInvitedCount(0); // Reset counters for the new assessment
+        duplicatedAssessment.setInvitedEmails(originalAssessment.getInvitedEmails());
+        duplicatedAssessment.setCreatedBy(userService.getCurrentUser());
+        duplicatedAssessment.setCreatedAt(LocalDateTime.now());
+        duplicatedAssessment.setInvitedCount(0);
         duplicatedAssessment.setAssessedCount(0);
         duplicatedAssessment.setQualifiedCount(0);
 
@@ -447,12 +453,60 @@ public class AssessmentService {
         for (AssessmentQuestion originalAq : originalAssessment.getAssessmentQuestions()) {
             AssessmentQuestion duplicatedAq = new AssessmentQuestion();
             duplicatedAq.setAssessment(duplicatedAssessment);
-            duplicatedAq.setQuestion(originalAq.getQuestion()); // Link to the same Question
-            duplicatedAq.setOrderIndex(originalAq.getOrderIndex()); // Copy order index
+            duplicatedAq.setQuestion(originalAq.getQuestion());
+            duplicatedAq.setOrderIndex(originalAq.getOrderIndex());
             duplicatedAssessmentQuestions.add(duplicatedAq);
         }
         duplicatedAssessment.setAssessmentQuestions(duplicatedAssessmentQuestions);
 
         return assessmentRepository.save(duplicatedAssessment);
+    }
+
+    public boolean existsByTitleAndAssessmentType(String title, Long assessmentTypeId, Long id) {
+        return assessmentRepository.existsByTitleAndAssessmentTypeIdAndIdNot(title, assessmentTypeId, id);
+    }
+
+
+    public  double cosineSimilarity(double[] vec1, double[] vec2) {
+        double dotProduct = 0, norm1 = 0, norm2 = 0;
+        for (int i = 0; i < vec1.length; i++) {
+            dotProduct += vec1[i] * vec2[i];
+            norm1 += vec1[i] * vec1[i];
+            norm2 += vec2[i] * vec2[i];
+        }
+        if (norm1 == 0 || norm2 == 0) return 0;
+        return dotProduct / (Math.sqrt(norm1) * Math.sqrt(norm2));
+    }
+
+    public String preprocessText(String text) {
+        if (text == null) return "";
+        String processedText = text.toLowerCase()
+                .replaceAll("[^\\p{L}\\p{N}\\s]", "")
+                .replaceAll("\\s+", " ")
+                .trim();
+
+        Set<String> stopWords = new HashSet<>(Arrays.asList("what", "is", "the", "of", "a", "an", "in", "on", "at", "for", "to"));
+
+        String[] words = processedText.split("\\s+");
+        StringBuilder filteredText = new StringBuilder();
+        for (String word : words) {
+            if (!stopWords.contains(word)) {
+                filteredText.append(word).append(" ");
+            }
+        }
+        return filteredText.toString().trim();
+    }
+
+
+    private Resource faceResource = new ClassPathResource("haarcascades/haarcascade_frontalface_alt.xml");
+
+    public int detectFace(MultipartFile file) throws IOException {
+        MatOfRect faceDectections = new MatOfRect();
+        CascadeClassifier faceDetector = new CascadeClassifier(faceResource.getFile().getAbsolutePath());
+
+        Mat image = Imgcodecs.imdecode(new MatOfByte(file.getBytes()), Imgcodecs.IMREAD_UNCHANGED);
+        faceDetector.detectMultiScale(image, faceDectections);
+
+        return faceDectections.toArray().length;
     }
 }

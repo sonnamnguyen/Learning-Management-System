@@ -161,14 +161,16 @@
                                     <span style="color: #6c757d; font-size: 0.9rem;">Not detected</span>
                                 </div>
                                 <hr class="my-1">
-                                <!--                                Suspicious activity-->
+                                <!--                                Violation Face Count-->
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <span>
                                         <i class="fas fa-user-secret me-2"></i>
-                                        Suspicious activity
+                                        Violation Face Count
                                         <i class="fas fa-info-circle" style="color: #6c757d;"></i>
                                     </span>
-                                    <span style="color: #6c757d; font-size: 0.9rem;">Not detected</span>
+                                    <span style="color: #6c757d; font-size: 0.9rem;" >
+                                        <span th:text="${violationFaceCount}"></span> times
+                                    </span>
                                 </div>
                             </div>
                         </div>

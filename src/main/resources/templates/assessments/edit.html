@@ -24,8 +24,51 @@
             display: inline-block;
             width: 100%;
         }
+
+        .question-answers {
+            width: 100%;
+            display: none;
+            margin-top: 10px;
+        }
+        .question-answers.show {
+            display: block;
+        }
+
+        .compact-question-item {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 5px;
+            width: 100%;
+        }
+
+        .custom-switch {
+            width: 2.5rem;
+            height: 1.4rem;
+            transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out;
+        }
+
+        .custom-switch:checked {
+            background-color: #0d6efd !important;
+            border-color: #0d6efd !important;
+        }
+
+        .d-flex.align-items-center {
+            display: flex;
+            align-items: center;
+        }
+
+        .form-check-input {
+            transition: all 0.3s ease-in-out;
+        }
     </style>
-    <form th:action="@{/assessments/save}" th:object="${assessment}" method="POST" id="assessment-form">
+
+
+    <form th:action="@{/assessments/update/{id}(id=${assessment.id})}" th:object="${assessment}" method="POST" id="assessment-form">
+
+        <input type="hidden" th:value="${assessment.id}" name="id"/>
+        <input type="hidden" id="newAddedQuestionsInput" name="newAddedQuestions">
+
         <div class="d-flex justify-content-between mb-3">
             <a th:href="@{/assessments}" style="text-decoration: none; color: #6c757d; transition: color 0.3s ease;"
                onmouseover="this.style.color='#343a40';"
@@ -40,16 +83,16 @@
                     <i class="fas fa-eye"></i> Preview Assessment
                 </a>
                 <span style="color: #ccc; margin: 0 10px;">|</span>
-                <a th:href="@{/assessments/save}"
-                   style="text-decoration: none; color: #28a745; transition: color 0.3s ease;"
-                   onmouseover="this.style.color='#1e7e34';"
-                   onmouseout="this.style.color='#28a745';">
+                <button type="submit" class="btn btn-success"
+                        style="text-decoration: none; color: white; transition: background-color 0.3s ease;"
+                        onmouseover="this.style.backgroundColor='#1e7e34';"
+                        onmouseout="this.style.backgroundColor='#28a745';">
                     <i class="fas fa-save"></i> Save Assessment
-                </a>
+                </button>
             </div>
         </div>
 
-        <div class="col-md-4 mt-4 position-relative">
+        <div class="col-md-8 mt-4 position-relative">
             <div class="position-relative">
                 <!-- Title Display -->
                 <h1 id="title-display" class="m-0 pe-4" th:text="${assessment.title}"></h1>
@@ -63,20 +106,32 @@
 
             <!-- Hidden Input Field -->
             <input id="title-input" type="text" name="title" class="form-control d-none mt-2"
-                   placeholder="Enter assessment title" maxlength="255" required>
+                   placeholder="Enter assessment title" maxlength="255" th:value="${assessment.title}" required>
+            <input type="hidden" id="assessmentId" th:value="${assessment.id}">
 
             <!-- Save Button (Appears Only in Edit Mode) -->
             <a href="#" id="save-title" class="d-none mt-2 d-inline-block"
-               style="text-decoration: none; color: #28a745; margin-top: 10px; marign-bottom: 5px;">
+               style="text-decoration: none; color: #28a745;">
                 <i class="fas fa-save"></i> Save Title
             </a>
+
+            <!-- Error Message for Duplicate Title -->
+            <div id="duplicateTitleError" class="alert alert-danger mt-2 d-none"></div>
 
             <hr class="my-3">
 
             <!-- Created By Text with Highlighted Email -->
             <p class="text-muted">
-                This assessment has been created by
-                <span class="text-primary fw-bold" th:text="${creator?.email}"></span>
+                <th:block th:if="${updater != null}">
+                    This assessment has been updated by
+                    <span class="text-primary fw-bold fst-italic" th:text="${updater?.email}"></span>
+                    at <span class="text-primary fw-bold fst-italic" th:text="${formattedUpdatedAt}"></span>
+                </th:block>
+                <th:block th:if="${updater == null}">
+                    This assessment has been created by
+                    <span class="text-primary fw-bold fst-italic" th:text="${creator?.email}"></span>
+                    at <span class="text-primary fw-bold fst-italic" th:text="${formattedCreateAt}"></span>
+                </th:block>
             </p>
         </div>
 
@@ -117,51 +172,6 @@
             </div>
         </div>
 
-        <!-- Assessment Details Section -->
-        <!--        <div class="card mb-4 shadow">-->
-        <!--            <div class="card-header bg-primary text-white">-->
-        <!--                <h4>Assessment Details</h4>-->
-        <!--            </div>-->
-        <!--            <div class="card-body">-->
-        <!--                <div class="row">-->
-        <!--                    <div class="col-md-4">-->
-        <!--                        <label for="assessmentType" class="form-label">Assessment Type</label>-->
-        <!--&lt;!&ndash;                        <input type="text" id="assessmentType" name="assessmentType" th:value="${assessment?.assessmentType}" class="form-control">&ndash;&gt;-->
-        <!--                        <div class="position-relative">-->
-        <!--                            <select name="assessmentType" id="assessmentType" class="form-control" required>-->
-        <!--                                <option value="">Select assessment type</option>-->
-        <!--                                <option th:each="type : ${assessmentTypes}"-->
-        <!--                                        th:value="${type.id}"-->
-        <!--                                        th:selected="${assessment?.assessmentType?.id == type.id}"-->
-        <!--                                        th:text="${type.name}">-->
-        <!--                                </option>-->
-        <!--                            </select>-->
-        <!--                            <i class="bi bi-chevron-down" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none;"></i>-->
-        <!--                        </div>-->
-        <!--                    </div>-->
-        <!--                    <div class="col-md-4">-->
-        <!--                        <label for="title" class="form-label">Title</label>-->
-        <!--                        <input type="text" id="title" name="title" th:value="${assessment?.title}" class="form-control">-->
-        <!--                    </div>-->
-        <!--                    <div class="col-md-4">-->
-        <!--                        <label for="course" class="form-label">Course</label>-->
-        <!--&lt;!&ndash;                        <input type="text" id="course" name="course" th:value="${assessment?.course}" class="form-control">&ndash;&gt;-->
-        <!--                        <div class="position-relative">-->
-        <!--                            <select name="course" id="course" class="form-control" required>-->
-        <!--                                <option value="">Select a course</option>-->
-        <!--                                <option th:each="c : ${courses}"-->
-        <!--                                        th:value="${c.id}"-->
-        <!--                                        th:selected="${assessment?.course?.id == c.id}"-->
-        <!--                                        th:text="${c.name}">-->
-        <!--                                </option>-->
-        <!--                            </select>-->
-        <!--                            <i class="bi bi-chevron-down" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none;"></i>-->
-        <!--                        </div>-->
-        <!--                    </div>-->
-        <!--                </div>-->
-        <!--            </div>-->
-        <!--        </div>-->
-
         <!-- Exercises/Questions/Settings Section -->
         <div class="card mb-4 shadow">
             <!--            <div class="card-header bg-secondary text-white">-->
@@ -198,6 +208,7 @@
                                                 </option>
                                             </select>
                                             <i class="bi bi-funnel filter-icon_assessment-edit"></i>
+                                            <input type="hidden" name="exerciseIds" id="exerciseIds">
                                         </div>
                                     </div>
                                     <div class="search-container" style="display: flex; align-items: center; gap: 8px;">
@@ -303,9 +314,7 @@
                                                                 <button type="button" class="btn btn-primary d-flex align-items-center justify-content-center position-relative btn-add-question add-questions"
                                                                         th:data-quiz-id="${quiz.id}"
                                                                         data-question-id=""
-                                                                        style="width: 35px; height: 35px; border-radius: 50%; transition: width 0.3s ease; overflow: hidden;"
-                                                                        onmouseover="this.style.width='70px'; this.style.borderRadius='5px'; this.querySelector('.add-all-text').style.opacity='1'; this.querySelector('.add-all-text').style.transform='translateY(0)'; this.querySelector('.plus-sign').style.opacity='0';"
-                                                                        onmouseout="this.style.width='35px'; this.style.borderRadius='50%'; this.querySelector('.add-all-text').style.opacity='0'; this.querySelector('.add-all-text').style.transform='translateY(-10px)'; this.querySelector('.plus-sign').style.opacity='1';">
+                                                                        style="width: 35px; height: 35px; border-radius: 50%; transition: width 0.3s ease; overflow: hidden;">
                                                                     <span class="plus-sign" style="font-size: 1.3rem; transition: opacity 0.3s ease;">+</span>
                                                                     <span class="add-all-text position-absolute" style="opacity: 0; left: 20%; transform: translateX(-50%) translateY(-10px); font-size: 0.8rem; transition: opacity 0.3s ease, transform 0.3s ease;">Add All</span>
                                                                 </button>
@@ -339,6 +348,9 @@
                                                                     </li>
                                                                 </th:block>
                                                             </ul>
+                                                            <p class="text-danger text-center fst-italic" th:if="${#lists.isEmpty(quizQuestionsMap.get(quiz.id))}">
+                                                                There's no questions available for this quiz!
+                                                            </p>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -352,11 +364,6 @@
                             <div class="col-md-7">
                                 <div class="d-flex justify-content-between align-items-center border-bottom pb-1 mb-2">
                                     <h5 class="mb-0">Selected Questions</h5>
-                                    <a th:href="@{/save-selection}" style="text-decoration: none; color: #28a745; transition: color 0.3s ease;"
-                                       onmouseover="this.style.color='#1e7e34';"
-                                       onmouseout="this.style.color='#28a745';">
-                                        <i class="fas fa-save"></i> Save Selection
-                                    </a>
                                 </div>
                                 <div style="max-height: 800px; overflow-y: auto; border: 1px solid #dee2e6; padding: 10px; border-radius: 5px;">
                                     <ul class="list-group" id="selected-questions">
@@ -371,16 +378,9 @@
                     <!-- Settings Tab -->
                     <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="settings-tab">
                         <div class="row g-3">
-                            <div class="col-md-4">
-                                <label for="id_total_score" class="form-label">Total Score:</label>
-                                <input type="number" name="totalScore"
-                                       th:value="${assessment?.totalScore ?: ''}"
-                                       class="form-control"
-                                       placeholder="Enter total score"
-                                       required
-                                       id="id_total_score">
+                            <div class="col-12">
+                                <h6 class="text-muted">General Settings</h6>
                             </div>
-
                             <div class="col-md-4">
                                 <label for="id_qualify_score" class="form-label">Minimum Score:</label>
                                 <input type="number" name="qualifyScore"
@@ -401,6 +401,52 @@
                                        id="id_time_limit">
                             </div>
                         </div>
+
+                        <hr>
+
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <h6 class="text-muted">Score Distribution</h6>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="id_quiz_score_ratio" class="form-label">Quiz Score Ratio (%):</label>
+                                <input type="number" name="quizScoreRatio"
+                                       th:value="${assessment?.quizScoreRatio ?: ''}"
+                                       class="form-control"
+                                       placeholder="Enter quiz score ratio"
+                                       min="0"
+                                       required
+                                       id="id_quiz_score_ratio">
+                            </div>
+
+                            <div class="col-md-3">
+                                <label for="id_exercise_score_ratio" class="form-label">Exercise Score Ratio (%):</label>
+                                <input type="number" name="exerciseScoreRatio"
+                                       th:value="${assessment?.exerciseScoreRatio ?: ''}"
+                                       class="form-control"
+                                       placeholder="Enter exercise score ratio"
+                                       min="0"
+                                       required
+                                       id="id_exercise_score_ratio">
+                            </div>
+                        </div>
+
+                        <hr/>
+
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <h6 class="text-muted">Additional Settings</h6>
+                            </div>
+                            <div class="col-md-4 d-flex align-items-center">
+                                <label class="form-label me-3 mb-0">Shuffle Question Order:</label>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input custom-switch" type="checkbox"
+                                           name="shuffled"
+                                           th:checked="${assessment?.shuffled ?: false}"
+                                           id="id_shuffled">
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -413,9 +459,86 @@
 </div>
 
 <!-- JavaScript for Tab and Preview Handling -->
-<script type="application/json" id="selectedQuestionsJson" th:text="${selectedQuestionsJson}"></script>
+<script type="application/json" id="selectedQuestionsJson" th:utext="${selectedQuestionsJson}"></script>
+
+<script type="application/json" id="answersJson" th:text="${answersJson}"></script>
 
 <script th:inline="javascript">
+    document.addEventListener("DOMContentLoaded", function () {
+        const assessmentTypeSelect = document.getElementById("assessmentType");
+        const exercisesTab = document.getElementById("exercises-tab");
+        const questionsTab = document.getElementById("questions-tab");
+
+        function updateTabs() {
+            const selectedType = assessmentTypeSelect.options[assessmentTypeSelect.selectedIndex].text.toLowerCase();
+
+            if (selectedType.includes("quiz") && !selectedType.includes("assignment")) {
+                let questionsTabElement = new bootstrap.Tab(questionsTab);
+                questionsTabElement.show();
+
+                exercisesTab.classList.add("disabled");
+                questionsTab.classList.remove("disabled");
+
+            } else if (selectedType.includes("assignment") && !selectedType.includes("quiz")) {
+                let exercisesTabElement = new bootstrap.Tab(exercisesTab);
+                exercisesTabElement.show();
+
+                questionsTab.classList.add("disabled");
+                exercisesTab.classList.remove("disabled");
+
+            } else {
+                let exercisesTabElement = new bootstrap.Tab(exercisesTab);
+                exercisesTabElement.show();
+                exercisesTab.classList.remove("disabled");
+                questionsTab.classList.remove("disabled");
+            }
+        }
+
+        updateTabs();
+
+        assessmentTypeSelect.addEventListener("change", updateTabs);
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const assessmentTypeSelect = document.getElementById("assessmentType");
+        const quizRatioInput = document.getElementById("id_quiz_score_ratio");
+        const exerciseRatioInput = document.getElementById("id_exercise_score_ratio");
+
+        function updateRatios() {
+            const selectedType = assessmentTypeSelect.options[assessmentTypeSelect.selectedIndex].text.toLowerCase();
+
+            if (selectedType.includes("quiz") && !selectedType.includes("assignment")) {
+                quizRatioInput.value = 100;
+                exerciseRatioInput.value = 0;
+                quizRatioInput.disabled = true;
+                exerciseRatioInput.disabled = true;
+            } else if (selectedType.includes("assignment") && !selectedType.includes("quiz")) {
+                quizRatioInput.value = 0;
+                exerciseRatioInput.value = 100;
+                quizRatioInput.disabled = true;
+                exerciseRatioInput.disabled = true;
+            } else {
+                quizRatioInput.disabled = false;
+                exerciseRatioInput.disabled = false;
+
+                quizRatioInput.addEventListener("input", function () {
+                    let quizValue = parseInt(quizRatioInput.value) || 0;
+                    if (quizValue > 100) quizValue = 100;
+                    exerciseRatioInput.value = 100 - quizValue;
+                });
+
+                exerciseRatioInput.addEventListener("input", function () {
+                    let exerciseValue = parseInt(exerciseRatioInput.value) || 0;
+                    if (exerciseValue > 100) exerciseValue = 100;
+                    quizRatioInput.value = 100 - exerciseValue;
+                });
+            }
+        }
+
+        updateRatios();
+        assessmentTypeSelect.addEventListener("change", updateRatios);
+    });
+
     document.addEventListener("DOMContentLoaded", () => {
         // Enable tab switching using Bootstrap's default behavior
         const tabButtons = document.querySelectorAll('#myTab button[data-bs-toggle="tab"]');
@@ -607,153 +730,434 @@
         }
     }
 
+    //Javascript for passing the exercise list
+    function updateSelectedExercises() {
+        const selectedIds = Array.from(document.querySelectorAll("input[name='exercises']:checked"))
+            .map(checkbox => checkbox.value);
+
+        console.log("🔥 Selected Exercise IDs:", selectedIds);
+
+        const hiddenInput = document.getElementById("exerciseIds");
+        if (hiddenInput) {
+            hiddenInput.value = selectedIds.join(",");
+        }
+    }
+
+    document.querySelectorAll("input[name='exercises']").forEach(checkbox => {
+        checkbox.addEventListener("change", updateSelectedExercises);
+    });
+
     // Javascript for adding and remove question function
-    document.addEventListener('DOMContentLoaded', function () {
-        const selectedQuestionsList = document.getElementById('selected-questions');
-        const questionMap = new Map(); // Store selected questions to prevent duplicates
-        let selectedQuestions = []; // ✅ Defined outside so it's accessible everywhere
+    document.addEventListener("DOMContentLoaded", () => {
+        console.log("✅ Trước Submit - JSON trong DOM:", document.getElementById("selectedQuestionsJson")?.textContent);
+    });
 
-        // Retrieve selected questions from the JSON data provided in the model
-        const selectedQuestionsJsonElement = document.getElementById('selectedQuestionsJson');
+    document.querySelector("form").addEventListener("submit", function (event) {
+        setTimeout(() => {
+            console.log("❌ Sau Submit - JSON trong DOM:", document.getElementById("selectedQuestionsJson")?.textContent);
+        }, 1000);
+    });
 
-        if (selectedQuestionsJsonElement) {
+    document.addEventListener("DOMContentLoaded", function () {
+        const selectedQuestionsList = document.getElementById("selected-questions");
+        let selectedQuestionsFull = [];
+        let newAddedQuestions = [];
+        let answersMap = {};
+
+        const emptyMessage = document.createElement("p");
+        emptyMessage.id = "empty-message";
+        emptyMessage.className = "text-danger text-center fst-italic mt-3";
+        emptyMessage.style.display = "none";
+        emptyMessage.textContent = "There's currently no selected question for this assessment!";
+        selectedQuestionsList.parentNode.appendChild(emptyMessage);
+
+        function loadQuestions() {
+            const selectedQuestionsJsonElement = document.getElementById("selectedQuestionsJson");
+
+            if (!selectedQuestionsJsonElement) {
+                console.error("❌ Không tìm thấy phần tử selectedQuestionsJson");
+                return;
+            }
+
+            let jsonText = selectedQuestionsJsonElement.textContent.trim();
+
+            if (!jsonText || jsonText === "null") {
+                console.warn("⚠️ selectedQuestionsJson rỗng hoặc null.");
+                return;
+            }
             try {
-                const jsonText = selectedQuestionsJsonElement.textContent.trim();
+                let parsedQuestions = JSON.parse(jsonText);
+                console.log("✅ JSON parse thành công:", parsedQuestions);
 
-                // Decode HTML entities before parsing JSON
+                selectedQuestionsFull = parsedQuestions;
+
+                selectedQuestionsFull.forEach((question) => {
+                    addQuestionToSelectedList(question.questionId, question.text, question.orderIndex, true);
+                });
+
+                updateEmptyMessage();
+            } catch (error) {
+                console.error("❌ Lỗi parse selectedQuestionsJson:", error);
+            }
+        }
+
+        function loadAnswers() {
+            const answersJsonElement = document.getElementById("answersJson");
+
+            if (!answersJsonElement || !answersJsonElement.textContent) return;
+
+            try {
+                const jsonText = answersJsonElement.textContent.trim();
                 const parser = new DOMParser();
                 const decodedJsonText = parser.parseFromString(jsonText, "text/html").body.textContent;
 
-                console.log("Decoded JSON:", decodedJsonText);
+                let parsedAnswers = JSON.parse(decodedJsonText);
+                if (!parsedAnswers || typeof parsedAnswers !== "object") throw new Error("Dữ liệu không hợp lệ!");
 
-                selectedQuestions = JSON.parse(decodedJsonText);
+                answersMap = {};
+                Object.entries(parsedAnswers).forEach(([key, answersArray]) => {
+                    if (Array.isArray(answersArray) && answersArray.length > 0) {
+                        const questionId = parseInt(key, 10);
+                        answersMap[questionId] = answersArray;
+                    }
+                });
             } catch (error) {
-                console.error("Error parsing selected questions JSON:", error);
-                selectedQuestions = [];
+                answersMap = {};
             }
         }
 
-        console.log("Parsed Selected Questions:", selectedQuestions);
+        function addQuestionToSelectedList(questionId, questionText, orderIndex, isNew = true) {
+            if (!questionId || isNaN(questionId)) {
+                console.error("❌ Lỗi: questionId không hợp lệ!", questionId);
+                return;
+            }
 
-        // Function to add a question to the selected list
-        function addQuestionToSelectedList(questionId, questionText, quizId) {
-            if (questionMap.has(questionId)) return; // Prevent duplicate additions
+            if ([...selectedQuestionsList.children].some(li => li.dataset.questionId == questionId)) {
+                return;
+            }
 
-            const listItem = document.createElement('li');
+            const listItem = document.createElement("li");
+            listItem.className = "list-group-item compact-question-item p-2";
             listItem.dataset.questionId = questionId;
-            listItem.className = 'list-group-item d-flex align-items-center justify-content-between p-2 compact-question-item';
+
+            let answersHtml = "";
+            const questionIdNum = parseInt(questionId, 10);
+
+            if (answersMap[questionIdNum] && answersMap[questionIdNum].length > 0) {
+                answersHtml = answersMap[questionIdNum].map(answer => `
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>${answer.text}</span>
+                    ${answer.isCorrect ? '<span class="badge rounded-pill bg-success"><i class="bi bi-check-lg"></i></span>' : ''}
+                </li>
+            `).join("");
+            } else {
+                answersHtml = `<li class="list-group-item text-danger fst-italic">There's no answer for this question!</li>`;
+            }
 
             listItem.innerHTML = `
-        <div class="d-flex align-items-center flex-grow-1">
-            <span class="question-text text-truncate" title="${questionText}" style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                ${questionText}
-            </span>
-        </div>
-        <button type="button" class="btn btn-sm btn-danger remove-question-selected" data-question-id="${questionId}" data-quiz-id="${quizId}">
-            <i class="fas fa-trash-alt"></i>
-        </button>
-    `;
+            <div class="d-flex justify-content-between align-items-center w-100">
+                <span class="question-text text-truncate" title="${questionText}"
+                      style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    ${orderIndex}. ${questionText}
+                </span>
+                <div class="d-flex align-items-center">
+                    <button type="button" class="btn btn-sm btn-outline-secondary move-up me-1">⬆</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary move-down me-2">⬇</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary toggle-answers me-2">
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-danger remove-question-selected">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            </div>
+            <ul class="list-group mt-2 question-answers" style="display: none;">${answersHtml}</ul>
+        `;
 
             selectedQuestionsList.appendChild(listItem);
-            questionMap.set(questionId, listItem);
+            newAddedQuestions.push({ questionId, orderIndex, text: questionText });
 
-            document.querySelector(`.library-add-question[data-question-id="${questionId}"]`)?.classList.add('d-none');
-            updateAddAllButtonState(quizId);
+            updateHiddenInput();
 
-            listItem.querySelector('.remove-question-selected').addEventListener('click', function () {
-                removeQuestionFromSelectedList(questionId, quizId);
+            listItem.querySelector(".remove-question-selected").addEventListener("click", function () {
+                removeQuestionFromSelectedList(questionId);
             });
+
+            listItem.querySelector(".toggle-answers").addEventListener("click", function () {
+                const answersList = listItem.querySelector(".question-answers");
+                const icon = this.querySelector("i");
+
+                if (answersList.style.display === "none") {
+                    answersList.style.display = "block";
+                    icon.classList.replace("fa-chevron-down", "fa-chevron-up");
+                } else {
+                    answersList.style.display = "none";
+                    icon.classList.replace("fa-chevron-up", "fa-chevron-down");
+                }
+            });
+
+            listItem.querySelector(".move-up").addEventListener("click", function () {
+                const index = [...selectedQuestionsList.children].indexOf(listItem);
+
+                if (index > 0) {
+                    const prevItem = selectedQuestionsList.children[index - 1];
+                    selectedQuestionsList.insertBefore(listItem, prevItem);
+
+                    [newAddedQuestions[index - 1], newAddedQuestions[index]] = [newAddedQuestions[index], newAddedQuestions[index - 1]];
+
+                    updateOrderIndexes();
+                    updateMoveButtons();
+                }
+            });
+
+            listItem.querySelector(".move-down").addEventListener("click", function () {
+                const index = [...selectedQuestionsList.children].indexOf(listItem);
+
+                if (index < selectedQuestionsList.children.length - 1) {
+                    const nextItem = selectedQuestionsList.children[index + 1];
+                    selectedQuestionsList.insertBefore(nextItem, listItem);
+
+                    [newAddedQuestions[index], newAddedQuestions[index + 1]] = [newAddedQuestions[index + 1], newAddedQuestions[index]];
+
+                    updateOrderIndexes();
+                    updateMoveButtons();
+                }
+            });
+
+            document.querySelectorAll(`.library-add-question[data-question-id='${questionId}']`).forEach(btn => {
+                btn.style.display = "none";
+            });
+
+            updateHiddenInput();
+            updateEmptyMessage();
+            updateOrderIndexes();
+            updateAddAllButton();
+            updateMoveButtons();
         }
 
-        function removeQuestionFromSelectedList(questionId, quizId) {
-            const listItem = questionMap.get(questionId);
+        function removeQuestionFromSelectedList(questionId) {
+            const listItem = [...selectedQuestionsList.children].find((item) => item.dataset.questionId == questionId);
+
             if (!listItem) return;
 
             listItem.remove();
-            questionMap.delete(questionId);
 
-            document.querySelector(`.library-add-question[data-question-id="${questionId}"]`)?.classList.remove('d-none');
-            updateAddAllButtonState(quizId);
+            newAddedQuestions = newAddedQuestions.filter((q) => q.questionId !== parseInt(questionId, 10));
+
+            document.querySelectorAll(`.library-add-question[data-question-id='${questionId}']`).forEach(btn => {
+                btn.style.display = "inline-block";
+            });
+
+            updateHiddenInput();
+            updateEmptyMessage();
+            updateOrderIndexes();
+            updateAddAllButton();
+            updateMoveButtons()
         }
 
-        function updateAddAllButtonState(quizId) {
-            const quizQuestions = document.querySelectorAll(`#collapse${quizId} .list-group-item`);
-            const addAllButton = document.querySelector(`.btn-add-question[data-quiz-id="${quizId}"]`);
+        function updateOrderIndexes() {
+            [...selectedQuestionsList.children].forEach((li, index) => {
+                const questionTextElement = li.querySelector(".question-text");
+                const textParts = questionTextElement.textContent.split(". ");
 
-            if ([...quizQuestions].every(q => questionMap.has(q.dataset.questionId))) {
-                addAllButton?.setAttribute('disabled', 'true');
-            } else {
-                addAllButton?.removeAttribute('disabled');
+                if (textParts.length > 1) {
+                    questionTextElement.textContent = `${index + 1}. ${textParts.slice(1).join(". ")}`;
+                }
+
+                const questionId = parseInt(li.dataset.questionId, 10);
+                const question = newAddedQuestions.find(q => q.questionId === questionId);
+                if (question) {
+                    question.orderIndex = index + 1;
+                }
+            });
+
+            updateHiddenInput();
+
+            console.log("📌 Danh sách câu hỏi sau khi cập nhật:", newAddedQuestions);
+        }
+
+        function updateMoveButtons() {
+            const items = [...selectedQuestionsList.children];
+
+            items.forEach((li, index) => {
+                const moveUpButton = li.querySelector(".move-up");
+                const moveDownButton = li.querySelector(".move-down");
+
+                moveUpButton.disabled = index === 0;
+                moveDownButton.disabled = index === items.length - 1;
+            });
+        }
+
+        function updateAddAllButton() {
+            document.querySelectorAll(".add-questions").forEach(button => {
+                const quizId = button.getAttribute("data-quiz-id");
+                const questions = document.querySelectorAll(`#collapse${quizId} .library-add-question`);
+
+                const allAdded = [...questions].every(q => q.style.display === "none");
+
+                button.disabled = allAdded;
+            });
+        }
+
+        function updateEmptyMessage() {
+            emptyMessage.style.display = selectedQuestionsList.children.length === 0 ? "block" : "none";
+        }
+
+        function updateHiddenInput() {
+            document.getElementById("newAddedQuestionsInput").value = JSON.stringify(newAddedQuestions);
+        }
+
+
+        document.addEventListener("click", function (event) {
+            if (event.target.closest(".library-add-question")) {
+                const button = event.target.closest(".library-add-question");
+                const questionId = button.getAttribute("data-question-id");
+                const questionText = button.closest(".list-group-item").querySelector(".question-text").innerText;
+
+                if (!questionId || isNaN(questionId)) {
+                    console.error(`❌ Lỗi: questionId không hợp lệ! Giá trị nhận được: "${questionId}"`);
+                    return;
+                }
+
+                addQuestionToSelectedList(parseInt(questionId, 10), questionText, newAddedQuestions.length + 1);
             }
-        }
-
-        selectedQuestions.forEach(question => {
-            addQuestionToSelectedList(question.id, question.text, question.quizId);
         });
 
-        document.addEventListener('click', function (event) {
-            if (event.target.closest('.library-add-question')) {
-                const button = event.target.closest('.library-add-question');
-                const questionId = button.getAttribute('data-question-id');
-                const questionText = button.closest('.list-group-item').querySelector('.question-text').innerText;
-                const quizId = button.closest('.accordion-collapse').id.replace('collapse', '');
-                addQuestionToSelectedList(questionId, questionText, quizId);
-            }
+        document.addEventListener("click", function (event) {
+            if (event.target.closest(".add-questions")) {
+                const quizId = event.target.closest(".add-questions").getAttribute("data-quiz-id");
+                const questions = document.querySelectorAll(`#collapse${quizId} .library-add-question`);
 
-            if (event.target.closest('.btn-add-question')) {
-                const button = event.target.closest('.btn-add-question');
-                const quizId = button.getAttribute('data-quiz-id');
-                const questions = document.querySelectorAll(`#collapse${quizId} .list-group-item`);
-
-                questions.forEach(questionItem => {
-                    const questionId = questionItem.dataset.questionId;
-                    if (!questionMap.has(questionId)) {
-                        const questionText = questionItem.querySelector('.question-text').innerText;
-                        addQuestionToSelectedList(questionId, questionText, quizId);
+                questions.forEach(button => {
+                    if (button.style.display !== "none") {
+                        const questionId = button.getAttribute("data-question-id");
+                        const questionText = button.closest(".list-group-item").querySelector(".question-text").innerText;
+                        addQuestionToSelectedList(parseInt(questionId, 10), questionText, newAddedQuestions.length + 1);
                     }
                 });
-                updateAddAllButtonState(quizId);
+
+                updateAddAllButton();
             }
         });
 
-        document.querySelectorAll('.quiz-dropdown').forEach(dropdown => {
-            dropdown.addEventListener('click', function () {
-                const quizId = this.id.replace('quizDropdown', '');
+        document.querySelectorAll(".quiz-dropdown").forEach(dropdown => {
+            dropdown.addEventListener("click", function () {
+                const quizId = this.id.replace("quizDropdown", "");
                 const collapseElement = document.getElementById(`collapse${quizId}`);
 
-                if (collapseElement.classList.contains('show')) {
-                    collapseElement.classList.remove('show');
+                if (collapseElement.classList.contains("show")) {
+                    collapseElement.classList.remove("show");
                 } else {
-                    document.querySelectorAll('.accordion-collapse.show').forEach(open => open.classList.remove('show'));
-                    collapseElement.classList.add('show');
+                    document.querySelectorAll(".accordion-collapse.show").forEach(open => open.classList.remove("show"));
+                    collapseElement.classList.add("show");
                 }
             });
         });
+
+        loadAnswers();
+        loadQuestions();
     });
 
+    // Javascript for checking duplicate assessment
     document.addEventListener("DOMContentLoaded", function () {
         const titleDisplay = document.getElementById("title-display");
         const titleInput = document.getElementById("title-input");
         const editTitle = document.getElementById("edit-title");
         const saveTitle = document.getElementById("save-title");
+        const errorDiv = document.getElementById("duplicateTitleError");
+        const saveAssessmentBtn = document.querySelector(".btn-success");
+
+        let initialTitle = titleInput.value.trim();
+        let isModified = false;
+
+        saveAssessmentBtn.disabled = false;
 
         editTitle.addEventListener("click", function (event) {
             event.preventDefault();
-            titleInput.classList.remove("d-none");
-            titleDisplay.classList.add("d-none");
-            saveTitle.classList.remove("d-none");
-            editTitle.classList.add("d-none");
-            titleInput.value = titleDisplay.textContent.trim();
-            titleInput.focus();
+            toggleTitleEditing(true);
+        });
+
+        titleInput.addEventListener("input", function () {
+            isModified = titleInput.value.trim() !== initialTitle;
+            updateSaveAssessmentButton();
         });
 
         saveTitle.addEventListener("click", function (event) {
             event.preventDefault();
-            titleDisplay.textContent = titleInput.value.trim();
-            titleInput.classList.add("d-none");
-            titleDisplay.classList.remove("d-none");
-            saveTitle.classList.add("d-none");
-            editTitle.classList.remove("d-none");
+
+            let newTitle = titleInput.value.trim();
+            let assessmentTypeId = document.getElementById("assessmentType").value;
+            let id = document.getElementById("assessmentId").value;
+
+            if (newTitle === "") {
+                showError("The title cannot be empty!");
+                titleInput.value = initialTitle;
+                return;
+            }
+
+            $.get(`/assessments/edit/check-duplicate`, { title: newTitle, assessmentTypeId: assessmentTypeId, id: id })
+                .done(function (response) {
+                    if (response.isDuplicate) {
+                        showError("Assessment title of this assessment type already exists!");
+                        titleInput.value = initialTitle;
+                        return;
+                    }
+
+                    hideError();
+                    toggleTitleEditing(false);
+
+                    initialTitle = titleInput.value.trim();
+                    isModified = false;
+                    updateSaveAssessmentButton();
+                })
+                .fail(function () {
+                    showError("Error when checking!");
+                    titleInput.value = initialTitle;
+                });
         });
+
+        function showError(message) {
+            errorDiv.textContent = message;
+            errorDiv.classList.remove("d-none");
+            errorDiv.style.opacity = "0";
+
+            setTimeout(() => {
+                errorDiv.style.transition = "opacity 0.5s ease-in-out";
+                errorDiv.style.opacity = "1";
+            }, 10);
+
+            setTimeout(() => {
+                errorDiv.style.opacity = "0";
+                setTimeout(() => errorDiv.classList.add("d-none"), 500);
+            }, 5000);
+        }
+
+        function hideError() {
+            errorDiv.style.opacity = "0";
+            setTimeout(() => errorDiv.classList.add("d-none"), 500);
+        }
+
+        function toggleTitleEditing(isEditing) {
+            if (isEditing) {
+                titleInput.classList.remove("d-none");
+                titleDisplay.classList.add("d-none");
+                saveTitle.classList.remove("d-none");
+                editTitle.classList.add("d-none");
+                titleInput.focus();
+            } else {
+                titleDisplay.textContent = titleInput.value.trim();
+                titleDisplay.classList.remove("d-none");
+                titleInput.classList.add("d-none");
+                saveTitle.classList.add("d-none");
+                editTitle.classList.remove("d-none");
+
+                isModified = false;
+            }
+            updateSaveAssessmentButton();
+        }
+
+        function updateSaveAssessmentButton() {
+            saveAssessmentBtn.disabled = !isModified && !titleInput.classList.contains("d-none");
+        }
     });
 </script>
