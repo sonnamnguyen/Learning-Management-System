@@ -128,7 +128,7 @@ public interface ExerciseRepository extends PagingAndSortingRepository<Exercise,
 
     @Query("Select COUNT(DISTINCT e.id) FROM Exercise e " +
             "JOIN e.studentExerciseAttempts sea " +
-            "JOIN e.language WHERE e.level = 'MEDIUM'  AND sea.attendant_email is null " +
+            "JOIN e.language WHERE e.level = 'MEDIUM' " +
             "AND sea.attendant_user.id =:id  and e.language.language like %:language% and sea.score_exercise >= :passingScore")
     Integer countUserNumberMediumExercises(@Param("id") Long userId,
                                            @Param("language") String language,
@@ -137,6 +137,7 @@ public interface ExerciseRepository extends PagingAndSortingRepository<Exercise,
     @Query("SELECT MONTH(sea.attemptDate) as month, COUNT(sea) as count " +
             "FROM StudentExerciseAttempt sea " +
             "WHERE YEAR(sea.attemptDate) = :year " +
+            "AND sea.score_exercise >= :passingScore " +
             "AND sea.attendant_user.id = :userId  AND sea.attendant_email is null " +
             "GROUP BY MONTH(sea.attemptDate) " +
             "ORDER BY MONTH(sea.attemptDate)")

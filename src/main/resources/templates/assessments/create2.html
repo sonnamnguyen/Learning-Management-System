@@ -14,7 +14,6 @@
 <style>
     html {
         font-size: 85%;
-
         .breadcrumb {
             display: flex;
             flex-wrap: wrap;
@@ -589,41 +588,74 @@
             const questionsTabButton = document.getElementById('questions-tab');
             const exercisesTabPane = document.getElementById('exercises');
             const questionsTabPane = document.getElementById('questions');
-
+            const settingsTabButton = document.getElementById('settings-tab'); // Lấy button Settings tab
+            const settingsTabPane = document.getElementById('settings');
             function handleAssessmentTypeChange() {
                 const selectedAssessmentType = assessmentTypeDropdown.value;
+                const quizRatioInput = document.getElementById('id_quiz_score_ratio');
+                const exerciseRatioInput = document.getElementById('id_exercise_score_ratio');
 
-                if (selectedAssessmentType === /* Value for "Quiz" from your options */ "1") { // Replace "1" with actual Quiz ID/value
+                deactivateTab(settingsTabButton, settingsTabPane);
+
+                if (selectedAssessmentType === "1") { // Replace "1" with actual Quiz ID/value
                     // Activate Questions tab, deactivate Exercises tab
                     activateTab(questionsTabButton, questionsTabPane);
                     deactivateTab(exercisesTabButton, exercisesTabPane);
 
                     // Disable Exercises tab button to prevent clicks
                     exercisesTabButton.setAttribute('disabled', 'true');
-                    exercisesTabButton.classList.add('disabled'); // Add a class for visual styling if needed
+                    exercisesTabButton.classList.add('disabled');
 
                     // Enable Questions tab button
                     questionsTabButton.removeAttribute('disabled');
                     questionsTabButton.classList.remove('disabled');
 
-                } else if (selectedAssessmentType === /* Value for "Assignment" from your options */ "2") { // Replace "2" with actual Assignment ID/value
+                    // Set default ratio for Quiz and disable Exercise Ratio input
+                    quizRatioInput.value = 100;
+                    exerciseRatioInput.value = 0;
+                    exerciseRatioInput.disabled = false; // **Disable Exercise Ratio input for Quiz**
+                    quizRatioInput.disabled = false; // **Ensure Quiz Ratio input is enabled**
+
+
+                } else if (selectedAssessmentType ===  "2") { // Replace "2" with actual Assignment ID/value
                     // Activate Exercises tab, deactivate Questions tab
                     activateTab(exercisesTabButton, exercisesTabPane);
                     deactivateTab(questionsTabButton, questionsTabPane);
 
                     // Disable Questions tab button to prevent clicks
                     questionsTabButton.setAttribute('disabled', 'true');
-                    questionsTabButton.classList.add('disabled'); // Add a class for visual styling if needed
+                    questionsTabButton.classList.add('disabled');
 
                     // Enable Exercises tab button
                     exercisesTabButton.removeAttribute('disabled');
                     exercisesTabButton.classList.remove('disabled');
 
-                } else {
-                    // For other assessment types or default, enable both tabs
+                    // Set default ratio for Assignment and disable Quiz Ratio input
+                    quizRatioInput.value = 0;
+                    exerciseRatioInput.value = 100;
+                    quizRatioInput.disabled = false;
+                    exerciseRatioInput.disabled = false;
+
+
+                } if (selectedAssessmentType ===  "3") {
+                    // For other assessment types or default, enable both and enable both ratio inputs
                     enableTab(exercisesTabButton);
                     enableTab(questionsTabButton);
-                    // You might want to set a default active tab here if needed for other types
+                    quizRatioInput.disabled = false;
+                    quizRatioInput.value = 50;
+                    exerciseRatioInput.value = 50;
+                    exerciseRatioInput.disabled = false;
+                    quizRatioInput.addEventListener("input", function () { // Keep the input event listeners for other types
+                        let quizValue = parseInt(quizRatioInput.value) || 0;
+                        if (quizValue > 100) quizValue = 100;
+                        exerciseRatioInput.value = 100 - quizValue;
+                    });
+
+                    exerciseRatioInput.addEventListener("input", function () {
+                        let exerciseValue = parseInt(exerciseRatioInput.value) || 0;
+                        if (exerciseValue > 100) exerciseValue = 100;
+                        quizRatioInput.value = 100 - exerciseValue;
+                    });
                 }
             }
 
@@ -882,81 +914,122 @@
                 duplicateTitleErrorDiv.style.opacity = "0";
                 setTimeout(() => duplicateTitleErrorDiv.classList.add("d-none"), 500);
             }
+
+            function showSimilarQuestionError(positionsGroups) {
+                let errorMessage = "Similar questions found at positions: ";
+                const positionsStrings = [];
+                for (const group of positionsGroups) {
+                    positionsStrings.push(group.join(", ")); // Join positions in each group with comma and space
+                }
+                errorMessage += positionsStrings.join("; "); // Join groups with semicolon and space
+                errorMessage += ". Please review and remove duplicates.";
+                showError(errorMessage); // Reuse existing showError function to display the message
+            }
+
+
+            function checkSimilarQuestions(questionIds) {
+                return new Promise((resolve, reject) => { // Return a Promise
+                    $.get('/assessments/check-similarQuestions', { 'questions-ids': questionIds })
+                        .done(function(response) {
+                            if (typeof response === 'string' && response.includes("No duplicate questions found.")) {
+                                resolve(false); // Resolve with false: No duplicates
+                            }
+                            else if (Array.isArray(response)) {
+                                // Assuming response is an array of duplicate question position groups
+                                if (response.length > 0) {
+                                    resolve(response); // Resolve with the position groups
+                                } else {
+                                    resolve(false); // Resolve with false: No duplicates (empty array - should not happen based on backend logic but good to have)
+                                }
+                            }
+                            else {
+                                console.error("Unexpected response format:", response);
+                                reject("Unexpected response format"); // Reject the promise on unexpected response
+                            }
+
+                        })
+                        .fail(function(jqXHR, textStatus, errorThrown) {
+                            console.error("Error checking for similar questions:", textStatus, errorThrown);
+                            reject(errorThrown); // Reject the promise on AJAX failure
+                        });
+                });
+            }
             assessmentForm.addEventListener('submit', function (event) {
                 event.preventDefault();
 
                 const newTitle = titleInput.value.trim();
                 const assessmentTypeId = assessmentTypeSelect.value;
-                let id = document.getElementById("assessmentId").value;
-                console.log("Giá trị assessmentId:", id); // Kiểm tra giá trị trong console
-
+                const assessmentId = document.getElementById("assessmentId").value; // Get the assessment ID
+                console.log("Assessment ID:", assessmentId);
 
                 if (newTitle === "") {
                     showError("The title cannot be empty!");
                     return;
                 }
 
-
-                // **1. Collect Selected Exercise IDs**
-                window.selectedExerciseIds = []; // Clear previous selections
-                const exerciseCheckboxes = document.querySelectorAll('input[name="exercises"]:checked');
-                exerciseCheckboxes.forEach(checkbox => {
-                    window.selectedExerciseIds.push(checkbox.value); // Store exercise IDs in the global variable
+                // **1. Collect Selected Exercise IDs** (Corrected and before AJAX)
+                window.selectedExerciseIds = [];
+                document.querySelectorAll('input[name="exercises"]:checked').forEach(checkbox => {
+                    window.selectedExerciseIds.push(checkbox.value);
                 });
 
-                // **2. Collect Selected Question IDs**
-                window.selectedQuestionIds = []; // Clear previous selections
-                const selectedQuestionItems = selectedQuestionsList.children; // Get list items in current order
-                for (let i = 0; i < selectedQuestionItems.length; i++) {
-                    const listItem = selectedQuestionItems[i];
-                    const questionId = listItem.dataset.questionId; // Get questionId from data attribute
-                    window.selectedQuestionIds.push(questionId); // Store question IDs in the global variable in the current order
-                }
-
-                console.log("Exercises IDs saved in JavaScript variable:", window.selectedExerciseIds);
-                console.log("Question IDs saved in JavaScript variable:", window.selectedQuestionIds);
-
-
-                // Remove existing hidden inputs for exercises and questions (to avoid duplicates)
+                // **2. Collect Selected Question IDs** (Corrected and before AJAX)
+                window.selectedQuestionIds = [];
+                document.querySelectorAll('#selected-questions li[data-question-id]').forEach(listItem => {
+                    window.selectedQuestionIds.push(listItem.dataset.questionId);
+                });
+                // Remove existing hidden inputs
                 document.querySelectorAll('input[name="exercises-ids"], input[name="questions-ids"]').forEach(input => input.remove());
 
-
-                // **2. Add hidden input fields for selected exercise IDs**
+                // **3. Add Hidden Inputs for Exercises**
                 window.selectedExerciseIds.forEach(exerciseId => {
                     const hiddenInput = document.createElement('input');
                     hiddenInput.type = 'hidden';
-                    hiddenInput.name = 'exercises-ids'; // **Correct name: exercises-ids**
+                    hiddenInput.name = 'exercises-ids';
                     hiddenInput.value = exerciseId;
-                    assessmentForm.appendChild(hiddenInput); // Append to the form
+                    assessmentForm.appendChild(hiddenInput);
                 });
 
-                // **3. Add hidden input fields for selected question IDs**
+                // **4. Add Hidden Inputs for Questions**
                 window.selectedQuestionIds.forEach(questionId => {
                     const hiddenInput = document.createElement('input');
                     hiddenInput.type = 'hidden';
-                    hiddenInput.name = 'questions-ids'; // **Correct name: questions-ids**
+                    hiddenInput.name = 'questions-ids';
                     hiddenInput.value = questionId;
-                    assessmentForm.appendChild(hiddenInput); // Append to the form
+                    assessmentForm.appendChild(hiddenInput);
                 });
 
 
-
-                $.get(`/assessments/create/check-duplicate`, { title: newTitle, assessmentTypeId: assessmentTypeId, id: id }) // Correct URL, **removed id parameter**
-                    .done(function (response) {
-                        if (response.isDuplicate) {
-                            showError("Assessment title of this assessment type already exists!");
-                            // Do NOT submit the form here if it's a duplicate
+                // --- PERFORM CHECKS ---
+                // First, check for similar questions
+                checkSimilarQuestions(window.selectedQuestionIds)
+                    .then(similarQuestionPositionsGroups => { // Rename variable to positionsGroups
+                        if (similarQuestionPositionsGroups === false) { // No similar questions (resolved with false)
+                            // If no similar questions, proceed with the title check
+                            return $.get(`/assessments/create/check-duplicate`, { title: newTitle, assessmentTypeId: assessmentTypeId, id: assessmentId });
                         } else {
-
-                            hideError(); // Hide any previous error
-                            assessmentForm.submit(); // **Submit the form ONLY if no duplicate**
+                            // Similar questions found, display error
+                            showSimilarQuestionError(similarQuestionPositionsGroups); // Call new function
+                            return Promise.reject("Similar questions found"); // Stop the chain
                         }
                     })
-                    .fail(function () {
-                        showError("Error when checking for duplicate title!");
-                        // Optionally handle failure to check duplicate (e.g., still submit or prevent submission)
+                    .then(response => { // This .then() is now reached only if no similar questions were found
+                        if (response.isDuplicate) {
+                            showError("Assessment title of this assessment type already exists!");
+                            return Promise.reject("Duplicate title found")
+                        } else {
+                            hideError();
+                            assessmentForm.submit(); // Submit the form if not a duplicate
+                        }
+                    })
+                    .catch(error => {
+                        if (error !== "Similar questions found" && error !== "Duplicate title found") { // Only show generic error if it's not one of our controlled rejections
+                            console.error("An error occurred during checks: ", error);
+                            showError("An unexpected error occurred during validation."); // Generic error message
+                        }
+                        // For "Similar questions found" and "Duplicate title found" errors, error message is already displayed by showError or showSimilarQuestionError
                     });
-            });
+            })
 
 
             const addQuizButtons = document.querySelectorAll('.add-questions');

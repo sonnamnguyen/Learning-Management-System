@@ -170,7 +170,6 @@
                                 </div>
                             </div>
                         </div>
-                        <!-- Display Exercises -->
                         <!-- Exercises -->
                         <input type="hidden" name="hasExercise" id="hasExercise"
                                th:value="${exercises != null and not #lists.isEmpty(exercises)}">
@@ -183,8 +182,7 @@
                                     <div class="card-body d-flex justify-content-between align-items-center">
                                         <h6 class="exercise-title btn btn-light">
                                             <span th:text="'Exercise ' + (${stat.index} + 1) + ': '"></span>
-                                            <!--redirect to coding site-->
-                                            <a th:href="@{/judgement/{type}/code_space/{id}(type='assessment', id=${exercise.id})}"
+                                            <a th:href="@{/judgement/assessment/code_space/{id}(id=${exercise.id})}"
                                                th:text="${exercise.name}" target="_blank"></a>
                                         </h6>
                                         <input type="checkbox" class="form-check-input me-2"
@@ -199,8 +197,6 @@
                 <!-- Hidden inputs -->
                 <!-- Hidden inputs -->
                 <input type="hidden" name="attemptMail" th:value="${attempt.getEmail()}">
-
-                <!-- Hidden input để gửi attemptId và elapsedTime -->
                 <input type="hidden" name="attemptId" th:value="${attempt.id}">
                 <input type="hidden" name="elapsedTime" id="elapsedTime">
             </form>
@@ -285,9 +281,12 @@
     let tabLeaveCount = sessionStorage.getItem("tabLeaveCount")
         ? parseInt(sessionStorage.getItem("tabLeaveCount"), 10)
         : 0;
+    let violationFaceCount = sessionStorage.getItem("violationFaceCount")
+        ? parseInt(sessionStorage.getItem("violationFaceCount"), 10)
+        : 0;
 
     // Detect when user leaves/switches tab
-    document.addEventListener("visibilitychange", function () {
+    document.addEventListener("visibilitychange", function() {
         if (document.hidden) {
             tabLeaveCount++;
             sessionStorage.setItem("tabLeaveCount", tabLeaveCount.toString());
@@ -295,20 +294,20 @@
     })
 
     // Prevent copy question or answer action
-    document.addEventListener("DOMContentLoaded", function () {
+    document.addEventListener("DOMContentLoaded", function() {
         let elements = document.querySelectorAll(".question-text, .form-check-label");
 
         elements.forEach(element => {
-            element.addEventListener("copy", function (e) {
+            element.addEventListener("copy", function(e) {
                 e.preventDefault();
                 alert('Copying is not allowed!');
             })
 
-            element.addEventListener("contextmenu", function (e) {
+            element.addEventListener("contextmenu", function(e) {
                 e.preventDefault();
             })
 
-            element.addEventListener("selectstart", function (e) {
+            element.addEventListener("selectstart", function(e) {
                 e.preventDefault();
             })
         })
@@ -321,14 +320,116 @@
         });
     })
 
+
+    // Auto capture picture from user's camera
+    document.addEventListener("DOMContentLoaded", async function () {
+        let video = document.createElement("video");
+        let canvas = document.createElement("canvas");
+        let context = canvas.getContext("2d");
+        let streamActive = false;
+
+        // Disable all answer inputs and exercise links initially
+        function disableInteractions() {
+            document.querySelectorAll(".form-check-input, .exercise-title a").forEach(element => {
+                element.disabled = true;
+                element.classList.add("disabled");
+            })
+        }
+
+        // Function to enable interactions
+        function enableInteractions() {
+            document.querySelectorAll(".form-check-input, .exercise-title a").forEach(element => {
+                element.disabled = false;
+                element.classList.remove("disabled");
+            })
+        }
+
+        // Function to setup camera
+        async function setupCamera() {
+            try {
+                let stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+                await new Promise(resolve => video.onloadedmetadata = resolve);
+                video.play();
+                streamActive = true;
+                enableInteractions();
+            } catch (error) {
+                console.error("Error accessing camera: ", error);
+                alert("❌ You must allow camera access to proceed with the exam.");
+                disableInteractions();
+            }
+        }
+
+        // Function to capture and send images to server
+        async function captureAndSendImage() {
+            if (!streamActive) return;
+            try {
+                // Ensure video stream is active
+                if (!video.srcObject) await setupCamera();
+
+                // Set canvas size to match video feed
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+
+                // Capture frame from video
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                // Convert image to Blob
+                canvas.toBlob(async function (blob) {
+                    let formData = new FormData();
+                    formData.append("file", blob, "capture_image.jpg");
+
+                    // Send image to server
+                    const response = await fetch("/assessments/capture-image", {
+                        method: "POST",
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        console.error(`Error from server: ${response.status}`);
+                        return;
+                    }
+
+                    const data = await response.json();
+
+                    if (data > 1 || data < 1) {
+                        violationFaceCount++;
+                        sessionStorage.setItem("violationFaceCount", violationFaceCount.toString()); // Store in session
+                        if (violationFaceCount >= 3 && data > 1) {
+                            alert("⚠ Warning! Multiple face detection issues detected.");
+                        } else if (violationFaceCount >= 3 && data < 1) {
+                            alert("⚠ Warning! None face detection issues detected.");
+                        }
+                    }
+
+                }, "image/jpeg");
+            } catch (error) {
+                console.error("Error capturing camera: ", error);
+            }
+        }
+
+        // Try to setup camera
+        await setupCamera();
+
+        // Capture image every 10 seconds
+        setInterval(captureAndSendImage, 5000);
+    })
+
     // Attach tabLeaveCount to form before submission
-    document.getElementById("form-assessment").addEventListener("submit", function () {
-        let input = document.createElement("input");
-        input.type = "hidden";
-        input.name = "tabLeaveCount";
-        input.value = tabLeaveCount.toString();
-        this.appendChild(input);
+    document.getElementById("form-assessment").addEventListener("submit", function() {
+        let tabLeaveCountInput = document.createElement("input");
+        tabLeaveCountInput.type = "hidden";
+        tabLeaveCountInput.name = "tabLeaveCount";
+        tabLeaveCountInput.value = tabLeaveCount.toString();
+        this.appendChild(tabLeaveCountInput);
+
+        let violationFaceCountInput = document.createElement("input");
+        violationFaceCountInput.type = "hidden";
+        violationFaceCountInput.name = "violationFaceCount";
+        violationFaceCountInput.value = violationFaceCount.toString();
+        this.appendChild(violationFaceCountInput);
     })
 </script>
+
 </body>
 </html>

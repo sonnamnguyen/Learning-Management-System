@@ -271,6 +271,70 @@
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
     });
+    document.addEventListener("DOMContentLoaded", function () {
+        const expirationInput = document.getElementById("expirationDate");
+
+        expirationInput.addEventListener("change", validateDateTime);
+
+        function validateDateTime() {
+            if (!validateTimeFormat()) return false;
+
+            let inputDate = new Date(expirationInput.value);
+            let now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset()); // Convert to local time
+
+            if (!expirationInput.value) {
+                showError("Expiration date & time is required!");
+                return false;
+            }
+
+            if (inputDate <= now) {
+                showError("The expiration date at least must be in the next day!");
+                expirationInput.value = ""; // Clear invalid input
+                return false;
+            }
+
+            clearError();
+            return true;
+        }
+
+        function validateTimeFormat() {
+            let inputDate = expirationInput.value;
+            let timePart = inputDate.split("T")[1]; // Extract HH:MM part
+
+            if (timePart) {
+                let [hours, minutes] = timePart.split(":").map(Number);
+
+                // Ensure valid hours (0-23) and minutes (0-59)
+                if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+                    showError("Invalid time format! Please enter a valid time.");
+                    expirationInput.value = ""; // Clear invalid input
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        function showError(message) {
+            let errorDiv = document.getElementById("expirationError");
+
+            if (!errorDiv) {
+                errorDiv = document.createElement("div");
+                errorDiv.id = "expirationError";
+                errorDiv.style.color = "red";
+                expirationInput.parentNode.appendChild(errorDiv);
+            }
+
+            errorDiv.textContent = message;
+        }
+
+        function clearError() {
+            let errorDiv = document.getElementById("expirationError");
+            if (errorDiv) errorDiv.textContent = "";
+        }
+    });
+
 </script>
 
 </body>
