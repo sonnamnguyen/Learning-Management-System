@@ -17,12 +17,14 @@ public class StudentExerciseAttemptResponse {
     String name;
     String code;
     String time;
+    Double score;
 
-    public StudentExerciseAttemptResponse(Long id, String name, String code, LocalDateTime attemptDate) {
+    public StudentExerciseAttemptResponse(Long id, String name, String code, LocalDateTime attemptDate, Double score) {
         this.id = id;
         this.name = name;
         this.code = code;
         this.time = formatRelativeTime(attemptDate);
+        this.score = score;
     }
 
     private String formatRelativeTime(LocalDateTime attemptDate) {

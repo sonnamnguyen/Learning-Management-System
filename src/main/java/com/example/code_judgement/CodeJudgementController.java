@@ -125,4 +125,18 @@ public class CodeJudgementController {
         System.out.println(targetPath);
         return "forward:" + targetPath;
     }
+
+    @GetMapping("/get_exercise")
+    public String getExercise(@RequestParam("exerciseId") Long exerciseId,
+                                 @RequestParam("code") String code,
+                              @RequestParam("score") Double score,
+                              Model model){
+        Exercise exercise = exerciseService.getExerciseById(exerciseId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));
+
+            model.addAttribute("exercise", exercise);
+            model.addAttribute("code", code);
+            model.addAttribute("score", score);
+        return "judgement/view_result";
+    }
 }

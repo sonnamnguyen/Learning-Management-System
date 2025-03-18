@@ -12,6 +12,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,18 +33,21 @@ public class StudentExerciseAttemptService {
         return studentExerciseAttemptRepository.findByExerciseSession(exerciseSession);
     }
 
-    public Page<StudentExerciseAttemptResponse> getStudentAttemptsByUser(Long userId, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<StudentExerciseAttempt> attempts = studentExerciseAttemptRepository.getStudentExerciseAttemptByUser(userId, pageable);
+    public List<StudentExerciseAttemptResponse> getStudentAttemptsByUser(Long userId) {
+        List<StudentExerciseAttempt> attempts = studentExerciseAttemptRepository.getStudentExerciseAttemptByUser(userId);
+        List<StudentExerciseAttemptResponse> responseList = new ArrayList<>();
 
-        return attempts.map(attempt ->
-                new StudentExerciseAttemptResponse(
-                        attempt.getSubmitted_exercise().getId(),
-                        attempt.getSubmitted_exercise().getName(),
-                        attempt.getSubmitted_code(),
-                        attempt.getAttemptDate()
-                )
-        );
+        for (StudentExerciseAttempt attempt : attempts) {
+            responseList.add(new StudentExerciseAttemptResponse(
+                    attempt.getSubmitted_exercise().getId(),
+                    attempt.getSubmitted_exercise().getName(),
+                    attempt.getSubmitted_code(),
+                    attempt.getAttemptDate(),
+                    attempt.getScore_exercise()
+            ));
+        }
+
+        return responseList;
     }
 
 }

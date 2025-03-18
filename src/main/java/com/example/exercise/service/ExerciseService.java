@@ -471,7 +471,7 @@ public class ExerciseService {
 
 
     public Map<String, Integer> countPassedTestsPerMonth(Long userId, int year) {
-        List<Object[]> results = exerciseRepository.countPassedTestsPerMonth(userId, year, pass_score);
+        List<Object[]> results = exerciseRepository.countPassedTestsPerMonth(userId, year);
         Map<String, Integer> passedTestsPerMonth = new LinkedHashMap<>(); // Keep order of months
 
         DateFormatSymbols dfs = new DateFormatSymbols(Locale.ENGLISH);

@@ -1240,9 +1240,9 @@
     <script th:inline="javascript">
         /*<![CDATA[*/
         // Đưa code phân trang ra ngoài document.addEventListener
-        const submissionsData = /*[[${studentAttempts}]]*/[];
+        const submissionsData = /*[[${studentAttempts}]]*/ [];
         const ITEMS_PER_PAGE = 5;
-        let currentPage = /*[[${currentPage}]]*/1;
+        let currentPage = 1;
 
         // Định nghĩa các hàm ở phạm vi toàn cục
         function displaySubmissions(page) {
@@ -1255,22 +1255,22 @@
 
             paginatedData.forEach(submission => {
                 submissionsList.innerHTML += `
-            <div class="submission-item" onclick="submitExercise(${submission.id}, '${submission.code}')">
+<div class="submission-item"
+     onclick="window.location.href='/judgement/get_exercise?exerciseId=' + this.dataset.id + '&code=' + encodeURIComponent(this.dataset.code) + '&score=' + this.dataset.score"
+     data-id="${submission.id}"
+     data-code="${submission.code}"
+     data-score="${submission.score}">
                         <div class="submission-title">${submission.name}</div>
                         <div class="submission-meta">
-                                <span class="submission-time">${submission.time}</span>
+                            <span class="submission-time">${submission.time}</span>
                         </div>
                     </div>
                 `;
             });
         }
 
-        function submitExercise(submissionId, submissionCode) {
-            window.location.href = `/judgement/get_exercise?exerciseId=${submissionId}&code=${encodeURIComponent(submissionCode)}`;
-        }
-
         function updatePagination() {
-            const totalPages = /*[[${totalPages}]]*/1
+            const totalPages = Math.ceil(submissionsData.length / ITEMS_PER_PAGE);
             const pageNumbers = document.getElementById('page-numbers');
             const prevBtn = document.getElementById('prev-btn');
             const nextBtn = document.getElementById('next-btn');
@@ -1685,7 +1685,7 @@
                                     label: function (context) {
                                         let label = context.label;
                                         let value = context.raw;
-                                        let total = stats[`user${label}`]; // Get correct total per category
+                                        let total = stats.userHard+stats.userEasy+stats.userMedium;
                                         let percentage = Math.round((value / total) * 100);
                                         return `${label}: ${value}/${total} (${percentage}%)`;
                                     }
