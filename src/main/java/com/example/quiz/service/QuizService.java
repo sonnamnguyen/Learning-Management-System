@@ -45,14 +45,13 @@ public class QuizService {
     @Autowired
     private QuizTagRepository quizTagRepository;
     @Autowired
-    private QuizTagService quizTagService;
-    @Autowired
     private PracticeResultRepository practiceResultRepository;
     @Autowired
     private ResultRepository resultRepository;
     @Autowired
     private TestSessionRepository testSessionRepository;
-
+    @Autowired
+    private QuizTagService quizTagService;
     @Autowired
     private QuestionRepository questionRepository;
     @Autowired
@@ -299,6 +298,9 @@ public class QuizService {
             e.printStackTrace();
         }
     }
+
+
+
     public void scheduleClearCacheJob(Long quizId) {
         try {
             scheduleJob.scheduleClearCacheJob(quizId, LocalDateTime.now().plusMinutes(10));
@@ -546,6 +548,7 @@ public class QuizService {
             return null;
         }
     }
+
 
     public double calculateScore(List<String> questionId, Long assessmentId, MultiValueMap<String, String> responses, User user) {
         if (questionId == null || questionId.isEmpty()) {
@@ -902,5 +905,6 @@ public class QuizService {
                 .orElseThrow(() -> new EntityNotFoundException("Quiz not found"));
         return new ArrayList<>(quiz.getTags());
     }
+
 
 }

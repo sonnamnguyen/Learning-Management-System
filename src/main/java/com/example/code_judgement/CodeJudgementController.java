@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
+import com.example.user.UserService;
 
 import java.util.List;
 import java.util.Objects;
@@ -18,6 +20,8 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class CodeJudgementController {
     private final ExerciseService exerciseService;
+
+    private final UserService userService;
 
     // Hiển thị giao diện code space cho một bài tập
     @GetMapping("/{type}/code_space/{id}")
@@ -127,6 +131,7 @@ public class CodeJudgementController {
     }
 
     @GetMapping("/get_exercise")
+    @PreAuthorize("hasAuthority('STUDENT')")
     public String getExercise(@RequestParam("exerciseId") Long exerciseId,
                                  @RequestParam("code") String code,
                               @RequestParam("score") Double score,

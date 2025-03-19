@@ -17,6 +17,7 @@ import com.example.quiz.repository.AnswerOptionRepository;
 import com.example.quiz.repository.AnswerRepository;
 import com.example.quiz.repository.QuestionRepository;
 import com.example.quiz.repository.QuizRepository;
+import com.example.tools.CovertExcelToJsonService;
 import com.example.tools.GenerateRandomService;
 import com.example.user.User;
 import com.example.user.UserService;
@@ -53,11 +54,12 @@ import static com.example.tools.QuizDuplicateChecker.checkDuplicateQuestion;
 public class QuestionService {
 
     @Autowired
+    private AssessmentQuestionRepository assessmentQuestionRepository;
+    @Autowired
     private QuizRepository quizRepository;
     @Autowired
     private QuestionRepository questionRepository;
-    @Autowired
-    private AssessmentQuestionRepository assessmentQuestionRepository;
+
     @Autowired
     private ScheduleJob scheduleJob;
     @Autowired
@@ -79,6 +81,9 @@ public class QuestionService {
     private AnswerOptionRepository answerOptionRepository;
     @Autowired
     private QuizService quizService;
+
+    @Autowired
+    private CovertExcelToJsonService covertExcelToJsonService;
 
     public Optional<Question> findById(Long id) {
         return questionRepository.findById(id);
@@ -151,7 +156,7 @@ public class QuestionService {
             Sheet sheet = workbook.getSheetAt(0);
             int rowCount = sheet.getPhysicalNumberOfRows();
             List<Question> questions = new ArrayList<>();
-            List<String> optionLabelList = List.of("A", "B", "C", "D", "E", "F", "G", "H", "I");
+            List<String> optionLabelList = List.of("A", "B", "C", "D", "E", "F", "G", "H", "I", "J");
             List<Course> courses = courseService.getAllCourses();
             List<Quiz> quizzes = new ArrayList<>();
             for (Course course : courses){
@@ -159,6 +164,7 @@ public class QuestionService {
                     quizzes.addAll(course.getQuizzes());
                 }
             }
+            //Set<Quiz> quizzes = quizRepository.findQuizByCourseName(courseName);
             List<String> existingQuestions = new ArrayList<>();
             int numDupQues = 0;
             double minNumOfDupQues = (1.0 / 3) * (rowCount - 1);
@@ -186,12 +192,12 @@ public class QuestionService {
                     Cell optionG = row.getCell(12);
                     Cell optionH = row.getCell(13);
                     Cell optionI = row.getCell(14);
+                    Cell optionJ = row.getCell(15);
 
                     String questionText = questionTextCell != null ? getCellValueAsString(questionTextCell).trim() : null;
                     // CHECK DUPLICATE QUESTION
                     if (questionText != null) {
                         if (checkDuplicateQuestion(existingQuestions, questionText)) {
-                            //throw new ObjectAlreadyExistsException("Question no." + i + " already exists in the database!!!");
                             numDupQues++;
                             if ((double) numDupQues >= Math.ceil(minNumOfDupQues)) {
                                 throw new ObjectAlreadyExistsException("Can not import file! More than 1/3 of the questions in the file are duplicated!");
@@ -202,7 +208,8 @@ public class QuestionService {
                     String questionTypeString = questionTypeCell != null ? getCellValueAsString(questionTypeCell).trim() : null;
                     List<Cell> optionCellList = List.of(optionA, optionB, optionC,
                             optionD, optionE, optionF,
-                            optionG, optionH, optionI);
+                            optionG, optionH, optionI,
+                            optionJ);
 
                     List<AnswerOption> answerOptionListTemp = new ArrayList<>();
 
@@ -234,8 +241,6 @@ public class QuestionService {
                         question.setQuestionNo(i);
                         question.setQuestionText(questionText);
                         question.setQuestionType(questionType);
-                        //question.setQuizzes(new HashSet<>());
-                        //question.setAnswerOptions(answerOptionListTemp);
 
                         for (AnswerOption answerOption : answerOptionListTemp) {
                             question.addAnswerOption(answerOption);
@@ -250,7 +255,6 @@ public class QuestionService {
 
             Quiz quiz = new Quiz();
 
-            //quiz.setName(generateRandomService.generateRandomName(quizzes));
             String originalFilenameName = _file_.getOriginalFilename();
             String fileName = "";
             if (originalFilenameName != null && originalFilenameName.contains(".")) {
@@ -324,6 +328,8 @@ public class QuestionService {
         if (questionsEachQuiz <= 0) {
             throw new InputException("Number of questions must not be <= 0");
         }
+
+        // CHECK TRÙNG NAME
         List<Course> courses = courseService.getAllCourses();
         List<Quiz> quizList = new ArrayList<>();
         for (Course course : courses){
@@ -331,7 +337,10 @@ public class QuestionService {
                 quizList.addAll(course.getQuizzes());
             }
         }
+
+
         List<Quiz> createdQuizzes = new ArrayList<>();
+
         Set<Quiz> quizzes = quizRepository.findQuizByCourseName(courseName);
 
         if (quizzes == null || quizzes.isEmpty()) {
@@ -354,8 +363,10 @@ public class QuestionService {
             List<Question> shuffledQuestions = generateRandomService.collectRandomQuestions(questions, questionsEachQuiz);
             Quiz quiz = new Quiz();
             quiz.setName(generateRandomService.generateRandomName(quizList));
+            //quiz.setCourse(courseService.findByName(courseName));
             quiz.setDescription("This is an auto-created quiz!");
             quiz.setCreatedBy(userService.getCurrentUser());
+            //quiz.setQuestions(new HashSet<>(shuffledQuestions));
             quiz.setCreatedAt(LocalDateTime.now());
             quiz.setUpdatedAt(LocalDateTime.now());
             quiz.setStartTime(LocalDateTime.now().plusSeconds(1));
@@ -389,7 +400,6 @@ public class QuestionService {
         return createdQuizzes;
     }
 
-
     public int countDuplicateName(List<Quiz> quizList, String name) {
         List<String> existingNames = quizList.stream()
                 .map(Quiz::getName)
@@ -411,7 +421,7 @@ public class QuestionService {
             int rowCount = sheet.getPhysicalNumberOfRows();
 
             List<Question> questions = new ArrayList<>();
-            List<String> optionLabelList = List.of("A", "B", "C", "D", "E", "F", "G", "H", "I");
+            List<String> optionLabelList = List.of("A", "B", "C", "D", "E", "F", "G", "H", "I", "J");
             List<String> correctAnswers = new ArrayList<>();
 
             //List<Course> courses = courseService.getAllCourses();
@@ -446,6 +456,7 @@ public class QuestionService {
                     Cell optionG = row.getCell(12);
                     Cell optionH = row.getCell(13);
                     Cell optionI = row.getCell(14);
+                    Cell optionJ = row.getCell(15);
 
                     String questionText = questionTextCell != null ? getCellValueAsString(questionTextCell).trim() : null;
                     String questionNo = questionNoCell != null ? getCellValueAsString(questionNoCell).trim() : null;
@@ -461,7 +472,8 @@ public class QuestionService {
                     String questionTypeString = questionTypeCell != null ? getCellValueAsString(questionTypeCell).trim() : null;
                     List<Cell> optionCellList = List.of(optionA, optionB, optionC,
                             optionD, optionE, optionF,
-                            optionG, optionH, optionI);
+                            optionG, optionH, optionI,
+                            optionJ);
 
                     List<AnswerOption> answerOptionListTemp = new ArrayList<>();
 
@@ -504,6 +516,50 @@ public class QuestionService {
                 //----------------------------------------------------------
             }
 
+            /*String originalFilenameName = _file_.getOriginalFilename();
+            String fileName = "";
+            if (originalFilenameName != null && originalFilenameName.contains(".")) {
+                fileName = originalFilenameName.substring(0, originalFilenameName.lastIndexOf("."));
+            }
+            int numberOfDuplicateNames = countDuplicateName(quizzes, fileName);
+            if (numberOfDuplicateNames != 0) {
+                int addPara = numberOfDuplicateNames + 1;
+                fileName = fileName + " (" + addPara + ")";
+            }*/
+            // Tạo quiz
+            /*Quiz quiz = new Quiz();
+
+            String originalFilenameName = _file_.getOriginalFilename();
+            String fileName = "";
+            if (originalFilenameName != null && originalFilenameName.contains(".")) {
+                fileName = originalFilenameName.substring(0, originalFilenameName.lastIndexOf("."));
+            }
+            int numberOfDuplicateNames = countDuplicateName(quizzes, fileName);
+            if (numberOfDuplicateNames != 0) {
+                int addPara = numberOfDuplicateNames + 1;
+                quiz.setName(fileName + " (" + addPara + ")");
+            } else {
+                quiz.setName(fileName);
+            }
+
+            quiz.setDescription("This is an auto-created quiz!");
+            quiz.setUpdatedAt(LocalDateTime.now());
+            quiz.setStartTime(LocalDateTime.now().plusSeconds(1));
+            quiz.setEndTime(LocalDateTime.now().plusSeconds(2));
+            User user = userService.getCurrentUser();
+            quiz.setCreatedAt(LocalDateTime.now());
+            quiz.setCreatedBy(user);
+            quiz.setQuizType(Quiz.QuizType.CLOSE);
+
+            for (Question question : questions) {
+                quiz.addQuestion(question);
+            }*/
+
+            //String errorDupQues = "";
+            /*if((double) numDupQues >= Math.ceil(minNumOfDupQues)){
+                errorDupQues = "Can not create quiz! More than 1/3 of the questions in the file are duplicated!";
+            }*/
+
             //Đặt tên quiz
             String originalFilenameName = _file_.getOriginalFilename();
             String fileName = "";
@@ -516,9 +572,22 @@ public class QuestionService {
                 fileName = fileName + " (" + addPara + ")";
             }
 
+            /*Map<Integer, List<Integer>> duplicatedRows = checkDuplicateInExcel(_file_);
+            List<String> warnings = new ArrayList<>();
+            for (Question question : questions){
+                String warning = null;
+                for (Map.Entry<Integer, List<Integer>> entry : duplicatedRows.entrySet()){
+                    if (entry.getKey() == question.getQuestionNo()){
+                        warning = "This question can be duplicated with question " + entry.getValue();
+                    } else if (entry.getValue().contains(question.getQuestionNo())){
+                        warning = "This question can be duplicated with question " + entry.getKey();
+                    }
+                }
+                warnings.add(warning);
+            }*/
             Map<String, Object> reviewData = new HashMap<>();
             reviewData.put("Questions", questions);
-            reviewData.put("Correct", correctAnswers);
+            //reviewData.put("Correct", correctAnswers);
             reviewData.put("fileName", fileName);
             reviewData.put("courseName", courseName);
             reviewData.put("DuplicateQuestionNos", dupQueNos);
@@ -702,8 +771,6 @@ public class QuestionService {
         }
     }
 
-
-
     private JsonNode restoreJsonNode(JsonNode jsonNode) {
         ObjectMapper objectMapper = new ObjectMapper();
 
@@ -748,6 +815,11 @@ public class QuestionService {
             deleteQuestion(question.getId());
         }
     }
+
+    /*public static void main(String[] args) throws IOException {
+        Map<Integer, String> map = new LinkedHashMap<>();
+        System.out.println("Độ tương đồng: " + similarity);
+    }*/
 
     @Transactional
     public Map<String, Object> reviewFileJson(MultipartFile file, String courseName){
@@ -811,6 +883,36 @@ public class QuestionService {
                 fileName = fileName + " (" + addPara + ")";
             }
 
+            /*quiz.setDescription("This is an auto-created quiz!");
+            quiz.setUpdatedAt(LocalDateTime.now());
+            quiz.setStartTime(LocalDateTime.now().plusSeconds(1));
+            quiz.setEndTime(LocalDateTime.now().plusSeconds(2));
+            User user = userService.getCurrentUser();
+            quiz.setCreatedAt(LocalDateTime.now());
+            quiz.setCreatedBy(user);
+            quiz.setQuizType(Quiz.QuizType.CLOSE);
+
+            for (Question question : questions) {
+                quiz.addQuestion(question);
+            }
+
+            Course course = courseService.findByName(courseName);
+            course.addQuiz(quiz);
+
+            Course savedCourse = courseService.save(course);
+            List<Quiz> newestQuizzes = savedCourse.getQuizzes();
+            Quiz savedQuiz = newestQuizzes.get(newestQuizzes.size() - 1);
+
+            try {
+                SchedulerUtil.startScheduler();
+
+                Scheduler scheduler = SchedulerUtil.getScheduler();
+                scheduleJob.scheduleQuizOpenJob(savedQuiz.getId(), savedQuiz.getStartTime());
+                scheduleJob.scheduleQuizCloseJob(savedQuiz.getId(), savedQuiz.getEndTime());
+            } catch (SchedulerException e) {
+                e.printStackTrace();
+            }*/
+
             Map<String, Object> reviewData = new HashMap<>();
             reviewData.put("Questions", questions);
             //reviewData.put("dataJson", dataJson);
@@ -824,6 +926,205 @@ public class QuestionService {
         }
     }
 
+    //TEST: IMPORT EXCEL BẰNG CÁCH TÁCH HÀM PROCESS EXCEL VỚI HÀM CREATE QUIZ
+    @Transactional
+    public void importExcelTEST(MultipartFile file, String courseName) throws ObjectAlreadyExistsException {
+        try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
+            Sheet sheet = workbook.getSheetAt(0);
+            List<Object> objectQuestions = covertExcelToJsonService.processSheetForImportExcel(sheet);
+            List<Question> questions = new ArrayList<>();
+            List<Quiz> quizzes = quizRepository.findAll();
+            List<String> existingQuestions = new ArrayList<>();
+
+            int numDupQues = 0;
+            double minNumOfDupQues = (1.0 / 3) * (objectQuestions.size());
+            for (Quiz quiz : quizzes) {
+                if (quiz.getQuestions() != null && !quiz.getQuestions().isEmpty()) {
+                    existingQuestions.addAll(quiz.getQuestions().stream().map(Question::getQuestionText).toList());
+                }
+            }
+
+            for (int i = 0; i < objectQuestions.size(); i++){
+                Map<String, Object> questionData = (Map<String, Object>) objectQuestions.get(i);
+                String questionText = (String) questionData.get("questionText");
+
+                if (questionText != null){
+                    if (checkDuplicateQuestion(existingQuestions, questionText)) {
+                        numDupQues++;
+                        if ((double) numDupQues >= Math.ceil(minNumOfDupQues)) {
+                            throw new ObjectAlreadyExistsException("Can not import file! More than 1/3 of the questions in the file are duplicated!");
+                        }
+                    }
+                }
+
+                String questionTypeString = (String) questionData.get("questionType");
+                List<Map<String, Object>> answerOptionsMapList = (List<Map<String, Object>>) questionData.get("answerOptions");
+                List<AnswerOption> answerOptionEachQuestion = new ArrayList<>();
+
+                for (int j = 0; j < answerOptionsMapList.size(); j++){
+                    String optionText = (String) answerOptionsMapList.get(j).get("optionText");
+                    boolean isCorrect = (boolean) answerOptionsMapList.get(j).get("isCorrect");
+
+                    AnswerOption answerOption = new AnswerOption();
+                    answerOption.setOptionLabel(String.valueOf((char) (j + 'A')));
+                    answerOption.setOptionText(optionText);
+                    answerOption.setIsCorrect(isCorrect);
+
+                    answerOptionEachQuestion.add(answerOption);
+                }
+
+                if (questionText != null && questionTypeString != null) {
+                    QuestionType questionType = setTypeBaseOnStringInput(questionTypeString);
+                    Question question = new Question();
+
+                    question.setQuestionNo(i + 1);
+                    question.setQuestionText(questionText);
+                    question.setQuestionType(questionType);
+
+                    for (AnswerOption answerOption : answerOptionEachQuestion) {
+                        question.addAnswerOption(answerOption);
+                    }
+
+                    questions.add(question);
+                }
+            }
+
+            Quiz quiz = new Quiz();
+
+            String originalFilenameName = file.getOriginalFilename();
+            String fileName = "";
+            if (originalFilenameName != null && originalFilenameName.contains(".")) {
+                fileName = originalFilenameName.substring(0, originalFilenameName.lastIndexOf("."));
+            }
+            if (quizzes != null && !quizzes.isEmpty()){
+                int numberOfDuplicateNames = countDuplicateName(quizzes, fileName);
+                if (numberOfDuplicateNames != 0) {
+                    int addPara = numberOfDuplicateNames + 1;
+                    quiz.setName(fileName + " (" + addPara + ")");
+                } else {
+                    quiz.setName(fileName);
+                }
+            } else {
+                quiz.setName(fileName);
+            }
+            quiz.setDescription("This is an auto-created quiz!");
+            quiz.setUpdatedAt(LocalDateTime.now());
+            quiz.setStartTime(LocalDateTime.now().plusSeconds(1));
+            quiz.setEndTime(LocalDateTime.now().plusSeconds(2));
+            User user = userService.getCurrentUser();
+            quiz.setCreatedAt(LocalDateTime.now());
+            quiz.setCreatedBy(user);
+            quiz.setQuizType(Quiz.QuizType.CLOSE);
+
+            for (Question question : questions) {
+                quiz.addQuestion(question);
+            }
+
+            Course course = courseService.findByName(courseName);
+            course.addQuiz(quiz);
+
+            Course savedCourse = courseService.save(course);
+            List<Quiz> newestQuizzes = savedCourse.getQuizzes();
+            Quiz savedQuiz = newestQuizzes.get(newestQuizzes.size() - 1);
+
+            try {
+                SchedulerUtil.startScheduler();
+
+                Scheduler scheduler = SchedulerUtil.getScheduler();
+                scheduleJob.scheduleQuizOpenJob(savedQuiz.getId(), savedQuiz.getStartTime());
+                scheduleJob.scheduleQuizCloseJob(savedQuiz.getId(), savedQuiz.getEndTime());
+            } catch (SchedulerException e) {
+                e.printStackTrace();
+            }
+        } catch (IOException _e_) {
+            throw new RuntimeException("Error importing questions from Excel", _e_);
+        } catch (ObjectAlreadyExistsException e) {
+            throw new ObjectAlreadyExistsException(e.getMessage());
+        }
+    }
+
+    @Transactional
+    public Map<String, Object> reviewQuizTEST(MultipartFile file, String courseName) {
+        try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
+            Sheet sheet = workbook.getSheetAt(0);
+            List<Object> objectQuestions = covertExcelToJsonService.processSheetForImportExcel(sheet);
+            List<Question> questions = new ArrayList<>();
+            List<Quiz> quizzes = quizRepository.findAll();
+            List<String> existingQuestions = new ArrayList<>();
+            List<String> dupQueNos = new ArrayList<>();
+
+            for (Quiz quiz : quizzes) {
+                if (quiz.getQuestions() != null && !quiz.getQuestions().isEmpty()) {
+                    existingQuestions.addAll(quiz.getQuestions().stream().map(Question::getQuestionText).toList());
+                }
+            }
+
+            for (int i = 0; i < objectQuestions.size(); i++){
+                Map<String, Object> questionData = (Map<String, Object>) objectQuestions.get(i);
+                String questionText = (String) questionData.get("questionText");
+
+                if (questionText != null){
+                    if (checkDuplicateQuestion(existingQuestions, questionText)) {
+                        dupQueNos.add(String.valueOf(i + 1));
+                    }
+                }
+
+                String questionTypeString = (String) questionData.get("questionType");
+                List<Map<String, Object>> answerOptionsMapList = (List<Map<String, Object>>) questionData.get("answerOptions");
+                List<AnswerOption> answerOptionEachQuestion = new ArrayList<>();
+
+                for (int j = 0; j < answerOptionsMapList.size(); j++){
+                    String optionText = (String) answerOptionsMapList.get(j).get("optionText");
+                    boolean isCorrect = (boolean) answerOptionsMapList.get(j).get("isCorrect");
+
+                    AnswerOption answerOption = new AnswerOption();
+                    answerOption.setOptionLabel(String.valueOf((char) (j + 'A')));
+                    answerOption.setOptionText(optionText);
+                    answerOption.setIsCorrect(isCorrect);
+
+                    answerOptionEachQuestion.add(answerOption);
+                }
+
+                if (questionText != null && questionTypeString != null) {
+                    QuestionType questionType = setTypeBaseOnStringInput(questionTypeString);
+                    Question question = new Question();
+
+                    question.setQuestionNo(i + 1);
+                    question.setQuestionText(questionText);
+                    question.setQuestionType(questionType);
+
+                    for (AnswerOption answerOption : answerOptionEachQuestion) {
+                        question.addAnswerOption(answerOption);
+                    }
+
+                    questions.add(question);
+                }
+            }
+
+            //Đặt tên quiz
+            String originalFilenameName = file.getOriginalFilename();
+            String fileName = "";
+            if (originalFilenameName != null && originalFilenameName.contains(".")) {
+                fileName = originalFilenameName.substring(0, originalFilenameName.lastIndexOf("."));
+            }
+            int numberOfDuplicateNames = countDuplicateName(quizService.findAll(), fileName);
+            if (numberOfDuplicateNames != 0) {
+                int addPara = numberOfDuplicateNames + 1;
+                fileName = fileName + " (" + addPara + ")";
+            }
+
+            Map<String, Object> reviewData = new HashMap<>();
+            reviewData.put("Questions", questions);
+            //reviewData.put("Correct", correctAnswers);
+            reviewData.put("fileName", fileName);
+            reviewData.put("courseName", courseName);
+            reviewData.put("DuplicateQuestionNos", dupQueNos);
+
+            return reviewData;
+        } catch (IOException e) {
+            throw new RuntimeException("Error importing questions from Excel", e);
+        }
+    }
     @Transactional
     public void importWord(MultipartFile file, String courseName) {
         try (InputStream inputStream = file.getInputStream();
@@ -959,9 +1260,9 @@ public class QuestionService {
             }
 
             quiz.setDescription("This is an auto-created quiz from Word");
-            quiz.setUpdatedAt(null);
-            quiz.setStartTime(LocalDateTime.now().plusSeconds(5));
-            quiz.setEndTime(LocalDateTime.now().plusSeconds(10));
+            quiz.setUpdatedAt(LocalDateTime.now());
+            quiz.setStartTime(LocalDateTime.now().plusSeconds(1));
+            quiz.setEndTime(LocalDateTime.now().plusSeconds(2));
             quiz.setCreatedAt(LocalDateTime.now());
             quiz.setCreatedBy(userService.getCurrentUser());
             quiz.setQuizType(Quiz.QuizType.CLOSE);
@@ -979,8 +1280,8 @@ public class QuestionService {
             try {
                 SchedulerUtil.startScheduler();
                 Scheduler scheduler = SchedulerUtil.getScheduler();
-                scheduleJob.scheduleQuizOpenJob(savedQuiz.getId(), quiz.getStartTime());
-                scheduleJob.scheduleQuizCloseJob(savedQuiz.getId(), quiz.getEndTime());
+                scheduleJob.scheduleQuizOpenJob(savedQuiz.getId(), savedQuiz.getStartTime());
+                scheduleJob.scheduleQuizCloseJob(savedQuiz.getId(), savedQuiz.getEndTime());
             } catch (SchedulerException e) {
                 e.printStackTrace();
             }

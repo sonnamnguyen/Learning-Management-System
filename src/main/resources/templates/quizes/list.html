@@ -285,9 +285,26 @@
                         </select>
                     </div>
 
+                    <div>
+                        <label for="fileType" class="form-label fw-bold ">Select File Type</label>
+                        <select id="fileType" name="fileType" class="form-select" onchange="reloadPage()" required>
+                            <option value="">-- Select file type --</option>
+                            <option
+                                    th:each="fileType : ${fileTypes}"
+                                    th:value="${fileType}"
+                                    th:text="${fileType}"
+                                    th:selected="${fileType==chosenType}"
+                            >
+                            </option>
+                        </select>
+                    </div>
+
                     <div class="mb-3">
                         <label for="file" class="form-label">Choose Excel File</label>
                         <input type="file" name="file" id="file" class="form-control" required>
+                        <p class="mt-2 text-success" th:if="${chosenFile}">
+                            Chosen file: <span th:text="${chosenFile}"></span>
+                        </p>
                     </div>
                     <button type="submit" name="action" value="import" class="btn btn-primary">Import</button>
                     <button type="submit" name="action" value="review" class="btn btn-primary">Review file</button>
@@ -296,6 +313,24 @@
                     <p th:text="${error}"></p>
                 </div>
 
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="confirmImportModal" tabindex="-1" aria-labelledby="confirmImportLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmImportLabel">Confirm Import</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="importMessage">The file contains <strong id="questionCount"></strong> questions. Do you want to proceed?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmImportButton">Confirm</button>
             </div>
         </div>
     </div>

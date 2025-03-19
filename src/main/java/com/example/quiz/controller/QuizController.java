@@ -19,8 +19,8 @@ import com.example.user.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.http.HttpSession;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.quartz.ObjectAlreadyExistsException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +31,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
@@ -38,34 +40,21 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.ByteArrayInputStream;
 import java.security.Principal;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 
 @Controller
 @RequestMapping("/quizes")
 public class QuizController {
 
-    @Autowired
-    private QuizTagService quizTagService;
-
-    @Autowired
-    private QuizTagRepository quizTagRepository;
     @Autowired
     private AIService aiService;
     @Autowired
@@ -78,6 +67,8 @@ public class QuizController {
     private QuizParticipantService quizParticipantService;
     @Autowired
     private QuizService quizService;
+    @Autowired
+    private QuizTagService quizTagService;
     @Autowired
     private UserRepository userRepository;
     @Autowired
@@ -104,6 +95,11 @@ public class QuizController {
         model.addAttribute("fileTypes", List.of("Word", "Excel", "Json"));
     }
 
+//    @GetMapping
+//    public String dashboard(Model model,Long studentId){
+//
+//        return "layout";
+//    }
 
 
     @GetMapping
@@ -152,6 +148,7 @@ public class QuizController {
     }
 
 
+
     @GetMapping("/create")
     public String showCreateForm(Model model) {
         // Get the authenticated user's details
@@ -176,10 +173,12 @@ public class QuizController {
         model.addAttribute("courses", courseService.getAllCourses());
         model.addAttribute("user", currentUser);
         model.addAttribute("users", userService.getAllUsers()); // Fetch all users for the dropdown
+        model.addAttribute("tags", quizTagService.getAllQuizTag());
 
         model.addAttribute("content", "quizes/create");
         return "layout";
     }
+
 
 
     @PostMapping("/create")
@@ -221,16 +220,16 @@ public class QuizController {
     }
 
 
+
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable("id") Long id, Model model, Principal principal) {
-        // Sử dụng fetch join để load tags cùng với quiz
-        Quiz quiz = quizService.getQuizWithTags(id);
+        Quiz quiz = quizService.findById(id).orElse(null);
         List<Course> courses = courseService.getAllCourses();
         User user = userService.findByUsername(principal.getName());
 
         model.addAttribute("quiz", quiz);
         model.addAttribute("courses", courses);
-        model.addAttribute("users", userService.getAllUsers());
+        model.addAttribute("users", userService.getAllUsers()); // Fetch all users for the dropdown
         model.addAttribute("user", user);
         model.addAttribute("content", "quizes/edit");
         return "layout";
@@ -238,10 +237,11 @@ public class QuizController {
 
     @PostMapping("/edit/{id}")
     public String update(@PathVariable("id") Long id, @ModelAttribute Quiz quiz) {
-        quizService.update(id, quiz);
+        quizService.update(id,quiz);
         return "redirect:/quizes";
     }
 
+    @Transactional
     @GetMapping("/delete/{id}")
     public String delete(@PathVariable("id") Long id) {
         quizService.deleteById(id);
@@ -320,12 +320,11 @@ public class QuizController {
         model.addAttribute("quiz", quiz);
         model.addAttribute("quizes", quizes);
         model.addAttribute("courses", courses);
-        model.addAttribute("questions", sortedQuestions);
         model.addAttribute("content", "quizes/detail");
+        model.addAttribute("currentQuiz",quiz);
 
         return "layout";
     }
-
 
     // add question
     @PostMapping("/detail/{quizId}/questions/create")
@@ -335,17 +334,18 @@ public class QuizController {
     }
 
 
-    @PostMapping("/tags/create")
-    @ResponseBody
-    public ResponseEntity<String> createTag(@RequestParam String name) {
-        try {
-            QuizTag newTag = quizTagService.createTag(name);
-            return ResponseEntity.ok("Tag created successfully with ID: " + newTag.getId());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error creating tag: " + e.getMessage());
+    /*@PostMapping("/import")
+    public String importExcel(@RequestParam("file") MultipartFile file, @RequestParam("course") String courseName, RedirectAttributes redirectAttributes) {
+        try{
+            questionService.importExcel(file, courseName);
+            return "redirect:/quizes";
+        }catch (Exception e){
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            //redirectAttributes.addFlashAttribute("modalOpen", true);
+            return "redirect:/quizes?openModal=importModal";
         }
-    }
 
+    }*/
 
 
     @GetMapping("/participants/{quizId}")
@@ -383,10 +383,18 @@ public class QuizController {
 
     @GetMapping("/{quizId}/participants/print")
     public String printAllParticipants(@PathVariable Long quizId, Model model) {
+        // Fetch all participants for the given quiz ID
+//        List<Quiz> participants = quizService.getParticipants(quizId);
         List<QuizParticipant> participants = quizParticipantService.getParticipantsByQuiz(quizId);
+        // Log each participant's details (for debugging or printing purposes)
+//        participants.forEach(participant -> {
+//            System.out.println("Participant Name: " + participant.getUsername());
+//            System.out.println("Participant Email: " + participant.getEmail());
+//        });
 
+        // Add participants to the model for rendering in Thymeleaf
         model.addAttribute("participants", participants);
-        return "printParticipants";
+        return "printParticipants";  // The name of the Thymeleaf template
     }
 
     @PostMapping("/apply/{quizId}")
@@ -427,7 +435,7 @@ public class QuizController {
         Set<Question> questions = quiz.getQuestions(); // Lấy danh sách câu hỏi của Quiz
         model.addAttribute("quiz", quiz);
         model.addAttribute("questions", questions);
-        if (Quiz.QuizCategory.PRACTICE == (quiz.getQuizCategory())) {
+        if (Quiz.QuizCategory.PRACTICE==(quiz.getQuizCategory())) {
             Duration calculatedDuration = quizService.calculateQuizDuration(quiz.getQuestions().size());
             model.addAttribute("timeLimit", calculatedDuration.toMinutes());
         } else {
@@ -439,18 +447,25 @@ public class QuizController {
     }
 
 
-    @GetMapping("/detail/{quizId}/view")
-    public String viewQuiz(@PathVariable("quizId") Long quizId, Principal principal, RedirectAttributes redirectAttributes, Model model) {
+
+    @GetMapping("/detail/{quizId}/view-all")
+    public String viewQuiz(@PathVariable("quizId") Long quizId, Model model) {
         Quiz quiz = quizService.getQuizById(quizId);
-        User user = userService.findByUsername(principal.getName());
-//        return "redirect:/quizes";
-        Set<Question> questions = quiz.getQuestions(); // Lấy danh sách câu hỏi của Quiz
-        model.addAttribute("quizes", quiz);
+        if (quiz == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Quiz not found");
+        }
+
+        // Lấy danh sách câu hỏi và sắp xếp theo questionNo
+        List<Question> questions = new ArrayList<>(quiz.getQuestions());
+        questions.sort(Comparator.comparingInt(Question::getQuestionNo));
+
+        model.addAttribute("quiz", quiz);
         model.addAttribute("questions", questions);
         model.addAttribute("quizId", quizId);
         model.addAttribute("content", "quizes/view-quiz");
         return "layout";
     }
+
 
     @PostMapping("/apply/{quizId}/submit")
     public String submitQuiz(
@@ -568,6 +583,8 @@ public class QuizController {
     }
 
 
+
+
     @GetMapping("/do-quiz/{quizId}")
     public String startQuiz(@PathVariable Long quizId, Model model, Principal principal) {
         Quiz quiz = quizService.findById(quizId)
@@ -579,7 +596,7 @@ public class QuizController {
 
         model.addAttribute("quiz", quiz);
         model.addAttribute("questions", questions);
-        model.addAttribute("timeLimit", quiz.getDuration());
+        model.addAttribute("timeLimit",quiz.getDuration());
         model.addAttribute("user", user);
         model.addAttribute("content", "quizes/do-quiz");
 
@@ -587,15 +604,14 @@ public class QuizController {
     }
 
     @GetMapping("/detail/test/{name}")
-    public String viewDetailQuiz(@PathVariable String name, Model model) {
-        try {
+    public String viewDetailQuiz(@PathVariable String name, Model model){
+        try{
             model.addAttribute("Questions", quizService.getQuestionsOfQuiz(name));
-        } catch (Exception e) {
+        } catch (Exception e){
             model.addAttribute("Errors", e.getMessage());
         }
         return "test";
     }
-
     @GetMapping("/detail/questions/{questionId}")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> getQuestion(@PathVariable Long questionId) {
@@ -628,7 +644,6 @@ public class QuizController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-
     @PutMapping("/detail/{quizId}/questions/{questionId}/update")
     @ResponseBody
     public ResponseEntity<?> updateQuestion(
@@ -646,25 +661,25 @@ public class QuizController {
     /*@GetMapping("review")
     public*/
 
-    @PutMapping("/detail/{quizId}/questions/{questionId}/move")
-    public ResponseEntity<String> moveQuestion(
-            @PathVariable Long quizId,
-            @PathVariable Long questionId,
+            @PutMapping("/detail/{quizId}/questions/{questionId}/move")
+            public ResponseEntity<String> moveQuestion(
+                    @PathVariable Long quizId,
+                    @PathVariable Long questionId,
             @RequestParam int newPosition) {
 
-        try {
-            quizService.moveQuestion(quizId, questionId, newPosition);
-            return ResponseEntity.ok("Question position updated successfully");
-        } catch (IllegalArgumentException | EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while updating question position.");
-        }
+                try {
+                    quizService.moveQuestion(quizId, questionId, newPosition);
+                    return ResponseEntity.ok("Question position updated successfully");
+                } catch (IllegalArgumentException | EntityNotFoundException e) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while updating question position.");
+                }
 
-    }
+            }
 
-    @GetMapping("/dashboard/{studentId}")
+            @GetMapping("/dashboard/{studentId}")
     public String getStudentDashboard(@PathVariable Long studentId, Model model) {
         try {
             // Lấy thông tin sinh viên
@@ -679,6 +694,7 @@ public class QuizController {
             model.addAttribute("scoreDifferences", scoresData.get("scoreDifferences"));
             model.addAttribute("quizDurations", scoresData.get("quizDurations"));
             model.addAttribute("quizCourses", quizCourses);
+
 
 
             // Lấy dữ liệu số lượng quiz theo khóa học
@@ -707,7 +723,6 @@ public class QuizController {
             return ResponseEntity.badRequest().body("Failed to delete all questions: " + e.getMessage());
         }
     }
-
     @DeleteMapping("/detail/{quizId}/questions/{questionId}")
     public ResponseEntity<String> deleteQuestion(@PathVariable Long quizId, @PathVariable Long questionId) {
         try {
@@ -718,7 +733,6 @@ public class QuizController {
             return ResponseEntity.badRequest().body("Failed to delete question: " + e.getMessage());
         }
     }
-
     @PostMapping("/modal")
     public String processModal(@RequestParam("file") MultipartFile file,
                                @RequestParam("course") String courseName,
@@ -726,27 +740,36 @@ public class QuizController {
                                @RequestParam String action,
                                RedirectAttributes redirectAttributes,
                                HttpSession session,
-                               Model model) {
-        if (action.equals("import")) {
-            try {
-                if (fileType.equals("Excel")) {
-                    questionService.importExcel(file, courseName);
+                               Model model){
+        if(action.equals("import")){
+            try{
+                if(fileType.equals("Excel")){
+                    //questionService.importExcel(file, courseName);
+                    questionService.importExcelTEST(file, courseName);
+                    redirectAttributes.addFlashAttribute("successMessage", "Quizzes imported successfully from Excel");
                 } else if (fileType.equals("Json")) {
                     questionService.importJson(file, courseName);
-                } else if (fileType.equals("Word")) {
+                    redirectAttributes.addFlashAttribute("successMessage", "Quizzes imported successfully from Json");
+                } else {
                     questionService.importWord(file, courseName);
+                    redirectAttributes.addFlashAttribute("successMessage", "Quizzes imported successfully from Word");
                 }
 
                 return "redirect:/quizes";
-            } catch (Exception e) {
+            }catch (Exception e){
                 redirectAttributes.addFlashAttribute("error", e.getMessage());
+                redirectAttributes.addFlashAttribute("chosenCourse", courseName);
+                redirectAttributes.addFlashAttribute("chosenType", fileType);
+                redirectAttributes.addFlashAttribute("chosenFile", file.getOriginalFilename());
+                //redirectAttributes.addFlashAttribute("modalOpen", true);
                 return "redirect:/quizes?openModal=importModal";
             }
         } else {
-            try {
+            try{
                 Map<String, Object> reviewData = new HashMap<>();
-                if (fileType.equals("Excel")) {
-                    reviewData = questionService.reviewQuiz(file, courseName);
+                if(fileType.equals("Excel")){
+                    //reviewData = questionService.reviewQuiz(file, courseName);
+                    reviewData = questionService.reviewQuizTEST(file, courseName);
                 } else if (fileType.equals("Json")) {
                     reviewData = questionService.reviewFileJson(file, courseName);
                 }
@@ -756,24 +779,32 @@ public class QuizController {
                     session.setAttribute(entry.getKey(), entry.getValue());
                 }
                 session.setAttribute("fileType", fileType);
-                return "quizes/review";
-            } catch (Exception e) {
+                model.addAttribute("content", "quizes/review");
+                return "layout";
+                //return "quizes/review";
+            }catch (Exception e){
                 //model.addAttribute("Error", e.getMessage());
                 redirectAttributes.addFlashAttribute("error", e.getMessage());
+                redirectAttributes.addFlashAttribute("chosenCourse", courseName);
+                redirectAttributes.addFlashAttribute("chosenType", fileType);
+                redirectAttributes.addFlashAttribute("chosenFile", file.getOriginalFilename());
                 return "redirect:/quizes?openModal=importModal";
             }
         }
     }
 
     @GetMapping("review/delete/{questionNo}")
-    public String deleteQuestionInReview(@PathVariable int questionNo, HttpSession session) {
+    public String deleteQuestionInReview(@PathVariable int questionNo, HttpSession session){
         List<Question> questionList = (List<Question>) session.getAttribute("Questions");
-        if (questionList != null) {
-            for (Question question : questionList) {
-                if (question.getQuestionNo() == questionNo) {
+        if (questionList != null){
+            for (Question question : questionList){
+                if (question.getQuestionNo() == questionNo){
                     questionList.remove(question);
                     break;
                 }
+            }
+            for (int i = 0; i < questionList.size(); i++){
+                questionList.get(i).setQuestionNo(i + 1);
             }
             session.setAttribute("Questions", questionList);
         }
@@ -796,7 +827,6 @@ public class QuizController {
             return "redirect:/quizes?openModal=importModal";
         }
     }
-
     @PostMapping("/create/AI")
     @ResponseBody
     public String createQuizByAI(@ModelAttribute("AIRequestBody") AIRequestBody aiRequest, RedirectAttributes redirectAttributes) {
@@ -838,22 +868,100 @@ public class QuizController {
         }
 
         return "redirect:/quizes";
+
     }
-
-
 
     @DeleteMapping("/tags/delete/{id}")
     @ResponseBody
-    public ResponseEntity<String> deleteTag(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> deleteTag(@PathVariable Long id) {
+        Map<String, Object> response = new HashMap<>();
         try {
+            // Kiểm tra xem tag có được sử dụng không
+            QuizTag tag = quizTagService.getQuizTagById(id);
+            if (tag == null) {
+                response.put("success", false);
+                response.put("message", "Tag not found");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+
+            if (quizTagService.isTagUsedInQuiz(id)) {
+                response.put("success", false);
+                response.put("message", "Cannot delete tag '" + tag.getName() + "' as it is being used in one or more quizzes");
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+            }
+
             quizTagService.deleteTagById(id);
-            return ResponseEntity.ok("Tag deleted successfully.");
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body("Cannot delete this tag as it is being used by one or more quizzes.");
+            response.put("success", true);
+            response.put("message", "Tag deleted successfully");
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Failed to delete tag: " + e.getMessage());
+            response.put("success", false);
+            response.put("message", "Failed to delete tag: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+
+    @GetMapping("/tags/search")
+    @ResponseBody
+    public ResponseEntity<List<QuizTag>> searchTags(@RequestParam String name) {
+        try {
+            List<QuizTag> tags = quizTagService.searchTagsByName(name);
+            return ResponseEntity.ok(tags);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @GetMapping("/tags/check/{id}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> checkTag(@PathVariable Long id) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            QuizTag tag = quizTagService.getQuizTagById(id);
+            if (tag == null) {
+                response.put("success", false);
+                response.put("message", "Tag not found");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+
+            boolean isUsed = quizTagService.isTagUsedInQuiz(id);
+            response.put("success", true);
+            response.put("isUsed", isUsed);
+            if (isUsed) {
+                response.put("message", "Tag '" + tag.getName() + "' is being used in quizzes");
+            }
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error checking tag: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @GetMapping("/{quizId}/tags")
+    @ResponseBody
+    public ResponseEntity<List<QuizTag>> getQuizTags(@PathVariable Long quizId) {
+        try {
+            List<QuizTag> tags = quizService.getQuizTags(quizId);
+            return ResponseEntity.ok(tags);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @PostMapping("/{quizId}/tags/update")
+    @ResponseBody
+    public ResponseEntity<String> updateQuizTags(
+            @PathVariable Long quizId,
+            @RequestBody Map<String, List<Long>> request) {
+        try {
+            List<Long> tagIds = request.get("tagIds");
+            quizService.updateQuizTags(quizId, tagIds);
+            return ResponseEntity.ok("Tags updated successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to update tags: " + e.getMessage());
+        }
+    }
+
 }

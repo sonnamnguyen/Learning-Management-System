@@ -49,7 +49,8 @@
         <div class="row g-4" id="quizCards">
             <div th:each="assessment : ${assessments}" class="col-md-4">
                 <!-- Assessments Card -->
-                <div class="card mb-4 hover-shadow shadow transition-all">
+                <div class="card mb-4 hover-shadow shadow transition-all"
+                     th:attr="data-updated-at=${assessment.updatedAt}">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <h5 class="card-title mb-0 fw-bold">
@@ -255,9 +256,90 @@
                 alert("Error fetching invite link.");
             });
     }
+
+    // Prominent the newly updated assessment
+    document.addEventListener("DOMContentLoaded", function() {
+        const assessmentCards = document.querySelectorAll(".card[data-updated-at]");
+
+        assessmentCards.forEach(card => {
+            const updatedAt = new Date(card.getAttribute("data-updated-at"));
+            const now = new Date();
+            const secondsAgo = (now - updatedAt) / 1000; // in seconds
+
+            if (secondsAgo <= 60) { // Highlight for assessments updated within 1 minute
+                card.classList.add("recently-updated");
+
+                card.classList.add("entrance-animation");
+
+                setTimeout(() => {
+                    // Start exit animation
+                    card.classList.add("exit-animation");
+
+                    // After  animation completes, remove classes
+                    setTimeout(() => {
+                        card.classList.remove("recently-updated", "entrance-animation", "exit-animation");
+                    }, 1000);
+                }, 5000);
+            }
+        })
+    })
 </script>
 
 <style>
+
+    /* Pulsing animation for recently updated cards */
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(255, 123, 0, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 15px rgba(255, 123, 0, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(255, 123, 0, 0);
+        }
+    }
+
+    .recently-updated {
+        animation: pulse 2s infinite;
+        border: 2px solid rgba(255, 69, 0, 0.9);
+        transform: scale(1.05);
+        transition: transform 0.5s ease-in-out;
+    }
+    /* Entrance animation for recently updated cards */
+    @keyframes entranceAnimation {
+        0% {
+            transform: scale(0.9);
+            opacity: 0;
+        }
+        50% {
+            transform: scale(1.05);
+        }
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    .entrance-animation {
+        animation: entranceAnimation 1s ease-out forwards;
+    }
+
+    /* Exit animation for when the highlight is removed */
+    @keyframes exitAnimation {
+        0% {
+            transform: scale(1);
+        }
+        100% {
+            transform: scale(0.98);
+        }
+    }
+
+    .exit-animation {
+        animation: exitAnimation 1s ease-in forwards;
+    }
+
+
     /* Scroll-to-top button */
     #scrollToTopButton {
         position: fixed;
@@ -350,8 +432,10 @@
     }
 
     .hover-shadow:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1), 0 5px 15px rgba(0, 0, 0, 0.07);
+        border-color: rgba(0, 120, 255, 0.2);
+        z-index: 5;
     }
 
     .transition-all {
@@ -362,6 +446,6 @@
     .card {
         transform: translateZ(0); /* Hardware acceleration */
         will-change: transform; /* Optimize animations */
-        transition: all 0.2s ease-in-out;
+        transition: all 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
     }
 </style>

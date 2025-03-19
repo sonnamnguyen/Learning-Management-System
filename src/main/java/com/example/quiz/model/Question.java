@@ -85,14 +85,14 @@ public class Question implements Cloneable{
     public Object clone() {
         try {
             Question cloned = (Question) super.clone();
-            cloned.id = null;
+            cloned.id = null; // Xóa ID để tránh lỗi trùng khóa
             cloned.quizzes = null;
             cloned.answers = null;
             cloned.questionNo = null;
             cloned.answerOptions = new ArrayList<>();
             for (AnswerOption answerOption : this.answerOptions) {
                 AnswerOption clonedAnswerOption = (AnswerOption) answerOption.clone();
-                clonedAnswerOption.setQuestion(cloned);
+                clonedAnswerOption.setQuestion(cloned); // Liên kết D mới với C mới
                 cloned.answerOptions.add(clonedAnswerOption);
             }
             return cloned;

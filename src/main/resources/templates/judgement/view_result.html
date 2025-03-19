@@ -501,8 +501,8 @@
         <h1 style="font-weight: bold;" class="title">RESULT</h1>
 
         <div class="action-buttons" style="margin-left: auto; margin-top: 7px;   ">
-            <button class="btn btn-success" onclick="backToExercises()">
-                <i class="fas fa-backward"></i> BACK TO EXERCISES
+            <button class="btn btn-success" th:onclick="'backToExercises(\'' + ${user.id} + '\');'">
+                <i class="fas fa-backward"></i> BACK TO PROFILE
             </button>
         </div>
     </div>
@@ -848,9 +848,10 @@
         console.log("Viewing solutions...");
     }
 
-    function backToExercises() {
-        window.location.href = '/exercises';
+    function backToExercises(userId) {
+        window.location.href = '/exercises/profile/' + userId;
     }
+
 
     function redoChallenge() {
         // TODO: Implement redo challenge functionality

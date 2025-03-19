@@ -171,7 +171,6 @@ public class AssessmentController {
 
     @Autowired
     private InvitedCandidateRepository invitedCandidateRepository;
-
     //Hashids to hash the assessment id
     private Hashids hashids = new Hashids("BaTramBaiCodeThieuNhi", 32);
     @Autowired
@@ -182,14 +181,10 @@ public class AssessmentController {
     private AssessmentRepository assessmentRepository;
     @Autowired
     private AssessmentQuestionService assessmentQuestionService;
-
     @Autowired
     private ExerciseSessionService exerciseSessionService;
-
-    // code mới
     @GetMapping("/create")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPERADMIN')")
-
     public String createAssessment(Model model) {
         Assessment assessment = new Assessment();
         assessment.setTimeLimit(30);
@@ -221,9 +216,10 @@ public class AssessmentController {
         model.addAttribute("courses", courseService.getAllCourses());
         model.addAttribute("assessmentTypes", assessmentTypeService.getAllAssessmentTypes());
         model.addAttribute("currentUser", userService.getCurrentUser());
-        return "assessments/create2";
-    }
+        model.addAttribute("content", "assessments/create2");
+        return "layout";//  return "assessments/create2";
 
+    }
     @PostMapping("/create")
     public String createAssessment(@ModelAttribute Assessment assessment, @RequestParam(value = "exercises-ids", required = false) List<String> exerciseIdsStr, @RequestParam(value = "questions-ids", required = false) List<String> questionIdsStr, Model model) {
         Set<Exercise> selectedExercisesSet = new LinkedHashSet<>();
@@ -231,7 +227,6 @@ public class AssessmentController {
         // Get the current user
         User currentUser = userService.getCurrentUser();
         assessment.setCreatedBy(currentUser);
-
         if (exerciseIdsStr != null && !exerciseIdsStr.isEmpty()) {
             for (String exerciseIdStr : exerciseIdsStr) {
                 Long exerciseId = Long.parseLong(exerciseIdStr);
@@ -255,7 +250,6 @@ public class AssessmentController {
         assessment.setExercises(selectedExercisesSet);
         List<AssessmentQuestion> assessmentQuestions = new ArrayList<>();
         int orderIndex = 1; // Initialize order index
-
         for (Question question : selectedQuestionsSet) {
             AssessmentQuestion aq = new AssessmentQuestion();
             aq.setAssessment(assessment);
@@ -266,12 +260,10 @@ public class AssessmentController {
         }
         assessmentService.alignSequenceForAssessmentQuestion();
         assessment.setAssessmentQuestions(assessmentQuestions);
-//        assessment.setUpdatedBy(currentUser);
         assessmentService.createAssessment(assessment);
         model.addAttribute("message", "Assessment created successfully!");
         return "redirect:/assessments";
     }
-
 
     @GetMapping("/duplicate/{id}")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPERADMIN')")
@@ -280,7 +272,6 @@ public class AssessmentController {
         assessmentService.duplicateAssessment(id);
         return "redirect:/assessments";
     }
-
 
     @GetMapping("/check-similarQuestions")
     public ResponseEntity<?> similarityQuiz(@RequestParam(value = "questions-ids", required = false) List<String> questionIdsStr) {
@@ -468,18 +459,18 @@ public class AssessmentController {
         }
         model.addAttribute("assessment", assessment);
 
-        // 2. Retrieve registered attempts with pagination (để hiển thị bảng)
+        // 2. Retrieve REGISTERED ATTEMPTS with pagination (for the main table)
         Page<StudentAssessmentAttempt> registeredAttemptsPage;
         try {
             Pageable pageableReg = PageRequest.of(pageReg, 10);
             registeredAttemptsPage = assessmentAttemptService.findByAssessment_Id(id, pageableReg);
         } catch (Exception e) {
-            logger.error("Error retrieving registered attempts (paged) for assessment id: {}", id, e);
+            logger.error("Error retrieving paged attempts for assessment id: {}", id, e);
             errorMessages.add("Error retrieving paged attempts: " + e.getMessage());
             registeredAttemptsPage = Page.empty();
         }
 
-        // 2a. Xây dựng dữ liệu cho bảng (paged) - attemptViewList
+        // 2a. Convert the paged content -> List<Map<...>> for the main table
         List<Map<String, Object>> attemptViewList = new ArrayList<>();
         try {
             for (StudentAssessmentAttempt attempt : registeredAttemptsPage.getContent()) {
@@ -490,7 +481,7 @@ public class AssessmentController {
                 map.put("scoreQuiz", attempt.getScoreQuiz());
                 map.put("scoreEx", attempt.getScoreEx());
 
-                // Lấy candidateUsername (via reflection) - tuỳ bạn giữ hay bỏ
+                // Optionally retrieve candidateUsername (reflection or quan hệ user)
                 String candidateUsername = "N/A";
                 try {
                     Field field = attempt.getClass().getDeclaredField("user");
@@ -511,44 +502,76 @@ public class AssessmentController {
                 attemptViewList.add(map);
             }
         } catch (Exception e) {
-            logger.error("Error processing registered attempts for table", e);
+            logger.error("Error processing attempts for table", e);
             errorMessages.add("Error processing attempts (table): " + e.getMessage());
         }
-        // Đưa danh sách attempt (bảng) vào model
+        // Put the paged attempts (for table) in the model
         model.addAttribute("registeredAttempts", attemptViewList);
         model.addAttribute("registeredAttemptsPage", registeredAttemptsPage);
 
-        // 3. Lấy toàn bộ attempts (KHÔNG phân trang) cho chart
+        // 2b. Retrieve ALL REGISTERED ATTEMPTS (no pagination) -> for the "View All" modal
         List<StudentAssessmentAttempt> allAttempts;
         try {
-            allAttempts = assessmentAttemptService.findByAssessment_Id(id);
+            allAttempts = assessmentAttemptService.findByAssessment_Id(id); // no pagination
         } catch (Exception e) {
+            logger.error("Error retrieving all attempts for modal, assessment id: {}", id, e);
+            errorMessages.add("Error retrieving all attempts for modal: " + e.getMessage());
             allAttempts = new ArrayList<>();
             errorMessages.add("Error retrieving all attempts for chart: " + e.getMessage());
         }
 
-        // 3a. Xây dựng quizScores, exerciseScores, dateLabels từ allAttempts
+        // 2c. Convert allAttempts -> List<Map<...>> for the modal
+        List<Map<String, Object>> allAttemptsView = new ArrayList<>();
+        try {
+            for (StudentAssessmentAttempt attempt : allAttempts) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("id", attempt.getId());
+                map.put("email", attempt.getEmail());
+                map.put("attemptDate", attempt.getAttemptDate());
+                map.put("scoreQuiz", attempt.getScoreQuiz());
+                map.put("scoreEx", attempt.getScoreEx());
+
+                // candidateUsername
+                String candidateUsername = "N/A";
+                try {
+                    Field field = attempt.getClass().getDeclaredField("user");
+                    field.setAccessible(true);
+                    Object userObj = field.get(attempt);
+                    if (userObj != null) {
+                        candidateUsername = (String) userObj.getClass()
+                                .getMethod("getUsername")
+                                .invoke(userObj);
+                    }
+                } catch (Exception ex) {
+                    logger.error("Error retrieving candidate username (ALL) for attempt id {}", attempt.getId(), ex);
+                }
+                map.put("candidateUsername", candidateUsername);
+
+                allAttemptsView.add(map);
+            }
+        } catch (Exception e) {
+            logger.error("Error processing all attempts for modal", e);
+            errorMessages.add("Error processing all attempts for modal: " + e.getMessage());
+        }
+        // Put the ALL attempts (for modal) in the model
+        model.addAttribute("registeredAttemptsAll", allAttemptsView);
+
+        // 3. Build chart data from allAttempts
         List<Integer> quizScores = new ArrayList<>();
         List<Integer> exerciseScores = new ArrayList<>();
         List<String> dateLabels = new ArrayList<>();
 
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        if (allAttempts != null) {
-            for (StudentAssessmentAttempt att : allAttempts) {
-                // quiz score
-                Integer qScore = att.getScoreQuiz();
-                quizScores.add(qScore);
-
-                // exercise score
-                Integer eScore = att.getScoreEx();
-                exerciseScores.add(eScore);
-
-                // date label
-                if (att.getAttemptDate() != null) {
-                    dateLabels.add(att.getAttemptDate().format(dtf));
-                } else {
-                    dateLabels.add("N/A");
-                }
+        for (StudentAssessmentAttempt att : allAttempts) {
+            // Quiz
+            quizScores.add(att.getScoreQuiz());
+            // Exercise
+            exerciseScores.add(att.getScoreEx());
+            // Date
+            if (att.getAttemptDate() != null) {
+                dateLabels.add(att.getAttemptDate().format(dtf));
+            } else {
+                dateLabels.add("N/A");
             }
         }
 
@@ -556,8 +579,8 @@ public class AssessmentController {
         model.addAttribute("exerciseScores", exerciseScores);
         model.addAttribute("dateLabels", dateLabels);
 
-        // 4. Retrieve invited candidates with pagination + search
-        Page<?> invitedCandidatesPage;
+        // 4. Invited candidates with pagination (table)
+        Page<InvitedCandidate> invitedCandidatesPage;
         try {
             Pageable pageableInv = PageRequest.of(pageInv, 10);
             if (searchEmail != null && !searchEmail.isEmpty()) {
@@ -566,13 +589,23 @@ public class AssessmentController {
                 invitedCandidatesPage = candidateService.findByAssessmentId(id, pageableInv);
             }
         } catch (Exception e) {
-            logger.error("Error retrieving invited candidates for assessment id: {}", id, e);
+            logger.error("Error retrieving invited candidates (paged) for assessment id: {}", id, e);
             errorMessages.add("Error retrieving invited candidates: " + e.getMessage());
             invitedCandidatesPage = Page.empty();
         }
         model.addAttribute("invitedCandidates", invitedCandidatesPage.getContent());
         model.addAttribute("invitedCandidatesPage", invitedCandidatesPage);
-        model.addAttribute("searchEmail", searchEmail);
+
+        // 4a. Retrieve ALL invited candidates (no pagination) for the "View All" modal
+        List<InvitedCandidate> allInvited;
+        try {
+            allInvited = candidateService.findByAssessmentId(id); // no paging
+        } catch (Exception e) {
+            logger.error("Error retrieving all invited candidates for modal", e);
+            errorMessages.add("Error retrieving all invited candidates: " + e.getMessage());
+            allInvited = new ArrayList<>();
+        }
+        model.addAttribute("invitedCandidatesAll", allInvited);
 
         // 5. Retrieve & sort questions
         List<Question> orderedQuestions = new ArrayList<>();
@@ -625,20 +658,11 @@ public class AssessmentController {
         }
 
         // 10. Return the view
+        model.addAttribute("searchEmail", searchEmail);
         model.addAttribute("content", "assessments/detail");
         return "layout";
     }
 
-
-//    @GetMapping("/invite/{id}")
-//    public String inviteCandidate(@PathVariable int id, Model model) {
-//        List<User> usersWithRole5 = userRepository.findByRoles_Id(2L);
-//        System.out.println("Users found: " + usersWithRole5.size()); // Debugging print
-//
-//        model.addAttribute("assessmentId", id);
-//        model.addAttribute("candidate", usersWithRole5);
-//        return "assessments/invite";
-//    }
 
     @PostMapping("/edit/{id}")
     public String update(@PathVariable("id") Long id, @ModelAttribute Assessment assessment) {
@@ -815,15 +839,14 @@ public class AssessmentController {
         //Add user models
         model.addAttribute("users", userService.getAllUsers());
         model.addAttribute("creator", assessment.getCreatedBy());
+        model.addAttribute("updater", assessment.getUpdatedBy());
         model.addAttribute("currentUser", userService.getCurrentUser());
-
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
         User updater = assessment.getUpdatedBy();
         model.addAttribute("updater", updater);
         if (updater != null) {
             String formattedUpdatedAt = assessment.getUpdatedAt().format(formatter);
-
             model.addAttribute("formattedUpdatedAt", formattedUpdatedAt);
         }
 
@@ -858,6 +881,7 @@ public class AssessmentController {
             RedirectAttributes redirectAttributes) {
 
         System.out.println("[Controller] Updating Assessment ID: " + id);
+        System.out.println("📥 JSON nhận được từ FE: " + newAddedQuestionsJson);
 
         Assessment existingAssessment = assessmentService.findById(id)
                 .orElseThrow(() -> {
@@ -865,7 +889,6 @@ public class AssessmentController {
                     return new RuntimeException("Assessment not found with ID: " + id);
                 });
 
-        // ✅ Cập nhật thông tin cơ bản
         existingAssessment.setTitle(assessment.getTitle());
         existingAssessment.setAssessmentType(assessment.getAssessmentType());
         existingAssessment.setCourse(assessment.getCourse());
@@ -877,8 +900,10 @@ public class AssessmentController {
 
         User currentUser = userService.getCurrentUser();
         existingAssessment.setUpdatedBy(currentUser);
+        existingAssessment.setUpdatedAt(
+                ZonedDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")).toLocalDateTime()
+        );
 
-        // ✅ Cập nhật danh sách bài tập
         if (exerciseIds != null && !exerciseIds.isEmpty()) {
             Set<Exercise> selectedExercises = new HashSet<>(exerciseService.findByIds(exerciseIds));
             existingAssessment.setExercises(selectedExercises);
@@ -888,9 +913,8 @@ public class AssessmentController {
             System.out.println("No exercises selected.");
         }
 
-        // ✅ Xử lý danh sách câu hỏi mới
         List<AssessmentQuestionService.QuestionOrder> questionOrders = new ArrayList<>();
-        if (newAddedQuestionsJson != null && !newAddedQuestionsJson.isEmpty()) {
+        if (newAddedQuestionsJson != null && !newAddedQuestionsJson.isBlank()) {
             try {
                 ObjectMapper objectMapper = new ObjectMapper();
                 questionOrders = objectMapper.readValue(newAddedQuestionsJson, new TypeReference<>() {
@@ -905,11 +929,9 @@ public class AssessmentController {
             System.out.println("No new questions provided.");
         }
 
-        // Update the list of questions in the assessment if new data is available
-        if (!questionOrders.isEmpty()) {
+        // Update the list of questions in the assessment
             assessmentQuestionService.updateAssessmentQuestions(id, questionOrders);
             System.out.println("Updated question list in the assessment.");
-        }
 
         // Save the updated assessment in the database
         assessmentService.saveAssessment(existingAssessment);
@@ -966,6 +988,9 @@ public class AssessmentController {
     public String verifyEmail(@PathVariable("id") String rawId, @RequestParam("email") String email, Model model) {
         email = email.toLowerCase();
         // Decode the ID (but don't overwrite rawId)
+        System.out.println("");
+        System.out.println("");
+        System.out.println("Take exam get id: " + rawId);
         long id;
         try {
             long[] temp = assessmentService.decodeId(rawId);

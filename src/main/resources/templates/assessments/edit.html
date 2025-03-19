@@ -468,6 +468,8 @@
         const assessmentTypeSelect = document.getElementById("assessmentType");
         const exercisesTab = document.getElementById("exercises-tab");
         const questionsTab = document.getElementById("questions-tab");
+        const exerciseCheckboxes = document.querySelectorAll('input[name="exercises"]');
+        const suffleCheckbox = document.getElementById("id_shuffled");
 
         function updateTabs() {
             const selectedType = assessmentTypeSelect.options[assessmentTypeSelect.selectedIndex].text.toLowerCase();
@@ -479,6 +481,11 @@
                 exercisesTab.classList.add("disabled");
                 questionsTab.classList.remove("disabled");
 
+                exerciseCheckboxes.forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+
+                suffleCheckbox.disabled = false;
             } else if (selectedType.includes("assignment") && !selectedType.includes("quiz")) {
                 let exercisesTabElement = new bootstrap.Tab(exercisesTab);
                 exercisesTabElement.show();
@@ -486,11 +493,14 @@
                 questionsTab.classList.add("disabled");
                 exercisesTab.classList.remove("disabled");
 
+                suffleCheckbox.checked = false;
+                suffleCheckbox.disabled = true;
             } else {
                 let exercisesTabElement = new bootstrap.Tab(exercisesTab);
                 exercisesTabElement.show();
                 exercisesTab.classList.remove("disabled");
                 questionsTab.classList.remove("disabled");
+                suffleCheckbox.disabled = false;
             }
         }
 
@@ -875,7 +885,7 @@
         `;
 
             selectedQuestionsList.appendChild(listItem);
-            newAddedQuestions.push({ questionId, orderIndex, text: questionText });
+            newAddedQuestions.push({questionId, orderIndex, text: questionText});
 
             updateHiddenInput();
 
@@ -1004,9 +1014,34 @@
         }
 
         function updateHiddenInput() {
+            console.log("🔍 Data gửi lên server:", JSON.stringify(newAddedQuestions));
             document.getElementById("newAddedQuestionsInput").value = JSON.stringify(newAddedQuestions);
         }
 
+        function getSelectedType() {
+            const assessmentTypeSelect = document.getElementById("assessmentType");
+            return assessmentTypeSelect.options[assessmentTypeSelect.selectedIndex].text.toLowerCase();
+        }
+
+        function resetQuestionsIfNeeded() {
+            const selectedType = getSelectedType();
+
+            if (selectedType.includes("assignment") && !selectedType.includes("quiz")) {
+                selectedQuestionsList.innerHTML = "";
+                newAddedQuestions = [];
+                updateHiddenInput();
+                updateEmptyMessage();
+
+                console.warn("📌 Danh sách câu hỏi đã reset vì là 'assignment' mà không phải 'quiz'.");
+
+                console.log("🔍 newAddedQuestions sau reset:", newAddedQuestions);
+                console.log("🔍 Hidden Input Value:", document.getElementById("newAddedQuestionsInput").value);
+            }
+        }
+
+        document.getElementById("assessmentType").addEventListener("change", function () {
+            resetQuestionsIfNeeded();
+        });
 
         document.addEventListener("click", function (event) {
             if (event.target.closest(".library-add-question")) {
@@ -1095,7 +1130,7 @@
                 return;
             }
 
-            $.get(`/assessments/edit/check-duplicate`, { title: newTitle, assessmentTypeId: assessmentTypeId, id: id })
+            $.get(`/assessments/edit/check-duplicate`, {title: newTitle, assessmentTypeId: assessmentTypeId, id: id})
                 .done(function (response) {
                     if (response.isDuplicate) {
                         showError("Assessment title of this assessment type already exists!");

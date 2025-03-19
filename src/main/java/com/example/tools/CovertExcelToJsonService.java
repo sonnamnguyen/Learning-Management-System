@@ -291,4 +291,101 @@ public class CovertExcelToJsonService {
         return mcQuestions;
     }
 
+
+    //PROCESS SHEET FOR IMPORT EXCEL
+    public List<Object> processSheetForImportExcel(Sheet sheet) {
+        List<Object> mcQuestions = new ArrayList<>();
+        int questionTypeIndex = -1;
+        int questionIndex = -1;
+        int correctAnswerIndex = -1; // Answer
+        Map<String, Integer> answerIndexes = new HashMap<>(); // Chứa <A, cột 1> <B, cột 2>, ....
+
+        Row headerRow = sheet.getRow(0); // check row đầu (header)
+        if (headerRow == null) throw new RuntimeException("Sheet " + sheet.getSheetName() + " is empty!");
+
+        for (Cell cell : headerRow) { // check từng cell của row đầu (header)
+            String header = getCellValueAsString(cell).trim().toLowerCase(); // Lấy tên header dưới dạng String và check
+
+            if (header.equals("type")) {
+                questionTypeIndex = cell.getColumnIndex();
+            } else if (header.equals("question")) {
+                questionIndex = cell.getColumnIndex();
+            } else if (header.equals("correct") || header.equals("answer")) {
+                correctAnswerIndex = cell.getColumnIndex();
+            } else if (header.startsWith("answer option ")) {
+                String option = header.replace("answer option ", "").trim();
+                answerIndexes.put(option.toUpperCase(), cell.getColumnIndex()); // <A, 1> <B, 2> <C, 3>,...
+            }
+        }
+
+        if (questionIndex == -1) throw new RuntimeException("No question column found in sheet: " + sheet.getSheetName());
+        if (answerIndexes.isEmpty()) throw new RuntimeException("No answer options found in sheet: " + sheet.getSheetName());
+
+        for (int rowIndex = 1; rowIndex <= sheet.getLastRowNum(); rowIndex++) { // check từng row (Question)
+            // QUESTION------------------------------------------
+            try {
+                Row currentRow = sheet.getRow(rowIndex);
+                if (currentRow == null) continue;
+
+                String question = getCellValueAsString(currentRow.getCell(questionIndex)).trim(); // Lấy question text
+                if (question.isEmpty()) continue;
+
+                String questionType = questionTypeIndex != -1
+                        ? getCellValueAsString(currentRow.getCell(questionTypeIndex))
+                        : "Multiple Choice";  // Lấy question type
+
+                /*if (questionType.equalsIgnoreCase("Multiple Choice")){
+                    questionType = "MCQ";
+                } else if (questionType.equalsIgnoreCase("Single Choice")) {
+                    questionType = "SCQ";
+                } else {
+                    questionType = "TEXT";
+                }*/
+
+                String correctAnswerList = correctAnswerIndex != -1
+                        ? getCellValueAsString(currentRow.getCell(correctAnswerIndex))
+                        : "";    // Lấy answer (A; A, B, C; ....)
+
+                Set<Integer> correctIndexes = new HashSet<>();
+                if (!correctAnswerList.isEmpty()) { // Lấy answer option
+                    for (String correctAnswer : correctAnswerList.split(",")) {
+                        correctAnswer = correctAnswer.trim().toUpperCase();
+                        if (!correctAnswer.isEmpty() && correctAnswer.length() == 1) {
+                            correctIndexes.add(correctAnswer.charAt(0) - 'A');
+                        }
+                    }
+                }
+
+                List<Map<String, Object>> answers = new ArrayList<>(); // Tạo answer data json
+                for (Map.Entry<String, Integer> entry : answerIndexes.entrySet()) {
+                    int columnIndex = entry.getValue();
+                    String answerText = getCellValueAsString(currentRow.getCell(columnIndex));
+
+                    if (!answerText.isEmpty()) {
+                        Map<String, Object> answerObj = new LinkedHashMap<>();
+
+                        answerObj.put("optionText", answerText);
+
+                        String optionKey = entry.getKey(); // "A", "B", "C", ...
+                        int optionIndex = optionKey.charAt(0) - 'A';
+
+                        answerObj.put("isCorrect", correctIndexes.contains(optionIndex)); // check đúng sai các câu A, B, C, D,...
+
+                        answers.add(answerObj); // 1 answerObj chứa text: "2"
+                    }                           //                  correct: true/false
+                }
+
+                Map<String, Object> questionData = new LinkedHashMap<>();
+                questionData.put("questionText", question);
+                questionData.put("questionType", questionType);
+                questionData.put("answerOptions", answers);
+                mcQuestions.add(questionData);
+            } catch (Exception e) {
+                throw new RuntimeException("Error processing row " + rowIndex + ": " + e.getMessage());
+            }
+        }
+
+        return mcQuestions;
+    }
+
 }

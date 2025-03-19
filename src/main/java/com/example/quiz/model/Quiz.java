@@ -71,13 +71,8 @@ public class Quiz {
 //    @JsonIgnore
 //    private Set<Question> questions = new HashSet<>();
 
-    @OneToMany(mappedBy = "quizzes")
+    @OneToMany(mappedBy = "quizzes", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Question> questions = new HashSet<>();
-
-    public void addQuestion(Question question) {
-        this.questions.add(question);
-        question.setQuizzes(this);
-    }
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
@@ -86,6 +81,11 @@ public class Quiz {
             inverseJoinColumns = @JoinColumn(name = "tag_id")
     )
     private Set<QuizTag> tags = new HashSet<>();
+
+    public void addQuestion(Question question) {
+        this.questions.add(question);
+        question.setQuizzes(this);
+    }
 
     @NotNull(message = "Duration is required.")
     @Min(value = 1, message = "Duration must be at least 1 minute.")

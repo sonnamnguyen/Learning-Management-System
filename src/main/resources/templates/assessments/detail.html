@@ -7,6 +7,8 @@
     <!-- Bootstrap & Font Awesome -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"/>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
         /* Breadcrumb styling */
@@ -19,22 +21,25 @@
             background-color: transparent;
             border-radius: 0.25rem;
         }
+
         .breadcrumb-item + .breadcrumb-item::before {
             content: ">";
             padding: 0 0.5rem;
             color: #6c757d;
         }
+
         /* Scrollable container if needed */
         .scrollable-table {
             overflow: auto;
             max-height: 650px;
         }
+
         /* Scroll-to-top button */
         #scrollToTopButton {
             position: fixed;
             bottom: 3vh;
             right: 20px;
-            display: none;
+            display: none; /* Initially hidden */
             width: 50px;
             height: 50px;
             background: linear-gradient(45deg, #6a11cb, #2575fc);
@@ -49,19 +54,39 @@
             transition: transform 0.3s ease, opacity 0.3s ease;
             z-index: 80;
         }
+
         #scrollToTopButton:hover {
             transform: scale(1.2);
             opacity: 1;
             background: linear-gradient(45deg, #2575fc, #6a11cb);
         }
+
+        /* Adjust max-height for medium screens */
         @media (max-width: 1200px) {
-            .scrollable-table { max-height: 500px; }
+            .scrollable-table {
+                max-height: 500px;
+            }
         }
+
+        /* Adjust max-height for small screens */
         @media (max-width: 768px) {
-            .scrollable-table { max-height: 400px; }
+            .scrollable-table {
+                max-height: 400px;
+            }
         }
+
+        /* Adjust max-height for extra-small screens */
         @media (max-width: 576px) {
-            .scrollable-table { max-height: 300px; }
+            .scrollable-table {
+                max-height: 300px;
+            }
+        }
+
+        /* Make the chart fill 90% of the card body */
+        .chart-container {
+            width: 90%;
+            height: 90%;
+            margin: 0 auto; /* center it */
         }
     </style>
 </head>
@@ -78,34 +103,65 @@
 
     <h1 class="text-center mt-2" th:text="${assessment.title}">Assessment Title</h1>
 
-    <!-- Assessment Details Section -->
+
     <div class="card mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h2 class="mb-0" th:text="${assessment.title}">Assessment Title</h2>
             <div>
-                <a th:href="@{/assessments/edit/{id}(id=${assessment.id})}" class="btn btn-outline-secondary">Edit</a>
-                <a th:href="@{/assessments}" class="btn btn-secondary ml-2">Back to Assessments</a>
+                <a th:href="@{/assessments/edit/{id}(id=${assessment.id})}"
+                   class="btn btn-outline-secondary">
+                    Edit
+                </a>
+                <a th:href="@{/assessments}" class="btn btn-secondary ml-2">
+                    Back to Assessments
+                </a>
             </div>
         </div>
+
         <div class="card-body">
             <div class="row">
-                <!-- Left Column: Course and Type -->
-                <div class="col-md-6">
+                <!-- 1. Course -->
+                <div class="col-md-3">
                     <p>
-                        <strong>Course:</strong> <span th:text="${assessment.course.name}">Course Name</span><br/>
-                        <strong>Assessment Type:</strong> <span th:text="${assessment.assessmentType.name}">Type</span>
+                        <span class="text-muted">Course</span><br/>
+                        <span class="fw-bold text-dark" th:text="${assessment.course.name}">
+                        Software Engineering
+                    </span>
                     </p>
                 </div>
-                <!-- Right Column: Duration and Passing Score -->
-                <div class="col-md-6">
+                <!-- 2. Assessment Type -->
+                <div class="col-md-3">
                     <p>
-                        <strong>Duration:</strong> <span th:text="${assessment.timeLimit}">0</span> Minutes<br/>
-                        <strong>Minimum Passing Score:</strong> <span th:text="${assessment.qualifyScore}">0</span>%
+                        <span class="text-muted">Assessment Type</span><br/>
+                        <span class="fw-bold text-dark" th:text="${assessment.assessmentType.name}">
+                        Assignment
+                    </span>
+                    </p>
+                </div>
+                <!-- 3. Created At -->
+                <div class="col-md-3">
+                    <p>
+                        <span class="text-muted">Created At</span><br/>
+                        <span class="fw-bold text-dark"
+                              th:text="${#temporals.format(assessment.createdAt, 'yyyy-MM-dd HH:mm')}">
+                        2025-02-20 09:27
+                    </span>
+                    </p>
+                </div>
+                <!-- 4. Exam Duration -->
+                <div class="col-md-3">
+                    <p>
+                        <span class="text-muted">Exam Duration</span><br/>
+                        <span class="fw-bold text-dark"
+                              th:text="${assessment.timeLimit} + ' minutes'">
+                        35 minutes
+                    </span>
                     </p>
                 </div>
             </div>
         </div>
     </div>
+
 
     <!-- Two-Column Layout for Exercises and Questions -->
     <div class="row mb-4">
@@ -118,7 +174,10 @@
                 <div class="card-body" style="max-height: 300px; overflow-y: auto;">
                     <ul class="list-group">
                         <li class="list-group-item" th:each="exercise : ${assessment.exercises}">
-                            <a th:href="@{/exercises/detail/{exerciseId}(exerciseId=${exercise.id})}" target="_blank" th:text="${exercise.name}">Exercise Name</a>
+                            <a th:href="@{/judgement/{type}/code_space/{id}(type='preview', id=${exercise.id})}"
+                               th:text="${exercise.name}" target="_blank">
+                                Exercise Name
+                            </a>
                         </li>
                         <li class="list-group-item text-muted" th:if="${#lists.isEmpty(assessment.exercises)}">
                             No exercises assigned.
@@ -127,13 +186,17 @@
                 </div>
             </div>
         </div>
+
         <!-- Questions Section -->
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3>Multiple Choice</h3>
                     <!-- View All Button opens modal -->
-                    <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#viewAllModal">View All</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal"
+                            data-bs-target="#viewAllModal">
+                        View All
+                    </button>
                 </div>
                 <div class="card-body" style="max-height: 300px; overflow-y: auto;">
                     <ul class="list-group">
@@ -147,38 +210,78 @@
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Modal for View All Questions with Answers -->
-        <div class="modal fade" id="viewAllModal" tabindex="-1" aria-labelledby="viewAllModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="viewAllModalLabel">All Multiple Choice Questions</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="scrollable-table">
-                            <div th:each="question, iterStat : ${questions}" class="mb-4 border-bottom pb-3">
-                                <p class="fw-bold">
-                                    <strong th:text="${iterStat.count}"></strong>.
-                                    <span th:text="${question.questionText}">Question text</span>
-                                </p>
-                                <ul class="list-group">
-                                    <li class="list-group-item"
-                                        th:each="ans : ${questionAnswerOptionsMap[question.id] != null ? questionAnswerOptionsMap[question.id] : T(java.util.Collections).emptyList()}">
-                                        <span th:text="${ans.optionText}">Answer Option Text</span>
-                                        <span th:if="${ans.isCorrect}" class="badge bg-success ms-2">Correct</span>
-                                    </li>
-                                    <li class="list-group-item text-muted" th:if="${#lists.isEmpty(questionAnswerOptionsMap[question.id])}">
-                                        No answers assigned.
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    </div>
+    <div class="row mb-4">
+
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-user-check fa-2x text-primary"></i>
+                    <p class="text-muted mt-2">Assessed</p>
+                    <h4 class="fw-bold text-dark" th:text="${assessment.assessedCount}">20</h4>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-envelope fa-2x text-warning"></i>
+                    <p class="text-muted mt-2">Invitations Sent</p>
+                    <h4 class="fw-bold text-dark" th:text="${assessment.invitedCount}">16</h4>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-check-circle fa-2x text-success"></i>
+                    <p class="text-muted mt-2">Passed</p>
+                    <h4 class="fw-bold text-dark" th:text="${assessment.qualifiedCount}">3</h4>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-percentage fa-2x text-danger"></i>
+                    <p class="text-muted mt-2">Minimum Passing Score</p>
+                    <h4 class="fw-bold text-dark" th:text="${assessment.qualifyScore}">
+                        75
+                    </h4>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section: Quiz Score Chart and Exercise Score Chart -->
+    <div class="row mb-4">
+        <!-- Quiz Score Chart -->
+        <div class="col-12 col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Quiz Score Chart</h3>
+                </div>
+                <div class="chart-container" style="height: 400px; width: 80%; margin: 0 auto;">
+                    <canvas id="quizScoreChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <!-- Exercise Score Chart -->
+        <div class="col-12 col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Exercise Score Chart</h3>
+                </div>
+                <div class="chart-container" style="height: 400px; width: 80%; margin: 0 auto;">
+                    <canvas id="exerciseScoreChart"></canvas>
                 </div>
             </div>
         </div>
@@ -186,8 +289,12 @@
 
     <!-- Registered Attempts Section (non-AJAX pagination) -->
     <div class="card" id="registeredAttemptsContainer">
-        <div class="card-header">
+        <div class="card-header d-flex justify-content-between align-items-center">
             <h3>Registered Attempts</h3>
+            <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal"
+                    data-bs-target="#viewAllAttemptsModal">
+                View All
+            </button>
         </div>
         <div class="card-body">
             <table class="table table-sm table-bordered">
@@ -198,7 +305,7 @@
                     <th>Email</th>
                     <th>Invitation Date</th>
                     <th>Quiz Score</th>
-                    <th>Assignment Score</th>
+                    <th>Exercise Score</th>
                     <th>Action</th>
                 </tr>
                 </thead>
@@ -209,9 +316,12 @@
                     <td th:text="${attempt.email}"></td>
                     <td th:text="${#temporals.format(attempt.attemptDate, 'yyyy-MM-dd HH:mm')}"></td>
                     <td th:text="${attempt.scoreQuiz}"></td>
-                    <td th:text="${attempt.scoreAss}"></td>
+                    <td th:text="${attempt.scoreEx}"></td>
                     <td>
-                        <a th:href="@{/assessments/viewReport/{assessmentId}(assessmentId=${assessment.id}, attempt-id=${attempt.id})}" class="btn btn-sm btn-outline-primary">View</a>
+                        <a th:href="@{/assessments/viewReport/{assessmentId}(assessmentId=${assessment.id}, attempt-id=${attempt.id})}"
+                           class="btn btn-sm btn-outline-primary">
+                            View
+                        </a>
                     </td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(registeredAttempts)}">
@@ -222,20 +332,63 @@
             <nav aria-label="Registered Attempts Pagination" th:if="${registeredAttemptsPage.totalPages > 0}">
                 <ul class="pagination justify-content-center">
                     <li class="page-item" th:classappend="${registeredAttemptsPage.number == 0} ? 'disabled'">
-                        <a class="page-link" th:href="@{/assessments/detail/{id}(id=${assessment.id}, pageReg=0, pageInv=${invitedCandidatesPage.number}, searchEmail=${searchEmail})}">First</a>
+                        <a class="page-link"
+                           th:href="@{/assessments/detail/{id}(
+                               id=${assessment.id},
+                               pageReg=0,
+                               pageInv=${invitedCandidatesPage.number},
+                               searchEmail=${searchEmail}
+                           )}">
+                            First
+                        </a>
                     </li>
                     <li class="page-item" th:classappend="${registeredAttemptsPage.number == 0} ? 'disabled'">
-                        <a class="page-link" th:href="@{/assessments/detail/{id}(id=${assessment.id}, pageReg=${registeredAttemptsPage.number - 1}, pageInv=${invitedCandidatesPage.number}, searchEmail=${searchEmail})}">Previous</a>
+                        <a class="page-link"
+                           th:href="@{/assessments/detail/{id}(
+                               id=${assessment.id},
+                               pageReg=${registeredAttemptsPage.number - 1},
+                               pageInv=${invitedCandidatesPage.number},
+                               searchEmail=${searchEmail}
+                           )}">
+                            Previous
+                        </a>
                     </li>
-                    <li class="page-item" th:each="i : ${#numbers.sequence(0, registeredAttemptsPage.totalPages - 1)}"
+                    <li class="page-item"
+                        th:each="i : ${#numbers.sequence(0, registeredAttemptsPage.totalPages - 1)}"
                         th:classappend="${registeredAttemptsPage.number == i} ? 'active'">
-                        <a class="page-link" th:href="@{/assessments/detail/{id}(id=${assessment.id}, pageReg=${i}, pageInv=${invitedCandidatesPage.number}, searchEmail=${searchEmail})}" th:text="${i + 1}">1</a>
+                        <a class="page-link"
+                           th:href="@{/assessments/detail/{id}(
+                               id=${assessment.id},
+                               pageReg=${i},
+                               pageInv=${invitedCandidatesPage.number},
+                               searchEmail=${searchEmail}
+                           )}"
+                           th:text="${i + 1}">
+                        </a>
                     </li>
-                    <li class="page-item" th:classappend="${registeredAttemptsPage.number == registeredAttemptsPage.totalPages - 1} ? 'disabled'">
-                        <a class="page-link" th:href="@{/assessments/detail/{id}(id=${assessment.id}, pageReg=${registeredAttemptsPage.number + 1}, pageInv=${invitedCandidatesPage.number}, searchEmail=${searchEmail})}">Next</a>
+                    <li class="page-item"
+                        th:classappend="${registeredAttemptsPage.number == registeredAttemptsPage.totalPages - 1} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/assessments/detail/{id}(
+                               id=${assessment.id},
+                               pageReg=${registeredAttemptsPage.number + 1},
+                               pageInv=${invitedCandidatesPage.number},
+                               searchEmail=${searchEmail}
+                           )}">
+                            Next
+                        </a>
                     </li>
-                    <li class="page-item" th:classappend="${registeredAttemptsPage.number == (registeredAttemptsPage.totalPages - 1)} ? 'disabled'">
-                        <a class="page-link" th:href="@{/assessments/detail/{id}(id=${assessment.id}, pageReg=${registeredAttemptsPage.totalPages - 1}, pageInv=${invitedCandidatesPage.number}, searchEmail=${searchEmail})}" th:text="'Last'">Last</a>
+                    <li class="page-item"
+                        th:classappend="${registeredAttemptsPage.number == (registeredAttemptsPage.totalPages - 1)} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/assessments/detail/{id}(
+                               id=${assessment.id},
+                               pageReg=${registeredAttemptsPage.totalPages - 1},
+                               pageInv=${invitedCandidatesPage.number},
+                               searchEmail=${searchEmail}
+                           )}"
+                           th:text="'Last'">
+                        </a>
                     </li>
                 </ul>
             </nav>
@@ -243,16 +396,26 @@
     </div>
 
     <!-- All Invited Candidates Section (non-AJAX pagination) -->
-    <div class="card mt-4" th:if="${currentUser != null and (currentUser.roles.?[id == 1].size() > 0 or currentUser.roles.?[name=='SUPERADMIN'].size() > 0)}">
+    <div class="card mt-4">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h3>All Invited Candidates</h3>
             <!-- Search Bar -->
-            <form id="searchCandidatesForm" th:action="@{/assessments/detail/{id}(id=${assessment.id})}" method="get" class="d-flex">
+            <form id="searchCandidatesForm"
+                  th:action="@{/assessments/detail/{id}(id=${assessment.id})}"
+                  method="get"
+                  class="d-flex">
                 <input type="hidden" name="pageReg" th:value="${registeredAttemptsPage.number}"/>
                 <input type="hidden" name="pageInv" value="0"/>
-                <input type="text" name="searchEmail" placeholder="Search email..." class="form-control" style="max-width: 200px; margin-right: 10px;" th:value="${searchEmail}"/>
-                <button class="btn btn-primary" type="submit"><i class="fa fa-search"></i></button>
+                <input type="text" name="searchEmail" placeholder="Search email..." class="form-control"
+                       style="max-width: 200px; margin-right: 10px;" th:value="${searchEmail}"/>
+                <button class="btn btn-primary" type="submit">
+                    <i class="fa fa-search"></i>
+                </button>
             </form>
+            <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal"
+                    data-bs-target="#viewAllInvitedModal">
+                View All
+            </button>
         </div>
         <div class="card-body">
             <div id="invitedCandidatesContainer">
@@ -273,33 +436,192 @@
                         <td th:text="${candidate.expirationDate}"></td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(invitedCandidates)}">
-                        <td colspan="4" class="text-center text-muted">No invited candidates yet.</td>
+                        <td colspan="4" class="text-center text-muted">
+                            No invited candidates yet.
+                        </td>
                     </tr>
                     </tbody>
                 </table>
-                <nav aria-label="Invited Candidates Pagination">
+
+
+                <nav aria-label="Invited Candidates Pagination"
+                     th:if="${invitedCandidatesPage.totalElements > 0}">
                     <ul class="pagination justify-content-center">
-                        <li class="page-item" th:classappend="${invitedCandidatesPage.number == 0} ? 'disabled'">
-                            <a class="page-link" th:href="@{/assessments/detail/{id}(id=${assessment.id}, pageInv=0, pageReg=${registeredAttemptsPage.number}, searchEmail=${searchEmail})}">First</a>
+
+                        <!-- First -->
+                        <li class="page-item"
+                            th:classappend="${invitedCandidatesPage.first}? 'disabled'">
+                            <a class="page-link" ...>First</a>
                         </li>
-                        <li class="page-item" th:classappend="${invitedCandidatesPage.number == 0} ? 'disabled'">
-                            <a class="page-link" th:href="@{/assessments/detail/{id}(id=${assessment.id}, pageInv=${invitedCandidatesPage.number - 1}, pageReg=${registeredAttemptsPage.number}, searchEmail=${searchEmail})}">Previous</a>
+
+                        <!-- Previous -->
+                        <li class="page-item"
+                            th:classappend="${invitedCandidatesPage.first}? 'disabled'">
+                            <a class="page-link" ...>Previous</a>
                         </li>
-                        <li class="page-item" th:each="i : ${#numbers.sequence(0, invitedCandidatesPage.totalPages - 1)}"
-                            th:classappend="${invitedCandidatesPage.number == i} ? 'active'">
-                            <a class="page-link" th:href="@{/assessments/detail/{id}(id=${assessment.id}, pageInv=${i}, pageReg=${registeredAttemptsPage.number}, searchEmail=${searchEmail})}" th:text="${i + 1}">1</a>
+
+                        <!-- Page numbers -->
+                        <li class="page-item"
+                            th:each="i : ${#numbers.sequence(0, invitedCandidatesPage.totalPages - 1)}"
+                            th:classappend="${invitedCandidatesPage.number == i}? 'active'">
+                            <a class="page-link" ...
+                               th:text="${i + 1}">1</a>
                         </li>
-                        <li class="page-item" th:classappend="${invitedCandidatesPage.number == invitedCandidatesPage.totalPages - 1} ? 'disabled'">
-                            <a class="page-link" th:href="@{/assessments/detail/{id}(id=${assessment.id}, pageInv=${invitedCandidatesPage.number + 1}, pageReg=${registeredAttemptsPage.number}, searchEmail=${searchEmail})}">Next</a>
+
+                        <!-- Next -->
+                        <li class="page-item"
+                            th:classappend="${invitedCandidatesPage.last}? 'disabled'">
+                            <a class="page-link" ...>Next</a>
                         </li>
-                        <li class="page-item" th:classappend="${invitedCandidatesPage.number == (invitedCandidatesPage.totalPages - 1)} ? 'disabled'">
-                            <a class="page-link" th:href="@{/assessments/detail/{id}(id=${assessment.id}, pageInv=${invitedCandidatesPage.totalPages - 1}, pageReg=${registeredAttemptsPage.number}, searchEmail=${searchEmail})}" th:text="'Last'">Last</a>
+
+                        <!-- Last -->
+                        <li class="page-item"
+                            th:classappend="${invitedCandidatesPage.last}? 'disabled'">
+                            <a class="page-link" ...>Last</a>
                         </li>
                     </ul>
                 </nav>
+
             </div>
         </div>
     </div>
+
+    <!-- Modal for View All Questions with Answers -->
+    <div class="modal fade" id="viewAllModal" tabindex="-1" aria-labelledby="viewAllModalLabel" aria-hidden="true">
+        <!-- Thay modal-lg thành một div có style -->
+        <div class="modal-dialog" style="max-width: 80%; width: 80%;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="viewAllModalLabel">All Multiple Choice Questions</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="scrollable-table">
+                        <div th:each="question, iterStat : ${questions}" class="mb-4 border-bottom pb-3">
+                            <p class="fw-bold">
+                                <strong th:text="${iterStat.count}"></strong>.
+                                <span th:text="${question.questionText}">Question text</span>
+                            </p>
+                            <ul class="list-group">
+                                <li class="list-group-item"
+                                    th:each="ans : ${questionAnswerOptionsMap[question.id] != null
+                                                 ? questionAnswerOptionsMap[question.id]
+                                                 : T(java.util.Collections).emptyList()}">
+                                    <span th:text="${ans.optionText}">Answer Option Text</span>
+                                    <span th:if="${ans.isCorrect}" class="badge bg-success ms-2">Correct</span>
+                                </li>
+                                <li class="list-group-item text-muted"
+                                    th:if="${#lists.isEmpty(questionAnswerOptionsMap[question.id])}">
+                                    No answers assigned.
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: View All Registered Attempts -->
+    <div class="modal fade" id="viewAllAttemptsModal" tabindex="-1" aria-labelledby="viewAllAttemptsModalLabel" aria-hidden="true">
+        <!-- Thêm modal-dialog-centered -->
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 80%; width: 80%;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="viewAllAttemptsModalLabel">All Registered Attempts</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Scrollable container if needed -->
+                    <div class="scrollable-table" style="max-height: 600px; overflow-y: auto;">
+                        <table class="table table-sm table-bordered">
+                            <thead class="thead-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Candidate</th>
+                                <th>Email</th>
+                                <th>Invitation Date</th>
+                                <th>Quiz Score</th>
+                                <th>Exercise Score</th>
+                                <th>Action</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <!-- Duyệt qua registeredAttemptsAll -->
+                            <tr th:each="attempt, iterStat : ${registeredAttemptsAll}">
+                                <td th:text="${iterStat.count}"></td>
+                                <td th:text="${attempt.candidateUsername}"></td>
+                                <td th:text="${attempt.email}"></td>
+                                <td th:text="${#temporals.format(attempt.attemptDate, 'yyyy-MM-dd HH:mm')}"></td>
+                                <td th:text="${attempt.scoreQuiz}"></td>
+                                <td th:text="${attempt.scoreEx}"></td>
+                                <td>
+                                    <a th:href="@{/assessments/viewReport/{assessmentId}(assessmentId=${assessment.id}, attempt-id=${attempt.id})}"
+                                       class="btn btn-sm btn-outline-primary">
+                                        View
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(registeredAttemptsAll)}">
+                                <td colspan="7" class="text-center text-muted">No attempts yet.</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div> <!-- scrollable-table -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: View All Invited Candidates -->
+    <div class="modal fade" id="viewAllInvitedModal" tabindex="-1" aria-labelledby="viewAllInvitedModalLabel" aria-hidden="true">
+        <!-- Thêm modal-dialog-centered -->
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 80%; width: 80%;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="viewAllInvitedModalLabel">All Invited Candidates</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="scrollable-table" style="max-height: 600px; overflow-y: auto;">
+                        <table class="table table-sm table-bordered">
+                            <thead class="thead-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Email</th>
+                                <th>Invitation Date</th>
+                                <th>Expiration Date</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <!-- Duyệt qua invitedCandidatesAll -->
+                            <tr th:each="candidate, stat : ${invitedCandidatesAll}">
+                                <td th:text="${stat.count}"></td>
+                                <td th:text="${candidate.email}"></td>
+                                <td th:text="${candidate.invitationDate}"></td>
+                                <td th:text="${candidate.expirationDate}"></td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(invitedCandidatesAll)}">
+                                <td colspan="4" class="text-center text-muted">No invited candidates yet.</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div> <!-- scrollable-table -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
 
     <!-- Scroll to top button -->
     <button onclick="scrollToTop()" id="scrollToTopButton" title="Go to top">
@@ -310,7 +632,7 @@
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
 <script>
-    // Scroll-to-top functionality
+    // Show/hide scrollToTopButton on scroll
     window.onscroll = function () {
         const scrollToTopButton = document.getElementById("scrollToTopButton");
         if (document.body.scrollTop > 50 || document.documentElement.scrollTop > 50) {
@@ -321,8 +643,83 @@
     };
 
     function scrollToTop() {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({top: 0, behavior: 'smooth'});
     }
 </script>
+
+<!-- Initialize Charts using Chart.js -->
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    // 1. Read the arrays from the model
+    const quizScoreData = /*[[${quizScores}]]*/ [];
+    const exerciseScoreData = /*[[${exerciseScores}]]*/ [];
+    const dateLabels = /*[[${dateLabels}]]*/ []; // the attempt dates as strings
+
+    // 2. Build the Quiz Score chart
+    const ctxQuiz = document.getElementById('quizScoreChart').getContext('2d');
+    const quizScoreChart = new Chart(ctxQuiz, {
+        type: 'bar',
+        data: {
+            labels: dateLabels,
+            datasets: [{
+                label: 'Quiz Score',
+                data: quizScoreData,
+                backgroundColor: 'rgba(54, 162, 235, 1)', // Blue color
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    ticks: {
+                        display: false // hide x-axis labels if you want
+                    },
+                    grid: {
+                        display: false // optionally hide x-axis grid lines
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+
+    // 3. Build the Exercise Score chart
+    const ctxEx = document.getElementById('exerciseScoreChart').getContext('2d');
+    const exerciseScoreChart = new Chart(ctxEx, {
+        type: 'bar',
+        data: {
+            labels: dateLabels,
+            datasets: [{
+                label: 'Exercise Score',
+                data: exerciseScoreData,
+                backgroundColor: 'rgba(255, 99, 132, 1)', // Red color
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    ticks: {
+                        display: false
+                    },
+                    grid: {
+                        display: false
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+    /*]]>*/
+</script>
+
 </body>
 </html>

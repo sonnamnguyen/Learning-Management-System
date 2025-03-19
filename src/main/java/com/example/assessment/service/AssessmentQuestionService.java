@@ -43,12 +43,6 @@ public class AssessmentQuestionService {
     public void updateAssessmentQuestions(Long assessmentId, List<QuestionOrder> questionOrders) {
         System.out.println("Updating questions for assessment ID: " + assessmentId);
 
-        // Validate input question orders
-        if (questionOrders == null || questionOrders.isEmpty()) {
-            System.out.println("No questions provided for update.");
-            return;
-        }
-
         // Retrieve assessment
         Assessment assessment = assessmentService.findById(assessmentId)
                 .orElseThrow(() -> new RuntimeException("Assessment not found with ID: " + assessmentId));
@@ -56,7 +50,13 @@ public class AssessmentQuestionService {
         // Delete existing assessment questions
         System.out.println("Removing existing questions for assessment ID: " + assessmentId);
         int deletedCount = assessmentQuestionRepository.deleteByAssessmentId(assessmentId);
+        assessmentQuestionRepository.flush();
         System.out.println("Removed " + deletedCount + " old questions.");
+
+        if (questionOrders == null || questionOrders.isEmpty()) {
+            System.out.println("No new questions provided.");
+            return;
+        }
 
         // Prepare new assessment questions
         List<AssessmentQuestion> newAssessmentQuestions = new ArrayList<>();

@@ -1,4 +1,3 @@
---- START OF FILE create2.html ---
 <!DOCTYPE html>
 
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
@@ -23,23 +22,22 @@
             background-color: transparent;
             border-radius: 0.25rem;
         }
-
         .breadcrumb-item + .breadcrumb-item::before {
             content: ">";
             padding: 0 0.5rem;
-            color: #6c757d; /* Màu xám nhẹ cho dấu ">" */
+            color: #6c757d;
         }
 
         .scrollable-table {
             overflow: auto;
-            max-height: 650px; /* Default for larger screens */
+            max-height: 650px;
         }
 
         #scrollToTopButton {
             position: fixed;
             bottom: 3vh;
             right: 10px;
-            display: none; /* Bắt đầu ẩn */
+            display: none;
             width: 50px;
             height: 50px;
             background: linear-gradient(45deg, #6a11cb, #2575fc);
@@ -55,7 +53,7 @@
         }
 
         #scrollToTopButton:hover {
-            transform: scale(1.2); /* Phóng to nhẹ khi hover */
+            transform: scale(1.2);
             opacity: 1; /* Tăng độ rõ */
             background: linear-gradient(45deg, #2575fc, #6a11cb); /* Đảo gradient khi hover */
         }
@@ -64,7 +62,6 @@
             display: inline-block;
             width: 100%;
         }
-
         .select-wrapper select {
             width: 100%;
             -webkit-appearance: none;
@@ -72,7 +69,6 @@
             appearance: none;
             padding-right: 30px; /* Adjust as needed */
         }
-
         .select-wrapper .select-arrow {
             position: absolute;
             top: 50%;
@@ -81,11 +77,9 @@
             pointer-events: none;
         }
 
-
         .no-wrap-label {
             white-space: nowrap;
         }
-
         .quiz-dropdown .quiz-arrow {
             position: absolute; /* Giữ nguyên định vị tuyệt đối */
             bottom: 0;          /* Đặt biểu tượng ở dưới cùng của quiz-header */
@@ -94,14 +88,12 @@
             align-self: auto;   /* Giữ nguyên hoặc bỏ align-self: auto; */
             /* Các style khác của biểu tượng (như transition, color, v.v.) có thể được giữ lại */
         }
-
         .quiz-header {
             position: relative; /* Đảm bảo quiz-header là phần tử tham chiếu (nếu chưa có) */
             font-size: 0.8rem; /* Giữ nguyên font-size hiện tại */
             padding-bottom: 15px; /* Tăng padding-bottom cho quiz-header để tạo không gian cho mũi tên (điều chỉnh giá trị này nếu cần) */
             /* Các style khác của quiz-header có thể được giữ lại */
         }
-
         .answer_options_hidden { /* Changed to underscore */
             display: none;
         }
@@ -111,7 +103,6 @@
             color: #6c757d; /* Example: Change icon color to gray */
             font-size: 0.9rem; /* Example: Adjust icon size */
         }
-
         .question-input .answer-dropdown-icon.rotated { /* Class for rotated icon */
             transform: rotate(180deg); /* Rotate icon 180 degrees */
         }
@@ -120,39 +111,52 @@
             border-color: #4cae4c;
             color: white;
         }
-
         .btn-primary:hover:not(.saved) { /* Hover cho nút btn-primary khi KHÔNG ở trạng thái 'saved' */
             background-color: #0b5ed7; /* Màu hover xanh dương đậm hơn một chút, ví dụ */
             border-color: #0a58ca;
             color: white;
         }
-
         .btn.saved:hover { /* Hover cho nút khi ở trạng thái 'saved' (màu xanh lá cây) */
             background-color: #4cae4c; /* Màu hover xanh lá cây đậm hơn nữa */
             border-color: #3d8b3d;
             color: white;
         }
+        /* check similar questions modal*/
+        .modal-header {
+            background-color: #ffc107; /* Màu vàng nhạt cho header */
+            color: white;
+            border-bottom: 1px solid #f8bb00;
+        }
+        .modal-title {
+            color: black; /* Màu chữ đen cho title */
+        }
+        .modal-footer button.btn-primary {
+            background-color: #0d6efd; /* Màu xanh dương cho nút OK */
+            border-color: #0d6efd;
+        }
+        .modal-footer button.btn-secondary {
+            background-color: #6c757d; /* Màu xám cho nút Cancel */
+            border-color: #6c757d;
+        }
+
         /* Adjust max-height for medium-sized screens */
         @media (max-width: 1200px) {
             .scrollable-table {
                 max-height: 500px;
             }
         }
-
         /* Adjust max-height for small screens */
         @media (max-width: 768px) {
             .scrollable-table {
                 max-height: 400px;
             }
         }
-
         /* Adjust max-height for extra small screens */
         @media (max-width: 576px) {
             .scrollable-table {
                 max-height: 300px;
             }
         }
-
         /* --- ADDED STYLES FROM edit.html for selected questions --- */
         .compact-question-item {
             display: flex !important;
@@ -161,7 +165,6 @@
             gap: 5px;
             width: 100%;
         }
-
         .question-answers {
             width: 100%;
             display: none;
@@ -170,59 +173,41 @@
         .question-answers.show {
             display: block;
         }
-
         .custom-switch {
             width: 2.5rem;
             height: 1.4rem;
             transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out;
         }
-
         .custom-switch:checked {
             background-color: #0d6efd !important;
             border-color: #0d6efd !important;
         }
-
         .d-flex.align-items-center {
             display: flex;
             align-items: center;
         }
-
         .form-check-input {
             transition: all 0.3s ease-in-out;
         }
-        /* --- END ADDED STYLES --- */
-
     }
 </style>
-
 <body>
-<div th:replace="~{fragments :: header}" class="sticky-top"></div> <!-- Header always on top -->
-
-
-
 <div class="mt-3" id="mainContentArea">
-
-
     <a href="/assessments" class=" btn-outline-secondary btn-sm rounded mx-2" style="padding: 0.5rem 1rem; border-width: 1px; font-size: 0.9rem; color: #777; border-color: #ccc; transition: all 0.3s ease; /* Thêm transition cho hiệu ứng mượt */"
        onmouseover="this.style.backgroundColor='#f8f9fa'; this.style.borderColor='#bbb'; this.style.color='#555';"
        onmouseout="this.style.backgroundColor='transparent'; this.style.borderColor='#ccc'; this.style.color='#777';">
         <i class="fas fa-arrow-left" style="margin-right: 0.5rem;"></i> Back to List
     </a>
-
-
     <head>
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/5.1.3/css/bootstrap.min.css">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     </head>
-
     <div class="container mt-1">
         <form method="POST" th:action="@{/assessments/create}" th:object="${assessment}" id="assessment-form" >
-
             <input type="hidden" name="csrfmiddlewaretoken" value="GIF6HSeEVpwBn48uJuRZ00xfC9yYxY6L3rEFxKHZoLVncpHCyfwfsOKrOyYPlSzx">
             <input type="hidden" th:field="*{createdBy}" th:value="${currentUser.username}" />
             <!-- Title -->
-
             <div class="col-md-4 mt-4 m-0">
                 <div class="d-flex align-items-center">  <!-- Flex container cho label và input -->
                     <label for="title-input" class=" me-2">Title:</label>
@@ -231,9 +216,7 @@
                 <input type="hidden" id="assessmentId" th:value="${assessment.id}">
                 <div id="duplicateTitleError" class="alert alert-danger mt-2 d-none"></div>
             </div>
-
             <div class="d-flex justify-content-end mb-2">  <!-- Thay đổi class thành 'd-flex justify-content-between' và thêm 'mb-3' -->
-
                 <button type="submit" class="btn btn-outline-success btn-sm rounded mx-2" style="padding: 0.5rem 1rem; border-width: 1px; font-size: 0.9rem; color: #5cb85c; border-color: #5cb85c; transition: all 0.3s ease; /* Thêm transition cho hiệu ứng mượt */"
                         onmouseover="this.style.backgroundColor='#e2f0e2'; this.style.borderColor='#4cae4c'; this.style.color='#3d8b3d';"
                         onmouseout="this.style.backgroundColor='transparent'; this.style.borderColor='#5cb85c'; this.style.color='#5cb85c';">
@@ -245,7 +228,6 @@
                  text-black">
                     <h4>Create Assessment</h4>
                 </div>
-
                 <div class="card-body">
                     <div class="row justify-content-around">
                         <div class="col-md-4  d-flex align-items-center m-0">
@@ -339,7 +321,6 @@
 
                             </div>
                         </div>
-
                         <!-- Questions Tab -->
                         <div class="tab-pane fade" id="questions" role="tabpanel" aria-labelledby="questions-tab">
                             <div class="row">
@@ -352,7 +333,6 @@
                                         </div>
                                     </div>
                                 </div>
-
                                 <!-- Multiple Choice Library -->
                                 <div class="col-md-5">
                                     <div class="card shadow-sm hover-shadow">
@@ -423,7 +403,6 @@
                                         </div>
                                     </div>
                                 </div>
-
                                 <div class="col-md-7">
                                     <div class="card shadow-sm hover-shadow">
                                         <div class="card-header d-flex justify-content-between align-items-center"> <!-- ADDED d-flex justify-content-between align-items-center -->
@@ -438,7 +417,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <!-- Settings Tab -->
                         <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="settings-tab">
                             <div class="row g-3">
@@ -465,9 +443,7 @@
                                            id="id_time_limit">
                                 </div>
                             </div>
-
                             <hr>
-
                             <div class="row g-3">
                                 <div class="col-12">
                                     <h6 class="text-muted">Score Distribution</h6>
@@ -482,7 +458,6 @@
                                            required
                                            id="id_quiz_score_ratio">
                                 </div>
-
                                 <div class="col-md-3">
                                     <label for="id_exercise_score_ratio" class="form-label">Exercise Score Ratio (%):</label>
                                     <input type="number"
@@ -494,9 +469,7 @@
                                            id="id_exercise_score_ratio">
                                 </div>
                             </div>
-
                             <hr/>
-
                             <div class="row g-3">
                                 <div class="col-12">
                                     <h6 class="text-muted">Additional Settings</h6>
@@ -512,7 +485,23 @@
                             </div>
                         </div>
                     </div>
-
+                </div>
+            </div>
+            <div id="customWarningModal" class="modal" style="display: none; position: fixed; z-index: 1060; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4);">
+                <div class="modal-dialog modal-dialog-centered" style="max-width: 500px; margin: 10% auto; ">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Warning!</h5>
+                            <button type="button" class="btn-close" id="customWarningModalCloseButton"></button>
+                        </div>
+                        <div class="modal-body" id="customWarningModalBody">
+                            <!-- Warning message will be inserted here -->
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" id="customWarningModalCancelButton">Cancel</button>
+                            <button type="button" class="btn btn-primary" id="customWarningModalOkButton">OK, Save Anyway</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </form>
@@ -522,10 +511,6 @@
     </div>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-
-
-
-
             function toggleAnswerVisibility(questionInput) {
                 console.log('toggleAnswerVisibility function called!');
                 const questionContent = questionInput.parentElement; // Get the parent .question-content
@@ -539,14 +524,9 @@
                     answerOptionsContainer.classList.add('answer_options_hidden');
                 }
             }
-
             const addQuestionButtons = document.querySelectorAll('.add-question');
             const selectedQuestionsList = document.getElementById('selected-questions');
-            // const randomizeOrderButton = document.getElementById('btn-randomize-order'); // Get the randomize button
-
             const buttonContainer = document.createElement('div');
-            // buttonContainer.className = 'd-flex justify-content-end mt-3';
-
             const saveButton = document.createElement('button');
             // saveButton.className = 'btn btn-success btn-sm';
             // saveButton.innerText = 'Save Selections';
@@ -561,11 +541,10 @@
 
             console.log("Exercise Checkboxes Selected (querySelectorAll result):", exerciseCheckboxes); // Log the NodeList
             exerciseCheckboxes.forEach(checkbox => {
-                console.log("Exercise Checkbox Element:", checkbox); // Log each checkbox element
-                console.log("Exercise Checkbox Value:", checkbox.value); // Log the value of each checkbox
+                console.log("Exercise Checkbox Element:", checkbox);
+                console.log("Exercise Checkbox Value:", checkbox.value);
                 window.selectedExerciseIds.push(checkbox.value);
             });
-            // Add event listener to each remove button (delegated event listener on selectedQuestionsList)
             selectedQuestionsList.addEventListener('click', function (event) {
                 if (event.target.classList.contains('remove-question')) {
                     const button = event.target;
@@ -576,9 +555,8 @@
                         questionMap.delete(questionId); // Remove from map as well
                         updateQuestionNumbers();
                         if (selectedQuestionsList.children.length === 0) {
-                            saveButton.style.display = 'none'; // Hide save button if no questions left
+                            saveButton.style.display = 'none';
                         }
-                        // updateSaveButtonState(); //NO NEED
                     }
                 }
             });
@@ -588,57 +566,46 @@
             const questionsTabButton = document.getElementById('questions-tab');
             const exercisesTabPane = document.getElementById('exercises');
             const questionsTabPane = document.getElementById('questions');
-            const settingsTabButton = document.getElementById('settings-tab'); // Lấy button Settings tab
+            const settingsTabButton = document.getElementById('settings-tab');
             const settingsTabPane = document.getElementById('settings');
             function handleAssessmentTypeChange() {
-                const selectedAssessmentType = assessmentTypeDropdown.value;
+                const selectedAssessmentType = assessmentTypeDropdown.options[assessmentTypeDropdown.selectedIndex].text.toLowerCase();
                 const quizRatioInput = document.getElementById('id_quiz_score_ratio');
                 const exerciseRatioInput = document.getElementById('id_exercise_score_ratio');
-
                 deactivateTab(settingsTabButton, settingsTabPane);
-
-                if (selectedAssessmentType === "1") { // Replace "1" with actual Quiz ID/value
+                if (selectedAssessmentType === "quiz") { // Replace "1" with actual Quiz ID/value
                     // Activate Questions tab, deactivate Exercises tab
                     activateTab(questionsTabButton, questionsTabPane);
                     deactivateTab(exercisesTabButton, exercisesTabPane);
-
                     // Disable Exercises tab button to prevent clicks
                     exercisesTabButton.setAttribute('disabled', 'true');
                     exercisesTabButton.classList.add('disabled');
-
                     // Enable Questions tab button
                     questionsTabButton.removeAttribute('disabled');
                     questionsTabButton.classList.remove('disabled');
-
                     // Set default ratio for Quiz and disable Exercise Ratio input
                     quizRatioInput.value = 100;
                     exerciseRatioInput.value = 0;
                     exerciseRatioInput.disabled = false; // **Disable Exercise Ratio input for Quiz**
                     quizRatioInput.disabled = false; // **Ensure Quiz Ratio input is enabled**
-
-
-                } else if (selectedAssessmentType ===  "2") { // Replace "2" with actual Assignment ID/value
+                } else if (selectedAssessmentType ===  "assignment") { // Replace "2" with actual Assignment ID/value
                     // Activate Exercises tab, deactivate Questions tab
                     activateTab(exercisesTabButton, exercisesTabPane);
                     deactivateTab(questionsTabButton, questionsTabPane);
-
                     // Disable Questions tab button to prevent clicks
                     questionsTabButton.setAttribute('disabled', 'true');
                     questionsTabButton.classList.add('disabled');
-
                     // Enable Exercises tab button
                     exercisesTabButton.removeAttribute('disabled');
                     exercisesTabButton.classList.remove('disabled');
-
                     // Set default ratio for Assignment and disable Quiz Ratio input
                     quizRatioInput.value = 0;
                     exerciseRatioInput.value = 100;
                     quizRatioInput.disabled = false;
                     exerciseRatioInput.disabled = false;
-
-
-                } if (selectedAssessmentType ===  "3") {
+                } if (selectedAssessmentType ===  "quiz & assignment") {
                     // For other assessment types or default, enable both and enable both ratio inputs
+
                     enableTab(exercisesTabButton);
                     enableTab(questionsTabButton);
                     quizRatioInput.disabled = false;
@@ -658,29 +625,21 @@
                     });
                 }
             }
-
             function activateTab(tabButton, tabPane) {
                 tabButton.classList.add('active');
                 tabButton.setAttribute('aria-selected', 'true');
                 tabPane.classList.add('show', 'active');
             }
-
             function deactivateTab(tabButton, tabPane) {
                 tabButton.classList.remove('active');
                 tabButton.setAttribute('aria-selected', 'false');
                 tabPane.classList.remove('show', 'active');
             }
-
             function enableTab(tabButton) {
                 tabButton.removeAttribute('disabled');
                 tabButton.classList.remove('disabled');
             }
-
-
             assessmentTypeDropdown.addEventListener('change', handleAssessmentTypeChange);
-
-
-
             // Handle click events for disabled tabs to prevent switching
             exercisesTabButton.addEventListener('click', function(event) {
                 if (this.hasAttribute('disabled')) {
@@ -688,7 +647,6 @@
                     event.stopPropagation(); // Stop event propagation to be safe
                     return false; // Stop further execution
                 }
-                // If not disabled, Bootstrap's default tab behavior will handle the switch
             });
 
             questionsTabButton.addEventListener('click', function(event) {
@@ -697,9 +655,7 @@
                     event.stopPropagation(); // Stop event propagation to be safe
                     return false; // Stop further execution
                 }
-                // If not disabled, Bootstrap's default tab behavior will handle the switch
             });
-            // Initial tab state on page load
             handleAssessmentTypeChange();
             const quizDropdowns = document.querySelectorAll('.quiz-dropdown');
             quizDropdowns.forEach(dropdown => {
@@ -708,7 +664,6 @@
                     if (!event.target.classList.contains('btn-add-question') && !event.target.classList.contains('add-all-text')) {
                         const quizId = dropdown.getAttribute('id').replace('quizDropdown', 'collapse');
                         const targetCollapse = document.getElementById(quizId);
-
                         // Toggle the collapse state
                         const isCollapsed = targetCollapse.classList.contains('show');
                         if (isCollapsed) {
@@ -720,7 +675,6 @@
                 });
 
 
-                // Optional: Add functionality to the Add All button
                 const addAllButton = dropdown.querySelector('.btn-add-question');
             });
 
@@ -729,32 +683,23 @@
                     try {
                         event.preventDefault();
                         event.stopPropagation();
-                        // updateSaveButtonState();//NO NEED
-
                         const questionId = this.dataset.questionId;
                         const questionTextElement = this.parentElement.querySelector('.question-text');
                         questionTextElement.classList.add('fw-normal');
                         const questionText = questionTextElement.innerHTML;
-
-                        // **Correctly select answer options by finding the hidden container first**
                         const hiddenAnswerOptionsContainer = this.parentElement.querySelector('.answer-options');
                         const answerOptions = Array.from(hiddenAnswerOptionsContainer.querySelectorAll('.answer-option'));
 
-                        // Kiểm tra nếu câu hỏi đã có trong danh sách
                         if (questionMap.has(questionId)) {
                             return;
                         } else {
-                            // Tạo mục mới cho câu hỏi đã chọn
                             const listItem = document.createElement('li');
                             listItem.className = "list-group-item compact-question-item p-2"; // ADDED CLASS HERE
                             listItem.dataset.questionId = questionId; // ADDED DATA ATTRIBUTE
                             listItem.dataset.order = selectedQuestionsList.children.length + 1;
-
                             let answersHtml = "";
                             answerOptions.forEach(optionElement => {
                                 const optionText = optionElement.querySelector('span:first-child').textContent;
-
-                                // **CORRECTED LINE: Select the FIRST span and check its classList directly**
                                 const correctnessSpan = optionElement.querySelector('span:first-child'); // Select the first (and only) span
                                 let correctnessClass = '';
 
@@ -801,23 +746,15 @@
 
                             selectedQuestionsList.appendChild(listItem);
                             questionMap.set(questionId, listItem);
-
-                            // No need for questionInputDiv click listener anymore as answer toggle is now different
-
-                            // NOW add the event listeners:
                             const moveUpButton = listItem.querySelector('.move-up');
                             const moveDownButton = listItem.querySelector('.move-down');
                             const removeButtonSelected = listItem.querySelector('.remove-question-selected'); // Correct selector
                             const toggleAnswersButton = listItem.querySelector('.toggle-answers'); // Correct selector
-
                             moveUpButton.addEventListener('click', () => moveQuestion(listItem, 'up'));
                             moveDownButton.addEventListener('click', () => moveQuestion(listItem, 'down'));
                             removeButtonSelected.addEventListener('click', () => removeQuestionFromSelectedList(questionId, listItem)); // Pass listItem
                             toggleAnswersButton.addEventListener('click', () => toggleAnswers(listItem));
-
-
                             saveButton.style.display = 'block'; // Show save button when question is added
-
                             updateQuestionNumbers();
                         }
                         updateQuestionNumbers();
@@ -839,7 +776,6 @@
                     icon.classList.replace("fa-chevron-up", "fa-chevron-down");
                 }
             }
-
             function removeQuestionFromSelectedList(questionId, listItem) { // Added listItem parameter
                 listItem.remove(); // Use the listItem parameter
                 questionMap.delete(questionId); // Remove from map as well
@@ -848,8 +784,6 @@
                     saveButton.style.display = 'none'; // Hide save button if no questions left
                 }
             }
-
-
             function updateQuestionNumbers() {
                 const listItems = selectedQuestionsList.children;
                 for (let i = 0; i < listItems.length; i++) {
@@ -866,8 +800,6 @@
                     }
                 }
             }
-
-
             function moveQuestion(listItem, direction) {
                 const currentOrder = parseInt(listItem.dataset.order);
                 const newIndex = direction === 'up' ? currentOrder - 2 : currentOrder; // Adjust index for 'up'
@@ -927,30 +859,67 @@
             }
 
 
+            function showSimilarQuestionWarning(positionsGroups) {
+                return new Promise((resolve, reject) => {
+                    const modal = document.getElementById('customWarningModal');
+                    const modalBody = document.getElementById('customWarningModalBody');
+                    const okButton = document.getElementById('customWarningModalOkButton');
+                    const cancelButton = document.getElementById('customWarningModalCancelButton');
+                    const closeButton = document.getElementById('customWarningModalCloseButton'); // Nút close (x)
+
+                    let warningMessage = "Warning: Similar questions found at positions: ";
+                    const positionsStrings = [];
+                    for (const group of positionsGroups) {
+                        positionsStrings.push(group.join(", "));
+                    }
+                    warningMessage += positionsStrings.join("; ");
+                    warningMessage += ". Please review these questions. Do you want to save the assessment anyway?";
+                    modalBody.textContent = warningMessage;
+                    modal.style.display = 'flex';
+                    okButton.onclick = function() {
+                        modal.style.display = 'none'; // Ẩn modal
+                        resolve(true);
+                    };
+                    cancelButton.onclick = function() {
+                        modal.style.display = 'none'; // Ẩn modal
+                        resolve(false);
+                    };
+                    closeButton.onclick = function() {
+                        modal.style.display = 'none';
+                        resolve(false);
+                    };
+                    window.onclick = function(event) {
+                        if (event.target == modal) {
+                            modal.style.display = 'none';
+                            resolve(false);
+                        }
+                    };
+                });
+            }
+
             function checkSimilarQuestions(questionIds) {
-                return new Promise((resolve, reject) => { // Return a Promise
+                return new Promise((resolve, reject) => {
                     $.get('/assessments/check-similarQuestions', { 'questions-ids': questionIds })
                         .done(function(response) {
                             if (typeof response === 'string' && response.includes("No duplicate questions found.")) {
-                                resolve(false); // Resolve with false: No duplicates
+                                resolve(false); // Resolve với false: No duplicates
                             }
                             else if (Array.isArray(response)) {
-                                // Assuming response is an array of duplicate question position groups
                                 if (response.length > 0) {
-                                    resolve(response); // Resolve with the position groups
+                                    resolve(response);
                                 } else {
-                                    resolve(false); // Resolve with false: No duplicates (empty array - should not happen based on backend logic but good to have)
+                                    resolve(false);
                                 }
                             }
                             else {
                                 console.error("Unexpected response format:", response);
-                                reject("Unexpected response format"); // Reject the promise on unexpected response
+                                reject("Unexpected response format");
                             }
 
                         })
                         .fail(function(jqXHR, textStatus, errorThrown) {
                             console.error("Error checking for similar questions:", textStatus, errorThrown);
-                            reject(errorThrown); // Reject the promise on AJAX failure
+                            reject(errorThrown);
                         });
                 });
             }
@@ -1000,34 +969,38 @@
                 });
 
 
-                // --- PERFORM CHECKS ---
                 // First, check for similar questions
                 checkSimilarQuestions(window.selectedQuestionIds)
-                    .then(similarQuestionPositionsGroups => { // Rename variable to positionsGroups
-                        if (similarQuestionPositionsGroups === false) { // No similar questions (resolved with false)
-                            // If no similar questions, proceed with the title check
-                            return $.get(`/assessments/create/check-duplicate`, { title: newTitle, assessmentTypeId: assessmentTypeId, id: assessmentId });
+                    .then(similarQuestionPositionsGroups => {
+                        if (similarQuestionPositionsGroups !== false) {
+                            return showSimilarQuestionWarning(similarQuestionPositionsGroups);
                         } else {
-                            // Similar questions found, display error
-                            showSimilarQuestionError(similarQuestionPositionsGroups); // Call new function
-                            return Promise.reject("Similar questions found"); // Stop the chain
+                            return Promise.resolve(true);
                         }
                     })
-                    .then(response => { // This .then() is now reached only if no similar questions were found
+                    .then(shouldSaveAssessment => {
+                        if (shouldSaveAssessment) {
+                            return $.get(`/assessments/create/check-duplicate`, { title: newTitle, assessmentTypeId: assessmentTypeId, id: assessmentId });
+                        } else {
+                            return Promise.reject("User cancelled saving due to similar questions.");
+                        }
+                    })
+                    .then(response => {
                         if (response.isDuplicate) {
                             showError("Assessment title of this assessment type already exists!");
-                            return Promise.reject("Duplicate title found")
+                            return Promise.reject("Duplicate title found");
                         } else {
                             hideError();
-                            assessmentForm.submit(); // Submit the form if not a duplicate
+                            assessmentForm.submit();
                         }
                     })
                     .catch(error => {
-                        if (error !== "Similar questions found" && error !== "Duplicate title found") { // Only show generic error if it's not one of our controlled rejections
+                        if (error === "User cancelled saving due to similar questions.") {
+                            console.log("Saving cancelled by user due to similar questions.");
+                        } else if (error !== "Duplicate title found" && error !== "Unexpected response format") {
                             console.error("An error occurred during checks: ", error);
-                            showError("An unexpected error occurred during validation."); // Generic error message
+                            showError("An unexpected error occurred during validation.");
                         }
-                        // For "Similar questions found" and "Duplicate title found" errors, error message is already displayed by showError or showSimilarQuestionError
                     });
             })
 
