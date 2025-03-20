@@ -303,7 +303,8 @@
                     <th>#</th>
                     <th>Candidate</th>
                     <th>Email</th>
-                    <th>Invitation Date</th>
+                    <th>Assessment Start Time</th>
+                    <th>Assessment Score</th>
                     <th>Quiz Score</th>
                     <th>Exercise Score</th>
                     <th>Action</th>
@@ -315,6 +316,7 @@
                     <td th:text="${attempt.candidateUsername}"></td>
                     <td th:text="${attempt.email}"></td>
                     <td th:text="${#temporals.format(attempt.attemptDate, 'yyyy-MM-dd HH:mm')}"></td>
+                    <td th:text="${attempt.scoreAss}"></td>
                     <td th:text="${attempt.scoreQuiz}"></td>
                     <td th:text="${attempt.scoreEx}"></td>
                     <td>
@@ -325,56 +327,60 @@
                     </td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(registeredAttempts)}">
-                    <td colspan="7" class="text-center text-muted">No attempts yet.</td>
+                    <td colspan="8" class="text-center text-muted">No attempts yet.</td>
                 </tr>
                 </tbody>
             </table>
+
+            <!-- Pagination (giữ nguyên logic cũ) -->
             <nav aria-label="Registered Attempts Pagination" th:if="${registeredAttemptsPage.totalPages > 0}">
                 <ul class="pagination justify-content-center">
                     <li class="page-item" th:classappend="${registeredAttemptsPage.number == 0} ? 'disabled'">
                         <a class="page-link"
                            th:href="@{/assessments/detail/{id}(
-                               id=${assessment.id},
-                               pageReg=0,
-                               pageInv=${invitedCandidatesPage.number},
-                               searchEmail=${searchEmail}
-                           )}">
+                           id=${assessment.id},
+                           pageReg=0,
+                           pageInv=${invitedCandidatesPage.number},
+                           searchEmail=${searchEmail}
+                       )}">
                             First
                         </a>
                     </li>
                     <li class="page-item" th:classappend="${registeredAttemptsPage.number == 0} ? 'disabled'">
                         <a class="page-link"
                            th:href="@{/assessments/detail/{id}(
-                               id=${assessment.id},
-                               pageReg=${registeredAttemptsPage.number - 1},
-                               pageInv=${invitedCandidatesPage.number},
-                               searchEmail=${searchEmail}
-                           )}">
+                           id=${assessment.id},
+                           pageReg=${registeredAttemptsPage.number - 1},
+                           pageInv=${invitedCandidatesPage.number},
+                           searchEmail=${searchEmail}
+                       )}">
                             Previous
                         </a>
                     </li>
+
                     <li class="page-item"
                         th:each="i : ${#numbers.sequence(0, registeredAttemptsPage.totalPages - 1)}"
                         th:classappend="${registeredAttemptsPage.number == i} ? 'active'">
                         <a class="page-link"
                            th:href="@{/assessments/detail/{id}(
-                               id=${assessment.id},
-                               pageReg=${i},
-                               pageInv=${invitedCandidatesPage.number},
-                               searchEmail=${searchEmail}
-                           )}"
+                           id=${assessment.id},
+                           pageReg=${i},
+                           pageInv=${invitedCandidatesPage.number},
+                           searchEmail=${searchEmail}
+                       )}"
                            th:text="${i + 1}">
                         </a>
                     </li>
+
                     <li class="page-item"
                         th:classappend="${registeredAttemptsPage.number == registeredAttemptsPage.totalPages - 1} ? 'disabled'">
                         <a class="page-link"
                            th:href="@{/assessments/detail/{id}(
-                               id=${assessment.id},
-                               pageReg=${registeredAttemptsPage.number + 1},
-                               pageInv=${invitedCandidatesPage.number},
-                               searchEmail=${searchEmail}
-                           )}">
+                           id=${assessment.id},
+                           pageReg=${registeredAttemptsPage.number + 1},
+                           pageInv=${invitedCandidatesPage.number},
+                           searchEmail=${searchEmail}
+                       )}">
                             Next
                         </a>
                     </li>
@@ -382,11 +388,11 @@
                         th:classappend="${registeredAttemptsPage.number == (registeredAttemptsPage.totalPages - 1)} ? 'disabled'">
                         <a class="page-link"
                            th:href="@{/assessments/detail/{id}(
-                               id=${assessment.id},
-                               pageReg=${registeredAttemptsPage.totalPages - 1},
-                               pageInv=${invitedCandidatesPage.number},
-                               searchEmail=${searchEmail}
-                           )}"
+                           id=${assessment.id},
+                           pageReg=${registeredAttemptsPage.totalPages - 1},
+                           pageInv=${invitedCandidatesPage.number},
+                           searchEmail=${searchEmail}
+                       )}"
                            th:text="'Last'">
                         </a>
                     </li>
@@ -394,6 +400,7 @@
             </nav>
         </div>
     </div>
+
 
     <!-- All Invited Candidates Section (non-AJAX pagination) -->
     <div class="card mt-4">
@@ -526,7 +533,8 @@
     </div>
 
     <!-- MODAL: View All Registered Attempts -->
-    <div class="modal fade" id="viewAllAttemptsModal" tabindex="-1" aria-labelledby="viewAllAttemptsModalLabel" aria-hidden="true">
+    <div class="modal fade" id="viewAllAttemptsModal" tabindex="-1" aria-labelledby="viewAllAttemptsModalLabel"
+         aria-hidden="true">
         <!-- Thêm modal-dialog-centered -->
         <div class="modal-dialog modal-dialog-centered" style="max-width: 80%; width: 80%;">
             <div class="modal-content">
@@ -580,7 +588,8 @@
     </div>
 
     <!-- MODAL: View All Invited Candidates -->
-    <div class="modal fade" id="viewAllInvitedModal" tabindex="-1" aria-labelledby="viewAllInvitedModalLabel" aria-hidden="true">
+    <div class="modal fade" id="viewAllInvitedModal" tabindex="-1" aria-labelledby="viewAllInvitedModalLabel"
+         aria-hidden="true">
         <!-- Thêm modal-dialog-centered -->
         <div class="modal-dialog modal-dialog-centered" style="max-width: 80%; width: 80%;">
             <div class="modal-content">
@@ -620,7 +629,6 @@
             </div>
         </div>
     </div>
-
 
 
     <!-- Scroll to top button -->

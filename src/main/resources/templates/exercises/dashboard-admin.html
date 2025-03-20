@@ -4,12 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Exercise Dashboard</title>
-    <!--    <script src="path/to/chartjs/dist/chart.umd.js"></script>-->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Load Chart.js (only once) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
+    <!-- Load chartjs-plugin-datalabels -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2.0/dist/css/adminlte.min.css"/>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.js" integrity="sha512-7U4rRB8aGAHGVad3u2jiC7GA5/1YhQcQjxKeaVms/bT66i3LVBMRcBI9KwABNWnxOSwulkuSXxZLGuyfvo7V1A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -64,14 +66,10 @@
             color: white;
         }
 
-        /* 🔹 Thêm khoảng cách giữa "Language" và "Difficulty" */
         .chart-container {
-            margin-bottom: 20px; /* Khoảng cách dưới */
+            margin-bottom: 20px;
         }
-        .hidden-box{
-            display: none !important;
-        }
-        /* Đảm bảo các ô số liệu có cùng chiều cao */
+
         .small-box {
             display: flex;
             justify-content: space-between;
@@ -79,23 +77,21 @@
             padding: 20px;
             border-radius: 10px;
             text-align: center;
-            min-height: 120px; /* Đảm bảo chiều cao đồng đều */
+            min-height: 120px;
         }
 
-        /* Chỉnh icon trong box */
         .small-box .icon {
             font-size: 40px;
             opacity: 0.8;
         }
 
-        /* Căn chỉnh biểu đồ */
         .chart-container {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             text-align: center;
-            height: 400px; /* Điều chỉnh chiều cao */
+            height: 400px;
         }
 
         .chart-container canvas {
@@ -103,7 +99,6 @@
             height: 300px !important;
         }
 
-        /* Điều chỉnh bảng leaderboard */
         .leaderboard {
             margin-top: 30px;
         }
@@ -131,31 +126,32 @@
         .leaderboard tbody tr:hover {
             background-color: #e9ecef;
         }
+
         #difficultyChart {
-            max-width: 400px; /* Giới hạn chiều rộng */
-            max-height: 400px; /* Giới hạn chiều cao */
+            max-width: 400px;
+            max-height: 400px;
             display: block;
-            margin: auto; /* Căn giữa */
+            margin: auto;
         }
+
         .difficulty-container {
             display: flex;
             align-items: center;
             justify-content: space-between;
             width: 100%;
-
             position: relative;
         }
 
         .difficulty-chart {
-            width: 70%; /* Tăng không gian cho biểu đồ */
+            width: 70%;
             display: flex;
             justify-content: center;
         }
 
         .difficulty-labels {
-            width: 25%; /* Giảm không gian cho nhãn */
+            width: 25%;
             text-align: left;
-            font-size: 14px; /* Giảm kích thước chữ nếu cần */
+            font-size: 14px;
         }
 
         .difficulty-select {
@@ -163,6 +159,7 @@
             top: 10px;
             right: 15px;
         }
+
         .chart-header {
             position: absolute;
             top: 10px;
@@ -170,10 +167,12 @@
             font-size: 18px;
             font-weight: bold;
         }
+
         canvas {
-            max-width: 300px;      /* Giới hạn kích thước biểu đồ */
+            max-width: 300px;
             max-height: 300px;
         }
+
         @media print {
             body {
                 background: white !important;
@@ -189,20 +188,51 @@
                 padding: 0;
             }
         }
+        .hidden-box {
+            display: none !important;
+        }
+        /* CSS dark mode được điều chỉnh sáng hơn */
+        .dark-mode {
+            background-color: #2c2f33; /* Xám đậm nhạt hơn */
+            color: #e0e0e0; /* Màu chữ sáng nhưng không chói */
+        }
 
+        .dark-mode .small-box {
+            color: #e0e0e0; /* Giữ màu chữ sáng */
+        }
+
+        .dark-mode .chart-container,
+        .dark-mode .leaderboard {
+            background-color: #3a3f44; /* Xám trung tính sáng hơn */
+            color: #e0e0e0;
+        }
+
+        .dark-mode .leaderboard th {
+            background-color: #0056b3; /* Xanh đậm nhạt hơn một chút */
+        }
+
+        .dark-mode .leaderboard tbody tr:nth-child(even) {
+            background-color: #444a50; /* Xám nhạt cho hàng chẵn */
+        }
+
+        .dark-mode .leaderboard tbody tr:hover {
+            background-color: #51575e; /* Xám sáng hơn khi hover */
+        }
     </style>
 </head>
 <body class="hold-transition layout-fixed">
 <div th:replace="~{fragments :: header}"></div>
 
 <h1 class="text-center mt-3">Exercise Dashboard</h1>
-<a href="#" th:href="@{/exercises}" class="btn btn-primary me-2 ">
-    <i class="bi bi-skip-backward"></i> Back </a>
-<!--<a href="/exercises/admindashboard-print" class="btn btn-outline-secondary me-2" target="_blank">-->
-<!--    <i class="bi bi-printer me-1"></i> Print-->
-<!--</a>-->
+<a href="#" th:href="@{/exercises}" class="btn btn-primary me-2">
+    <i class="bi bi-skip-backward"></i> Back
+</a>
 <button onclick="printDashboard()" class="btn btn-outline-secondary me-2">
     <i class="bi bi-printer me-1"></i> Print
+</button>
+<!-- Thêm nút toggle dark mode -->
+<button onclick="toggleDarkMode()" class="btn btn-outline-secondary me-2" id="darkModeToggle">
+    <i class="bi bi-moon-stars me-1"></i> Dark Mode
 </button>
 <section class="content pt-3">
     <div class="container-fluid">
@@ -214,27 +244,24 @@
                         <p>New Exercises</p>
                     </div>
                     <div class="icon"><i class="bi bi-dumbbell"></i></div>
-
                 </div>
             </div>
             <div class="col-lg-3 col-6 hidden-box">
                 <div class="small-box bg-success">
                     <div class="inner">
                         <h3 id="completionRate" th:text="${completionRate}">0</h3>
-                        <p>Has Assingment</p>
+                        <p>Has Assignment</p>
                     </div>
                     <div class="icon"><i class="bi bi-stopwatch"></i></div>
-
                 </div>
             </div>
-            <div class="col-lg-3 col-6 hidden-box" >
+            <div class="col-lg-3 col-6 hidden-box">
                 <div class="small-box bg-primary">
                     <div class="inner">
                         <h3 id="totalExercises" th:text="${totalExercises}">0</h3>
                         <p>Total Exercises</p>
                     </div>
                     <div class="icon"><i class="bi bi-clipboard-check"></i></div>
-
                 </div>
             </div>
             <div class="col-lg-3 col-6 hidden-box">
@@ -244,14 +271,13 @@
                         <p>Total Languages</p>
                     </div>
                     <div class="icon"><i class="bi bi-code-slash"></i></div>
-
                 </div>
             </div>
         </div>
-        <!--  Biểu đồ Language và Difficulty -->
+        <!-- Biểu đồ Language và Difficulty -->
         <div class="row g-3">
-            <div class="col-md-6 chart-container" >
-                <canvas id="lineChart" ></canvas>
+            <div class="col-md-6 chart-container">
+                <canvas id="lineChart"></canvas>
                 <div class="chart-header">
                     <h3>Language</h3>
                 </div>
@@ -302,288 +328,220 @@
 <!-- Footer -->
 <div th:replace="~{fragments :: footer}" class="mt-auto"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    // Thêm hàm toggle dark mode
+    function toggleDarkMode() {
+        const body = document.body;
+        const button = document.getElementById('darkModeToggle');
+        body.classList.toggle('dark-mode');
+
+        // Cập nhật text và icon của nút
+        if (body.classList.contains('dark-mode')) {
+            button.innerHTML = '<i class="bi bi-sun me-1"></i> Light Mode';
+            localStorage.setItem('darkMode', 'enabled');
+        } else {
+            button.innerHTML = '<i class="bi bi-moon-stars me-1"></i> Dark Mode';
+            localStorage.setItem('darkMode', 'disabled');
+        }
+    }
+
+    // Kiểm tra trạng thái dark mode khi load trang
+    document.addEventListener('DOMContentLoaded', function() {
+        if (localStorage.getItem('darkMode') === 'enabled') {
+            document.body.classList.add('dark-mode');
+            document.getElementById('darkModeToggle').innerHTML = '<i class="bi bi-sun me-1"></i> Light Mode';
+        }
+    });
+</script>
+<script>
     function printDashboard() {
-        // Ẩn các phần không cần in
         document.querySelectorAll('.hidden-box, nav, footer, .btn, select').forEach(el => el.style.display = 'none');
-
-        // Gọi hàm in
         window.print();
-
-        // Hiển thị lại sau khi in xong
         document.querySelectorAll('.hidden-box, nav, footer, .btn, select').forEach(el => el.style.display = '');
     }
 </script>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        window.difficultyChartInstance = null;
-
-        function resetChart(chartInstance, canvasId) {
-            if (chartInstance) {
-                chartInstance.destroy();
-            }
-            const canvas = document.getElementById(canvasId);
-            if (canvas) {
-                const newCanvas = canvas.cloneNode(true);
-                canvas.parentNode.replaceChild(newCanvas, canvas);
-            }
+        // Đăng ký ChartDataLabels nếu có
+        if (typeof ChartDataLabels !== 'undefined') {
+            Chart.register(ChartDataLabels);
+            console.log("✔ ChartDataLabels registered successfully.");
+        } else {
+            console.warn("⚠ ChartDataLabels is not loaded. Datalabels will be disabled.");
         }
 
+        // Hàm reset/destroy biểu đồ
+        function resetChart(chartInstance) {
+            if (chartInstance) {
+                try {
+                    chartInstance.destroy();
+                    console.log("✔ Đã hủy biểu đồ cũ.");
+                } catch (error) {
+                    console.error("❌ Lỗi khi hủy biểu đồ:", error);
+                }
+                return null;
+            }
+            return null;
+        }
+
+        // Hàm gọi API và cập nhật biểu đồ
         function fetchDashboardData(languageId = "all") {
             let apiUrl = "/exercises/dashboard-data";
-            if (languageId !== "all") {
+            if (languageId && languageId !== "all") {
                 apiUrl += `?languageId=${languageId}`;
             }
-            fetch(apiUrl)
-                .then(response => response.json())
-                .then(data => {
-                    console.log("📊 Language Data:", data.topicChartData);
-                    console.log("📊 Difficulty Data:", data.difficultyChartData);
 
-                    // 🔍 Kiểm tra nếu API không trả dữ liệu
-                    if (!data.topicChartData || !data.difficultyChartData) {
-                        console.error("⚠️ Không có dữ liệu!");
+            // Hủy biểu đồ ngay khi gọi API
+            window.topicChartInstance = resetChart(window.topicChartInstance);
+            window.difficultyChartInstance = resetChart(window.difficultyChartInstance);
+
+            fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("📊 API Data:", data);
+
+                    // Kiểm tra nếu không có dữ liệu hoặc số bài tập = 0
+                    if (!data || data.totalExercises === 0) {
+                        console.warn("⚠️ Không có dữ liệu để hiển thị biểu đồ.");
                         return;
                     }
-                    // 1️⃣ CẬP NHẬT BIỂU ĐỒ LANGUAGE (Bar Chart)
-                    resetChart(window.topicChartInstance, "lineChart");
-                    const languageCtx = document.getElementById('lineChart')?.getContext('2d');
-                    if (languageCtx) {
-                        const languageLabels = Object.keys(data.topicChartData);
-                        const languageValues = Object.values(data.topicChartData);
-                        const languageColors = getRandomColors(languageLabels.length);
 
-                        if (window.topicChartInstance) {
-                            window.topicChartInstance.destroy();
-                        }
+                    // Kiểm tra dữ liệu hợp lệ
+                    if (!data.difficultyChartData || !data.topicChartData) {
+                        console.error("⚠ API trả về dữ liệu không hợp lệ:", data);
+                        return;
+                    }
 
-                        window.topicChartInstance = new Chart(languageCtx, {
-                            type: 'bar',
-                            data: {
-                                labels: languageLabels,
-                                datasets: [{
-                                    data: languageValues,
-                                    backgroundColor: languageColors,
-                                    borderColor: languageColors.map(color => color.replace('0.5', '1')),
-                                    borderWidth: 1
-                                }]
-                            },
-                            options: {
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                scales: { y: { beginAtZero: true } },
-                                plugins: {
-                                    legend: { display: false },
-                                    datalabels: { // Hiển thị số lượng thay vì phần trăm
-                                        formatter: (value) => value, // Hiển thị trực tiếp giá trị thay vì tính %
-                                        color: '#000',
-                                        font: {
-                                            weight: 'bold',
-                                            size: 14
-                                        }
-                                    },
-                                    tooltip: { //  hover
-                                        callbacks: {
-                                            label: function (tooltipItem) {
-                                                const value = tooltipItem.raw || 0;
-                                                return value > 1 ? `${value} exercises` : `${value} exercise`; // Hiển thị số liệu + chữ "exercises"
-                                            }
+                    // 1️⃣ Biểu đồ Chủ đề (Topic Chart)
+                    const languageCanvas = document.getElementById('lineChart');
+                    if (!languageCanvas) {
+                        console.error("❌ Không tìm thấy thẻ canvas #lineChart");
+                        return;
+                    }
+                    const languageCtx = languageCanvas.getContext('2d');
+
+                    const languageLabels = Object.keys(data.topicChartData || {});
+                    console.log("📌 Labels:", languageLabels);
+
+                    const assessedValues = languageLabels.map(lang => data.topicChartData[lang]?.assessed ?? 0);
+                    const unassessedValues = languageLabels.map(lang => data.topicChartData[lang]?.notAssessed ?? 0);
+                    console.log("unassessedValues ", unassessedValues);
+                    const totalValues = languageLabels.map(lang => data.topicChartData[lang]?.total ?? 0);
+
+                    window.topicChartInstance = new Chart(languageCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: languageLabels,
+                            datasets: [
+                                { label: "Assessed", data: assessedValues, backgroundColor: "rgba(255, 99, 132, 0.4)", minBarLength: 2 },
+                                { label: "Unassessed", data: unassessedValues, backgroundColor: "rgba(153, 102, 255, 0.4)", minBarLength: 2 },
+                                { label: "Total", data: totalValues, backgroundColor: "rgba(75, 192, 192, 0.4)", minBarLength: 2 }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: { y: { beginAtZero: true } },
+                            plugins: {
+                                datalabels: {
+                                    formatter: (value) => value,
+                                    color: '#000',
+                                    font: { weight: 'bold', size: 14 }
+                                },
+                                tooltip: { //  hover
+                                    callbacks: {
+                                        label: function (tooltipItem) {
+                                            const value = tooltipItem.raw || 0;
+                                            return value > 1 ? `${value} exercises` : `${value} exercise`; // Hiển thị số liệu + chữ "exercises"
                                         }
                                     }
                                 }
-                            },
-                            plugins: [ChartDataLabels]
-                        });
-                    } else {
-                        console.error("⚠️ Không tìm thấy thẻ canvas #lineChart");
-                    }
-
-                    // 2️⃣ CẬP NHẬT BIỂU ĐỒ DIFFICULTY (Pie Chart)
-                    resetChart(window.difficultyChartInstance, "difficultyChart");
-                    const difficultyCtx = document.getElementById('difficultyChart')?.getContext('2d');
-                    if (difficultyCtx) {
-                        const difficultyData = [
-                            data.difficultyChartData["EASY"] || 0,
-                            data.difficultyChartData["MEDIUM"] || 0,
-                            data.difficultyChartData["HARD"] || 0
-                        ];
-
-                        const totalDifficulties = difficultyData.reduce((a, b) => a + b, 0); // Tính tổng số bài tập
-                        const difficultyColors = ['rgba(255, 99, 132, 0.5)', 'rgba(255, 159, 64, 0.5)', 'rgba(255, 205, 86, 0.5)'];
-
-                        if (window.difficultyChartInstance) {
-                            window.difficultyChartInstance.destroy();
+                            }
                         }
-
-                        window.difficultyChartInstance = new Chart(difficultyCtx, {
-                            type: 'pie',
-                            data: {
-                                labels: ["Easy", "Medium", "Hard"],
-                                datasets: [{
-                                    data: difficultyData,
-                                    backgroundColor: difficultyColors
-                                }]
-                            },
-                            options: {
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                plugins: {
-                                    legend: {
-                                        position: "right", // Di chuyển chú thích sang bên phải
-                                        labels: {
-                                            boxWidth: 20,
-                                            padding: 15
-                                        }
-                                    },
-                                    datalabels: { // Hiển thị số lượng thay vì phần trăm
-                                        formatter: (value, ctx) => {
-                                            const dataset = ctx.chart.data.datasets[0].data;
-                                            const total = dataset.reduce((a, b) => a + b, 0);
-                                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) + "%" : "";
-
-                                            return value > 0 ? percentage : ""; // Nếu giá trị > 0 thì hiển thị, ngược lại ẩn
-                                        },
-                                        font: {
-                                            weight: 'bold',
-                                            size: 14
-                                        }
-                                    },
-                                    tooltip: { // 🎯 Cập nhật tooltip khi hover
-                                        callbacks: {
-                                            label: function (tooltipItem) {
-                                                const value = tooltipItem.raw || 0;
-                                                return value > 1 ? `${value} exercises` : `${value} exercise`; // Hiển thị số liệu + chữ "exercises"
-                                            }
-                                        }
-                                    }
-                                }
-                            },
-                            plugins: [ChartDataLabels] // Đảm bảo plugin này đã được import
-                        });
-                    } else {
-                        console.error("⚠️ Không tìm thấy thẻ canvas #difficultyChart");
-                    }
-                })
-                .catch(error => console.error("❌ Error fetching dashboard data:", error));
-        }
-
-
-        // Hàm tạo màu ngẫu nhiên
-        function getRandomColors(count) {
-            return Array.from({ length: count }, () => {
-                return `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 0.5)`;
-            });
-        }
-        function fetchLanguages() {
-            fetch('/programming_languages/list')
-                .then(response => response.json())
-                .then(languages => {
-                    const select = document.getElementById("languageFilter");
-                    select.innerHTML = '<option value="all">All Languages</option>';
-
-                    languages.forEach(lang => {
-                        const option = document.createElement("option");
-                        option.value = lang.id;
-                        option.textContent = lang.language;
-                        select.appendChild(option);
                     });
+                    console.log("✔ Bar Chart created successfully.");
+
+                    // 2️⃣ Biểu đồ Độ khó (Difficulty Chart)
+                    const difficultyCanvas = document.getElementById('difficultyChart');
+                    if (!difficultyCanvas) {
+                        console.error("❌ Không tìm thấy thẻ canvas #difficultyChart");
+                        return;
+                    }
+                    const difficultyCtx = difficultyCanvas.getContext('2d');
+
+                    const difficultyData = [
+                        data.difficultyChartData["EASY"] || 0,
+                        data.difficultyChartData["MEDIUM"] || 0,
+                        data.difficultyChartData["HARD"] || 0
+                    ];
+
+                    window.difficultyChartInstance = new Chart(difficultyCtx, {
+                        type: 'pie',
+                        data: {
+                            labels: ["Easy", "Medium", "Hard"],
+                            datasets: [{
+                                data: difficultyData,
+                                backgroundColor: [
+                                    'rgba(255, 99, 132, 0.5)',
+                                    'rgba(255, 159, 64, 0.5)',
+                                    'rgba(255, 205, 86, 0.5)'
+                                ]
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: "right",
+                                    labels: { boxWidth: 20, padding: 15 }
+                                },
+                                datalabels: {
+                                    formatter: (value, ctx) => {
+                                        const dataset = ctx.chart.data.datasets[0].data;
+                                        const total = dataset.reduce((a, b) => a + b, 0);
+                                        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) + "%" : "";
+                                        return value > 0 ? percentage : ""; // Nếu giá trị > 0 thì hiển thị, ngược lại ẩn
+                                    },
+                                    font: { weight: 'bold', size: 14 }
+                                },
+                                tooltip: { // 🎯 Cập nhật tooltip khi hover
+                                    callbacks: {
+                                        label: function (tooltipItem) {
+                                            const value = tooltipItem.raw || 0;
+                                            return value > 1 ? `${value} exercises` : `${value} exercise`; // Hiển thị số liệu + chữ "exercises"
+                                        }
+                                    }
+                                }
+
+                            }
+                        }
+                    });
+                    console.log("✔ Pie Chart created successfully.");
                 })
-                .catch(error => console.error("❌ Lỗi khi tải danh sách ngôn ngữ:", error));
+                .catch(error => console.error("❌ Lỗi khi tải dữ liệu:", error));
         }
 
+        // Gọi API khi trang tải
         fetchDashboardData();
-        <!--        fetchLanguages();-->
 
-        document.getElementById("languageFilter").addEventListener("change", function () {
-            fetchDashboardData(this.value);
-        });
-
-    });
-
-</script>
-<script>
-    // const labels = Utils.months({count: 7});
-    // const data = {
-    //     labels: labels,
-    //     datasets: [{
-    //         label: 'My First Dataset',
-    //         data: [65, 59, 80, 81, 56, 55, 40],
-    //         backgroundColor: [
-    //             'rgba(255, 99, 132, 0.2)',
-    //             'rgba(255, 159, 64, 0.2)',
-    //             'rgba(255, 205, 86, 0.2)',
-    //             'rgba(75, 192, 192, 0.2)',
-    //             'rgba(54, 162, 235, 0.2)',
-    //             'rgba(153, 102, 255, 0.2)',
-    //             'rgba(201, 203, 207, 0.2)'
-    //         ],
-    //         borderColor: [
-    //             'rgb(255, 99, 132)',
-    //             'rgb(255, 159, 64)',
-    //             'rgb(255, 205, 86)',
-    //             'rgb(75, 192, 192)',
-    //             'rgb(54, 162, 235)',
-    //             'rgb(153, 102, 255)',
-    //             'rgb(201, 203, 207)'
-    //         ],
-    //         borderWidth: 1
-    //     }]
-    // };
-    const Utils = {
-        months: ({ count }) => {
-            const now = new Date();
-            return Array.from({ length: count }, (_, i) => {
-                const date = new Date(now.getFullYear(), now.getMonth() - count + i + 1, 1);
-                return date.toLocaleString('default', { month: 'short' });
+        // Bắt sự kiện thay đổi bộ lọc ngôn ngữ
+        const languageFilter = document.getElementById("languageFilter");
+        if (languageFilter) {
+            languageFilter.addEventListener("change", function () {
+                console.log("🔄 Language filter changed to:", this.value);
+                fetchDashboardData(this.value);
             });
-        }
-    };
-
-    const ctx = document.getElementById('lineChart');
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: Utils.months({count: 6}),
-            datasets: [{
-                label: '# of Votes',
-                data: [12, 19, 3, 5, 2, 3],
-                backgroundColor: [
-                    'rgba(255, 99, 132, 0.2)',
-                    'rgba(255, 159, 64, 0.2)',
-                    'rgba(255, 205, 86, 0.2)',
-                    'rgba(75, 192, 192, 0.2)',
-                    'rgba(54, 162, 235, 0.2)',
-                    'rgba(153, 102, 255, 0.2)'
-
-                ],
-                borderColor: [
-                    'rgb(255, 99, 132)',
-                    'rgb(255, 159, 64)',
-                    'rgb(255, 205, 86)',
-                    'rgb(75, 192, 192)',
-                    'rgb(54, 162, 235)',
-                    'rgb(153, 102, 255)'
-                ], borderWidth: 1
-            }]
-        },
-        options: {
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
+        } else {
+            console.error("❌ Không tìm thấy phần tử #languageFilter");
         }
     });
+
 </script>
-<!--                <div class="difficulty-labels">-->
-<!--                    <p><strong style="color: rgba(255, 99, 132, 1)">Easy:</strong> <span id="easyCount" th:text="${easyCount}">0</span>-->
-<!--                    </p>-->
-<!--                    <p><strong style="color: rgba(255, 159, 64, 1)">Medium:</strong> <span id="mediumCount"-->
-<!--                                                                             th:text="${mediumCount}">0</span></p>-->
-<!--                    <p><strong style="color: rgba(255, 205, 86, 1)">Hard:</strong> <span id="hardCount" th:text="${hardCount}">0</span>-->
-<!--                    </p>-->
-<!--                </div>-->
 </body>
 </html>

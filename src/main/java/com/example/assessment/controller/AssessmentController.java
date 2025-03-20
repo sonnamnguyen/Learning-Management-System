@@ -171,6 +171,7 @@ public class AssessmentController {
 
     @Autowired
     private InvitedCandidateRepository invitedCandidateRepository;
+
     //Hashids to hash the assessment id
     private Hashids hashids = new Hashids("BaTramBaiCodeThieuNhi", 32);
     @Autowired
@@ -189,6 +190,7 @@ public class AssessmentController {
         Assessment assessment = new Assessment();
         assessment.setTimeLimit(30);
         assessment.setQualifyScore(60);
+        assessment.setExerciseScoreRatio(50);
         assessment.setQuizScoreRatio(50);
         assessment.setExerciseScoreRatio(50);
         List<Quiz> allQuizzes = quizService.findAll();
@@ -432,7 +434,6 @@ public class AssessmentController {
         return "assessments/invite";
     }
 
-
     @GetMapping("/detail/{id}")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPERADMIN')")
     @Transactional(readOnly = true)
@@ -478,6 +479,7 @@ public class AssessmentController {
                 map.put("id", attempt.getId());
                 map.put("email", attempt.getEmail());
                 map.put("attemptDate", attempt.getAttemptDate());
+                map.put("scoreAss", attempt.getScoreAss());
                 map.put("scoreQuiz", attempt.getScoreQuiz());
                 map.put("scoreEx", attempt.getScoreEx());
 
@@ -1177,6 +1179,7 @@ public class AssessmentController {
         }
     }
 
+
     @GetMapping("/viewReport/{assessmentId}")
     public String viewReport(@PathVariable Long assessmentId, @RequestParam("attempt-id") Long attemptId, Model model) {
 
@@ -1236,6 +1239,10 @@ public class AssessmentController {
         }
         // Lưu kết quả attempt
         StudentAssessmentAttempt attempt = studentAssessmentAttemptService.saveTestAttempt(attemptId, elapsedTime, quizScore, scoreExercise, proctoringData);
+        Optional<Assessment> assessment = assessmentService.findById(assessmentId);
+        if (attempt.getScoreAss() >= assessment.get().getQualifyScore()) {
+            assessmentService.updateQualifiedCount(assessmentId, attempt);
+        }
         model.addAttribute("timeTaken", elapsedTime);
         return "assessments/submitAssessment";
     }

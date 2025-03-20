@@ -58,6 +58,18 @@ public class StudentAssessmentAttempt {
     @Column(nullable = false, updatable = false)
     private LocalDateTime attemptDate = LocalDateTime.now();
 
+    @Column(name = "last_modified")
+    private LocalDateTime lastModified;
+
+    @PrePersist
+    public void onPrePersist() {
+        this.lastModified = this.attemptDate.plusSeconds(this.duration);
+    }
+
+
+
+
+
     // Getters and Setters
     // Omitted for brevity
 }

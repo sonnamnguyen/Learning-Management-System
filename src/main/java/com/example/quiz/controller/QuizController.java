@@ -19,8 +19,8 @@ import com.example.user.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpSession;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.quartz.ObjectAlreadyExistsException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,8 +31,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
@@ -40,15 +38,23 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.ByteArrayInputStream;
 import java.security.Principal;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 
 @Controller
@@ -564,7 +570,6 @@ public class QuizController {
             participant.setUser(user);
         }
         participant.setTestSession(testSession);
-        participant.setAttemptUsed(participant.getAttemptUsed() + 1);
         participant.setTimeStart(testSession.getStartTime());
         participant.setTimeEnd(testSession.getEndTime());
         quizParticipantRepository.save(participant);
@@ -678,10 +683,9 @@ public class QuizController {
                 }
 
             }
-
             @GetMapping("/dashboard/{studentId}")
-    public String getStudentDashboard(@PathVariable Long studentId, Model model) {
-        try {
+        public String getStudentDashboard(@PathVariable Long studentId, Model model) {
+            try {
             // Lấy thông tin sinh viên
             User student = userRepository.findById(studentId)
                     .orElseThrow(() -> new NotFoundException("User not found"));
@@ -772,7 +776,10 @@ public class QuizController {
                     reviewData = questionService.reviewQuizTEST(file, courseName);
                 } else if (fileType.equals("Json")) {
                     reviewData = questionService.reviewFileJson(file, courseName);
+                } else {
+                    reviewData = questionService.reviewImportWord(file, courseName);
                 }
+
 
                 for (Map.Entry<String, Object> entry : reviewData.entrySet()) {
                     //model.addAttribute(entry.getKey(), entry.getValue());
@@ -794,7 +801,7 @@ public class QuizController {
     }
 
     @GetMapping("review/delete/{questionNo}")
-    public String deleteQuestionInReview(@PathVariable int questionNo, HttpSession session){
+    public String deleteQuestionInReview(@PathVariable int questionNo, HttpSession session, Model model){
         List<Question> questionList = (List<Question>) session.getAttribute("Questions");
         if (questionList != null){
             for (Question question : questionList){
@@ -808,7 +815,9 @@ public class QuizController {
             }
             session.setAttribute("Questions", questionList);
         }
-        return "quizes/review";
+        model.addAttribute("content", "quizes/review");
+        return "layout";
+        //return "quizes/review";
     }
 
     @PostMapping("/importFromReview")
@@ -829,14 +838,16 @@ public class QuizController {
     }
     @PostMapping("/create/AI")
     @ResponseBody
-    public String createQuizByAI(@ModelAttribute("AIRequestBody") AIRequestBody aiRequest, RedirectAttributes redirectAttributes) {
+    public Set<Question> createQuizByAI(@ModelAttribute("AIRequestBody") AIRequestBody aiRequest, RedirectAttributes redirectAttributes) {
 
         AIResponse response = aiService.getResponseAIGenerate(aiRequest.getType(), aiRequest.getNumOfQuestions(),
                 aiRequest.getNumOfAnswerOptions(),
                 aiRequest.getQuestionDescription());
-        System.out.println("content: " + response.getChoices().getLast().getMessage().getContent());
-        return response.getChoices().getLast().getMessage().getContent();
+        String json = response.getChoices().getLast().getMessage().getContent();
+        System.out.println(json);
+        return questionService.jsonToQuestionSet(json);
     }
+
 
     @PostMapping("/import")
     public String importFile(

@@ -118,7 +118,6 @@ public class QuestionService {
     }
 
 
-
     private String getCellValueAsString(Cell cell) {
         DataFormatter formatter = new DataFormatter();
         return formatter.formatCellValue(cell);
@@ -159,7 +158,7 @@ public class QuestionService {
             List<String> optionLabelList = List.of("A", "B", "C", "D", "E", "F", "G", "H", "I", "J");
             List<Course> courses = courseService.getAllCourses();
             List<Quiz> quizzes = new ArrayList<>();
-            for (Course course : courses){
+            for (Course course : courses) {
                 if (course.getQuizzes() != null && !course.getQuizzes().isEmpty()) {
                     quizzes.addAll(course.getQuizzes());
                 }
@@ -306,7 +305,6 @@ public class QuestionService {
     }
 
 
-
     public QuestionType setTypeBaseOnStringInput(String questionTypeString) {
         if (questionTypeString.equalsIgnoreCase("Multiple Choice")) {
             return QuestionType.MCQ;
@@ -332,7 +330,7 @@ public class QuestionService {
         // CHECK TRÙNG NAME
         List<Course> courses = courseService.getAllCourses();
         List<Quiz> quizList = new ArrayList<>();
-        for (Course course : courses){
+        for (Course course : courses) {
             if (course.getQuizzes() != null && !course.getQuizzes().isEmpty()) {
                 quizList.addAll(course.getQuizzes());
             }
@@ -462,8 +460,8 @@ public class QuestionService {
                     String questionNo = questionNoCell != null ? getCellValueAsString(questionNoCell).trim() : null;
 
                     // CHECK DUPLICATE QUESTION
-                    if(questionText != null){
-                        if (checkDuplicateQuestion(existingQuestions, questionText)){
+                    if (questionText != null) {
+                        if (checkDuplicateQuestion(existingQuestions, questionText)) {
                             dupQueNos.add(questionNo);
                         }
                     }
@@ -632,7 +630,7 @@ public class QuestionService {
 
 
     @Transactional
-    public void importFileFromReview(List<Question> questions, String fileName, String courseName){
+    public void importFileFromReview(List<Question> questions, String fileName, String courseName) {
         try {
             Quiz quiz = new Quiz();
 
@@ -673,8 +671,8 @@ public class QuestionService {
 
     // IMPORT JSON
     @Transactional
-    public void importJson(MultipartFile file, String courseName){
-        try{
+    public void importJson(MultipartFile file, String courseName) {
+        try {
             ObjectMapper objectMapper = new ObjectMapper();
             InputStream inputStream = file.getInputStream();
             //byte[] jsonData = inputStream.readAllBytes();
@@ -685,7 +683,7 @@ public class QuestionService {
 
             List<Course> courses = courseService.getAllCourses();
             List<Quiz> quizzes = new ArrayList<>();
-            for (Course course : courses){
+            for (Course course : courses) {
                 if (course.getQuizzes() != null && !course.getQuizzes().isEmpty()) {
                     quizzes.addAll(course.getQuizzes());
                 }
@@ -701,7 +699,8 @@ public class QuestionService {
                 }
             }
 
-            List<Question> questions = objectMapper.convertValue(restoreJsonNode(questionNode), new TypeReference<List<Question>>() {});
+            List<Question> questions = objectMapper.convertValue(restoreJsonNode(questionNode), new TypeReference<List<Question>>() {
+            });
             for (int i = 0; i < questions.size(); i++) {
                 Question question = questions.get(i);
                 question.setQuestionNo(i + 1);
@@ -800,6 +799,7 @@ public class QuestionService {
                 .replace("&nbsp;&nbsp;&nbsp;&nbsp;", "    ");
         return StringEscapeUtils.unescapeHtml4(restoredString);
     }
+
     @Transactional
     public void deleteQuestion(Long questionId) {
         Question question = questionRepository.findById(questionId).orElseThrow();
@@ -822,8 +822,8 @@ public class QuestionService {
     }*/
 
     @Transactional
-    public Map<String, Object> reviewFileJson(MultipartFile file, String courseName){
-        try{
+    public Map<String, Object> reviewFileJson(MultipartFile file, String courseName) {
+        try {
             ObjectMapper objectMapper = new ObjectMapper();
             InputStream inputStream = file.getInputStream();
             JsonNode rootNode = objectMapper.readTree(inputStream);
@@ -833,7 +833,7 @@ public class QuestionService {
 
             List<Course> courses = courseService.getAllCourses();
             List<Quiz> quizzes = new ArrayList<>();
-            for (Course course : courses){
+            for (Course course : courses) {
                 if (course.getQuizzes() != null && !course.getQuizzes().isEmpty()) {
                     quizzes.addAll(course.getQuizzes());
                 }
@@ -850,14 +850,15 @@ public class QuestionService {
                 }
             }
 
-            List<Question> questions = objectMapper.convertValue(restoreJsonNode(questionNode), new TypeReference<List<Question>>() {});
+            List<Question> questions = objectMapper.convertValue(restoreJsonNode(questionNode), new TypeReference<List<Question>>() {
+            });
             for (int i = 0; i < questions.size(); i++) {
                 Question question = questions.get(i);
                 question.setQuestionNo(i + 1);
 
                 if (question.getQuestionText() != null) {
                     if (checkDuplicateQuestion(existingQuestions, question.getQuestionText())) {
-                        dupQueNos.add(String.valueOf(i+1));
+                        dupQueNos.add(String.valueOf(i + 1));
                         /*if ((double) numDupQues >= Math.ceil(minNumOfDupQues)) {
                             throw new ObjectAlreadyExistsException("Can not import file! More than 1/3 of the questions in the file are duplicated!");
                         }*/
@@ -944,11 +945,11 @@ public class QuestionService {
                 }
             }
 
-            for (int i = 0; i < objectQuestions.size(); i++){
+            for (int i = 0; i < objectQuestions.size(); i++) {
                 Map<String, Object> questionData = (Map<String, Object>) objectQuestions.get(i);
                 String questionText = (String) questionData.get("questionText");
 
-                if (questionText != null){
+                if (questionText != null) {
                     if (checkDuplicateQuestion(existingQuestions, questionText)) {
                         numDupQues++;
                         if ((double) numDupQues >= Math.ceil(minNumOfDupQues)) {
@@ -961,7 +962,7 @@ public class QuestionService {
                 List<Map<String, Object>> answerOptionsMapList = (List<Map<String, Object>>) questionData.get("answerOptions");
                 List<AnswerOption> answerOptionEachQuestion = new ArrayList<>();
 
-                for (int j = 0; j < answerOptionsMapList.size(); j++){
+                for (int j = 0; j < answerOptionsMapList.size(); j++) {
                     String optionText = (String) answerOptionsMapList.get(j).get("optionText");
                     boolean isCorrect = (boolean) answerOptionsMapList.get(j).get("isCorrect");
 
@@ -996,7 +997,7 @@ public class QuestionService {
             if (originalFilenameName != null && originalFilenameName.contains(".")) {
                 fileName = originalFilenameName.substring(0, originalFilenameName.lastIndexOf("."));
             }
-            if (quizzes != null && !quizzes.isEmpty()){
+            if (quizzes != null && !quizzes.isEmpty()) {
                 int numberOfDuplicateNames = countDuplicateName(quizzes, fileName);
                 if (numberOfDuplicateNames != 0) {
                     int addPara = numberOfDuplicateNames + 1;
@@ -1059,11 +1060,11 @@ public class QuestionService {
                 }
             }
 
-            for (int i = 0; i < objectQuestions.size(); i++){
+            for (int i = 0; i < objectQuestions.size(); i++) {
                 Map<String, Object> questionData = (Map<String, Object>) objectQuestions.get(i);
                 String questionText = (String) questionData.get("questionText");
 
-                if (questionText != null){
+                if (questionText != null) {
                     if (checkDuplicateQuestion(existingQuestions, questionText)) {
                         dupQueNos.add(String.valueOf(i + 1));
                     }
@@ -1073,7 +1074,7 @@ public class QuestionService {
                 List<Map<String, Object>> answerOptionsMapList = (List<Map<String, Object>>) questionData.get("answerOptions");
                 List<AnswerOption> answerOptionEachQuestion = new ArrayList<>();
 
-                for (int j = 0; j < answerOptionsMapList.size(); j++){
+                for (int j = 0; j < answerOptionsMapList.size(); j++) {
                     String optionText = (String) answerOptionsMapList.get(j).get("optionText");
                     boolean isCorrect = (boolean) answerOptionsMapList.get(j).get("isCorrect");
 
@@ -1125,6 +1126,7 @@ public class QuestionService {
             throw new RuntimeException("Error importing questions from Excel", e);
         }
     }
+
     @Transactional
     public void importWord(MultipartFile file, String courseName) {
         try (InputStream inputStream = file.getInputStream();
@@ -1253,7 +1255,7 @@ public class QuestionService {
             // Tạo quiz và lưu
             Quiz quiz = new Quiz();
             try {
-                Set<Quiz> quizzes = showAllQuizzesWithQuestions(courseName);
+                Set<Quiz> quizzes = quizRepository.findQuizByCourseName(courseName);
                 quiz.setName(generateRandomService.generateRandomName((List<Quiz>) quizzes));
             } catch (Exception e) {
                 quiz.setName(generateRandomService.generateRandomName(null));
@@ -1303,10 +1305,185 @@ public class QuestionService {
         return correctAnswers;
     }
 
-    @Autowired
-    public QuestionService(AssessmentQuestionRepository assessmentQuestionRepository) {
-        this.assessmentQuestionRepository = assessmentQuestionRepository;
+    @Transactional
+    public Map<String, Object> reviewImportWord(MultipartFile file, String courseName) {
+        try (InputStream inputStream = file.getInputStream();
+             XWPFDocument document = new XWPFDocument(inputStream)) {
+
+            List<Question> questions = new ArrayList<>();
+            List<String> optionLabelList = Arrays.asList("A", "B", "C", "D", "E", "F", "G", "H", "I");
+            List<String> existingQuestions = new ArrayList<>();
+            List<String> dupQueNos = new ArrayList<>();
+            List<String> correctAnswersList = new ArrayList<>(); // Danh sách để lưu đáp án đúng cho từng câu hỏi
+
+            // Lấy danh sách câu hỏi hiện có để kiểm tra trùng
+            List<Quiz> quizzes = quizRepository.findAll();
+            for (Quiz quiz : quizzes) {
+                if (quiz.getQuestions() != null && !quiz.getQuestions().isEmpty()) {
+                    existingQuestions.addAll(quiz.getQuestions().stream()
+                            .map(Question::getQuestionText)
+                            .toList());
+                }
+            }
+
+            for (XWPFTable table : document.getTables()) {
+                List<XWPFTableRow> rows = table.getRows();
+
+                for (int i = 1; i < rows.size(); i++) {
+                    List<XWPFTableCell> cells = rows.get(i).getTableCells();
+                    if (cells.size() < 3) {
+                        continue;
+                    }
+
+                    try {
+                        String questionNoStr = cells.get(0).getText().trim();
+                        String correctAnswer = cells.get(2).getText().trim();
+                        XWPFTableCell contentCell = cells.get(1);
+                        StringBuilder contentBuilder = new StringBuilder();
+                        int optionCounter = 0;
+
+                        for (XWPFParagraph paragraph : contentCell.getParagraphs()) {
+                            String paragraphText = paragraph.getText().trim();
+                            if (paragraphText.isEmpty()) {
+                                continue;
+                            }
+
+                            if (paragraph.getNumIlvl() != null) {
+                                String numFmt = paragraph.getNumFmt();
+                                if (numFmt != null && numFmt.equals("upperLetter") && optionCounter < optionLabelList.size()) {
+                                    paragraphText = optionLabelList.get(optionCounter) + ". " + paragraphText;
+                                    optionCounter++;
+                                }
+                            }
+                            contentBuilder.append(paragraphText).append("\n");
+                        }
+
+                        String content = contentBuilder.toString().trim();
+                        Pattern pattern = Pattern.compile("A\\s*\\.");
+                        Matcher matcher = pattern.matcher(content);
+
+                        if (!matcher.find()) {
+                            continue;
+                        }
+
+                        int startAnswers = matcher.start();
+                        String questionText = content.substring(0, startAnswers).trim();
+                        String optionsText = content.substring(startAnswers).trim();
+
+                        if (questionText.isEmpty()) {
+                            continue;
+                        }
+
+                        // Kiểm tra trùng lặp
+                        if (checkDuplicateQuestion(existingQuestions, questionText)) {
+                            dupQueNos.add(questionNoStr);
+                        }
+
+                        Pattern optionPattern = Pattern.compile("([A-I])\\s*\\.\\s*(.*?)(?=(?:[A-I]\\s*\\.|$))", Pattern.DOTALL);
+                        Matcher optionMatcher = optionPattern.matcher(optionsText);
+                        List<String> processedOptions = new ArrayList<>();
+
+                        while (optionMatcher.find()) {
+                            String optionText = optionMatcher.group(2).trim();
+                            if (!optionText.isEmpty()) {
+                                if (optionText.length() > 255) {
+                                    optionText = optionText.substring(0, 252) + "...";
+                                }
+                                processedOptions.add(optionText);
+                            }
+                        }
+
+                        if (processedOptions.size() < 2) {
+                            continue;
+                        }
+
+                        // Tạo câu hỏi để review
+                        Question question = new Question();
+                        question.setQuestionNo(i);
+                        question.setQuestionText(questionText);
+                        question.setQuestionType(QuestionType.MCQ);
+                        question.setPoints(10);
+
+                        Set<String> correctAnswers = parseCorrectAnswers(correctAnswer);
+                        StringBuilder correctAnswerText = new StringBuilder();
+
+                        for (int j = 0; j < processedOptions.size() && j < optionLabelList.size(); j++) {
+                            AnswerOption option = new AnswerOption();
+                            String optionLabel = optionLabelList.get(j);
+                            option.setOptionLabel(optionLabel);
+                            option.setOptionText(processedOptions.get(j));
+                            boolean isCorrect = correctAnswers.contains(optionLabel);
+                            option.setIsCorrect(isCorrect);
+                            question.addAnswerOption(option);
+
+                            // Thêm nhãn đáp án đúng vào chuỗi
+                            if (isCorrect) {
+                                if (correctAnswerText.length() > 0) {
+                                    correctAnswerText.append(", ");
+                                }
+                                correctAnswerText.append(optionLabel);
+                            }
+                        }
+
+                        questions.add(question);
+                        correctAnswersList.add(correctAnswerText.toString()); // Lưu đáp án đúng
+
+                    } catch (Exception e) {
+                        continue;
+                    }
+                }
+                break; // Chỉ xử lý bảng đầu tiên
+            }
+
+            if (questions.isEmpty()) {
+                throw new RuntimeException("No valid questions found in the Word file");
+            }
+
+            // Tạo tên quiz
+            String originalFilename = file.getOriginalFilename();
+            String fileName = "";
+            if (originalFilename != null && originalFilename.contains(".")) {
+                fileName = originalFilename.substring(0, originalFilename.lastIndexOf("."));
+            }
+            int numberOfDuplicateNames = countDuplicateName(quizService.findAll(), fileName);
+            if (numberOfDuplicateNames != 0) {
+                fileName = fileName + " (" + (numberOfDuplicateNames + 1) + ")";
+            }
+
+            Map<String, Object> reviewData = new HashMap<>();
+            reviewData.put("Questions", questions);
+            reviewData.put("fileName", fileName);
+            reviewData.put("courseName", courseName);
+            reviewData.put("DuplicateQuestionNos", dupQueNos);
+            reviewData.put("CorrectAnswers", correctAnswersList); // Thêm danh sách đáp án đúng
+
+            return reviewData;
+
+        } catch (IOException e) {
+            throw new RuntimeException("Error reviewing questions from Word", e);
+        }
     }
+
+    private boolean checkDuplicateQuestion(List<String> existingQuestions, String questionText) {
+        return existingQuestions.contains(questionText.trim());
+    }
+
+    public Set<Question> jsonToQuestionSet(String json) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            String questionsJson = objectMapper.readTree(json).get("questions").toString();
+            // Deserialize "questions" thành danh sách Question
+            Set<Question> questions = objectMapper.readValue(questionsJson, new TypeReference<Set<Question>>() {});
+            return questions;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public long count() {
+        return questionRepository.count();
+    }
+
     @Transactional
     public List<Question> findQuestionsByAssessmentId(Long assessmentId) {
         List<AssessmentQuestion> assessmentQuestions =
@@ -1319,5 +1496,5 @@ public class QuestionService {
     }
 
 
-}
 
+}

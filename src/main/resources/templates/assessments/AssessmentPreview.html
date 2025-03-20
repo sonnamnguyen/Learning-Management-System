@@ -34,7 +34,7 @@
             height: 90%;
             overflow-y: auto;
             margin-top: 14px;
-            width: 25%;
+            width: 17%;
         }
 
         /* Main content area margin adjustment */
@@ -56,6 +56,14 @@
 
             #sidebar.active {
                 left: 0;
+            }
+        }
+
+        @media (min-width: 992px) {
+            /* Màn hình lớn (lg) */
+            .col-lg-2_4 {
+                flex: 0 0 20%; /* 100% / 5 = 20% (Mỗi hàng 5 cột) */
+                max-width: 20%;
             }
         }
 
@@ -89,13 +97,14 @@
                     <div class="text-center">
                         <h5>Questions</h5>
                         <div class="row">
-                            <div th:each="question, iterStat : ${questions}" class="mb-2 col-3 col-md-3 col-xl-2">
-                                <div class="d-flex align-items-center">
-                                    <button type="button" class="btn btn-outline-primary" style="min-width: 40px"
-                                            th:attr="onclick='document.getElementById(\'question_' + ${question.id} + '\').scrollIntoView({behavior: \'smooth\'})'">
-                                        <span th:text="${iterStat.count}"></span>
-                                    </button>
-                                </div>
+                            <div th:each="question, iterStat : ${questions}"
+                                 class="mb-2 col-3 col-md-3 col-lg-2_4 d-flex justify-content-center">
+                                <button type="button"
+                                        class="btn btn-outline-primary d-flex align-items-center justify-content-center"
+                                        style="width: 35px; height: 35px;"
+                                        th:attr="onclick='document.getElementById(\'question_' + ${question.id} + '\').scrollIntoView({behavior: \'smooth\'})'">
+                                    <span th:text="${iterStat.count}"></span>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -121,12 +130,11 @@
             </div>
         </nav>
         <!-- Left Section (Content Area) -->
-        <main role="main" class="col-md-9 ms-sm-auto px-2 d-flex flex-column main-content">
+        <main role="main" class="col-md-10 ms-sm-auto px-2 d-flex flex-column main-content">
             <div class="flex-grow-1">
                 <div style="height: 100%;">
                     <!-- Display Questions -->
-
-                        <div class="mb-4" th:if="${questions != null and not #lists.isEmpty(questions)}">
+                    <div class="mb-4" th:if="${questions != null and not #lists.isEmpty(questions)}">
                         <h3 style="margin-top: 10px">Questions</h3>
                         <div class="border rounded p-3"
                              style="max-height: 80vh; overflow-y: auto;">
@@ -136,7 +144,7 @@
                                 <div class="card-body">
                                     <div class="d-flex align-items-start">
                                         <h5 class="me-2 question-number">
-                                            <strong th:text="${iterStat.index + 1}"></strong>
+                                            <strong th:text="${iterStat.index + 1} +'.'"></strong>
                                         </h5>
                                         <p class="question-text" th:utext="${question.questionText}"></p>
                                         <input type="checkbox" class="form-check-input me-2"
@@ -164,22 +172,22 @@
                     <div class="mb-4" th:if="${exercises != null and not #lists.isEmpty(exercises)}">
                         <h3>Exercises</h3>
                         <div class="border rounded p-3"
-                             style="max-height: 50vh; overflow-y: auto;">
+                             style="max-height: 80vh; overflow-y: auto;">
                             <!-- Loop through exercises -->
                             <div th:each="exercise, stat : ${exercises}" class="card mb-4 shadow-sm exercise-card"
                                  th:id="'exercise_' + ${exercise.id}">
                                 <div class="card-body d-flex justify-content-between align-items-center">
                                     <h6 class="exercise-title btn btn-light">
-                                        <!-- Hiển thị số thứ tự bắt đầu từ 1 -->
-                                        <span th:text="'Exercise ' + (${stat.index} + 1) + ': '"></span>
-                                        <!--redirect to coding site-->
-                                        <a th:href="@{/judgement/{type}/code_space/{id}(type='preview', id=${exercise.id})}"
-                                           th:text="${exercise.name}" target="_blank"></a>
+                                        <span style="font-weight: bold"
+                                              th:text="'Exercise ' + (${stat.index} + 1) + ': '"></span>
+                                        <span th:text="${exercise.name}"></span>
                                     </h6>
                                     <input type="checkbox" class="form-check-input me-2"
                                            th:attr="id='check_' + ${exercise.id}">
                                     <i class="bi bi-flag"></i>
                                 </div>
+                                <iframe th:src="@{/judgement/preview/code_space/{id}(id=${exercise.id})}"
+                                        style="width: 100%; height: 600px; border: none;"></iframe>
                             </div>
                         </div>
                     </div>

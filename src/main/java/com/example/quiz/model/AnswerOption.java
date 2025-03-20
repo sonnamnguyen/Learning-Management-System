@@ -3,10 +3,15 @@ package com.example.quiz.model;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import jakarta.persistence.*;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @NoArgsConstructor
@@ -32,7 +37,7 @@ public class AnswerOption implements Cloneable{
     @Column(name = "is_correct", nullable = false)
     private Boolean isCorrect;
 
-    @JsonBackReference("question-answerOption")
+    @JsonBackReference("questions-answerOption")
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "question_id", nullable = false)
     private Question question;

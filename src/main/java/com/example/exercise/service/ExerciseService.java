@@ -2,7 +2,10 @@ package com.example.exercise.service;
 
 import com.example.assessment.model.ProgrammingLanguage;
 import com.example.assessment.repository.ProgrammingLanguageRepository;
+import com.example.exercise.model.Category;
 import com.example.exercise.model.Exercise;
+import com.example.exercise.model.ExerciseCategory;
+import com.example.exercise.repository.CategoryRepository;
 import com.example.exercise.repository.ExerciseRepository;
 import com.example.testcase.TestCase;
 import com.example.testcase.TestCaseRepository;
@@ -36,7 +39,57 @@ public class ExerciseService {
     @Autowired
     private ProgrammingLanguageRepository programmingLanguageRepository;
     private TestCaseRepository testCaseRepository;
+    @Autowired
+    private CategoryService categoryService;
+    @Autowired
+    private CategoryRepository categoryRepository;
 
+    public Map<String, Map<String, Integer>> getExercisesByLanguageWithAssessment() {
+        List<Object[]> results = exerciseRepository.countExercisesByLanguageWithAssessment();
+        Map<String, Map<String, Integer>> data = new HashMap<>();
+
+        for (Object[] row : results) {
+            String languageName = row[0].toString();
+            int assessed = ((Number) row[1]).intValue();
+            int notAssessed = ((Number) row[2]).intValue();
+            int total = assessed + notAssessed;
+
+            Map<String, Integer> exerciseData = new HashMap<>();
+            exerciseData.put("assessed", assessed);
+            exerciseData.put("notAssessed", notAssessed);
+            exerciseData.put("total", total);
+
+            data.put(languageName, exerciseData);
+        }
+
+        return data;
+    }
+    // Trả về dữ liệu theo từng ngôn ngữ (nếu có languageId)
+    // ✅ Lấy dữ liệu theo languageId
+    public Map<String, Map<String, Integer>> getExercisesByLanguageWithAssessment(Long languageId) {
+        List<Object[]> results;
+        if (languageId == null) {
+            results = exerciseRepository.countExercisesByLanguageWithAssessment();
+        } else {
+            results = exerciseRepository.countExercisesByLanguageWithAssessment(languageId);
+        }
+
+        Map<String, Map<String, Integer>> data = new HashMap<>();
+        for (Object[] row : results) {
+            String languageName = (String) row[0];
+            int assessedExercises = ((Number) row[1]).intValue();    // Bài tập có trong Assessment
+            int unassessedExercises = ((Number) row[2]).intValue();  // Bài tập chưa có trong Assessment
+            int totalExercises = assessedExercises + unassessedExercises;
+
+            Map<String, Integer> values = new HashMap<>();
+            values.put("assessed", assessedExercises);
+            values.put("unassessed", unassessedExercises);
+            values.put("total", totalExercises);
+
+            data.put(languageName, values);
+        }
+        return data;
+    }
     public ExerciseService(ExerciseRepository exerciseRepository) {
         this.exerciseRepository = exerciseRepository;
     }
@@ -159,7 +212,7 @@ public class ExerciseService {
             }
 
             // Kiểm tra xem các header quan trọng có tồn tại không
-            String[] requiredHeaders = {"Title", "Language", "Level", "Description", "Set Up Code", "Test Case"};
+            String[] requiredHeaders = {"Title", "Language", "Level", "Description", "Set Up Code", "Test Case", "SQL Tag", "Tag"};
             for (String header : requiredHeaders) {
                 if (!columnIndexMap.containsKey(header)) {
                     throw new RuntimeException("Missing required column: " + header);
@@ -224,7 +277,7 @@ public class ExerciseService {
                         if (optionalLanguage.isPresent()) {
                             exercise.setLanguage(optionalLanguage.get());
                         } else {
-                            warnings.add("Row " + rowIndex + " contains an unknown Language: " + languageName +". List available language: " + programmingLanguageRepository.findAllLanguages());
+                            warnings.add("Row " + rowIndex + " contains an unknown Language: " + languageName + ". List available language: " + programmingLanguageRepository.findAllLanguages());
 
                             isValidRow = false;
                         }
@@ -339,6 +392,56 @@ public class ExerciseService {
                     }
                 }
 
+
+//                ******** Xử lý SQL Tag ******
+
+                if (columnIndexMap.containsKey("SQL Tag")) {
+                    Cell cell = row.getCell(columnIndexMap.get("SQL Tag"));
+                    exercise.setSetupsql((cell != null) ? cell.getStringCellValue().trim() : "");
+                }
+
+//                ********* Xử lý Tag ********
+                if (columnIndexMap.containsKey("Tag")) {
+                    Cell cell = row.getCell(columnIndexMap.get("Tag"));
+                    String tagText = (cell != null) ? cell.getStringCellValue().trim() : "";
+                    List<ExerciseCategory> exerciseCategories = new ArrayList<>();
+                    boolean hadInvalidTag = false;
+                    if (!tagText.isEmpty()) {
+                        String[] tagArray = tagText.split(",");
+                        for (String tagStr : tagArray) {
+                            tagStr = tagStr.trim();
+                            if (!tagStr.isEmpty()) {
+//                                if (!tagStr.contains(",")) {
+//                                    warnings.add("Row " + rowIndex + " has an invalid tag format: '" + tagStr + "'.");
+//                                    hadInvalidTag = false;
+//                                    continue;
+//                                }
+
+                                Category category = categoryRepository.findByTag(tagStr).orElse(null);
+                                if(category == null) {
+                                    warnings.add("Row " + rowIndex + " has a tag that does not exist: '" + tagStr + "'");
+                                    hadInvalidTag = true;
+                                }
+
+                                ExerciseCategory exerciseCategory = new ExerciseCategory();
+                                exerciseCategory.setCategory(category);
+                                exerciseCategory.setExercise(exercise);
+                                exerciseCategories.add(exerciseCategory);
+                            }
+
+
+                        }
+                    }
+                    if (hadInvalidTag) {
+                        warnings.add("Row " + rowIndex + " has invalid tag and was not saved.");
+                        isValidRow = false;
+                    }else {
+                        exercise.setExerciseCategories(exerciseCategories);
+                    }
+
+                }
+
+
                 if (isValidRow) {
                     exercises.add(exercise);
                 }
@@ -395,6 +498,7 @@ public class ExerciseService {
             throw new IllegalArgumentException("Invalid file format. Please upload an Excel file.");
         }
     }
+
     public Page<Exercise> getExercisesByLanguageAndLevel(Long languageId, String level, Pageable pageable) {
         Exercise.Level exerciseLevel = (level == null || level.trim().isEmpty())
                 ? null
@@ -412,6 +516,7 @@ public class ExerciseService {
     public List<Exercise> getExercisesByAssessmentId(Long assessmentId) {
         return exerciseRepository.findExercisesByAssessmentId(assessmentId);
     }
+
     //                      COOKING DASHBOARD
     double min_score = 0.0;
     double pass_score = 70.0;
@@ -472,11 +577,16 @@ public class ExerciseService {
 
     public Map<String, Integer> countPassedTestsPerMonth(Long userId, int year) {
         List<Object[]> results = exerciseRepository.countPassedTestsPerMonth(userId, year);
-        Map<String, Integer> passedTestsPerMonth = new LinkedHashMap<>(); // Keep order of months
+        Map<String, Integer> passedTestsPerMonth = new LinkedHashMap<>();
 
         DateFormatSymbols dfs = new DateFormatSymbols(Locale.ENGLISH);
-        String[] monthNames = dfs.getMonths(); // Array of month names: "January", "February", etc.
+        String[] monthNames = dfs.getMonths();
 
+        for (int i = 0; i < 12; i++) {
+            passedTestsPerMonth.put(monthNames[i], 0);
+        }
+
+        // Populate with actual results from the database
         for (Object[] row : results) {
             int monthIndex = (Integer) row[0] - 1; // Convert 1-based (SQL) to 0-based (Java)
             String monthName = monthNames[monthIndex]; // Get English month name
@@ -495,9 +605,11 @@ public class ExerciseService {
     public List<Exercise> findAll() {
         return exerciseRepository.findAll();
     }
+
     public Page<Exercise> getExercisesByLanguage(Long languageId, Pageable pageable) {
         return exerciseRepository.findByLanguageId(languageId, pageable);
     }
+
     public Page<Exercise> searchByDescriptionPaginated(String keyword, Pageable pageable) {
         return exerciseRepository.findByDescriptionContainingIgnoreCase(keyword, pageable);
     }
@@ -558,66 +670,73 @@ public class ExerciseService {
         return exerciseRepository.findAll();
     }
 
-    public Map<String, List<Exercise>> findDuplicates() {
-        // Lấy tất cả exercises và nhóm theo ngôn ngữ ngay từ đầu
-        List<Exercise> allExercises = exerciseRepository.findAll();
-        Map<String, List<Exercise>> exercisesByLanguage = allExercises.stream()
-                .collect(Collectors.groupingBy(ex -> ex.getLanguage().getLanguage()));
+//    public Map<String, List<Exercise>> findDuplicates() {
+//        // Lấy tất cả exercises và nhóm theo ngôn ngữ ngay từ đầu
+//        List<Exercise> allExercises = exerciseRepository.findAll();
+//        Map<String, List<Exercise>> exercisesByLanguage = allExercises.stream()
+//                .collect(Collectors.groupingBy(ex -> ex.getLanguage().getLanguage()));
+//
+//        Map<String, List<Exercise>> duplicates = new HashMap<>();
+//        LevenshteinDistance levenshtein = new LevenshteinDistance();
+//
+//        // Xử lý từng ngôn ngữ riêng biệt
+//        for (List<Exercise> languageGroup : exercisesByLanguage.values()) {
+//            int size = languageGroup.size();
+//            // Nếu chỉ có 1 bài thì không cần kiểm tra
+//            if (size <= 1) continue;
+//
+//            // Sử dụng Map tạm thời để nhóm các bài tương tự
+//            Map<String, List<Exercise>> tempGroups = new HashMap<>();
+//
+//            for (int i = 0; i < size; i++) {
+//                Exercise ex1 = languageGroup.get(i);
+//                String desc1 = ex1.getDescription();
+//                int maxLength1 = desc1.length();
+//
+//                // Tìm nhóm phù hợp cho ex1
+//                String matchedKey = null;
+//
+//                for (String key : tempGroups.keySet()) {
+//                    int distance = levenshtein.apply(desc1, key);
+//                    double similarity = 1.0 - ((double) distance / Math.max(maxLength1, key.length()));
+//
+//                    if (similarity >= 0.7) {
+//                        matchedKey = key;
+//                        break;
+//                    }
+//                }
+//
+//                // Nếu tìm thấy nhóm tương tự
+//                if (matchedKey != null) {
+//                    tempGroups.get(matchedKey).add(ex1);
+//                } else {
+//                    // Tạo nhóm mới với desc1 làm key
+//                    List<Exercise> newGroup = new ArrayList<>();
+//                    newGroup.add(ex1);
+//                    tempGroups.put(desc1, newGroup);
+//                }
+//            }
+//
+//            // Chỉ giữ lại các nhóm có duplicates
+//            tempGroups.entrySet().stream()
+//                    .filter(entry -> entry.getValue().size() > 1)
+//                    .forEach(entry -> {
+//                        String finalKey = entry.getValue().get(0).getDescription() + "-" +
+//                                entry.getValue().get(0).getLanguage().getLanguage();
+//                        duplicates.put(finalKey, entry.getValue());
+//                    });
+//        }
+//
+//        return duplicates;
+//    }
 
-        Map<String, List<Exercise>> duplicates = new HashMap<>();
-        LevenshteinDistance levenshtein = new LevenshteinDistance();
-
-        // Xử lý từng ngôn ngữ riêng biệt
-        for (List<Exercise> languageGroup : exercisesByLanguage.values()) {
-            int size = languageGroup.size();
-            // Nếu chỉ có 1 bài thì không cần kiểm tra
-            if (size <= 1) continue;
-
-            // Sử dụng Map tạm thời để nhóm các bài tương tự
-            Map<String, List<Exercise>> tempGroups = new HashMap<>();
-
-            for (int i = 0; i < size; i++) {
-                Exercise ex1 = languageGroup.get(i);
-                String desc1 = ex1.getDescription();
-                int maxLength1 = desc1.length();
-
-                // Tìm nhóm phù hợp cho ex1
-                String matchedKey = null;
-
-                for (String key : tempGroups.keySet()) {
-                    int distance = levenshtein.apply(desc1, key);
-                    double similarity = 1.0 - ((double) distance / Math.max(maxLength1, key.length()));
-
-                    if (similarity >= 0.7) {
-                        matchedKey = key;
-                        break;
-                    }
-                }
-
-                // Nếu tìm thấy nhóm tương tự
-                if (matchedKey != null) {
-                    tempGroups.get(matchedKey).add(ex1);
-                } else {
-                    // Tạo nhóm mới với desc1 làm key
-                    List<Exercise> newGroup = new ArrayList<>();
-                    newGroup.add(ex1);
-                    tempGroups.put(desc1, newGroup);
-                }
-            }
-
-            // Chỉ giữ lại các nhóm có duplicates
-            tempGroups.entrySet().stream()
-                    .filter(entry -> entry.getValue().size() > 1)
-                    .forEach(entry -> {
-                        String finalKey = entry.getValue().get(0).getDescription() + "-" +
-                                entry.getValue().get(0).getLanguage().getLanguage();
-                        duplicates.put(finalKey, entry.getValue());
-                    });
-        }
-
-        return duplicates;
+    public boolean existsByTitleAndLanguageExcludingId(String title, Integer languageId, Long id) {
+        return exerciseRepository.existsByNameAndLanguageExcludingId(title, languageId, id);
     }
 
+    public boolean existsByTitleAndLanguage(String title, Integer languageId) {
+        return exerciseRepository.existsByNameAndLanguage(title, languageId);
+    }
 
     //---------------------Dashboard
     public Map<String, Integer> getExerciseStatistics(Long languageId) {
@@ -645,8 +764,6 @@ public class ExerciseService {
         }
         return levelDistribution;
     }
-
-
 
 
     public Map<String, Integer> getStatusDistribution(Long languageId) {
@@ -689,6 +806,7 @@ public class ExerciseService {
 
         return data;
     }
+
     public int countTotalExercises(Long languageId) {
         return exerciseRepository.countTotalExercises(languageId);
     }

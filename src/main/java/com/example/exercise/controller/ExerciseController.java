@@ -11,7 +11,6 @@ import com.example.exercise.service.StudentExerciseAttemptService;
 import com.example.testcase.*;
 import com.example.user.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.*;
@@ -38,6 +37,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.security.SecureRandom;
 import java.text.SimpleDateFormat;
+import java.time.Year;
 import java.util.*;
 import java.util.regex.*;
 import java.util.stream.Collectors;
@@ -123,19 +123,14 @@ public class ExerciseController {
             }
             model.addAttribute("commonWords", getTfIdfScores(allExercises.getContent()));
         }
-        Map<String, List<Exercise>> duplicates = exerciseService.findDuplicates();
-        if (!duplicates.isEmpty()) {
-            int totalDuplicates = duplicates.values().stream().mapToInt(List::size).sum();
-            model.addAttribute("duplicateMessage",
-                    "There are " + totalDuplicates + " duplicate exercises found. " +
-                            "<a href=\"/exercises/check-duplicates\" class=\"alert-link\">View duplicates</a>");
-        }
+
         System.out.println("Language ID: " + languageId + ", Level: " + level +
                 ", Title: " + title + ", Description: " + descriptionKeyword);
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(auth -> auth.getAuthority().equals("ADMIN") || auth.getAuthority().equals("SUPERADMIN"));
         return isAdmin ? "exercises/list" : "exercises/student-list";
     }
+
 
     @GetMapping("/check-duplicates")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPERADMIN', 'STUDENT')")
@@ -458,22 +453,43 @@ public class ExerciseController {
     }
 
 
+//    @GetMapping("/dashboard-data")
+//    @ResponseBody
+//    public Map<String, Object> getDashboardData(@RequestParam(value = "languageId", required = false) Long languageId) {
+//        Map<String, Object> response = new HashMap<>();
+//
+//        //response.put("newExercises", exerciseService.countNewExercises(languageId));
+//        //response.put("completionRate", exerciseService.getCompletionRate(languageId));
+//        response.put("totalExercises", exerciseService.countTotalExercises(languageId));
+//        response.put("totalLanguages", programmingLanguageService.countTotalLanguages());
+//
+//        // Lấy dữ liệu biểu đồ
+    ////        Map<String, Integer> topicChartData = exerciseService.getExercisesByLanguage();
+//        // Xử lý dữ liệu cho biểu đồ
+//        Map<String, Integer> topicChartData = (languageId == null)
+//                ? exerciseService.getExercisesByLanguage()  // Lấy dữ liệu của tất cả ngôn ngữ
+//                : exerciseService.getExercisesByLanguage(languageId); // Lọc theo ngôn ngữ được chọn
+//        Map<String, Integer> difficultyChartData = exerciseService.getLevelDistribution(languageId);
+//
+//        response.put("topicChartData", topicChartData != null ? topicChartData : new HashMap<>());
+//        response.put("difficultyChartData", difficultyChartData != null ? difficultyChartData : new HashMap<>());
+//
+//        return response;
+//    }
     @GetMapping("/dashboard-data")
     @ResponseBody
     public Map<String, Object> getDashboardData(@RequestParam(value = "languageId", required = false) Long languageId) {
         Map<String, Object> response = new HashMap<>();
 
-        //response.put("newExercises", exerciseService.countNewExercises(languageId));
-        //response.put("completionRate", exerciseService.getCompletionRate(languageId));
         response.put("totalExercises", exerciseService.countTotalExercises(languageId));
         response.put("totalLanguages", programmingLanguageService.countTotalLanguages());
 
-        // Lấy dữ liệu biểu đồ
-//        Map<String, Integer> topicChartData = exerciseService.getExercisesByLanguage();
-        // Xử lý dữ liệu cho biểu đồ
-        Map<String, Integer> topicChartData = (languageId == null)
-                ? exerciseService.getExercisesByLanguage()  // Lấy dữ liệu của tất cả ngôn ngữ
-                : exerciseService.getExercisesByLanguage(languageId); // Lọc theo ngôn ngữ được chọn
+        // 🔹 Lấy dữ liệu bài tập theo từng ngôn ngữ
+        Map<String, Map<String, Integer>> topicChartData = (languageId == null)
+                ? exerciseService.getExercisesByLanguageWithAssessment()  // Tất cả ngôn ngữ
+                : exerciseService.getExercisesByLanguageWithAssessment(languageId); // Lọc theo ngôn ngữ
+
+        // 🔹 Lấy dữ liệu độ khó
         Map<String, Integer> difficultyChartData = exerciseService.getLevelDistribution(languageId);
 
         response.put("topicChartData", topicChartData != null ? topicChartData : new HashMap<>());
@@ -546,7 +562,9 @@ public class ExerciseController {
         if (result.hasErrors()) {
             return ResponseEntity.badRequest().body("Validation error: " + result.getAllErrors());
         }
-
+        if(exerciseService.existsByTitleAndLanguage(name, languageId)){
+            return ResponseEntity.badRequest().body("Exercise already exists");
+        }
         Optional<ProgrammingLanguage> languageOpt = programmingLanguageService.getProgrammingLanguageById(languageId);
         if (languageOpt.isEmpty()) {
             return ResponseEntity.badRequest().body("Invalid programming language");
@@ -736,14 +754,13 @@ public class ExerciseController {
         // Kiểm tra và cập nhật tên bài tập
         List<Category> categories = categoryService.getAllCategory();
         if (!exercise.getName().equals(existingExercise.getName())) {
-            if (exerciseService.existsByTitleExcludingId(exercise.getName(), id)) {
+            if (exerciseService.existsByTitleAndLanguageExcludingId(exercise.getName(), exercise.getLanguage().getId(), id)) {
                 model.addAttribute("error", "Exercise name already exists!");
                 model.addAttribute("programmingLanguages", programmingLanguageService.getAllProgrammingLanguages());
                 model.addAttribute("testCasesJson", testCasesJson);
-                model.addAttribute("tags", categories);
                 model.addAttribute("content", "exercises/edit");
+                model.addAttribute("tags", categoryService.getAllCategory());
                 model.addAttribute("exercise", existingExercise);
-
                 return "layout";
             }
             existingExercise.setName(exercise.getName());
@@ -1032,8 +1049,9 @@ public class ExerciseController {
                             Model model) {
 
         if (year == null) {
-            year = 2025; // Default value
+            year = Year.now().getValue();
         }
+
         if(language == null){
             language = "";
         }

@@ -55,6 +55,7 @@ public class EmailController {
         emailService.sendAssessmentInvite(emailList, assessmentId, expirationDate);
         // Store invited emails with full date-time values
         assessmentService.storeInvitedEmail(assessmentId, emailList, invitationDate, expirationDate);
+        System.out.println("Invited email sent: "+ emailList);
 
         model.addAttribute("message", "Invitations sent successfully!");
         return "redirect:/assessments";

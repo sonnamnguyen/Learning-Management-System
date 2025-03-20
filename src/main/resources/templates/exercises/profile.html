@@ -1438,8 +1438,9 @@
                     icon: 'fa-award',
                     requirement: 50,
                     checkProgress: (userData) => {
-                        const totalSolved = userData.submissions.accepted;
-                        return {
+                        const totalSolved = userData.difficultyNoLanguage.easyNoLanguage +
+                            userData.difficultyNoLanguage.mediumNoLanguage +
+                            userData.difficultyNoLanguage.hardNoLanguage;                        return {
                             current: totalSolved,
                             total: 50,
                             isCompleted: totalSolved >= 50

@@ -162,7 +162,7 @@ public class AIService {
 
     // type, numOfQuestion, numOfAnswerOptions, questionDescription
     public AIResponse getResponseAIGenerate(String type, int numOfQuestions, int numOfAnswerOptions,
-                                        String questionDescription) {
+                                            String questionDescription) {
 
         String prompt = switch (type) {
             case "Single Choice Question" -> generatePromptForSCQ(numOfQuestions, numOfAnswerOptions, questionDescription);

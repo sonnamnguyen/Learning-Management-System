@@ -15,13 +15,20 @@ public interface AnswerOptionRepository extends JpaRepository<AnswerOption, Long
 
     @Transactional
     void deleteAllByQuestion(Question question);
+    @Query("SELECT ao FROM AnswerOption ao WHERE ao.question.id = :questionId AND ao.isCorrect = true")
+    List<AnswerOption> findCorrectAnswersByQuestionId(@Param("questionId") Long questionId);
 
     @Query("SELECT ao FROM AnswerOption ao WHERE ao.question.id IN :questionIds AND ao.isCorrect = true")
     List<AnswerOption> findCorrectAnswersByQuestionIds(@Param("questionIds") List<Long> questionIds);
 
-    @Query("SELECT ao FROM AnswerOption ao WHERE ao.question.id = :questionId AND ao.isCorrect = true")
-    List<AnswerOption> findCorrectAnswersByQuestionId(@Param("questionId") Long questionId);
+    @Query("SELECT COUNT(ao) FROM AnswerOption ao WHERE ao.isCorrect = true")
+    long countTotalCorrectAnswers();
+
+    @Query("SELECT COUNT(ao) FROM AnswerOption ao WHERE ao.isCorrect = false")
+    long countTotalIncorrectAnswers();
+
 
     List<AnswerOption> findByQuestionId(long id);
+
 
 }

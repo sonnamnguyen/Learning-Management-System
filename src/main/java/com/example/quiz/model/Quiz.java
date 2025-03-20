@@ -2,6 +2,8 @@ package com.example.quiz.model;
 
 import com.example.course.Course;
 import com.example.user.User;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;

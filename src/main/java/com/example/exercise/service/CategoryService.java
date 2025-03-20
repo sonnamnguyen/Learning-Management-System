@@ -32,10 +32,7 @@ public class CategoryService {
     }
 
     public Category saveCategory(Category category) throws Exception {
-        // Check if tag name already exists
-        if (existsByTagName(category.getTag())) {
-            throw new Exception("Tag name already exists!");
-        }
+
         return categoryRepository.save(category);
     }
 
@@ -56,8 +53,14 @@ public class CategoryService {
         categoryRepository.deleteById(id);
     }
 
-    private boolean existsByTagName(String tag) {
+    public boolean existsByTagName(String tag) {
         return categoryRepository.findAll().stream()
                 .anyMatch(category -> category.getTag().equalsIgnoreCase(tag));
     }
+
+    public Category existsByName(String name) {
+        return categoryRepository.findByTag(name).orElse(null);
+    }
+
+
 }

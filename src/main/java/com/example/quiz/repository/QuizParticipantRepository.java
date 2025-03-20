@@ -4,6 +4,7 @@ import com.example.quiz.model.Quiz;
 import com.example.quiz.model.QuizParticipant;
 import com.example.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,5 +27,9 @@ public interface QuizParticipantRepository extends JpaRepository<QuizParticipant
 //    List<QuizParticipant> findByFirstNameOrLastName(
 //            @Param("firstName") String firstName,
 //            @Param("lastName") String lastName);
+
+    @Query("SELECT q.name, COUNT(p) FROM QuizParticipant p JOIN p.quiz q GROUP BY q.name")
+    List<Object[]> countAttemptsByQuiz();
+
 
 }

@@ -309,30 +309,6 @@
             transform: rotate(180deg);
         }
 
-        /*!* Danh sách cảnh báo *!*/
-        /*.warning-list {*/
-        /*    color: #b71c1c;*/
-        /*    background-color: #fff3cd;*/
-        /*    border-left: 4px solid #ffa000;*/
-        /*    padding: 10px;*/
-        /*    border-radius: 5px;*/
-        /*    list-style-type: none;*/
-        /*    margin: 0;*/
-        /*}*/
-
-        /*.warning-list li {*/
-        /*    padding: 5px 0;*/
-        /*    font-weight: 500;*/
-        /*}*/
-
-        /*!* Card chứa chi tiết *!*/
-        /*.card.card-body {*/
-        /*    background-color: #fffbee;*/
-        /*    border: 1px solid #ffc107;*/
-        /*    border-radius: 5px;*/
-        /*    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);*/
-        /*}*/
-
         .warning-list {
             list-style: none;
             padding: 0;
@@ -525,38 +501,6 @@
             font-weight: 500;
         }
 
-        /*Badge css*/
-        /*.badge {*/
-        /*    font-size: 14px;*/
-        /*    padding: 8px 12px;*/
-        /*    border-radius: 12px;*/
-        /*    margin: 4px; !* Tăng khoảng cách giữa các badge *!*/
-        /*    display: inline-block; !* Giúp badge không bị dính vào nhau *!*/
-        /*}*/
-
-        /*.bg-dark {*/
-        /*    background-color: #6c757d !important;*/
-        /*    color: #ffffff !important;*/
-        /*}*/
-
-        /*.bg-secondary {*/
-        /*    background-color: #dee2e6 !important;*/
-        /*    color: #495057 !important;*/
-        /*}*/
-
-        /*#toggleTags {*/
-        /*    cursor: pointer;*/
-        /*    font-weight: bold;*/
-        /*    padding: 8px 14px;*/
-        /*    border-radius: 12px;*/
-        /*    background-color: #adb5bd !important;*/
-        /*    color: #343a40 !important;*/
-        /*    border: none;*/
-        /*}*/
-
-        /*#toggleTags:hover {*/
-        /*    background-color: #868e96 !important;*/
-        /*}*/
         .badge {
             font-size: 14px;
             padding: 8px 12px;
@@ -662,13 +606,6 @@
                                 View Details <i class="bi bi-chevron-down"></i>
                             </button>
                         </div>
-                        <!--                        <div class="collapse" id="warningDetails">-->
-                        <!--                            <div class="card card-body">-->
-                        <!--                                <ul class="warning-list">-->
-                        <!--                                    <li th:each="warning : ${warningList}" th:text="${warning}"></li>-->
-                        <!--                                </ul>-->
-                        <!--                            </div>-->
-                        <!--                        </div>-->
 
                         <div class="collapse" id="warningDetails">
                             <div class="card card-body">
@@ -774,6 +711,7 @@
 
                                             <!-- Tag Filter -->
                                             <div class="col-md-4 ">
+                                                <label class="form-label fw-semibold text-muted mb-1">Tags</label>
                                                 <div class="dropdown">
                                                     <button class="btn btn-secondary dropdown-toggle w-100"
                                                             type="button"
@@ -1063,17 +1001,6 @@
 
 </div>
 
-<!-- Toast Notification -->
-<!--<div id="deleteSuccessToast" class="toast position-fixed top-50 start-50 translate-middle" role="alert"-->
-<!--     aria-live="assertive" aria-atomic="true" style="z-index: 1050; display: none;">-->
-<!--    <div class="toast-header bg-success text-white">-->
-<!--        <strong class="me-auto">Success</strong>-->
-<!--        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>-->
-<!--    </div>-->
-<!--    <div class="toast-body text-center">-->
-<!--        Deleted Successfully!-->
-<!--    </div>-->
-<!--</div>-->
 
 <div id="deleteSuccessToast" class="toast position-fixed" role="alert"
      aria-live="assertive" aria-atomic="true" style="z-index: 1050; display: none; top: 70px; right: 20px;">
@@ -1286,7 +1213,6 @@
         document.getElementById("searchInput").value = "";
         document.getElementById("languageFilter").value = "";
         document.getElementById("levelFilter").value = "";
-        document.getElementById("descriptionFilter").value = "";
         document.getElementById("filterForm").submit();
 
 
@@ -1400,8 +1326,7 @@
         showConfirmButton: false, // Ẩn nút "OK"
         willClose: () => {
             window.location.href = '/exercises';  // Điều hướng về trang mong muốn
-        }
-    });
+        }    });
 </script>
 
 <script th:if="${error}">

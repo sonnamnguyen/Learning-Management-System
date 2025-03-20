@@ -39,7 +39,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -100,7 +99,6 @@ public class AssessmentService {
                     .getSingleResult();
         }
     }
-
     public Assessment createAssessment(Assessment assessment) {
         return assessmentRepository.save(assessment);
     }
@@ -372,7 +370,6 @@ public class AssessmentService {
 
         attemptRepository.save(attempt);
     }
-
     @Scheduled(fixedRate = 3600000) // Runs every hour
     public void checkExpiringAssessments() {
         LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Bangkok")); // GMT+7
@@ -518,5 +515,15 @@ public class AssessmentService {
         faceDetector.detectMultiScale(image, faceDectections);
 
         return faceDectections.toArray().length;
+    }
+
+    public void updateQualifiedCount(Long assessmentId, StudentAssessmentAttempt attempt) {
+        Assessment assessment = assessmentRepository.findById(assessmentId)
+                .orElseThrow(() -> new RuntimeException("Assessment not found"));
+
+        if (attempt.getScoreAss() >= assessment.getQualifiedCount()) {
+            assessment.setQualifiedCount(assessment.getQualifiedCount() + 1);
+            assessmentRepository.save(assessment); // Lưu vào DB
+        }
     }
 }

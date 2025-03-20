@@ -143,6 +143,70 @@
             right: 10px;
         }
     }
+
+    /* Điều chỉnh sidebar */
+    #sidebar {
+        max-height: calc(100vh - 100px); /* Chiều cao tối đa của sidebar */
+        overflow: hidden; /* Ngăn overflow từ card bên trong */
+    }
+
+    #sidebar .card {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Container cho phần questions navigation */
+    .questions-nav-container {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0 1rem;
+        /* Custom scrollbar */
+        scrollbar-width: thin;
+        scrollbar-color: #888 #f1f1f1;
+    }
+
+    /* Custom scrollbar cho Chrome/Safari/Edge */
+    .questions-nav-container::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .questions-nav-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+    }
+
+    .questions-nav-container::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 3px;
+    }
+
+    .questions-nav-container::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+
+    /* Đảm bảo footer luôn ở dưới cùng */
+    #sidebar .card-footer {
+        margin-top: auto;
+        flex-shrink: 0;
+    }
+
+    /* Điều chỉnh khoảng cách buttons */
+    .questions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
+        gap: 8px;
+        padding-bottom: 1rem;
+    }
+
+    .question-nav-btn {
+        width: 100%;
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 500;
+    }
   </style>
 </head>
 <body>
@@ -238,9 +302,9 @@
             </div>
 
             <!-- Question Navigation -->
-            <div class="card-body" th:if="${questions != null and not #lists.isEmpty(questions)}">
-              <h6 class="mb-3">Questions</h6>
-              <div class="d-flex flex-wrap gap-2">
+            <div class="questions-nav-container" th:if="${questions != null and not #lists.isEmpty(questions)}">
+              <h6 class="mb-3 pt-3">Questions</h6>
+              <div class="questions-grid">
                 <button th:each="question, iterStat : ${questions}"
                         type="button"
                         class="btn btn-outline-primary question-nav-btn"
@@ -270,34 +334,34 @@
   </button>
 
   <script>
-        function toggleSidebar() {
-            var sidebar = document.getElementById("sidebar");
-            sidebar.classList.toggle("active");
-            if (sidebar.classList.contains("active")) {
-                sidebar.classList.remove("d-none");
-            } else {
-                setTimeout(() => sidebar.classList.add("d-none"), 300);
-            }
+    function toggleSidebar() {
+        var sidebar = document.getElementById("sidebar");
+        sidebar.classList.toggle("active");
+        if (sidebar.classList.contains("active")) {
+            sidebar.classList.remove("d-none");
+        } else {
+            setTimeout(() => sidebar.classList.add("d-none"), 300);
         }
+    }
 
-        window.onscroll = function() {
-            var moveToTopButton = document.getElementById("moveToTop");
-            if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
-                moveToTopButton.style.display = "block";
-                setTimeout(() => moveToTopButton.classList.add('show'), 10);
-            } else {
-                moveToTopButton.classList.remove('show');
-                setTimeout(() => moveToTopButton.style.display = "none", 300);
-            }
-        };
-
-        function moveToTop() {
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
+    window.onscroll = function() {
+        var moveToTopButton = document.getElementById("moveToTop");
+        if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+            moveToTopButton.style.display = "block";
+            setTimeout(() => moveToTopButton.classList.add('show'), 10);
+        } else {
+            moveToTopButton.classList.remove('show');
+            setTimeout(() => moveToTopButton.style.display = "none", 300);
         }
-    </script>
+    };
+
+    function moveToTop() {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    }
+  </script>
 </main>
 
 </body>

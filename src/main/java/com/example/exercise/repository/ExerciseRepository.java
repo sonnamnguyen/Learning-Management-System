@@ -16,6 +16,19 @@ import java.util.Optional;
 @Repository
 public interface ExerciseRepository extends PagingAndSortingRepository<Exercise, Long>, JpaRepository<Exercise, Long> {
 
+    // ✅ Lấy dữ liệu tất cả ngôn ngữ (3 cột: assessed, unassessed, total)
+    @Query("SELECT e.language.language, " +
+            "SUM(CASE WHEN EXISTS (SELECT 1 FROM Assessment a JOIN a.exercises ex WHERE ex.id = e.id) THEN 1 ELSE 0 END), " +
+            "SUM(CASE WHEN NOT EXISTS (SELECT 1 FROM Assessment a JOIN a.exercises ex WHERE ex.id = e.id) THEN 1 ELSE 0 END) " +
+            "FROM Exercise e GROUP BY e.language.language")
+    List<Object[]> countExercisesByLanguageWithAssessment();
+
+    // ✅ Lấy dữ liệu theo languageId
+    @Query("SELECT e.language.language, " +
+            "SUM(CASE WHEN EXISTS (SELECT 1 FROM Assessment a JOIN a.exercises ex WHERE ex.id = e.id) THEN 1 ELSE 0 END), " +
+            "SUM(CASE WHEN NOT EXISTS (SELECT 1 FROM Assessment a JOIN a.exercises ex WHERE ex.id = e.id) THEN 1 ELSE 0 END) " +
+            "FROM Exercise e WHERE e.language.id = :languageId GROUP BY e.language.language")
+    List<Object[]> countExercisesByLanguageWithAssessment(@Param("languageId") Long languageId);
     @Query("SELECT e FROM Exercise e WHERE LOWER(e.name) LIKE LOWER(CONCAT('%', :title, '%'))")
     List<Exercise> searchByTitle(@Param("title") String title);
 
@@ -242,6 +255,12 @@ public interface ExerciseRepository extends PagingAndSortingRepository<Exercise,
             @Param("level") Exercise.Level level,
             @Param("tagIds") List<Long> tagIds,
             Pageable pageable);
+
+    @Query("SELECT COUNT(e) > 0 FROM Exercise e WHERE e.name = :name AND e.language.id = :languageId AND e.id <> :id")
+    boolean existsByNameAndLanguageExcludingId(@Param("name") String name, @Param("languageId") Integer languageId, @Param("id") Long id);
+
+    @Query("SELECT COUNT(e) > 0 FROM Exercise e WHERE e.name = :name AND e.language.id = :languageId")
+    boolean existsByNameAndLanguage(@Param("name") String name, @Param("languageId") Integer languageId);
 }
 
 
