@@ -972,6 +972,78 @@
         body.light-theme #customOutputLabel {
             color: #000000 !important;
         }
+        /* loader */
+
+        .result-loader {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%; /* Giúp nó full chiều cao của thẻ cha */
+        }
+
+        .loader {
+            animation: rotate 1s infinite;
+            height: 50px;
+            width: 50px;
+        }
+
+        .loader:before,
+        .loader:after {
+            border-radius: 50%;
+            content: "";
+            display: block;
+            height: 20px;
+            width: 20px;
+        }
+        .loader:before {
+            animation: ball1 1s infinite;
+            background-color: #fff;
+            box-shadow: 30px 0 0 #ff3d00;
+            margin-bottom: 10px;
+        }
+        .loader:after {
+            animation: ball2 1s infinite;
+            background-color: #ff3d00;
+            box-shadow: 30px 0 0 #fff;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg) scale(0.8) }
+            50% { transform: rotate(360deg) scale(1.2) }
+            100% { transform: rotate(720deg) scale(0.8) }
+        }
+
+        @keyframes ball1 {
+            0% {
+                box-shadow: 30px 0 0 #ff3d00;
+            }
+            50% {
+                box-shadow: 0 0 0 #ff3d00;
+                margin-bottom: 0;
+                transform: translate(15px, 15px);
+            }
+            100% {
+                box-shadow: 30px 0 0 #ff3d00;
+                margin-bottom: 10px;
+            }
+        }
+
+        @keyframes ball2 {
+            0% {
+                box-shadow: 30px 0 0 #fff;
+            }
+            50% {
+                box-shadow: 0 0 0 #fff;
+                margin-top: -20px;
+                transform: translate(15px, 15px);
+            }
+            100% {
+                box-shadow: 30px 0 0 #fff;
+                margin-top: 0;
+            }
+        }
+
+
     </style>
 </head>
 
@@ -1014,7 +1086,7 @@ Exercises
         <div class="container-fluid" style="height: 85vh;">
             <div class="row" style="height: 100%; display: flex; flex-wrap: nowrap;">
                 <!-- Left Panel -->
-                 <div class="col-md-3 text-white d-flex flex-column position-relative" id="leftPanel"
+                <div class="col-md-3 text-white d-flex flex-column position-relative" id="leftPanel"
                      style="height:100%; font-size:0.9em;">
                     <div class="resizer" id="resizer"></div>
                     <div id="leftPanelContent">
@@ -1044,25 +1116,25 @@ Exercises
                             </div>
 
                             <!-- Search Results Tab -->
-<!--                            <div class="tab-pane fade" id="searchResults" role="tabpanel">-->
-<!--                                <div id="emptySearchState" class="text-center p-5">-->
-<!--                                    <i class="fas fa-search mb-4" style="font-size: 3em; color: #6c757d;"></i>-->
-<!--                                    <h4 class="mb-3" style="color: #6c757d;">Start searching</h4>-->
-<!--                                    <p class="text-muted">-->
-<!--                                        Enter a keyword into the search box above to search on Google.<br>-->
-<!--                                        Search results will appear here.-->
-<!--                                    </p>-->
-<!--                                    <div class="mt-4">-->
-<!--                                        <small class="text-muted">-->
-<!--                                            <i class="fas fa-lightbulb"></i> Suggestion: You can search for-->
-<!--                                            examples,-->
-<!--                                            guides, or reference materials related to the exercise.-->
-<!--                                        </small>-->
-<!--                                    </div>-->
-<!--                                </div>-->
-<!--                                <iframe id="searchFrame"-->
-<!--                                        style="width: 100%; height: 100%; border: none; display: none;"></iframe>-->
-<!--                            </div>-->
+                            <!--                            <div class="tab-pane fade" id="searchResults" role="tabpanel">-->
+                            <!--                                <div id="emptySearchState" class="text-center p-5">-->
+                            <!--                                    <i class="fas fa-search mb-4" style="font-size: 3em; color: #6c757d;"></i>-->
+                            <!--                                    <h4 class="mb-3" style="color: #6c757d;">Start searching</h4>-->
+                            <!--                                    <p class="text-muted">-->
+                            <!--                                        Enter a keyword into the search box above to search on Google.<br>-->
+                            <!--                                        Search results will appear here.-->
+                            <!--                                    </p>-->
+                            <!--                                    <div class="mt-4">-->
+                            <!--                                        <small class="text-muted">-->
+                            <!--                                            <i class="fas fa-lightbulb"></i> Suggestion: You can search for-->
+                            <!--                                            examples,-->
+                            <!--                                            guides, or reference materials related to the exercise.-->
+                            <!--                                        </small>-->
+                            <!--                                    </div>-->
+                            <!--                                </div>-->
+                            <!--                                <iframe id="searchFrame"-->
+                            <!--                                        style="width: 100%; height: 100%; border: none; display: none;"></iframe>-->
+                            <!--                            </div>-->
                         </div>
 
                         <!-- Phần tìm kiếm Google -->
@@ -1588,6 +1660,9 @@ Exercises
             const exerciseId = document.getElementById("exerciseId").value;
             const code = editor.getValue();
 
+            let output = document.getElementById("output");
+            output.innerHTML = `<div class="result-loader d-flex justify-content-center align-items-center" style="height: 100%;"><span class="loader"></span></div>`;
+
             $.ajax({
                 url: "/judgement/precheck-code",
                 method: "POST",
@@ -1596,11 +1671,11 @@ Exercises
                     code: code
                 },
                 success: function (response) {
-                    document.getElementById("output").innerHTML = `<span>${response}</span>`;
+                    output.innerHTML = `<span>${response}</span>`;
                 },
                 error: function (xhr) {
                     let errorMessage = xhr.responseText ? xhr.responseText : "Something went wrong!";
-                    document.getElementById("customOutput").innerHTML = `<span style='color: red;'>${errorMessage}</span>`;
+                    output.innerHTML = `<span style='color: red;'>${errorMessage}</span>`;
                 }
             });
         }
@@ -1791,6 +1866,9 @@ Exercises
         const code = editor.getValue();
         const customInput = document.getElementById("customInput").value;
 
+        let customOutput = document.getElementById("customOutput");
+        customOutput.innerHTML = `<span class="loader"></span>`;
+
         $.ajax({
             url: "/judgement/run-custom-code",
             method: "POST",
@@ -1800,11 +1878,11 @@ Exercises
                 customInput: customInput
             },
             success: function (response) {
-                document.getElementById("customOutput").innerHTML = `<span>${response}</span>`;
+                customOutput.innerHTML = `<span>${response}</span>`;
             },
             error: function (xhr) {
                 let errorMessage = xhr.responseText ? xhr.responseText : "Something went wrong!";
-                document.getElementById("customOutput").innerHTML = `<span style='color: red;'>${errorMessage}</span>`;
+                customOutput.innerHTML = `<span style='color: red;'>${errorMessage}</span>`;
             }
         });
     }
