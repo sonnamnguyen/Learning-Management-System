@@ -557,49 +557,62 @@ public class ExerciseService {
     public List<Exercise> getAllExercisesAll() {
         return exerciseRepository.findAll();
     }
+
     public Map<String, List<Exercise>> findDuplicates() {
+        // Lấy tất cả exercises và nhóm theo ngôn ngữ ngay từ đầu
         List<Exercise> allExercises = exerciseRepository.findAll();
-        Map<String, List<Exercise>> byLanguage = allExercises.stream()
+        Map<String, List<Exercise>> exercisesByLanguage = allExercises.stream()
                 .collect(Collectors.groupingBy(ex -> ex.getLanguage().getLanguage()));
 
         Map<String, List<Exercise>> duplicates = new HashMap<>();
         LevenshteinDistance levenshtein = new LevenshteinDistance();
 
-        for (List<Exercise> exercises : byLanguage.values()) {
-            if (exercises.size() <= 1) continue;
+        // Xử lý từng ngôn ngữ riêng biệt
+        for (List<Exercise> languageGroup : exercisesByLanguage.values()) {
+            int size = languageGroup.size();
+            // Nếu chỉ có 1 bài thì không cần kiểm tra
+            if (size <= 1) continue;
 
-            Map<String, List<Exercise>> tempDuplicates = new HashMap<>();
+            // Sử dụng Map tạm thời để nhóm các bài tương tự
+            Map<String, List<Exercise>> tempGroups = new HashMap<>();
 
-            for (int i = 0; i < exercises.size(); i++) {
-                Exercise ex1 = exercises.get(i);
-                String key = ex1.getDescription();
-                int len1 = ex1.getDescription().length();
+            for (int i = 0; i < size; i++) {
+                Exercise ex1 = languageGroup.get(i);
+                String desc1 = ex1.getDescription();
+                int maxLength1 = desc1.length();
 
-                List<Exercise> group = tempDuplicates.computeIfAbsent(key, k -> new ArrayList<>());
-                if (!group.contains(ex1)) {
-                    group.add(ex1);
-                }
+                // Tìm nhóm phù hợp cho ex1
+                String matchedKey = null;
 
-                for (int j = i + 1; j < exercises.size(); j++) {
-                    Exercise ex2 = exercises.get(j);
-                    int len2 = ex2.getDescription().length();
-
-                    if (Math.abs(len1 - len2) > len1 * 0.2) continue;
-
-                    int distance = levenshtein.apply(ex1.getDescription(), ex2.getDescription());
-                    double similarity = 1.0 - ((double) distance / Math.max(len1, len2));
+                for (String key : tempGroups.keySet()) {
+                    int distance = levenshtein.apply(desc1, key);
+                    double similarity = 1.0 - ((double) distance / Math.max(maxLength1, key.length()));
 
                     if (similarity >= 0.7) {
-                        if (!group.contains(ex2)) {
-                            group.add(ex2);
-                        }
+                        matchedKey = key;
+                        break;
                     }
+                }
+
+                // Nếu tìm thấy nhóm tương tự
+                if (matchedKey != null) {
+                    tempGroups.get(matchedKey).add(ex1);
+                } else {
+                    // Tạo nhóm mới với desc1 làm key
+                    List<Exercise> newGroup = new ArrayList<>();
+                    newGroup.add(ex1);
+                    tempGroups.put(desc1, newGroup);
                 }
             }
 
-            tempDuplicates.entrySet().stream()
+            // Chỉ giữ lại các nhóm có duplicates
+            tempGroups.entrySet().stream()
                     .filter(entry -> entry.getValue().size() > 1)
-                    .forEach(entry -> duplicates.put(entry.getKey() + "-" + exercises.get(0).getLanguage().getLanguage(), entry.getValue()));
+                    .forEach(entry -> {
+                        String finalKey = entry.getValue().get(0).getDescription() + "-" +
+                                entry.getValue().get(0).getLanguage().getLanguage();
+                        duplicates.put(finalKey, entry.getValue());
+                    });
         }
 
         return duplicates;

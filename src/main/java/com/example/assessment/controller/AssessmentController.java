@@ -897,6 +897,7 @@ public class AssessmentController {
         existingAssessment.setShuffled(assessment.isShuffled());
         existingAssessment.setQuizScoreRatio(assessment.getQuizScoreRatio());
         existingAssessment.setExerciseScoreRatio(assessment.getExerciseScoreRatio());
+        existingAssessment.setUpdatedAt(ZonedDateTime.now().toLocalDateTime());
 
         User currentUser = userService.getCurrentUser();
         existingAssessment.setUpdatedBy(currentUser);
@@ -1335,5 +1336,39 @@ public class AssessmentController {
     @GetMapping("/already-assessed")
     public String showAlreadyAssessedError() {
         return "assessments/already-assessed";  // This will load the calendar.html template
+    }
+    @Controller
+    @RequestMapping("/api/score")
+    public class AssessmentScoreController {
+        @Autowired
+        private AssessmentScoreService assessmentScoreService;
+
+        @PutMapping("/edit/{attemptId}")
+        public ResponseEntity<?> editScore(@PathVariable Long attemptId,
+                                           @RequestBody Map<String, Object> requestMap) {
+            try {
+                Map<String, Object> result =   assessmentScoreService.editScore(attemptId, requestMap);
+                return ResponseEntity.ok(result);
+            } catch (ResourceNotFoundException e) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("error", e.getMessage()));
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", e.getMessage()));
+            } catch (Exception e) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(Map.of("error", "Lỗi khi chỉnh sửa điểm: " + e.getMessage()));
+            }
+        }
+        @GetMapping("/edit/{attemptId}")
+        public String editScorePage(@PathVariable Long attemptId, Model model) {
+            model.addAttribute("attemptId", attemptId);
+            return "assessments/editscore";
+        }
+        @GetMapping("/current/{attemptId}")
+        public ResponseEntity<Map<String, Object>> getCurrentScores(@PathVariable Long attemptId) {
+            Map<String, Object> currentScores = assessmentScoreService.getCurrentScores(attemptId);
+            return ResponseEntity.ok(currentScores);
+        }
     }
 }

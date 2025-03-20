@@ -39,6 +39,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -91,15 +92,6 @@ public class AssessmentService {
     private NotificationService notificationService;
 
     @Transactional
-    public void alignSequence() {
-        Object maxId = entityManager.createQuery("SELECT MAX(i.id) FROM InvitedCandidate i").getSingleResult();
-        if (maxId != null) {
-            entityManager.createNativeQuery("SELECT setval('assessment_id_seq', :newValue, true)")
-                    .setParameter("newValue", ((Number) maxId).longValue())
-                    .getSingleResult();
-        }
-    }
-    @Transactional
     public void alignSequenceForAssessmentQuestion() {
         Object maxId = entityManager.createQuery("SELECT MAX(aq.id) FROM AssessmentQuestion aq").getSingleResult();
         if (maxId != null) {
@@ -108,6 +100,7 @@ public class AssessmentService {
                     .getSingleResult();
         }
     }
+
     public Assessment createAssessment(Assessment assessment) {
         return assessmentRepository.save(assessment);
     }
@@ -119,15 +112,6 @@ public class AssessmentService {
     public Assessment saveAssessment(Assessment assessment) {
         return assessmentRepository.save(assessment);
     }
-
-    public boolean duplicateAss(String name) {
-        return assessmentRepository.existsByName(name);
-    }
-
-    private final String SECRET_KEY = "BaTramBaiCodeThieuNhi";
-
-    // private final String inviteUrlHeader = "https://group-02.cookie-candy.id.vn/assessments/invite/";
-    private final String inviteUrlHeader = "http://localhost:9091/assessments/invite/";
 
     //  private final String inviteUrlHeader = "https://java02.fsa.io.vn/assessments/invite/";
     public Optional<Assessment> findById(Long id) {
@@ -153,10 +137,6 @@ public class AssessmentService {
 
     public Page<Assessment> search(String searchQuery, Pageable pageable) {
         return assessmentRepository.search(searchQuery, pageable);
-    }
-
-    public boolean existsByTitle(String title) {
-        return assessmentRepository.existsByTitle(title);
     }
 
     public User getCurrentUser() {
@@ -251,26 +231,28 @@ public class AssessmentService {
         return new ByteArrayInputStream(out.toByteArray());
     }
 
-    public void increaseInvitedCount(long assessmentId, int count) {
-        Optional<Assessment> assessmentOpt = assessmentRepository.findById(assessmentId);
-        if (assessmentOpt.isPresent()) {
-            Assessment assessment = assessmentOpt.get();
-            assessment.setInvitedCount(assessment.getInvitedCount() + count); // Increase by batch size
-            assessmentRepository.save(assessment);
-        }
-    }
-
-    /**
-     * Stores or updates the invited emails in the PostgreSQL LOB column and inserts into the invited_candidate table.
-     * This method appends new emails to the existing ones instead of overwriting.
-     *
-     * @param assessmentId The ID of the assessment.
-     * @param newEmails    List of new emails to be added.
-     */
+    @Transactional
     public void storeInvitedEmail(long assessmentId, List<String> newEmails, LocalDateTime invitationDate, LocalDateTime expirationDate) {
+        System.out.println(">>> Starting storeInvitedEmail for assessmentId=" + assessmentId);
+        System.out.println(">>> New Emails to store: " + newEmails);
+        System.out.println(">>> Invitation Date (Local): " + invitationDate);
+        System.out.println(">>> Expiration Date (Local): " + expirationDate);
+
+        // Check connected database
+        try {
+            String dbName = jdbcTemplate.queryForObject("SELECT current_database();", String.class);
+            System.out.println(">>> Connected to database: " + dbName);
+        } catch (Exception e) {
+            System.err.println(">>> ERROR: Unable to check database connection!");
+            e.printStackTrace();
+            return; // Exit if there's a DB connection issue
+        }
+
+        // Fetch existing emails
         List<String> existingEmails = getInvitedEmails(assessmentId);
         Set<String> updatedEmails = new HashSet<>(existingEmails);
         updatedEmails.addAll(newEmails);
+        System.out.println(">>> Updated Email List: " + updatedEmails);
 
         ZoneId vietnamZone = ZoneId.of("Asia/Ho_Chi_Minh");
 
@@ -282,29 +264,55 @@ public class AssessmentService {
         Timestamp invitationTimestamp = Timestamp.valueOf(invitationZoned.toLocalDateTime());
         Timestamp expirationTimestamp = Timestamp.valueOf(expirationZoned.toLocalDateTime());
 
-        for (String email : newEmails) {
-            Integer count = jdbcTemplate.queryForObject(
-                    "SELECT COUNT(*) FROM invited_candidate WHERE email = ? AND assessment_id = ?",
-                    Integer.class, email, assessmentId
-            );
+        // Debug timestamp values
+        System.out.println(">>> Final invitationTimestamp: " + invitationTimestamp);
+        System.out.println(">>> Final expirationTimestamp: " + expirationTimestamp);
 
-            if (count != null && count > 0) {
-                jdbcTemplate.update(
-                        "UPDATE invited_candidate " +
-                                "SET invitation_date = ?, expiration_date = ?, has_assessed = false " + // Reset has_assessed to false
-                                "WHERE email = ? AND assessment_id = ?",
-                        invitationTimestamp, expirationTimestamp, email, assessmentId
+        try {
+            for (String email : newEmails) {
+                System.out.println(">>> Processing email: " + email);
+
+                Integer count = jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM invited_candidate WHERE email = ? AND assessment_id = ?",
+                        Integer.class, email, assessmentId
                 );
-            } else {
-                jdbcTemplate.update(
-                        "INSERT INTO invited_candidate (email, invitation_date, expiration_date, assessment_id, has_assessed) " +
-                                "VALUES (?, ?, ?, ?, false)",
-                        email, invitationTimestamp, expirationTimestamp, assessmentId
-                );
+
+                System.out.println(">>> Existing count for email " + email + ": " + count);
+
+                if (count != null && count > 0) {
+                    int rowsAffected = jdbcTemplate.update(
+                            "UPDATE invited_candidate " +
+                                    "SET invitation_date = ?, expiration_date = ?, has_assessed = false " +
+                                    "WHERE email = ? AND assessment_id = ?",
+                            invitationTimestamp, expirationTimestamp, email, assessmentId
+                    );
+                    System.out.println(">>> Rows affected (update): " + rowsAffected);
+                } else {
+                    int rowsAffected = jdbcTemplate.update(
+                            "INSERT INTO invited_candidate (email, invitation_date, expiration_date, assessment_id, has_assessed) " +
+                                    "VALUES (?, ?, ?, ?, false)",
+                            email, invitationTimestamp, expirationTimestamp, assessmentId
+                    );
+                    System.out.println(">>> Rows affected (insert): " + rowsAffected);
+                }
             }
+        } catch (Exception e) {
+            jdbcTemplate.execute("ROLLBACK;");
+            System.out.println(">>> ERROR: Transaction rolled back due to an issue");
+            e.printStackTrace();
         }
-    }
 
+        // Force commit (for debugging transaction issues)
+//        try {
+//            jdbcTemplate.execute("COMMIT;");
+//            System.out.println(">>> Transaction committed.");
+//        } catch (Exception e) {
+//            System.err.println(">>> ERROR: Could not commit transaction.");
+//            e.printStackTrace();
+//        }
+
+        System.out.println(">>> storeInvitedEmail execution completed.");
+    }
 
     /**
      * Retrieves the list of invited emails stored in PostgreSQL LOB column.
@@ -364,6 +372,7 @@ public class AssessmentService {
 
         attemptRepository.save(attempt);
     }
+
     @Scheduled(fixedRate = 3600000) // Runs every hour
     public void checkExpiringAssessments() {
         LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Bangkok")); // GMT+7
@@ -375,6 +384,7 @@ public class AssessmentService {
             notificationService.sendReminderEmail(candidate.getEmail(), assessment.getId(), candidate.getExpirationDate());
         }
     }
+
     public long countAttemptsByAssessmentId(Long assessmentId) {
         return attemptRepository.countByAssessmentId(assessmentId);
     }
@@ -467,7 +477,7 @@ public class AssessmentService {
     }
 
 
-    public  double cosineSimilarity(double[] vec1, double[] vec2) {
+    public double cosineSimilarity(double[] vec1, double[] vec2) {
         double dotProduct = 0, norm1 = 0, norm2 = 0;
         for (int i = 0; i < vec1.length; i++) {
             dotProduct += vec1[i] * vec2[i];

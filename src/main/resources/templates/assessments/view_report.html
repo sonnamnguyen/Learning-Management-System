@@ -14,10 +14,18 @@
                 </span>
 
             </div>
-            <a href="/assessments" class="btn btn-outline-secondary" style="font-size: 0.875rem;">
-                Back to List
-            </a>
+            <div class="d-flex">
+                <!-- Thêm nút Edit Score -->
+                <a th:href="@{/api/score/edit/{attemptId}(attemptId=${attemptInfo.id})}" class="btn btn-primary me-2" style="font-size: 0.875rem;">
+                    <i class="fas fa-edit"></i> Edit Score
+                </a>
+
+                <a href="/assessments" class="btn btn-outline-secondary" style="font-size: 0.875rem;">
+                    Back to List
+                </a>
+            </div>
         </div>
+
 
         <hr>
 

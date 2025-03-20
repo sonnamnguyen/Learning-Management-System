@@ -734,12 +734,16 @@ public class ExerciseController {
         }
 
         // Kiểm tra và cập nhật tên bài tập
+        List<Category> categories = categoryService.getAllCategory();
         if (!exercise.getName().equals(existingExercise.getName())) {
             if (exerciseService.existsByTitleExcludingId(exercise.getName(), id)) {
                 model.addAttribute("error", "Exercise name already exists!");
                 model.addAttribute("programmingLanguages", programmingLanguageService.getAllProgrammingLanguages());
                 model.addAttribute("testCasesJson", testCasesJson);
+                model.addAttribute("tags", categories);
                 model.addAttribute("content", "exercises/edit");
+                model.addAttribute("exercise", existingExercise);
+
                 return "layout";
             }
             existingExercise.setName(exercise.getName());
