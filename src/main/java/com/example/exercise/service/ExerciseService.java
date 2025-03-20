@@ -78,12 +78,12 @@ public class ExerciseService {
         for (Object[] row : results) {
             String languageName = (String) row[0];
             int assessedExercises = ((Number) row[1]).intValue();    // Bài tập có trong Assessment
-            int unassessedExercises = ((Number) row[2]).intValue();  // Bài tập chưa có trong Assessment
-            int totalExercises = assessedExercises + unassessedExercises;
+            int notAssessed = ((Number) row[2]).intValue();  // Bài tập chưa có trong Assessment
+            int totalExercises = assessedExercises + notAssessed;
 
             Map<String, Integer> values = new HashMap<>();
             values.put("assessed", assessedExercises);
-            values.put("unassessed", unassessedExercises);
+            values.put("notAssessed", notAssessed);
             values.put("total", totalExercises);
 
             data.put(languageName, values);

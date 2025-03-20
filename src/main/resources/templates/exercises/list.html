@@ -867,9 +867,8 @@
                             <div class="description" th:text="${exercise.description}"></div>
                         </td>
                         <td>
-                            <!--                            <span th:each="tag : ${exercise.exerciseCategories}" th:text="${tag.category.tag}" class="badge bg-dark text-light me-2"></span>-->
-                            <!--                            <span th:if="${#lists.size(exercise.exerciseCategories) > 2}" class="badge bg-secondary text-light">...</span>-->
-                            <div id="tagContainer">
+                            <div id="tagContainer"
+                                 style="max-width: 200px; overflow-x: auto; white-space: nowrap; display: flex;">
         <span th:each="tag, iterStat : ${exercise.exerciseCategories}"
               th:text="${tag.category.tag}"
               th:classappend="${iterStat.index >= 2} ? 'd-none extra-tag'"
@@ -1145,8 +1144,8 @@
                 if (result.isConfirmed) {
                     fetch('/exercises/delete-batch', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ ids: selectedIds })
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ids: selectedIds})
                     }).then(response => {
                         if (response.ok) {
                             Swal.fire({
@@ -1326,7 +1325,8 @@
         showConfirmButton: false, // Ẩn nút "OK"
         willClose: () => {
             window.location.href = '/exercises';  // Điều hướng về trang mong muốn
-        }    });
+        }
+    });
 </script>
 
 <script th:if="${error}">

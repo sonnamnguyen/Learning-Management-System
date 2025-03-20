@@ -8,6 +8,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <!-- Bootstrap Icons CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     #backToTop, #scrollDown {
       width: 45px;
@@ -333,38 +334,70 @@
       });
     });
 
-    // Xử lý nút "Delete Selected"
     if (deleteButton) {
       deleteButton.addEventListener("click", function () {
         const selectedIds = [...document.querySelectorAll(".selectItem:checked")]
                 .map(cb => cb.closest("tr").getAttribute("data-id"));
 
         if (selectedIds.length === 0) {
-          alert("No exercises selected.");
+          Swal.fire({
+            icon: 'warning',
+            title: 'No exercises selected!',
+            text: 'Please select at least one exercise to delete.',
+            confirmButtonText: 'OK'
+          });
           return;
         }
 
-        if (confirm("Are you sure you want to delete selected exercises?")) {
-          fetch('/exercises/delete-batch', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ids: selectedIds})
-          }).then(response => {
-            if (response.ok) {
-              showToast();
-              setTimeout(() => location.reload(), 1000);
-            } else {
-              alert("Failed to delete exercises.");
-            }
-          }).catch(error => {
-            console.error("Error deleting exercises: ", error);
-            alert("An error occurred while deleting exercises.");
-          });
-        }
+        Swal.fire({
+          title: "Are you sure?",
+          text: "You will not be able to recover the deleted exercises!",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#d33",
+          cancelButtonColor: "#3085d6",
+          confirmButtonText: "Yes, delete them!",
+          cancelButtonText: "Cancel"
+        }).then((result) => {
+          if (result.isConfirmed) {
+            fetch('/exercises/delete-batch', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ ids: selectedIds })
+            }).then(response => {
+              if (response.ok) {
+                Swal.fire({
+                  icon: "success",
+                  title: "Deleted!",
+                  text: "The selected exercises have been deleted.",
+                  timerProgressBar: true,
+                  timer: 2000,
+                  showConfirmButton: false
+                });
+                setTimeout(() => location.reload(), 1000);
+              } else {
+                Swal.fire({
+                  icon: "error",
+                  title: "Failed!",
+                  text: "Failed to delete exercises. Please try again.",
+                  timerProgressBar: true,
+                  timer: 1000,
+                  showConfirmButton: false
+                });
+              }
+            }).catch(() => {
+              Swal.fire({
+                icon: "error",
+                title: "Error!",
+                text: "Something went wrong. Please try again later.",
+                confirmButtonText: "OK"
+              });
+            });
+          }
+        });
       });
     }
 
-    // Hiển thị toast
     function showToast() {
       if (toastElement) {
         toastElement.style.display = "block";
