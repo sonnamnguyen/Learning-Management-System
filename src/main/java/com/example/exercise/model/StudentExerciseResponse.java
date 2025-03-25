@@ -29,4 +29,14 @@ public class StudentExerciseResponse {
     private int userEasyExercisesNoLanguage;
     private int userHardExercisesNoLanguage;
     private int userMediumExercisesNoLanguage;
+    private int totalJava;
+    private int totalC;
+    private int totalCsharp;
+    private int totalCpp;
+    private int totalSql;
+    private int userJava;
+    private int userC;
+    private int userCsharp;
+    private int userCpp;
+    private int userSql;
 }
