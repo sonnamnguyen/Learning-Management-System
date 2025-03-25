@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface StudentAssessmentAttemptRepository extends JpaRepository<StudentAssessmentAttempt, Long> {
-
+    List<StudentAssessmentAttempt> findAll();
     // Lấy danh sách attempts theo assessment (không phân trang)
     List<StudentAssessmentAttempt> findByAssessment_Id(Long assessmentId);
 

@@ -10,10 +10,79 @@
             integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
             crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+    <!-- Face detection api-->
+    <script defer src="/js/face-api.min.js"></script>
+    <script defer src="/js/face-detection.js"></script>
     <style>
         /* Smooth scroll behavior */
         html {
             scroll-behavior: smooth;
+        }
+
+        .video-container {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            background: rgba(0, 0, 0, 0.1);
+            min-height: 240px; /* Ensure minimum height even before video loads */
+        }
+
+        .face-detection-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100% !important; /* Force canvas to match container size */
+            height: 100% !important;
+            z-index: 10;
+            pointer-events: none; /* Allow clicks to pass through to video */
+        }
+
+        #video {
+            width: 100%;
+            height: auto;
+            min-height: 240px;
+            border-radius: 15px;
+            background-color: #000; /* Dark background while loading */
+        }
+
+        .video-overlay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            z-index: 20; /* Ensure overlay is above canvas */
+        }
+
+        .video-active {
+            border: 3px solid #28a745;
+            box-shadow: 0 0 10px rgba(40, 167, 69, 0.8);
+        }
+
+        .loading-spinner {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         /* Marking checkbox */
@@ -89,6 +158,14 @@
         <!-- Right Section (Sidebar) -->
         <nav id="sidebar" class="sidebar d-none d-md-block">
             <div>
+                <!-- Card to show video of user taking exam -->
+                <div class="card">
+                    <div class="video-container" id="videoContainer">
+                        <video id="video" autoplay muted></video>
+                        <div class="loading-spinner" id="loadingSpinner"></div>
+                        <div class="video-overlay" id="cameraStatus">Initializing...</div>
+                    </div>
+                </div>
                 <div class="card text-bg-light">
                     <!-- Time -->
                     <div class="card-header">
@@ -308,8 +385,6 @@
         });
     });
 </script>
-
-
 <!--Cheating check-->
 <script>
     // Initial tabLeaveCount from sessionStorage
@@ -353,101 +428,6 @@
                 alert("Copying is not allowed!");
             }
         });
-    })
-
-
-    // Auto capture picture from user's camera
-    document.addEventListener("DOMContentLoaded", async function () {
-        let video = document.createElement("video");
-        let canvas = document.createElement("canvas");
-        let context = canvas.getContext("2d");
-        let streamActive = false;
-
-        // Disable all answer inputs and exercise links initially
-        function disableInteractions() {
-            document.querySelectorAll(".form-check-input, .exercise-title a").forEach(element => {
-                element.disabled = true;
-                element.classList.add("disabled");
-            })
-        }
-
-        // Function to enable interactions
-        function enableInteractions() {
-            document.querySelectorAll(".form-check-input, .exercise-title a").forEach(element => {
-                element.disabled = false;
-                element.classList.remove("disabled");
-            })
-        }
-
-        // Function to setup camera
-        async function setupCamera() {
-            try {
-                let stream = await navigator.mediaDevices.getUserMedia({video: true});
-                video.srcObject = stream;
-                await new Promise(resolve => video.onloadedmetadata = resolve);
-                video.play();
-                streamActive = true;
-                enableInteractions();
-            } catch (error) {
-                console.error("Error accessing camera: ", error);
-                alert("❌ You must allow camera access to proceed with the exam.");
-                disableInteractions();
-            }
-        }
-
-        // Function to capture and send images to server
-        async function captureAndSendImage() {
-            if (!streamActive) return;
-            try {
-                // Ensure video stream is active
-                if (!video.srcObject) await setupCamera();
-
-                // Set canvas size to match video feed
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-
-                // Capture frame from video
-                context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-                // Convert image to Blob
-                canvas.toBlob(async function (blob) {
-                    let formData = new FormData();
-                    formData.append("file", blob, "capture_image.jpg");
-
-                    // Send image to server
-                    const response = await fetch("/assessments/capture-image", {
-                        method: "POST",
-                        body: formData
-                    });
-
-                    if (!response.ok) {
-                        console.error(`Error from server: ${response.status}`);
-                        return;
-                    }
-
-                    const data = await response.json();
-
-                    if (data > 1 || data < 1) {
-                        violationFaceCount++;
-                        sessionStorage.setItem("violationFaceCount", violationFaceCount.toString()); // Store in session
-                        if (violationFaceCount >= 3 && data > 1) {
-                            alert("⚠ Warning! Multiple face detection issues detected.");
-                        } else if (violationFaceCount >= 3 && data < 1) {
-                            alert("⚠ Warning! None face detection issues detected.");
-                        }
-                    }
-
-                }, "image/jpeg");
-            } catch (error) {
-                console.error("Error capturing camera: ", error);
-            }
-        }
-
-        // Try to setup camera
-        await setupCamera();
-
-        // Capture image every 10 seconds
-        setInterval(captureAndSendImage, 5000);
     })
 
     // Attach tabLeaveCount to form before submission

@@ -103,6 +103,8 @@ public class ExerciseController {
         totalPages = exercisesPage.getTotalPages();
 
         // Add attributes to model
+//        model.addAttribute("mostAttemptedExercises", studentExerciseAttemptService.getListAttempt());
+//        System.out.println(studentExerciseAttemptService.getListAttempt());
         model.addAttribute("exercises", exercises);
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", totalPages);
@@ -420,6 +422,7 @@ public class ExerciseController {
         List<ProgrammingLanguage> languages = programmingLanguageService.getAllProgrammingLanguages();
 
         // Thêm dữ liệu vào model
+        model.addAttribute("mostAttemptedExercises", studentExerciseAttemptService.getListAttempt());
         model.addAttribute("newExercises", newExercises);
         model.addAttribute("completionRate", completionRate);
         model.addAttribute("totalExercises", totalExercises);

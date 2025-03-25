@@ -11,7 +11,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2.0/dist/css/adminlte.min.css"/>
-
+    <!-- Prism.js CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -188,38 +189,68 @@
                 padding: 0;
             }
         }
-
         .hidden-box {
             display: none !important;
         }
+        /* CSS dark mode sáng hơn, đẹp hơn với animation */
+.dark-mode {
+    background-color: #32373d; /* Xám đậm nhẹ nhàng hơn */
+    color: #f0f2f5; /* Màu chữ sáng dịu, dễ đọc */
+    transition: background-color 0.3s ease, color 0.3s ease; /* Hiệu ứng chuyển màu mượt */
+}
 
-        /* CSS dark mode được điều chỉnh sáng hơn */
-        .dark-mode {
-            background-color: #2c2f33; /* Xám đậm nhạt hơn */
-            color: #e0e0e0; /* Màu chữ sáng nhưng không chói */
-        }
+.dark-mode .small-box {
+    color: #f0f2f5; /* Màu chữ sáng dịu */
+    background-color: #3e444b; /* Nền nhẹ nhàng hơn */
+    border-radius: 8px; /* Bo góc mềm mại */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Đổ bóng nhẹ */
+    transition: transform 0.2s ease, box-shadow 0.2s ease; /* Animation khi hover */
+}
 
-        .dark-mode .small-box {
-            color: #e0e0e0; /* Giữ màu chữ sáng */
-        }
+.dark-mode .small-box:hover {
+    transform: translateY(-5px); /* Nhấc lên nhẹ khi hover */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* Đổ bóng đậm hơn */
+}
 
-        .dark-mode .chart-container,
-        .dark-mode .leaderboard {
-            background-color: #3a3f44; /* Xám trung tính sáng hơn */
-            color: #e0e0e0;
-        }
+.dark-mode .chart-container,
+.dark-mode .leaderboard {
+    background-color: #40474f; /* Xám trung tính sáng hơn */
+    color: #f0f2f5;
+    border-radius: 10px; /* Bo góc hiện đại */
+    padding: 15px; /* Thêm khoảng đệm */
+    transition: background-color 0.3s ease; /* Chuyển màu mượt mà */
+}
 
-        .dark-mode .leaderboard th {
-            background-color: #0056b3; /* Xanh đậm nhạt hơn một chút */
-        }
+.dark-mode .leaderboard th {
+    background-color: #0066cc; /* Xanh đậm tươi sáng hơn */
+    color: #ffffff; /* Chữ trắng cho tương phản */
+    padding: 10px;
+    border-bottom: 2px solid #f0f2f5; /* Đường viền dưới nổi bật */
+}
 
-        .dark-mode .leaderboard tbody tr:nth-child(even) {
-            background-color: #444a50; /* Xám nhạt cho hàng chẵn */
-        }
+.dark-mode .leaderboard tbody tr {
+    transition: background-color 0.2s ease, transform 0.2s ease; /* Animation cho hàng */
+}
 
-        .dark-mode .leaderboard tbody tr:hover {
-            background-color: #51575e; /* Xám sáng hơn khi hover */
-        }
+.dark-mode .leaderboard tbody tr:nth-child(even) {
+    background-color: #4a5159; /* Xám nhạt hơn cho hàng chẵn */
+}
+
+.dark-mode .leaderboard tbody tr:hover {
+    background-color: #5c646d; /* Xám sáng hơn khi hover */
+    transform: scale(1.02); /* Phóng to nhẹ khi hover */
+    cursor: pointer; /* Con trỏ tay để tăng tương tác */
+}
+
+/* Thêm hiệu ứng fade-in khi load */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.dark-mode {
+    animation: fadeIn 0.5s ease-in; /* Hiệu ứng mờ dần khi load */
+}
     </style>
 </head>
 <body class="hold-transition layout-fixed">
@@ -304,24 +335,50 @@
         <div class="row mt-4">
             <div class="col-md-12 leaderboard">
                 <h2 class="text-center">Most Attempted Exercises</h2>
-                <table class="table table-bordered">
+                <table class="table table-bordered" id="exerciseTable">
                     <thead>
                     <tr class="bg-primary text-white">
                         <th>Exercise Name</th>
                         <th>Times Attempted</th>
-                        <th>Completed</th>
-                        <th>Not Completed</th>
+                        <th>Score</th>
+                        <th>Submitted Code</th>
+                        <th>Attendant</th>
                     </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="exerciseTableBody">
                     <tr th:each="exercise : ${mostAttemptedExercises}">
-                        <td th:text="${exercise.name}"></td>
-                        <td th:text="${exercise.attempts}"></td>
-                        <td th:text="${exercise.completed}"></td>
-                        <td th:text="${exercise.notCompleted}"></td>
+                        <td th:text="${exercise.submitted_exercise.name}"></td>
+                        <td th:text="${#temporals.format(exercise.attemptDate, 'dd/MM/yyyy HH:mm:ss')}"></td> <!-- kiểu LocalDateTime -->
+                        <td th:text="${exercise.score_exercise}"></td>
+                        <td>
+                            <button class="btn btn-info btn-sm" onclick="showCodeModal(this)"
+                                    th:attr="data-code=${exercise.submitted_code} ?: '// No code submitted'">View Code</button>
+                        </td>
+                        <td th:text="${exercise.attendant_user.username}"></td>
                     </tr>
                     </tbody>
                 </table>
+                <!-- Thêm container cho phân trang -->
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center" id="pagination"></ul>
+                </nav>
+            </div>
+            <!-- Modal -->
+            <div class="modal fade" id="codeModal" tabindex="-1" aria-labelledby="codeModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="codeModalLabel">Submitted Code</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <pre><code id="codeContent" class="language-java"></code></pre>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -329,7 +386,106 @@
 
 <!-- Footer -->
 <div th:replace="~{fragments :: footer}" class="mt-auto"></div>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const rowsPerPage = 10; // Số hàng mỗi trang
+        const tableBody = document.getElementById("exerciseTableBody");
+        const rows = tableBody.getElementsByTagName("tr");
+        const totalRows = rows.length;
+        const totalPages = Math.ceil(totalRows / rowsPerPage);
+        let currentPage = 1;
 
+        // Hàm hiển thị các hàng cho trang hiện tại
+        function displayRows(page) {
+            const start = (page - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+
+            // Ẩn tất cả các hàng
+            for (let i = 0; i < totalRows; i++) {
+                rows[i].style.display = "none";
+            }
+
+            // Hiển thị các hàng cho trang hiện tại
+            for (let i = start; i < end && i < totalRows; i++) {
+                rows[i].style.display = "";
+            }
+
+            // Cập nhật trạng thái phân trang
+            updatePagination();
+        }
+
+        // Hàm tạo các nút phân trang
+        function updatePagination() {
+            const pagination = document.getElementById("pagination");
+            pagination.innerHTML = "";
+
+            // Nút First
+            const firstLi = document.createElement("li");
+            firstLi.className = "page-item" + (currentPage === 1 ? " disabled" : "");
+            firstLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(event, 1)">First</a>`;
+            pagination.appendChild(firstLi);
+
+            // Nút Previous
+            const prevLi = document.createElement("li");
+            prevLi.className = "page-item" + (currentPage === 1 ? " disabled" : "");
+            prevLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(event, ${currentPage - 1})">Previous</a>`;
+            pagination.appendChild(prevLi);
+
+            // Các nút số trang
+            for (let i = 1; i <= totalPages; i++) {
+                const li = document.createElement("li");
+                li.className = "page-item" + (i === currentPage ? " active" : "");
+                li.innerHTML = `<a class="page-link" href="#" onclick="changePage(event, ${i})">${i}</a>`;
+                pagination.appendChild(li);
+            }
+
+            // Nút Next
+            const nextLi = document.createElement("li");
+            nextLi.className = "page-item" + (currentPage === totalPages ? " disabled" : "");
+            nextLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(event, ${currentPage + 1})">Next</a>`;
+            pagination.appendChild(nextLi);
+
+            // Nút Last
+            const lastLi = document.createElement("li");
+            lastLi.className = "page-item" + (currentPage === totalPages ? " disabled" : "");
+            lastLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(event, ${totalPages})">Last</a>`;
+            pagination.appendChild(lastLi);
+        }
+
+        // Hàm chuyển trang
+        window.changePage = function (event, page) {
+            event.preventDefault(); // Ngăn hành vi mặc định của thẻ <a>
+            if (page < 1 || page > totalPages) return;
+            currentPage = page;
+            displayRows(currentPage);
+        };
+
+        // Hiển thị trang đầu tiên khi tải trang
+        if (totalRows > 0) {
+            displayRows(currentPage);
+        }
+    });
+</script>
+<!-- Prism.js JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script>
+    function showCodeModal(button) {
+         let code = button.getAttribute("data-code") || "// No code submitted";
+         const codeContent = document.getElementById("codeContent");
+         const modalElement = document.getElementById('codeModal');
+
+         if (!modalElement) {
+             console.error("Modal element not found!");
+             return;
+         }
+
+         codeContent.textContent = code;
+         Prism.highlightElement(codeContent);
+
+         const modal = new bootstrap.Modal(modalElement);
+         modal.show();
+     }
+</script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     // Thêm hàm toggle dark mode
@@ -349,7 +505,7 @@
     }
 
     // Kiểm tra trạng thái dark mode khi load trang
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function() {
         if (localStorage.getItem('darkMode') === 'enabled') {
             document.body.classList.add('dark-mode');
             document.getElementById('darkModeToggle').innerHTML = '<i class="bi bi-sun me-1"></i> Light Mode';
@@ -394,7 +550,7 @@
                 apiUrl += `?languageId=${languageId}`;
             }
 
-            // Hủy biểu đồ khi gọi API
+            // Hủy biểu đồ ngay khi gọi API
             window.topicChartInstance = resetChart(window.topicChartInstance);
             window.difficultyChartInstance = resetChart(window.difficultyChartInstance);
 
@@ -408,16 +564,20 @@
                 .then(data => {
                     console.log("📊 API Data:", data);
 
+                    // Kiểm tra nếu không có dữ liệu hoặc số bài tập = 0
                     if (!data || data.totalExercises === 0) {
                         console.warn("⚠️ Không có dữ liệu để hiển thị biểu đồ.");
                         return;
                     }
 
+                    // Kiểm tra dữ liệu hợp lệ
                     if (!data.difficultyChartData || !data.topicChartData) {
                         console.error("⚠ API trả về dữ liệu không hợp lệ:", data);
                         return;
                     }
-
+                    // Xác định màu dựa trên dark mode
+                    const isDarkMode = document.body.classList.contains('dark-mode');
+                    const labelColor = isDarkMode ? '#f0f2f5' : '#000'; // Trắng cho dark mode, đen cho light mode
                     // 1️⃣ Biểu đồ Chủ đề (Topic Chart)
                     const languageCanvas = document.getElementById('lineChart');
                     if (!languageCanvas) {
@@ -448,40 +608,32 @@
                         data: {
                             labels: languageLabels,
                             datasets: [
-                                {
-                                    label: "Assessed",
-                                    data: assessedValues,
-                                    backgroundColor: "rgba(255, 99, 132, 0.4)",
-                                    minBarLength: 2
-                                },
-                                {
-                                    label: "Unassessed",
-                                    data: unassessedValues,
-                                    backgroundColor: "rgba(153, 102, 255, 0.4)",
-                                    minBarLength: 2
-                                },
-                                {
-                                    label: "Total",
-                                    data: totalValues,
-                                    backgroundColor: "rgba(75, 192, 192, 0.4)",
-                                    minBarLength: 2
-                                }
+                                { label: "Assessed", data: assessedValues, backgroundColor: "rgba(255, 99, 132, 0.4)", minBarLength: 2 },
+                                { label: "Unassessed", data: unassessedValues, backgroundColor: "rgba(153, 102, 255, 0.4)", minBarLength: 2},
+                                { label: "Total", data: totalValues, backgroundColor: "rgba(75, 192, 192, 0.4)", minBarLength: 2 }
                             ]
                         },
                         options: {
                             responsive: true,
-                            scales: {y: {beginAtZero: true}},
+                            scales: { y: { beginAtZero: true }, x: { ticks: { color: labelColor} } },
                             plugins: {
+                                legend: {
+                                    position: "top",
+                                    labels: {
+                                        color: labelColor,
+                                        font: { size: 14 }
+                                        }
+                                    },
                                 datalabels: {
                                     formatter: (value) => value,
-                                    color: '#000',
-                                    font: {weight: 'bold', size: 14}
+                                    color: labelColor,
+                                    font: { weight: 'bold', size: 14 }
                                 },
-                                tooltip: {
+                                tooltip: { //  hover
                                     callbacks: {
                                         label: function (tooltipItem) {
                                             const value = tooltipItem.raw || 0;
-                                            return value > 1 ? `${value} exercises` : `${value} exercise`;
+                                            return value > 1 ? `${value} exercises` : `${value} exercise`; // Hiển thị số liệu + chữ "exercises"
                                         }
                                     }
                                 }
@@ -523,25 +675,27 @@
                             plugins: {
                                 legend: {
                                     position: "right",
-                                    labels: {boxWidth: 20, padding: 15}
+                                    labels: { boxWidth: 20, padding: 15, color: labelColor }
                                 },
                                 datalabels: {
                                     formatter: (value, ctx) => {
                                         const dataset = ctx.chart.data.datasets[0].data;
                                         const total = dataset.reduce((a, b) => a + b, 0);
                                         const percentage = total > 0 ? ((value / total) * 100).toFixed(1) + "%" : "";
-                                        return value > 0 ? percentage : "";
+                                        return value > 0 ? percentage : ""; // Nếu giá trị > 0 thì hiển thị, ngược lại ẩn
                                     },
-                                    font: {weight: 'bold', size: 14}
+                                    font: { weight: 'bold', size: 14 },
+                                    color: labelColor
                                 },
-                                tooltip: {
+                                tooltip: { // 🎯 Cập nhật tooltip khi hover
                                     callbacks: {
                                         label: function (tooltipItem) {
                                             const value = tooltipItem.raw || 0;
-                                            return value > 1 ? `${value} exercises` : `${value} exercise`;
+                                            return value > 1 ? `${value} exercises` : `${value} exercise`; // Hiển thị số liệu + chữ "exercises"
                                         }
                                     }
                                 }
+
                             }
                         }
                     });
@@ -549,7 +703,6 @@
                 })
                 .catch(error => console.error("❌ Lỗi khi tải dữ liệu:", error));
         }
-
 
         // Gọi API khi trang tải
         fetchDashboardData();
@@ -563,6 +716,13 @@
             });
         } else {
             console.error("❌ Không tìm thấy phần tử #languageFilter");
+        }
+        // Cập nhật biểu đồ khi toggle dark mode
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        if (darkModeToggle) {
+            darkModeToggle.addEventListener('click', function () {
+                fetchDashboardData(document.getElementById("languageFilter")?.value || "all");
+            });
         }
     });
 

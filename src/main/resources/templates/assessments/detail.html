@@ -101,13 +101,18 @@
         </ol>
     </nav>
 
-    <h1 class="text-center mt-2" th:text="${assessment.title}">Assessment Title</h1>
-
-
-    <div class="card mb-4">
+    <div class="card mb-4" id="assessmentCard">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h2 class="mb-0" th:text="${assessment.title}">Assessment Title</h2>
+
+            <!-- Right-side controls -->
             <div>
+                <!-- Toggle button with an up arrow by default -->
+                <button type="button" class="btn btn-outline-secondary" id="toggleBtn">
+
+                    <i class="fas fa-chevron-up"></i>
+                </button>
+
                 <a th:href="@{/assessments/edit/{id}(id=${assessment.id})}"
                    class="btn btn-outline-secondary">
                     Edit
@@ -118,14 +123,13 @@
             </div>
         </div>
 
-        <div class="card-body">
+        <div class="card-body" id="assessmentCardBody">
             <div class="row">
                 <!-- 1. Course -->
                 <div class="col-md-3">
                     <p>
                         <span class="text-muted">Course</span><br/>
                         <span class="fw-bold text-dark" th:text="${assessment.course.name}">
-                        Software Engineering
                     </span>
                     </p>
                 </div>
@@ -134,7 +138,6 @@
                     <p>
                         <span class="text-muted">Assessment Type</span><br/>
                         <span class="fw-bold text-dark" th:text="${assessment.assessmentType.name}">
-                        Assignment
                     </span>
                     </p>
                 </div>
@@ -144,7 +147,6 @@
                         <span class="text-muted">Created At</span><br/>
                         <span class="fw-bold text-dark"
                               th:text="${#temporals.format(assessment.createdAt, 'yyyy-MM-dd HH:mm')}">
-                        2025-02-20 09:27
                     </span>
                     </p>
                 </div>
@@ -154,13 +156,38 @@
                         <span class="text-muted">Exam Duration</span><br/>
                         <span class="fw-bold text-dark"
                               th:text="${assessment.timeLimit} + ' minutes'">
-                        35 minutes
                     </span>
                     </p>
                 </div>
+
+
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const toggleBtn   = document.getElementById('toggleBtn');
+            // Sửa ID này cho trùng với ID trong HTML
+            const cardBody    = document.getElementById('assessmentCardBody');
+
+            let isHidden = false;
+
+            toggleBtn.addEventListener('click', function handleClick() {
+                if (isHidden) {
+                    // Nếu đang ẩn -> cho hiển thị
+                    cardBody.style.display = 'block';
+                    this.innerHTML = '<i class="fas fa-chevron-up"></i>';
+                    isHidden = false;
+                } else {
+                    // Nếu đang hiển thị -> ẩn đi
+                    cardBody.style.display = 'none';
+                    this.innerHTML = '<i class="fas fa-chevron-down"></i>';
+                    isHidden = true;
+                }
+            });
+        });
+    </script>
 
 
 
@@ -214,30 +241,93 @@
         </div>
     </div>
 
-    <!-- Charts Section: Quiz Score Chart and Exercise Score Chart -->
-    <div class="row mb-4">
-        <!-- Quiz Score Chart -->
-        <div class="col-12 col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h3>Quiz Score Chart</h3>
-                </div>
-                <div class="chart-container" style="height: 400px; width: 80%; margin: 0 auto;">
-                    <canvas id="quizScoreChart"></canvas>
-                </div>
-            </div>
-        </div>
-        <!-- Exercise Score Chart -->
-        <div class="col-12 col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h3>Exercise Score Chart</h3>
-                </div>
-                <div class="chart-container" style="height: 400px; width: 80%; margin: 0 auto;">
-                    <canvas id="exerciseScoreChart"></canvas>
+    <!-- CHARTS SECTION -->
+    <div class="row mb-4" th:switch="${#strings.toUpperCase(assessment.assessmentType.name)}">
+
+        <!-- CASE 1: QUIZ ONLY -->
+        <div th:case="'QUIZ'">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Quiz Score Chart</h3>
+                    </div>
+                    <div class="chart-container" style="height: 400px; width: 90%; margin: 0 auto;">
+                        <canvas id="quizScoreChart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
+
+        <!-- CASE 2: ASSIGNMENT ONLY -->
+        <div th:case="'ASSIGNMENT'">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Exercise Score Chart</h3>
+                    </div>
+                    <div class="chart-container" style="height: 400px; width: 100%; margin: 0 auto;">
+                        <canvas id="exerciseScoreChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CASE 3: QUIZ & ASSIGNMENT -->
+        <div th:case="'QUIZ & ASSIGNMENT'">
+            <!-- Two half-width columns: one for Quiz, one for Exercise -->
+            <div class="row mb-4">
+                <div class="col-12 col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Quiz Score Chart</h3>
+                        </div>
+                        <div class="chart-container" style="height: 400px; width: 100%; margin: 0 auto;">
+                            <canvas id="quizScoreChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6 mt-3 mt-md-0">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Exercise Score Chart</h3>
+                        </div>
+                        <div class="chart-container" style="height: 400px; width: 100%; margin: 0 auto;">
+                            <canvas id="exerciseScoreChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- OPTIONAL: default case if type is unknown -->
+        <div th:case="*">
+            <div class="row mb-4">
+                <div class="col-12 col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Quiz Score Chart</h3>
+                        </div>
+                        <div class="chart-container" style="height: 400px; width: 100%; margin: 0 auto;">
+                            <canvas id="quizScoreChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6 mt-3 mt-md-0">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Exercise Score Chart</h3>
+                        </div>
+                        <div class="chart-container" style="height: 400px; width: 100%; margin: 0 auto;">
+                            <canvas id="exerciseScoreChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- If you want to handle unknown types, do so here, or just omit. -->
+        </div>
+
     </div>
 
     <!-- Two-Column Layout for Exercises and Questions -->
@@ -527,53 +617,165 @@
     </div>
 
 
-    <!-- Modal for View All Questions with Answers -->
-    <div class="modal fade" id="viewAllModal" tabindex="-1" aria-labelledby="viewAllModalLabel" aria-hidden="true">
-        <div class="modal-dialog" style="max-width: 80%; width: 80%;">
+    <!-- MODAL: View All Questions with Answers -->
+    <div class="modal fade" id="viewAllModal" tabindex="-1"
+         aria-labelledby="viewAllModalLabel" aria-hidden="true">
+        <!-- Center the modal -->
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 80%; width: 80%;">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="viewAllModalLabel">All Multiple Choice Questions</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="scrollable-table">
-                        <div th:each="question, iterStat : ${questions}" class="mb-4 border-bottom pb-3">
-                            <p class="fw-bold">
-                                <strong th:text="${iterStat.count}"></strong>.
-                                <span th:text="${question.questionText}">Question text</span>
-                            </p>
-                            <ul class="list-group">
-                                <li class="list-group-item"
-                                    th:each="ans : ${questionAnswerOptionsMap[question.id] != null
-                                                 ? questionAnswerOptionsMap[question.id]
-                                                 : T(java.util.Collections).emptyList()}">
-                                    <span th:text="${ans.optionText}">Answer Option Text</span>
-                                    <span th:if="${ans.isCorrect}" class="badge bg-success ms-2">Correct</span>
-                                </li>
-                                <li class="list-group-item text-muted"
-                                    th:if="${#lists.isEmpty(questionAnswerOptionsMap[question.id])}">
-                                    No answers assigned.
-                                </li>
-                            </ul>
+
+                <!-- Modal header with gray background and a search bar on the right -->
+                <div class="modal-header d-flex align-items-center" style="background-color: #f0f0f0;">
+                    <!-- Title on the left -->
+                    <h5 class="modal-title me-auto" id="viewAllModalLabel">
+                        All Multiple Choice Questions
+                    </h5>
+
+                    <!-- Search bar on the right -->
+                    <div class="ms-auto d-flex align-items-center">
+                        <div class="input-group me-2 border border-secondary rounded bg-white"
+                             style="max-width: 360px;">
+                        <span class="input-group-text border-0 bg-transparent" id="search-icon-questions">
+                            <i class="fas fa-search text-secondary"></i>
+                        </span>
+                            <input type="text"
+                                   class="form-control border-0 shadow-none"
+                                   placeholder="Search..."
+                                   aria-label="Search"
+                                   aria-describedby="search-icon-questions"
+                                   id="modalSearchQuestionsInput">
                         </div>
+
+                        <!-- Close button -->
+                        <button type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"
+                                aria-label="Close">
+                        </button>
                     </div>
                 </div>
+
+                <!-- Modal body with scrollable content -->
+                <div class="modal-body">
+                    <div class="scrollable-table" style="max-height: 600px; overflow-y: auto;">
+                        <!--
+                            We'll wrap all question blocks in a container
+                            so we can filter them easily via JavaScript.
+                         -->
+                        <div id="questionsContainer">
+                            <!-- Each question block -->
+                            <div th:each="question, iterStat : ${questions}"
+                                 class="question-block mb-4 border-bottom pb-3">
+                                <p class="fw-bold">
+                                    <strong th:text="${iterStat.count}"></strong>.
+                                    <span th:text="${question.questionText}">
+                                    Question text
+                                </span>
+                                </p>
+                                <ul class="list-group">
+                                    <li class="list-group-item"
+                                        th:each="ans : ${questionAnswerOptionsMap[question.id] != null
+                                                  ? questionAnswerOptionsMap[question.id]
+                                                  : T(java.util.Collections).emptyList()}">
+                                    <span th:text="${ans.optionText}">
+                                        Answer Option Text
+                                    </span>
+                                        <span th:if="${ans.isCorrect}"
+                                              class="badge bg-success ms-2">
+                                        Correct
+                                    </span>
+                                    </li>
+                                    <li class="list-group-item text-muted"
+                                        th:if="${#lists.isEmpty(questionAnswerOptionsMap[question.id])}">
+                                        No answers assigned.
+                                    </li>
+                                </ul>
+                            </div>
+                            <!-- Fallback if no questions at all -->
+                            <div th:if="${#lists.isEmpty(questions)}">
+                                <p class="text-muted">
+                                    No questions assigned.
+                                </p>
+                            </div>
+                        </div> <!-- #questionsContainer -->
+                    </div>
+                </div>
+
+                <!-- Modal footer -->
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+                        Close
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Script to filter questions in real-time -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        document.addEventListener("DOMContentLoaded", function() {
+            const searchInput = document.getElementById("modalSearchQuestionsInput");
+            const container   = document.getElementById("questionsContainer");
+
+            if (searchInput && container) {
+                searchInput.addEventListener("keyup", function() {
+                    const filter = this.value.toLowerCase();
+                    // Each question block has class "question-block"
+                    const blocks = container.querySelectorAll(".question-block");
+
+                    blocks.forEach(block => {
+                        // Convert block's text to lowercase for searching
+                        const text = block.innerText.toLowerCase();
+                        block.style.display = text.includes(filter) ? "" : "none";
+                    });
+                });
+            }
+        });
+        /*]]>*/
+    </script>
+
+
     <!-- MODAL: View All Registered Attempts -->
-    <div class="modal fade" id="viewAllAttemptsModal" tabindex="-1" aria-labelledby="viewAllAttemptsModalLabel"
-         aria-hidden="true">
+    <div class="modal fade" id="viewAllAttemptsModal" tabindex="-1"
+         aria-labelledby="viewAllAttemptsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" style="max-width: 80%; width: 80%;">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="viewAllAttemptsModalLabel">All Registered Attempts</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+
+                <!-- Modal header with gray background and a search bar on the right -->
+                <div class="modal-header d-flex align-items-center" style="background-color: #f0f0f0;">
+                    <!-- Title on the left -->
+                    <h5 class="modal-title me-auto" id="viewAllAttemptsModalLabel">
+                        All Registered Attempts
+                    </h5>
+
+                    <!-- Search bar on the right -->
+                    <div class="ms-auto d-flex align-items-center">
+                        <div class="input-group me-2 border border-secondary rounded bg-white"
+                             style="max-width: 360px;">
+                        <span class="input-group-text border-0 bg-transparent" id="search-icon-attempts">
+                            <i class="fas fa-search text-secondary"></i>
+                        </span>
+                            <input type="text"
+                                   class="form-control border-0 shadow-none"
+                                   placeholder="Search..."
+                                   aria-label="Search"
+                                   aria-describedby="search-icon-attempts"
+                                   id="modalSearchAttemptsInput">
+                        </div>
+
+                        <!-- Close button -->
+                        <button type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"
+                                aria-label="Close">
+                        </button>
+                    </div>
                 </div>
+
+                <!-- Modal body with scrollable content -->
                 <div class="modal-body">
                     <div class="scrollable-table" style="max-height: 600px; overflow-y: auto;">
                         <table class="table table-sm table-bordered">
@@ -587,7 +789,7 @@
                                 <th>Action</th>
                             </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="attemptsAllTableBody">
                             <tr th:each="attempt, iterStat : ${registeredAttemptsAll}">
                                 <td th:text="${iterStat.count}"></td>
                                 <td th:text="${attempt.email}"></td>
@@ -595,25 +797,59 @@
                                 <td th:text="${attempt.scoreQuiz}"></td>
                                 <td th:text="${attempt.scoreEx}"></td>
                                 <td>
-                                    <a th:href="@{/assessments/viewReport/{assessmentId}(assessmentId=${assessment.id}, attempt-id=${attempt.id})}"
+                                    <a th:href="@{/assessments/viewReport/{assessmentId}(
+                                                 assessmentId=${assessment.id},
+                                                 attempt-id=${attempt.id}
+                                               )}"
                                        class="btn btn-sm btn-outline-primary">
                                         View
                                     </a>
                                 </td>
                             </tr>
                             <tr th:if="${#lists.isEmpty(registeredAttemptsAll)}">
-                                <td colspan="7" class="text-center text-muted">No attempts yet.</td>
+                                <td colspan="6" class="text-center text-muted">
+                                    No attempts yet.
+                                </td>
                             </tr>
                             </tbody>
                         </table>
-                    </div> <!-- scrollable-table -->
+                    </div>
                 </div>
+
+                <!-- Modal footer -->
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+                        Close
+                    </button>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Script to filter attempts in real-time -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        document.addEventListener("DOMContentLoaded", function() {
+            const searchInput = document.getElementById("modalSearchAttemptsInput");
+            const tableBody   = document.getElementById("attemptsAllTableBody");
+
+            if (searchInput && tableBody) {
+                searchInput.addEventListener("keyup", function() {
+                    const filter = this.value.toLowerCase();
+                    const rows = tableBody.querySelectorAll("tr");
+                    rows.forEach(row => {
+                        const text = row.innerText.toLowerCase();
+                        // Show row if it matches the filter; otherwise hide it
+                        row.style.display = text.includes(filter) ? "" : "none";
+                    });
+                });
+            }
+        });
+        /*]]>*/
+    </script>
+
 
     <!-- MODAL: View All Invited Candidates -->
     <div class="modal fade" id="viewAllInvitedModal" tabindex="-1"

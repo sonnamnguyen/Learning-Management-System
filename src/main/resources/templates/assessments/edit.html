@@ -70,13 +70,13 @@
         <input type="hidden" id="newAddedQuestionsInput" name="newAddedQuestions">
 
         <div class="d-flex justify-content-between mb-3">
-            <a th:href="@{/assessments}" style="text-decoration: none; color: #6c757d; transition: color 0.3s ease;"
+            <a id="backToList" th:href="@{/assessments}" style="text-decoration: none; color: #6c757d; transition: color 0.3s ease;"
                onmouseover="this.style.color='#343a40';"
                onmouseout="this.style.color='#6c757d';">
                 <i class="fas fa-arrow-left"></i> Back to List
             </a>
             <div>
-                <a th:href="@{/assessments/{id}/preview(id=${assessment.id})}" class="mx-2"
+                <a id="previewAssessment" th:href="@{/assessments/{id}/preview(id=${assessment.id})}" class="mx-2"
                    style="text-decoration: none; color: #007bff; transition: color 0.3s ease;"
                    onmouseover="this.style.color='#0056b3';"
                    onmouseout="this.style.color='#007bff';">
@@ -1093,12 +1093,14 @@
                         let duplicateText = duplicateOrderIndexes.join(", ");
 
                         modalBody.innerHTML = `
-                <p><strong style="color: red;"><em>Warning:</em></strong> The following question is a duplicate:</p>
-                <ul>
-                    <li>${text}</li>
-                </ul>
-                <p>This question duplicates others at order indexes: ${duplicateText}.</p>
-                <p>Do you still want to add it?</p>
+               <div style="max-height: 50vh; overflow-y: auto; padding: 10px;">
+        <p><strong style="color: red;"><em>Warning:</em></strong> The following question maybe duplicate:</p>
+        <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; border-left: 4px solid red;">
+            <strong>${text}</strong>
+        </div>
+        <p style="margin-top: 10px;">This question duplicates others at order indexes: <strong>${duplicateText}</strong>.</p>
+        <p>Do you still want to add it?</p>
+    </div>
             `;
 
                         addAnywayBtn.onclick = function () {
@@ -1106,8 +1108,10 @@
                             bootstrap.Modal.getInstance(modal).hide();
                         };
 
+                        modal.querySelector(".modal-dialog").style.maxWidth = "75vw";
+                        modal.querySelector(".modal-content").style.minHeight = "50vh";
                         bootstrap.Modal.getOrCreateInstance(modal).show();
-                        return; // Dừng lại, tránh chạy tiếp
+                        return;
                     }
 
                     // Nếu không tìm thấy câu hỏi trùng
@@ -1116,7 +1120,6 @@
                 })
                 .catch(error => console.error("❌ Error checking similar questions:", error));
         }
-
 
         document.getElementById("assessmentType").addEventListener("change", function () {
             resetQuestionsIfNeeded();
@@ -1167,13 +1170,21 @@
                         if (data.duplicateQuestions && Object.keys(data.duplicateQuestions).length > 0) {
                             const modalBody = document.getElementById("similarQuestionBody");
                             modalBody.innerHTML = `
-                <p><strong style="color: red;"><em>Warning:</em></strong> The following new questions may be duplicates:</p>
-                <ul>
-                    ${Object.entries(data.duplicateQuestions).map(([index, dups]) => `
-                        <li>${newQuestions[index].text} (Similar to: ${dups.map(i => newQuestions[i].text).join(", ")})</li>
-                    `).join("")}
-                </ul>
-                <p>Do you still want to add them?</p>
+                <div style="max-height: 50vh; overflow-y: auto; padding: 10px;">
+        <p><strong style="color: red;"><em>Warning:</em></strong> The following new questions maybe duplicates:</p>
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid red;">
+            <ul style="padding-left: 20px; margin-bottom: 0;">
+                ${Object.entries(data.duplicateQuestions).map(([index, dups]) => `
+                    <li>
+                        <strong>${newQuestions[index].text}</strong>
+                        <br>
+                        <span style="color: gray; font-size: 14px;">(Similar to: ${dups.map(i => `<span style="color: #007bff;">${newQuestions[i].text}</span>`).join(", ")})</span>
+                    </li>
+                `).join("")}
+            </ul>
+        </div>
+        <p style="margin-top: 15px;">Do you still want to add them?</p>
+    </div>
             `;
 
                             const addAnywayBtn = document.getElementById("addAnywayBtn");
@@ -1184,7 +1195,10 @@
                                 bootstrap.Modal.getInstance(document.getElementById("similarQuestionModal")).hide();
                             };
 
-                            bootstrap.Modal.getOrCreateInstance(document.getElementById("similarQuestionModal")).show();
+                            const modalElement = document.getElementById("similarQuestionModal");
+                            modalElement.querySelector(".modal-dialog").style.maxWidth = "75vw";
+                            modalElement.querySelector(".modal-content").style.minHeight = "50vh";
+                            bootstrap.Modal.getOrCreateInstance(modalElement).show();
                         } else {
                             newQuestions.forEach((q, index) => {
                                 addQuestionToSelectedList(q.id, q.text, newAddedQuestions.length + 1 + index);
@@ -1315,6 +1329,75 @@
 
         function updateSaveAssessmentButton() {
             saveAssessmentBtn.disabled = !isModified && !titleInput.classList.contains("d-none");
+        }
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+        let isFormChanged = false;
+
+        document.querySelector("form").addEventListener("input", function () {
+            isFormChanged = true;
+        });
+
+        document.querySelector("form").addEventListener("change", function () {
+            isFormChanged = true;
+        });
+
+        let questionList = document.getElementById("selected-questions");
+        if (questionList) {
+            new MutationObserver(function () {
+                isFormChanged = true;
+            }).observe(questionList, { childList: true, subtree: true });
+        }
+
+        document.querySelectorAll("#backToList, #previewAssessment").forEach(button => {
+            button.addEventListener("click", function (event) {
+                if (isFormChanged) {
+                    event.preventDefault();
+                    showSaveModal(this.href);
+                }
+            });
+        });
+
+        function showSaveModal(redirectUrl) {
+            let existingModal = document.getElementById("saveConfirmModal");
+            if (!existingModal) {
+                let modalHtml = `
+            <div class="modal fade" id="saveConfirmModal" tabindex="-1" aria-labelledby="saveConfirmLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="saveConfirmLabel">Unsaved Changes</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            You have unsaved changes. Do you want to save before leaving?
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" id="dontSaveBtn" data-bs-dismiss="modal">Don't Save</button>
+                            <button type="button" class="btn btn-success" id="confirmSave">Save & Proceed</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            `;
+                document.body.insertAdjacentHTML("beforeend", modalHtml);
+            }
+
+            let modalElement = document.getElementById("saveConfirmModal");
+            let modal = new bootstrap.Modal(modalElement);
+            modal.show();
+
+            document.getElementById("confirmSave").onclick = function () {
+                document.querySelector("button[type='submit'].btn-success").click(); // Giả lập click Save
+                modal.hide();
+                setTimeout(() => window.location.href = redirectUrl, 500);
+            };
+
+            document.getElementById("dontSaveBtn").onclick = function () {
+                modal.hide();
+                setTimeout(() => window.location.href = redirectUrl, 300);
+            };
         }
     });
 </script>

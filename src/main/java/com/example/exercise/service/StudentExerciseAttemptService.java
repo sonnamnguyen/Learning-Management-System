@@ -21,6 +21,9 @@ public class StudentExerciseAttemptService {
     @Autowired
     private StudentExerciseAttemptRepository studentExerciseAttemptRepository;
 
+    public List<StudentExerciseAttempt> getListAttempt(){
+        return studentExerciseAttemptRepository.findAll();
+    }
     public void save(StudentExerciseAttempt studentExerciseAttempt) {
         studentExerciseAttemptRepository.save(studentExerciseAttempt);
     }

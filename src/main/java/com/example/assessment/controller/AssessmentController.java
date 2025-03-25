@@ -298,10 +298,7 @@ public class AssessmentController {
         }
         System.out.println("Checking similar questions...");
         // If no valid questions are provided, return bad request
-        if (selectedQuestionsSet.isEmpty()) {
-            System.out.println("selectedQuestionsSet.isEmpty");
-            return ResponseEntity.badRequest().body("No valid questions provided or found.");
-        }
+
         try {
             // Create Weka Instances (keep this part as is)
             FastVector attributes = new FastVector();
