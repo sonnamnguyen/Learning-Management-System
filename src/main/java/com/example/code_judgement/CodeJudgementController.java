@@ -5,6 +5,7 @@ import com.example.exercise.model.ExerciseSession;
 import com.example.exercise.model.StudentExerciseAttempt;
 import com.example.exercise.service.ExerciseService;
 import com.example.testcase.TestCase;
+import com.example.user.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -136,12 +137,14 @@ public class CodeJudgementController {
                                  @RequestParam("code") String code,
                               @RequestParam("score") Double score,
                               Model model){
+        User user = userService.getCurrentUser();
         Exercise exercise = exerciseService.getExerciseById(exerciseId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));
 
             model.addAttribute("exercise", exercise);
             model.addAttribute("code", code);
             model.addAttribute("score", score);
+            model.addAttribute("user", user);
         return "judgement/view_result";
     }
 }

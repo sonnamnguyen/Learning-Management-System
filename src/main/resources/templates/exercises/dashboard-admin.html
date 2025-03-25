@@ -383,7 +383,7 @@
                             <button class="btn btn-info btn-sm" onclick="showCodeSweetAlert(this)"
                                     th:attr="data-code=${exercise.submitted_code} ?: '// No code submitted'">View Code</button>
                         </td>
-                        <td th:text="${exercise.attendant_user.username}"></td>
+                        <td th:text="${exercise.attendant_user?.username} ?: ''"></td>
                     </tr>
                     </tbody>
                 </table>

@@ -1147,22 +1147,14 @@ public class AssessmentController {
         return "assessments/verifyEmail"; // Show email input page
     }
     @PostMapping("/invite/take-exam/{id}")
-    //rawId is actually true Id
     public String verifyEmail(@PathVariable("id") String rawId, @RequestParam("email") String email, Model model) {
-        //Check if invited candidate -> has_assessed = true or not
-        Optional<InvitedCandidate> invitedCandidateOpt = invitedCandidateRepository.findByAssessmentIdAndEmail(Long.parseLong(rawId), email);
-        if(invitedCandidateOpt.isEmpty()){
-            model.addAttribute("message", "You have already taken this exam.");
-            return "redirect:/assessments/invalid-link"; // Redirect to an "Already Taken" page
-        }
-        InvitedCandidate invitedCandidate = invitedCandidateOpt.get();
-        if (invitedCandidate.isHasAssessed()) {
-            model.addAttribute("message", "You have already taken this exam.");
-            return "redirect:/assessments/already-assessed"; // Redirect to an "Already Taken" page
-        }
         //Change has_assessed -> Invited Candidate to true
         invitedCandidateRepository.updateHasAssessedByEmailAndAssessmentId(email, Long.parseLong(rawId));
         email = email.toLowerCase();
+        // Decode the ID (but don't overwrite rawId)
+        System.out.println("");
+        System.out.println("");
+        System.out.println("Take exam get id: " + rawId);
         long id = Long.parseLong(rawId);
 
         // Store the hashed ID (rawId) in the model instead of the decoded id
@@ -1187,7 +1179,7 @@ public class AssessmentController {
             return "redirect:/assessments/expired-link?time=" + formattedExpireTime;
         }
 
-        // Fetch the current assessed_count count
+        // Fetch the current invited count
         Integer invitedCount = jdbcTemplate.queryForObject(
                 "SELECT assessed_count FROM assessment WHERE id = ?",
                 Integer.class, id
@@ -1345,7 +1337,9 @@ public class AssessmentController {
 
 
     @GetMapping("/viewReport/{assessmentId}")
-    public String viewReport(@PathVariable Long assessmentId, @RequestParam("attempt-id") Long attemptId, Model model) {
+    public String viewReport(@PathVariable Long assessmentId,
+                             @RequestParam("attempt-id") Long attemptId,
+                             Model model) {
 
         Optional<StudentAssessmentAttempt> attempt = studentAssessmentAttemptService.findById(attemptId);
 
@@ -1357,6 +1351,33 @@ public class AssessmentController {
             model.addAttribute("tabLeaveCount", tabLeaveCount);
             model.addAttribute("violationFaceCount", violationFaceCount);
             model.addAttribute("attemptInfo", attempt.get());
+
+            Assessment assessment = attempt.get().getAssessment();
+            if (assessment != null) {
+                model.addAttribute("assessment", assessment);
+
+                List<Question> questions = new ArrayList<>();
+                try {
+                    questions = questionService.findQuestionsByAssessmentId(assessment.getId());
+                } catch (Exception e) {
+                    model.addAttribute("errorMessage",
+                            "Error retrieving questions for assessment " + assessmentId + ": " + e.getMessage());
+                }
+                model.addAttribute("questions", questions);
+
+                Map<Long, List<AnswerOption>> questionAnswerOptionsMap = new HashMap<>();
+                for (Question q : questions) {
+                    try {
+                        List<AnswerOption> ansList = answerOptionService.getAnswerOptionByid(q.getId());
+                        questionAnswerOptionsMap.put(q.getId(), ansList);
+                    } catch (Exception e) {
+                        model.addAttribute("errorMessage",
+                                "Error retrieving answer options for question id " + q.getId() + ": " + e.getMessage());
+                        questionAnswerOptionsMap.put(q.getId(), new ArrayList<>());
+                    }
+                }
+                model.addAttribute("questionAnswerOptionsMap", questionAnswerOptionsMap);
+            }
         }
         model.addAttribute("content", "assessments/view_report");
         return "layout";
