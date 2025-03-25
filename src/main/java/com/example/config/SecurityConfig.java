@@ -42,21 +42,21 @@ public class SecurityConfig {
                                 "/otp",
                                 "/verify-otp",
                                 "/materials/**",
-                                "assessments/expired-link", // Allow expired link page
-                                "assessments/invite/**",   // Allow all invite-related links (Take Assessment)
+                                "/assessments/expired-link",
+                                "/assessments/invite/**",
+                                "/assessments/TakeAssessment/**",  // ✅ Explicitly allow this route
+                                "/assessments/invite/take-exam/**",  // ✅ Explicitly allow this route
                                 "/already-assessed",
-                                "assessments/create/**",
-                                "assessments/detail/{id}",
-                                "assessments/export",
-                                "assessments/import",
-                                "assessments/duplicate/{id}",
-                                "assessments/edit/",
-                                "assessments/{id}/preview"
-                                // Allow all invite-related links (Take Assessment)
+                                "/assessments/create/**",
+                                "/assessments/detail/{id}",
+                                "/assessments/export",
+                                "/assessments/import",
+                                "/assessments/duplicate/{id}",
+                                "/assessments/edit/",
+                                "/assessments/{id}/preview"
                         ).permitAll()
-                        .requestMatchers("exercises/profile/**").authenticated()
+                        .requestMatchers("/exercises/profile/**").authenticated()
                         .anyRequest().authenticated()
-
                 )
                 .exceptionHandling(exception
                         -> exception.accessDeniedPage("/exercises/access-denied")

@@ -154,7 +154,6 @@ public class QuizController {
     }
 
 
-
     @GetMapping("/create")
     public String showCreateForm(Model model) {
         // Get the authenticated user's details
@@ -186,13 +185,15 @@ public class QuizController {
     }
 
 
-
     @PostMapping("/create")
     @Transactional
     public String createQuiz(@Valid @ModelAttribute Quiz quizz,
                              @RequestParam(value = "tagIds", required = false) List<Long> tagIds,
                              @RequestParam(value = "newTagNames", required = false) List<String> newTagNames,
                              BindingResult result, Model model) {
+        ObjectMapper mapper = new ObjectMapper();
+
+
         quizz.validateTime(result);
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -227,15 +228,19 @@ public class QuizController {
 
 
 
+
+
+
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable("id") Long id, Model model, Principal principal) {
-        Quiz quiz = quizService.findById(id).orElse(null);
+        // Sử dụng fetch join để load tags cùng với quiz
+        Quiz quiz = quizService.getQuizWithTags(id);
         List<Course> courses = courseService.getAllCourses();
         User user = userService.findByUsername(principal.getName());
 
         model.addAttribute("quiz", quiz);
         model.addAttribute("courses", courses);
-        model.addAttribute("users", userService.getAllUsers()); // Fetch all users for the dropdown
+        model.addAttribute("users", userService.getAllUsers());
         model.addAttribute("user", user);
         model.addAttribute("content", "quizes/edit");
         return "layout";
@@ -479,10 +484,10 @@ public class QuizController {
             @RequestParam(required = false) Long assessmentId,
             @RequestParam MultiValueMap<String, String> responses,
             @RequestParam("elapsedTime") int elapsedTime,
-            @RequestParam("questionIds") List<String> questionId,
+            @RequestParam("questionIds") List<String> questionIds,
             Model model) {
 
-        System.out.println("Dữ liệu nhận được từ form: " + questionId);
+        System.out.println("Dữ liệu nhận được từ form: " + questionIds);
 
         responses.forEach((key, values) -> {
             System.out.println("Key: " + key + " | Values: " + values);
@@ -503,50 +508,67 @@ public class QuizController {
         int remainingTime = (totalTime * 60) - elapsedTime;
 
         // ✅ Tính điểm sử dụng MultiValueMap
-        double score = quizService.calculateScore(questionId, assessmentId, responses, user);
+        double score = quizService.calculateScore(questionIds, assessmentId, responses, user);
 
         List<Question> questions = questionRepository.findAllById(
-                questionId.stream().map(Long::parseLong).collect(Collectors.toList())
+                questionIds.stream().map(Long::parseLong).collect(Collectors.toList())
         );
+
         int correctCount = 0;
         Map<Long, List<Long>> selectedAnswers = new HashMap<>();
         Map<Long, Long> correctAnswers = new HashMap<>();
         List<Answer> answerList = new ArrayList<>();
 
-        System.out.println("Dữ liệu nhận được từ form: " + responses);
+        System.out.println("📌 Dữ liệu nhận được từ form: " + responses);
 
         for (Question question : questions) {
             List<String> selectedOptionIds = responses.get("answers[" + question.getId() + "]");
 
             if (selectedOptionIds != null && !selectedOptionIds.isEmpty()) {
-                List<Long> selectedOptionLongs = selectedOptionIds.stream()
-                        .map(Long::parseLong)
-                        .collect(Collectors.toList());
-                selectedAnswers.put(question.getId(), selectedOptionLongs);
+                if (question.getQuestionType().toString().equals("TEXT")) {
+                    // ✅ Xử lý câu hỏi dạng TEXT
+                    String textAnswer = selectedOptionIds.get(0);
 
-                List<AnswerOption> correctOptions = answerOptionRepository.findCorrectAnswersByQuestionId(question.getId());
+                    Answer textResponse = new Answer();
+                    textResponse.setQuestion(question);
+                    textResponse.setAnswerText(textAnswer); // Lưu nội dung tự luận
+                    textResponse.setIsCorrect(null); // Không có đúng/sai ngay lập tức
+                    answerList.add(textResponse);
+                    answerRepository.save(textResponse);
 
-                if (!correctOptions.isEmpty()) {
-                    correctAnswers.put(question.getId(), correctOptions.get(0).getId()); // Chỉ lấy một đáp án đúng đầu tiên
-                }
+                } else {
+                    // ✅ Xử lý MCQ & SCQ (Chỉ lấy ID hợp lệ)
+                    List<Long> selectedOptionLongs = selectedOptionIds.stream()
+                            .filter(id -> id.matches("\\d+")) // Chỉ giữ lại số hợp lệ
+                            .map(Long::parseLong)
+                            .collect(Collectors.toList());
 
-                boolean isCorrect = correctOptions.stream().allMatch(opt -> selectedOptionLongs.contains(opt.getId()))
-                        && selectedOptionLongs.containsAll(correctOptions.stream().map(AnswerOption::getId).toList());
+                    selectedAnswers.put(question.getId(), selectedOptionLongs);
 
-                if (isCorrect) {
-                    correctCount++;
-                }
+                    List<AnswerOption> correctOptions = answerOptionRepository.findCorrectAnswersByQuestionId(question.getId());
 
-                for (Long selectedOptionId : selectedOptionLongs) {
-                    AnswerOption selectedOption = answerOptionRepository.findById(selectedOptionId).orElse(null);
-                    if (selectedOption != null) {
-                        Answer answer = new Answer();
-                        answer.setSelectedOption(selectedOption);
-                        answer.setQuestion(question);
-                        answer.setAnswerText(selectedOption.getOptionText());
-                        answer.setIsCorrect(correctOptions.stream().anyMatch(opt -> opt.getId().equals(selectedOptionId)));
-                        answerList.add(answer);
-                        answerRepository.save(answer);
+                    if (!correctOptions.isEmpty()) {
+                        correctAnswers.put(question.getId(), correctOptions.get(0).getId());
+                    }
+
+                    boolean isCorrect = correctOptions.stream().allMatch(opt -> selectedOptionLongs.contains(opt.getId()))
+                            && selectedOptionLongs.containsAll(correctOptions.stream().map(AnswerOption::getId).toList());
+
+                    if (isCorrect) {
+                        correctCount++;
+                    }
+
+                    for (Long selectedOptionId : selectedOptionLongs) {
+                        AnswerOption selectedOption = answerOptionRepository.findById(selectedOptionId).orElse(null);
+                        if (selectedOption != null) {
+                            Answer answer = new Answer();
+                            answer.setSelectedOption(selectedOption);
+                            answer.setQuestion(question);
+                            answer.setAnswerText(selectedOption.getOptionText());
+                            answer.setIsCorrect(correctOptions.stream().anyMatch(opt -> opt.getId().equals(selectedOptionId)));
+                            answerList.add(answer);
+                            answerRepository.save(answer);
+                        }
                     }
                 }
             }
@@ -666,26 +688,26 @@ public class QuizController {
     /*@GetMapping("review")
     public*/
 
-            @PutMapping("/detail/{quizId}/questions/{questionId}/move")
-            public ResponseEntity<String> moveQuestion(
-                    @PathVariable Long quizId,
-                    @PathVariable Long questionId,
+    @PutMapping("/detail/{quizId}/questions/{questionId}/move")
+    public ResponseEntity<String> moveQuestion(
+            @PathVariable Long quizId,
+            @PathVariable Long questionId,
             @RequestParam int newPosition) {
 
-                try {
-                    quizService.moveQuestion(quizId, questionId, newPosition);
-                    return ResponseEntity.ok("Question position updated successfully");
-                } catch (IllegalArgumentException | EntityNotFoundException e) {
-                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while updating question position.");
-                }
+        try {
+            quizService.moveQuestion(quizId, questionId, newPosition);
+            return ResponseEntity.ok("Question position updated successfully");
+        } catch (IllegalArgumentException | EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while updating question position.");
+        }
 
-            }
-            @GetMapping("/dashboard/{studentId}")
-        public String getStudentDashboard(@PathVariable Long studentId, Model model) {
-            try {
+    }
+    @GetMapping("/dashboard/{studentId}")
+    public String getStudentDashboard(@PathVariable Long studentId, Model model) {
+        try {
             // Lấy thông tin sinh viên
             User student = userRepository.findById(studentId)
                     .orElseThrow(() -> new NotFoundException("User not found"));
@@ -882,47 +904,6 @@ public class QuizController {
 
     }
 
-    @DeleteMapping("/tags/delete/{id}")
-    @ResponseBody
-    public ResponseEntity<Map<String, Object>> deleteTag(@PathVariable Long id) {
-        Map<String, Object> response = new HashMap<>();
-        try {
-            // Kiểm tra xem tag có được sử dụng không
-            QuizTag tag = quizTagService.getQuizTagById(id);
-            if (tag == null) {
-                response.put("success", false);
-                response.put("message", "Tag not found");
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-            }
-
-            if (quizTagService.isTagUsedInQuiz(id)) {
-                response.put("success", false);
-                response.put("message", "Cannot delete tag '" + tag.getName() + "' as it is being used in one or more quizzes");
-                return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
-            }
-
-            quizTagService.deleteTagById(id);
-            response.put("success", true);
-            response.put("message", "Tag deleted successfully");
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "Failed to delete tag: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-
-    @GetMapping("/tags/search")
-    @ResponseBody
-    public ResponseEntity<List<QuizTag>> searchTags(@RequestParam String name) {
-        try {
-            List<QuizTag> tags = quizTagService.searchTagsByName(name);
-            return ResponseEntity.ok(tags);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-
     @GetMapping("/tags/check/{id}")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> checkTag(@PathVariable Long id) {
@@ -974,5 +955,95 @@ public class QuizController {
                     .body("Failed to update tags: " + e.getMessage());
         }
     }
+
+    @DeleteMapping("/{quizId}/tags/{tagId}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> removeTagFromQuiz(
+            @PathVariable Long quizId,
+            @PathVariable Long tagId) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            quizService.removeTagFromQuiz(quizId, tagId);
+            response.put("success", true);
+            response.put("message", "Tag removed successfully from quiz");
+            return ResponseEntity.ok(response);
+        } catch (EntityNotFoundException e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Failed to remove tag: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @PostMapping("/tags/create")
+    @ResponseBody
+    public ResponseEntity<String> createTag(@RequestParam String name) {
+        try {
+            QuizTag newTag = quizTagService.createTag(name);
+            return ResponseEntity.ok("Tag created successfully with ID: " + newTag.getId());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error creating tag: " + e.getMessage());
+        }
+    }
+
+
+    @PostMapping("/{quizId}/tags")
+    @ResponseBody
+    public ResponseEntity<String> addTagsToQuiz(
+            @PathVariable Long quizId,
+            @RequestParam(required = false) List<Long> tagIds,
+            @RequestParam(required = false) List<String> newTagNames) {
+        try {
+            quizService.addTagsToQuiz(quizId, tagIds, newTagNames);
+            return ResponseEntity.ok("Tags added successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to add tags: " + e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/tags/delete/{id}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> deleteTag(@PathVariable Long id) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            // Kiểm tra xem tag có được sử dụng không
+            QuizTag tag = quizTagService.getQuizTagById(id);
+            if (tag == null) {
+                response.put("success", false);
+                response.put("message", "Tag not found");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+
+            if (quizTagService.isTagUsedInQuiz(id)) {
+                response.put("success", false);
+                response.put("message", "Cannot delete tag '" + tag.getName() + "' as it is being used in one or more quizzes");
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+            }
+
+            quizTagService.deleteTagById(id);
+            response.put("success", true);
+            response.put("message", "Tag deleted successfully");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Failed to delete tag: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+    @GetMapping("/tags/search")
+    @ResponseBody
+    public ResponseEntity<List<QuizTag>> searchTags(@RequestParam String name) {
+        try {
+            List<QuizTag> tags = quizTagService.searchTagsByName(name);
+            return ResponseEntity.ok(tags);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
 
 }

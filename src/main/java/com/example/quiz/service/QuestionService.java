@@ -1495,6 +1495,4 @@ public class QuestionService {
                 .collect(Collectors.toList());
     }
 
-
-
 }

@@ -27,8 +27,6 @@ public interface AnswerOptionRepository extends JpaRepository<AnswerOption, Long
     @Query("SELECT COUNT(ao) FROM AnswerOption ao WHERE ao.isCorrect = false")
     long countTotalIncorrectAnswers();
 
-
     List<AnswerOption> findByQuestionId(long id);
-
 
 }

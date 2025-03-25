@@ -492,11 +492,31 @@ public class ExerciseController {
         // 🔹 Lấy dữ liệu độ khó
         Map<String, Integer> difficultyChartData = exerciseService.getLevelDistribution(languageId);
 
+        // ✅ Thêm dữ liệu "All Languages"
+        if (languageId == null && topicChartData != null && !topicChartData.isEmpty()) {
+            int totalAssessed = 0;
+            int totalNotAssessed = 0;
+            int totalExercises = 0;
+
+            for (Map<String, Integer> values : topicChartData.values()) {
+                totalAssessed += values.getOrDefault("assessed", 0);
+                totalNotAssessed += values.getOrDefault("notAssessed", 0);
+                totalExercises += values.getOrDefault("total", 0);
+            }
+
+            topicChartData.put("All Languages", Map.of(
+                    "assessed", totalAssessed,
+                    "notAssessed", totalNotAssessed,
+                    "total", totalExercises
+            ));
+        }
+
         response.put("topicChartData", topicChartData != null ? topicChartData : new HashMap<>());
         response.put("difficultyChartData", difficultyChartData != null ? difficultyChartData : new HashMap<>());
 
         return response;
     }
+
 
     @GetMapping("/api/exercise-data")
     @ResponseBody

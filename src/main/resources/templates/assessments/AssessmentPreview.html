@@ -151,19 +151,41 @@
                                                th:attr="id='check_' + ${question.id}">
                                         <i class="bi bi-flag"></i>
                                     </div>
-                                    <!-- Answers loop -->
-                                    <ul class="list-group mt-3">
-                                        <li class="list-group-item option-item"
-                                            th:each="option, optionStat : ${question.answerOptions}">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="radio"
-                                                       th:attr="name=${'question_' + question.id}, value=${optionStat.index}, id=${'option_' + question.id + '_' + optionStat.index}">
-                                                <label class="form-check-label"
-                                                       th:for="${'option_' + question.id + '_' + optionStat.index}"
-                                                       th:text="${option.optionText}"></label>
-                                            </div>
-                                        </li>
+                                    <!-- Câu hỏi MCQ -->
+                                    <ul class="list-group mt-3"
+                                        th:if="${question.questionType.toString() == 'MCQ'}">
+                                        <th:block
+                                                th:if="${question.answerOptions != null and not #lists.isEmpty(question.answerOptions)}">
+                                            <li th:each="option : ${question.answerOptions}"
+                                                class="list-group-item">
+                                                <label>
+                                                    <input type="checkbox" th:name="|answers[${question.id}]|"
+                                                           th:value="${option.id}">
+                                                    <span th:text="${option.optionText}"></span>
+                                                </label>
+                                            </li>
+                                        </th:block>
                                     </ul>
+                                    <!-- Câu hỏi SCQ -->
+                                    <ul class="list-group mt-3"
+                                        th:if="${question.questionType.toString() == 'SCQ'}">
+                                        <th:block
+                                                th:if="${question.answerOptions != null and not #lists.isEmpty(question.answerOptions)}">
+                                            <li th:each="option : ${question.answerOptions}"
+                                                class="list-group-item">
+                                                <label>
+                                                    <input type="radio" th:name="|answers[${question.id}]|"
+                                                           th:value="${option.id}">
+                                                    <span th:text="${option.optionText}"></span>
+                                                </label>
+                                            </li>
+                                        </th:block>
+                                    </ul>
+                                    <!-- Xử lý câu hỏi tự luận -->
+                                    <div class="mt-3" th:if="${question.questionType.toString() == 'TEXT'}">
+                                            <textarea class="form-control" rows="3" th:name="|answers[${question.id}]|"
+                                                      placeholder="Nhập câu trả lời..."></textarea>
+                                    </div>
                                 </div>
                             </div>
                         </div>

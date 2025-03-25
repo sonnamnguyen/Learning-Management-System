@@ -241,7 +241,6 @@ public class QuizService {
 
     @Autowired
     private Scheduler scheduler; // Inject từ Spring, không dùng SchedulerUtil nữa
-
     public void createQuiz(Quiz quiz, List<Long> tagIds, List<String> newTagNames) {
         User user = userService.getCurrentUser();
         if (user == null) {
@@ -298,6 +297,37 @@ public class QuizService {
             e.printStackTrace();
         }
     }
+
+
+    @Transactional
+    public void addTagsToQuiz(Long quizId, List<Long> tagIds, List<String> newTagNames) {
+        Quiz quiz = quizRepository.findById(quizId)
+                .orElseThrow(() -> new NotFoundException("Quiz not found"));
+
+        // Khởi tạo Set tags nếu chưa có
+        if (quiz.getTags() == null) {
+            quiz.setTags(new HashSet<>());
+        }
+
+        // Thêm tags mới nếu có
+        if (newTagNames != null && !newTagNames.isEmpty()) {
+            for (String tagName : newTagNames) {
+                if (tagName != null && !tagName.trim().isEmpty()) {
+                    QuizTag newTag = quizTagService.createTag(tagName.trim());
+                    quiz.getTags().add(newTag);
+                }
+            }
+        }
+
+        // Thêm tags hiện có
+        if (tagIds != null && !tagIds.isEmpty()) {
+            Set<QuizTag> selectedTags = new HashSet<>(quizTagRepository.findAllById(tagIds));
+            quiz.getTags().addAll(selectedTags);
+        }
+
+        quizRepository.save(quiz);
+    }
+
 
 
 
@@ -570,11 +600,16 @@ public class QuizService {
         session.setCheckPractice(isPractice);
         testSessionRepository.save(session);
 
+        // ✅ Tính số câu hỏi MCQ & SCQ (Bỏ qua TEXT)
+        long totalScoredQuestions = questions.stream()
+                .filter(q -> !q.getQuestionType().toString().equals("TEXT"))
+                .count();
+
         double totalPoints = 100.0;
-        double pointsPerQuestion = totalPoints / questions.size();
+        double pointsPerQuestion = totalScoredQuestions > 0 ? totalPoints / totalScoredQuestions : 0;
         double score = 0;
 
-        // Lấy tất cả đáp án đúng một lần duy nhất
+        // ✅ Lấy tất cả đáp án đúng một lần duy nhất
         List<AnswerOption> correctOptionsList = answerOptionRepository.findCorrectAnswersByQuestionIds(questionIds);
         Map<Long, List<Long>> correctAnswersMap = correctOptionsList.stream()
                 .collect(Collectors.groupingBy(
@@ -586,8 +621,26 @@ public class QuizService {
             List<String> userAnswerIdsStr = responses.get("answers[" + question.getId() + "]");
             List<Long> correctAnswerIds = correctAnswersMap.getOrDefault(question.getId(), Collections.emptyList());
 
+            System.out.println("📌 Câu hỏi ID: " + question.getId() + " | Dạng: " + question.getQuestionType());
+
+            if (question.getQuestionType().toString().equals("TEXT")) {
+                // ✅ Nếu là câu hỏi TEXT, chỉ lưu nội dung, không lưu answer_option_id, không tính điểm
+                if (userAnswerIdsStr != null && !userAnswerIdsStr.isEmpty()) {
+                    String textAnswer = userAnswerIdsStr.get(0);
+                    Answer textResponse = new Answer();
+                    textResponse.setQuestion(question);
+                    textResponse.setAnswerText(textAnswer);
+                    textResponse.setIsCorrect(null); // ✅ Không xác định đúng/sai
+                    textResponse.setSelectedOption(null); // ✅ Không có AnswerOption
+                    answerRepository.save(textResponse);
+                }
+                continue; // ⛔ Bỏ qua tính điểm cho TEXT
+            }
+
             if (userAnswerIdsStr != null && !userAnswerIdsStr.isEmpty()) {
+                // ✅ Lọc bỏ các giá trị không hợp lệ trước khi `parseLong()`
                 List<Long> userAnswerIds = userAnswerIdsStr.stream()
+                        .filter(id -> id.matches("\\d+")) // Chỉ giữ lại số hợp lệ
                         .map(Long::parseLong)
                         .collect(Collectors.toList());
 
@@ -617,9 +670,10 @@ public class QuizService {
             }
         }
 
-        // Làm tròn score đến 2 chữ số thập phân
+        // ✅ Làm tròn score đến 2 chữ số thập phân
         return BigDecimal.valueOf(score).setScale(2, RoundingMode.HALF_UP).doubleValue();
     }
+
 
 
     public Duration calculateQuizDuration(int numberOfQuestions) {
@@ -868,6 +922,22 @@ public class QuizService {
     }
 
 
+    @Transactional
+    public void removeTagFromQuiz(Long quizId, Long tagId) {
+        Quiz quiz = findById(quizId)
+                .orElseThrow(() -> new EntityNotFoundException("Quiz not found"));
+
+        QuizTag tag = quizTagService.getQuizTagById(tagId);
+        if (tag == null) {
+            throw new EntityNotFoundException("Tag not found");
+        }
+
+        if (quiz.getTags().remove(tag)) {
+            quizRepository.save(quiz);
+        } else {
+            throw new EntityNotFoundException("Tag is not associated with this quiz");
+        }
+    }
 
     @Transactional
     public void updateQuizTags(Long quizId, List<Long> tagIds) {
@@ -890,15 +960,11 @@ public class QuizService {
 
         quizRepository.save(quiz);
     }
-
-
-
     @Transactional(readOnly = true)
     public Quiz getQuizWithTags(Long id) {
         return quizRepository.findQuizWithTags(id)
                 .orElseThrow(() -> new NotFoundException("Quiz not found"));
     }
-
     @Transactional
     public List<QuizTag> getQuizTags(Long quizId) {
         Quiz quiz = findById(quizId)

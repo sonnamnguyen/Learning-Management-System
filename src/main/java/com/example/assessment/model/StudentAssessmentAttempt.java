@@ -59,7 +59,7 @@ public class StudentAssessmentAttempt {
     private LocalDateTime attemptDate = LocalDateTime.now();
 
     @Column(name = "last_modified")
-    private LocalDateTime lastModified;
+    private LocalDateTime lastModified ;
 
     @PrePersist
     public void onPrePersist() {

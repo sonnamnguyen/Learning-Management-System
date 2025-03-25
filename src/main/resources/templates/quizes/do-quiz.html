@@ -270,30 +270,36 @@ var durationInMinutes = /*[[${timeLimit != null ? timeLimit : 60}]]*/ 60; // M�
 
     if (quizForm) {
         quizForm.addEventListener("submit", function (event) {
-            var questions = document.querySelectorAll("[id^='question_']"); // Get all questions
+            var questions = document.querySelectorAll("[id^='question_']"); // Lấy tất cả câu hỏi
             var unansweredQuestions = [];
 
             questions.forEach(function (question, index) {
-                var questionId = question.id.split("_")[1]; // Get question ID
+                var questionId = question.id.split("_")[1]; // Lấy ID câu hỏi
+
+                // Kiểm tra nếu câu hỏi là dạng TEXT
+                var textArea = document.querySelector("textarea[name='answers[" + questionId + "]']");
+                if (textArea) {
+                    return; // Nếu là TEXT thì bỏ qua kiểm tra
+                }
+
                 var options = document.querySelectorAll("input[name='answers[" + questionId + "]']:checked");
 
-                // Remove previous warning
+                // Xóa cảnh báo trước đó
                 question.style.border = "";
 
                 if (options.length === 0) {
                     unansweredQuestions.push("Question " + (index + 1));
-                    question.style.border = "2px solid red"; // Add red border to indicate error
+                    question.style.border = "2px solid red"; // Đánh dấu lỗi bằng viền đỏ
                 }
             });
 
             if (unansweredQuestions.length > 0) {
-                event.preventDefault(); // Prevent form submission
+                event.preventDefault(); // Ngăn chặn submit
                 alert("You haven't selected an answer for the following questions:\n" + unansweredQuestions.join(", "));
             }
         });
     }
 });
-
 </script>
 
 </body>

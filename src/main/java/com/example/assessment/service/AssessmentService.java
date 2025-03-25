@@ -488,7 +488,7 @@ public class AssessmentService {
     public String preprocessText(String text) {
         if (text == null) return "";
         String processedText = text.toLowerCase()
-                .replaceAll("[^\\p{L}\\p{N}\\s]", "")
+                .replaceAll("[^\\p{L}\\p{N}\\s\\-=\\?]", "")
                 .replaceAll("\\s+", " ")
                 .trim();
 

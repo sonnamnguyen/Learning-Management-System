@@ -483,24 +483,6 @@ public class AssessmentController {
                 map.put("scoreQuiz", attempt.getScoreQuiz());
                 map.put("scoreEx", attempt.getScoreEx());
 
-                // Optionally retrieve candidateUsername (reflection or quan hệ user)
-                String candidateUsername = "N/A";
-                try {
-                    Field field = attempt.getClass().getDeclaredField("user");
-                    field.setAccessible(true);
-                    Object userObj = field.get(attempt);
-                    if (userObj != null) {
-                        candidateUsername = (String) userObj.getClass()
-                                .getMethod("getUsername")
-                                .invoke(userObj);
-                    }
-                } catch (Exception ex) {
-                    logger.error("Error retrieving candidate username for attempt id {}", attempt.getId(), ex);
-                    errorMessages.add("Error retrieving candidate username for attempt id "
-                            + attempt.getId() + ": " + ex.getMessage());
-                }
-                map.put("candidateUsername", candidateUsername);
-
                 attemptViewList.add(map);
             }
         } catch (Exception e) {
@@ -533,29 +515,12 @@ public class AssessmentController {
                 map.put("scoreQuiz", attempt.getScoreQuiz());
                 map.put("scoreEx", attempt.getScoreEx());
 
-                // candidateUsername
-                String candidateUsername = "N/A";
-                try {
-                    Field field = attempt.getClass().getDeclaredField("user");
-                    field.setAccessible(true);
-                    Object userObj = field.get(attempt);
-                    if (userObj != null) {
-                        candidateUsername = (String) userObj.getClass()
-                                .getMethod("getUsername")
-                                .invoke(userObj);
-                    }
-                } catch (Exception ex) {
-                    logger.error("Error retrieving candidate username (ALL) for attempt id {}", attempt.getId(), ex);
-                }
-                map.put("candidateUsername", candidateUsername);
-
                 allAttemptsView.add(map);
             }
         } catch (Exception e) {
             logger.error("Error processing all attempts for modal", e);
             errorMessages.add("Error processing all attempts for modal: " + e.getMessage());
         }
-        // Put the ALL attempts (for modal) in the model
         model.addAttribute("registeredAttemptsAll", allAttemptsView);
 
         // 3. Build chart data from allAttempts
@@ -663,14 +628,6 @@ public class AssessmentController {
         model.addAttribute("searchEmail", searchEmail);
         model.addAttribute("content", "assessments/detail");
         return "layout";
-    }
-
-
-    @PostMapping("/edit/{id}")
-    public String update(@PathVariable("id") Long id, @ModelAttribute Assessment assessment) {
-        assessment.setId(id);
-        assessmentService.save(assessment);
-        return "redirect:/assessments";
     }
 
     @GetMapping("/delete/{id}")
@@ -958,6 +915,104 @@ public class AssessmentController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/edit/check-similarNewQuestions")
+    public ResponseEntity<?> checkSimilarNewQuestions(@RequestBody Map<String, List<Map<String, String>>> requestData) {
+        List<Map<String, String>> newAddedQuestions = requestData.get("newAddedQuestions");
+        System.out.println("📝 Received newAddedQuestions: " + newAddedQuestions);
+
+        if (newAddedQuestions == null || newAddedQuestions.isEmpty()) {
+            return ResponseEntity.badRequest().body("No questions provided.");
+        }
+
+        Map<String, String> newestQuestion = newAddedQuestions.get(newAddedQuestions.size() - 1);
+        String newestText = newestQuestion.get("text");
+
+        if (newestText == null || newestText.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("Newest question is empty.");
+        }
+
+        List<String> oldQuestions = new ArrayList<>();
+        for (int i = 0; i < newAddedQuestions.size() - 1; i++) {
+            String text = newAddedQuestions.get(i).get("text");
+            if (text != null && !text.trim().isEmpty()) {
+                oldQuestions.add(text);
+            }
+        }
+
+        if (oldQuestions.isEmpty()) {
+            return ResponseEntity.ok(Collections.singletonMap("message", "No previous questions to compare."));
+        }
+
+        System.out.println("📌 Newest question: " + newestText);
+        System.out.println("📌 Old questions: " + oldQuestions);
+
+        try {
+            ArrayList<Attribute> attributes = new ArrayList<>();
+            attributes.add(new Attribute("content", (List<String>) null));
+            Instances data = new Instances("questions", attributes, oldQuestions.size() + 1);
+            data.setClassIndex(0);
+
+            for (String text : oldQuestions) {
+                double[] instanceValue = new double[data.numAttributes()];
+                instanceValue[0] = data.attribute(0).addStringValue(assessmentService.preprocessText(text));
+                Instance instance = new DenseInstance(1.0, instanceValue);
+                instance.setDataset(data);
+                data.add(instance);
+            }
+
+            double[] newestInstanceValue = new double[data.numAttributes()];
+            newestInstanceValue[0] = data.attribute(0).addStringValue(assessmentService.preprocessText(newestText));
+            Instance newestInstance = new DenseInstance(1.0, newestInstanceValue);
+            newestInstance.setDataset(data);
+            data.add(newestInstance);
+
+            if (data.numInstances() == 0) {
+                return ResponseEntity.badRequest().body("No valid questions found.");
+            }
+
+            StringToWordVector filter = new StringToWordVector();
+            filter.setOutputWordCounts(true);
+            filter.setLowerCaseTokens(true);
+            filter.setWordsToKeep(5000);
+            filter.setDoNotOperateOnPerClassBasis(true);
+            filter.setMinTermFreq(1);
+            filter.setAttributeIndices("first-last");
+
+            filter.setInputFormat(data);
+            Instances tfidfData = Filter.useFilter(data, filter);
+
+            System.out.println("🔍 TF-IDF vector size: " + tfidfData.numAttributes());
+
+            List<Integer> similarQuestions = new ArrayList<>();
+
+            // So sánh câu mới nhất với tất cả câu cũ
+            int newestIndex = tfidfData.numInstances() - 1; // Vị trí câu mới nhất
+            for (int i = 0; i < tfidfData.numInstances() - 1; i++) { // Chỉ xét câu cũ
+                double similarity = assessmentService.cosineSimilarity(
+                        tfidfData.instance(newestIndex).toDoubleArray(),
+                        tfidfData.instance(i).toDoubleArray()
+                );
+
+                System.out.println("🔍 Comparing newest question with question " + (i + 1));
+                System.out.println("➡ Cosine Similarity: " + similarity);
+
+                if (similarity >= 0.80) { // Nếu giống nhau >= 80%, thêm vào danh sách
+                    similarQuestions.add(i + 1);
+                }
+            }
+
+            if (similarQuestions.isEmpty()) {
+                return ResponseEntity.ok(Collections.singletonMap("message", "No duplicate questions found."));
+            }
+
+            return ResponseEntity.ok(Collections.singletonMap("similarQuestions", similarQuestions));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500)
+                    .body(Collections.singletonMap("error", "An error occurred while processing similarity: " + e.getMessage()));
+        }
+    }
+
     //Preview assessment
     @GetMapping("/{id}/preview")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPERADMIN')")
@@ -970,6 +1025,10 @@ public class AssessmentController {
         // Get list question and exercise
         List<Question> questions = questionService.findQuestionsByAssessmentId(id);
         List<Exercise> exercises = exerciseService.getExercisesByAssessmentId(id);
+        if (assessment.isShuffled()) {
+            Collections.shuffle(questions);
+            Collections.shuffle(exercises);
+        }
         // Add to model
         model.addAttribute("assessment", assessment);
         model.addAttribute("questions", questions);
@@ -987,7 +1046,7 @@ public class AssessmentController {
         return "assessments/verifyEmail"; // Show email input page
     }
 
-    @PostMapping("/invite/{id}/take-exam")
+    @PostMapping("/invite/take-exam/{id}")
     public String verifyEmail(@PathVariable("id") String rawId, @RequestParam("email") String email, Model model) {
         email = email.toLowerCase();
         // Decode the ID (but don't overwrite rawId)
@@ -1019,7 +1078,7 @@ public class AssessmentController {
 
         // Convert nowUtc to GMT+7
         ZoneId gmt7 = ZoneId.of("Asia/Bangkok");
-        ZonedDateTime nowGmt7 = nowUtc.atZone(ZoneId.of("UTC")).withZoneSameInstant(gmt7);
+        ZonedDateTime nowGmt7 = nowUtc.atZone(ZoneId.of("UTC"));
 
         if (expireDateGmt7.isBefore(nowGmt7.toLocalDateTime())) {
             String formattedExpireTime = expireDateGmt7.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
@@ -1066,6 +1125,10 @@ public class AssessmentController {
         // Fetch questions
         List<Question> questions = questionService.findQuestionsByAssessmentId(id);
         List<Exercise> exercises = exerciseService.getExercisesByAssessmentId(id);
+        if (assessment.isShuffled()) {
+            Collections.shuffle(questions);
+            Collections.shuffle(exercises);
+        }
         //Create attempt
         StudentAssessmentAttempt attempt = studentAssessmentAttemptService.createAssessmentAttempt(id, email);
 

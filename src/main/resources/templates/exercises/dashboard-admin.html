@@ -188,9 +188,11 @@
                 padding: 0;
             }
         }
+
         .hidden-box {
             display: none !important;
         }
+
         /* CSS dark mode được điều chỉnh sáng hơn */
         .dark-mode {
             background-color: #2c2f33; /* Xám đậm nhạt hơn */
@@ -347,7 +349,7 @@
     }
 
     // Kiểm tra trạng thái dark mode khi load trang
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         if (localStorage.getItem('darkMode') === 'enabled') {
             document.body.classList.add('dark-mode');
             document.getElementById('darkModeToggle').innerHTML = '<i class="bi bi-sun me-1"></i> Light Mode';
@@ -392,7 +394,7 @@
                 apiUrl += `?languageId=${languageId}`;
             }
 
-            // Hủy biểu đồ ngay khi gọi API
+            // Hủy biểu đồ khi gọi API
             window.topicChartInstance = resetChart(window.topicChartInstance);
             window.difficultyChartInstance = resetChart(window.difficultyChartInstance);
 
@@ -406,13 +408,11 @@
                 .then(data => {
                     console.log("📊 API Data:", data);
 
-                    // Kiểm tra nếu không có dữ liệu hoặc số bài tập = 0
                     if (!data || data.totalExercises === 0) {
                         console.warn("⚠️ Không có dữ liệu để hiển thị biểu đồ.");
                         return;
                     }
 
-                    // Kiểm tra dữ liệu hợp lệ
                     if (!data.difficultyChartData || !data.topicChartData) {
                         console.error("⚠ API trả về dữ liệu không hợp lệ:", data);
                         return;
@@ -426,38 +426,62 @@
                     }
                     const languageCtx = languageCanvas.getContext('2d');
 
-                    const languageLabels = Object.keys(data.topicChartData || {});
-                    console.log("📌 Labels:", languageLabels);
+                    let languageLabels = Object.keys(data.topicChartData || {}).filter(lang => lang !== "All Languages");
+                    // Đưa "All Languages" xuống cuối danh sách nếu tồn tại
+                    if (data.topicChartData["All Languages"]) {
+                        languageLabels.push("All Languages");
+                    }
+                    let assessedValues = languageLabels.map(lang => data.topicChartData[lang]?.assessed ?? 0);
+                    let unassessedValues = languageLabels.map(lang => data.topicChartData[lang]?.notAssessed ?? 0);
+                    let totalValues = languageLabels.map(lang => data.topicChartData[lang]?.total ?? 0);
 
-                    const assessedValues = languageLabels.map(lang => data.topicChartData[lang]?.assessed ?? 0);
-                    const unassessedValues = languageLabels.map(lang => data.topicChartData[lang]?.notAssessed ?? 0);
-                    console.log("unassessedValues ", unassessedValues);
-                    const totalValues = languageLabels.map(lang => data.topicChartData[lang]?.total ?? 0);
+                    // Kiểm tra và thêm dữ liệu "All Languages"
+                    if (data.topicChartData["All Languages"] && !languageLabels.includes("All Languages")) {
+                        languageLabels.push("All Languages");
+                        assessedValues.push(data.topicChartData["All Languages"].assessed);
+                        unassessedValues.push(data.topicChartData["All Languages"].notAssessed);
+                        totalValues.push(data.topicChartData["All Languages"].total);
+                    }
 
                     window.topicChartInstance = new Chart(languageCtx, {
                         type: 'bar',
                         data: {
                             labels: languageLabels,
                             datasets: [
-                                { label: "Assessed", data: assessedValues, backgroundColor: "rgba(255, 99, 132, 0.4)", minBarLength: 2 },
-                                { label: "Unassessed", data: unassessedValues, backgroundColor: "rgba(153, 102, 255, 0.4)", minBarLength: 2 },
-                                { label: "Total", data: totalValues, backgroundColor: "rgba(75, 192, 192, 0.4)", minBarLength: 2 }
+                                {
+                                    label: "Assessed",
+                                    data: assessedValues,
+                                    backgroundColor: "rgba(255, 99, 132, 0.4)",
+                                    minBarLength: 2
+                                },
+                                {
+                                    label: "Unassessed",
+                                    data: unassessedValues,
+                                    backgroundColor: "rgba(153, 102, 255, 0.4)",
+                                    minBarLength: 2
+                                },
+                                {
+                                    label: "Total",
+                                    data: totalValues,
+                                    backgroundColor: "rgba(75, 192, 192, 0.4)",
+                                    minBarLength: 2
+                                }
                             ]
                         },
                         options: {
                             responsive: true,
-                            scales: { y: { beginAtZero: true } },
+                            scales: {y: {beginAtZero: true}},
                             plugins: {
                                 datalabels: {
                                     formatter: (value) => value,
                                     color: '#000',
-                                    font: { weight: 'bold', size: 14 }
+                                    font: {weight: 'bold', size: 14}
                                 },
-                                tooltip: { //  hover
+                                tooltip: {
                                     callbacks: {
                                         label: function (tooltipItem) {
                                             const value = tooltipItem.raw || 0;
-                                            return value > 1 ? `${value} exercises` : `${value} exercise`; // Hiển thị số liệu + chữ "exercises"
+                                            return value > 1 ? `${value} exercises` : `${value} exercise`;
                                         }
                                     }
                                 }
@@ -499,26 +523,25 @@
                             plugins: {
                                 legend: {
                                     position: "right",
-                                    labels: { boxWidth: 20, padding: 15 }
+                                    labels: {boxWidth: 20, padding: 15}
                                 },
                                 datalabels: {
                                     formatter: (value, ctx) => {
                                         const dataset = ctx.chart.data.datasets[0].data;
                                         const total = dataset.reduce((a, b) => a + b, 0);
                                         const percentage = total > 0 ? ((value / total) * 100).toFixed(1) + "%" : "";
-                                        return value > 0 ? percentage : ""; // Nếu giá trị > 0 thì hiển thị, ngược lại ẩn
+                                        return value > 0 ? percentage : "";
                                     },
-                                    font: { weight: 'bold', size: 14 }
+                                    font: {weight: 'bold', size: 14}
                                 },
-                                tooltip: { // 🎯 Cập nhật tooltip khi hover
+                                tooltip: {
                                     callbacks: {
                                         label: function (tooltipItem) {
                                             const value = tooltipItem.raw || 0;
-                                            return value > 1 ? `${value} exercises` : `${value} exercise`; // Hiển thị số liệu + chữ "exercises"
+                                            return value > 1 ? `${value} exercises` : `${value} exercise`;
                                         }
                                     }
                                 }
-
                             }
                         }
                     });
@@ -526,6 +549,7 @@
                 })
                 .catch(error => console.error("❌ Lỗi khi tải dữ liệu:", error));
         }
+
 
         // Gọi API khi trang tải
         fetchDashboardData();

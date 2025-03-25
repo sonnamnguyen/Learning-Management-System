@@ -9,6 +9,26 @@
     <!-- Bootstrap Icons CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet"/>
     <style>
+
+        #toggleView {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 12px;
+            min-width: 120px;
+            max-width: 200px;
+        }
+
+        #tagContainer {
+            max-width: 200px;
+            white-space: normal;
+            word-wrap: break-word;
+            overflow-x: hidden;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
         /* Sử dụng table-bordered để có đường viền giữa các cột */
         table.table-bordered th,
         table.table-bordered td {
@@ -710,29 +730,26 @@
                                             </div>
 
                                             <!-- Tag Filter -->
-                                            <div class="col-md-4 ">
+                                            <div class="col-md-4">
                                                 <label class="form-label fw-semibold text-muted mb-1">Tags</label>
                                                 <div class="dropdown">
-                                                    <button class="btn btn-secondary dropdown-toggle w-100"
-                                                            type="button"
-                                                            id="tagDropdown" data-bs-toggle="dropdown"
-                                                            aria-expanded="false">
+                                                    <button class="btn btn-secondary dropdown-toggle w-100" type="button" id="tagDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                                                         Select Tags
                                                     </button>
-                                                    <div class="dropdown-menu p-2"
-                                                         style="max-height: 200px; overflow-y: auto; width: 100%;">
-                                                        <div class="d-flex flex-column gap-2">
-                                                            <div th:each="tag : ${tags}" class="form-check"
-                                                                 id="tagFilter">
-                                                                <input class="form-check-input" type="checkbox"
-                                                                       th:id="'tag-' + ${tag.id}"
-                                                                       name="tags" th:value="${tag.id}"
-                                                                       th:checked="${selectedTags != null and selectedTags.contains(tag.id)}">
-                                                                <label class="form-check-label"
-                                                                       th:for="'tag-' + ${tag.id}"
-                                                                       th:text="${tag.tag}"></label>
+                                                    <div class="dropdown-menu p-2" style="max-height: 350px; overflow-y: auto; width: 100%;">
+                                                        <!-- 🔍 Thanh tìm kiếm -->
+                                                        <div class="input-group mb-2">
+                                                            <input type="text" class="form-control" id="tagSearch" placeholder="Search tags...">
+                                                        </div>
+                                                        <!-- ✅ Danh sách tag -->
+                                                        <div class="d-flex flex-column gap-2" id="tagList">
+                                                            <div th:each="tag : ${tags}" class="form-check">
+                                                                <input class="form-check-input tag-checkbox" type="checkbox" th:id="'tag-' + ${tag.id}" name="tags" th:value="${tag.id}" th:checked="${selectedTags != null and selectedTags.contains(tag.id)}">
+                                                                <label class="form-check-label" th:for="'tag-' + ${tag.id}" th:text="${tag.tag}"></label>
                                                             </div>
                                                         </div>
+                                                        <!-- 🔘 Nút Apply Filter -->
+                                                        <button type="submit" class="btn btn-success w-100 mt-2">Apply Filter</button>
                                                     </div>
                                                 </div>
                                             </div>
@@ -869,11 +886,11 @@
                         <td>
                             <div id="tagContainer"
                                  style="max-width: 200px; overflow-x: auto; white-space: nowrap; display: flex;">
-        <span th:each="tag, iterStat : ${exercise.exerciseCategories}"
-              th:text="${tag.category.tag}"
-              th:classappend="${iterStat.index >= 2} ? 'd-none extra-tag'"
-              class="badge bg-dark text-light me-2">
-        </span>
+                                 <span th:each="tag, iterStat : ${exercise.exerciseCategories}"
+                                       th:text="${tag.category.tag}"
+                                       th:classappend="${iterStat.index >= 2} ? 'd-none extra-tag'"
+                                       class="badge bg-dark text-light me-2">
+                                 </span>
                                 <span th:if="${#lists.size(exercise.exerciseCategories) > 2}"
                                       id="toggleTags" class="badge bg-secondary text-light"
                                       role="button" onclick="toggleTags()">...</span>
@@ -1200,11 +1217,11 @@
             filterForm.submit();
         });
 
-        document.querySelectorAll('input[name="tags"]').forEach(checkbox => {
-            checkbox.addEventListener("change", function () {
-                filterForm.submit();
-            });
-        });
+        // document.querySelectorAll('input[name="tags"]').forEach(checkbox => {
+        //     checkbox.addEventListener("change", function () {
+        //         filterForm.submit();
+        //     });
+        // });
 
     });
 
@@ -1212,6 +1229,7 @@
         document.getElementById("searchInput").value = "";
         document.getElementById("languageFilter").value = "";
         document.getElementById("levelFilter").value = "";
+        document.getElementById("tagList").value = "";
         document.getElementById("filterForm").submit();
 
 
@@ -1222,19 +1240,19 @@
         document.getElementById('filterForm').submit();
     }
 
-    function showDetails(index) {
-        const details = document.getElementById(`details-${index}`);
-        const overlay = document.getElementById('overlay');
-        details.classList.add('active');
-        overlay.classList.add('active');
-    }
-
-    function closeDetails(index) {
-        const details = document.getElementById(`details-${index}`);
-        const overlay = document.getElementById('overlay');
-        details.classList.remove('active');
-        overlay.classList.remove('active');
-    }
+    // function showDetails(index) {
+    //     const details = document.getElementById(`details-${index}`);
+    //     const overlay = document.getElementById('overlay');
+    //     details.classList.add('active');
+    //     overlay.classList.add('active');
+    // }
+    //
+    // function closeDetails(index) {
+    //     const details = document.getElementById(`details-${index}`);
+    //     const overlay = document.getElementById('overlay');
+    //     details.classList.remove('active');
+    //     overlay.classList.remove('active');
+    // }
 
     // Close popup when clicking outside
     document.getElementById('overlay').addEventListener('click', function () {
@@ -1244,64 +1262,64 @@
         this.classList.remove('active');
     });
 
-    function updateSelectedTags() {
-        selectedTagsContainer.innerHTML = '';
-        let selectedCount = 0;
-        let selectedTags = [];
+    // function updateSelectedTags() {
+    //     selectedTagsContainer.innerHTML = '';
+    //     let selectedCount = 0;
+    //     let selectedTags = [];
+    //
+    //     tagCheckboxes.forEach(checkbox => {
+    //         if (checkbox.checked) {
+    //             selectedCount++;
+    //             selectedTags.push(checkbox.value);
+    //             const tag = document.createElement('span');
+    //             tag.className = 'selected-tag';
+    //             const label = checkbox.nextElementSibling.textContent;
+    //             tag.innerHTML = `${label} <span class="remove-tag" data-id="${checkbox.value}">&times;</span>`;
+    //             selectedTagsContainer.appendChild(tag);
+    //         }
+    //     });
+    //
+    //     dropdownButton.textContent = selectedCount > 0 ? `${selectedCount} tag(s) selected` : 'Select Tags';
+    //
+    //     // Update form's hidden input for tags
+    //     let form = document.getElementById('filterForm');
+    //     // Remove existing tag inputs
+    //     form.querySelectorAll('input[name="tags"]').forEach(input => {
+    //         if (!input.checked) {
+    //             input.remove();
+    //         }
+    //     });
+    //
+    //     // Add selected tags as hidden inputs
+    //     selectedTags.forEach(tagId => {
+    //         if (!form.querySelector(`input[name="tags"][value="${tagId}"]`)) {
+    //             const input = document.createElement('input');
+    //             input.type = 'hidden';
+    //             input.name = 'tags';
+    //             input.value = tagId;
+    //             form.appendChild(input);
+    //         }
+    //     });
+    // }
 
-        tagCheckboxes.forEach(checkbox => {
-            if (checkbox.checked) {
-                selectedCount++;
-                selectedTags.push(checkbox.value);
-                const tag = document.createElement('span');
-                tag.className = 'selected-tag';
-                const label = checkbox.nextElementSibling.textContent;
-                tag.innerHTML = `${label} <span class="remove-tag" data-id="${checkbox.value}">&times;</span>`;
-                selectedTagsContainer.appendChild(tag);
-            }
-        });
-
-        dropdownButton.textContent = selectedCount > 0 ? `${selectedCount} tag(s) selected` : 'Select Tags';
-
-        // Update form's hidden input for tags
-        let form = document.getElementById('filterForm');
-        // Remove existing tag inputs
-        form.querySelectorAll('input[name="tags"]').forEach(input => {
-            if (!input.checked) {
-                input.remove();
-            }
-        });
-
-        // Add selected tags as hidden inputs
-        selectedTags.forEach(tagId => {
-            if (!form.querySelector(`input[name="tags"][value="${tagId}"]`)) {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = 'tags';
-                input.value = tagId;
-                form.appendChild(input);
-            }
-        });
-    }
-
-    tagCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', () => {
-            updateSelectedTags();
-            document.getElementById('filterForm').submit();
-        });
-    });
-
-    selectedTagsContainer.addEventListener('click', (e) => {
-        if (e.target.classList.contains('remove-tag')) {
-            const tagId = e.target.dataset.id;
-            const checkbox = document.querySelector(`input[value="${tagId}"]`);
-            if (checkbox) {
-                checkbox.checked = false;
-                updateSelectedTags();
-                document.getElementById('filterForm').submit();
-            }
-        }
-    });
+    // tagCheckboxes.forEach(checkbox => {
+    //     checkbox.addEventListener('change', () => {
+    //         updateSelectedTags();
+    //         // document.getElementById('filterForm').submit();
+    //     });
+    // });
+    //
+    // selectedTagsContainer.addEventListener('click', (e) => {
+    //     if (e.target.classList.contains('remove-tag')) {
+    //         const tagId = e.target.dataset.id;
+    //         const checkbox = document.querySelector(`input[value="${tagId}"]`);
+    //         if (checkbox) {
+    //             checkbox.checked = false;
+    //             updateSelectedTags();
+    //             document.getElementById('filterForm').submit();
+    //         }
+    //     }
+    // });
 
     // Initialize selected tags
     updateSelectedTags();
@@ -1381,6 +1399,27 @@
         if (closeButton) {
             closeButton.addEventListener('click', () => closeAlert('duplicateAlert'));
         }
+    });
+
+</script>
+<!--search selectTags-->
+<script>
+    document.getElementById("filterForm").addEventListener("submit", function () {
+        let checkedTags = [];
+        document.querySelectorAll("input[name='tags']:checked").forEach(tag => {
+            checkedTags.push(tag.value);
+        });
+        console.log("Selected Tags:", checkedTags);
+    });
+
+    document.getElementById("tagSearch").addEventListener("input", function () {
+        let filter = this.value.toLowerCase();
+        let tags = document.querySelectorAll("#tagList .form-check");
+
+        tags.forEach(tag => {
+            let label = tag.querySelector("label").innerText.toLowerCase();
+            tag.style.display = label.includes(filter) ? "block" : "none";
+        });
     });
 </script>
 </body>

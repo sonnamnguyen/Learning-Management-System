@@ -31,7 +31,7 @@ public class Answer {
     @JoinColumn(name = "question_id", nullable = false)
     private Question question;
 
-    @Column(name = "is_correct", nullable = false)
+    @Column(name = "is_correct", nullable = true)
     private Boolean isCorrect;
 
 }

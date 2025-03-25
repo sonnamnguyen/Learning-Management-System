@@ -451,6 +451,24 @@
                 </div>
             </div>
         </div>
+
+        <div class="modal fade" id="similarQuestionModal" tabindex="-1" aria-labelledby="similarQuestionModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="similarQuestionModalLabel">Similar Question Found</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body" id="similarQuestionBody">
+                        <!-- Content dynamically updated by JS -->
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" id="cancelBtn" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="addAnywayBtn">Add Anyway</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </form>
 </div>
 
@@ -781,6 +799,11 @@
         emptyMessage.textContent = "There's currently no selected question for this assessment!";
         selectedQuestionsList.parentNode.appendChild(emptyMessage);
 
+        const modal = document.getElementById("similarQuestionModal");
+        const modalBody = document.getElementById("similarQuestionBody");
+        const addAnywayBtn = document.getElementById("addAnywayBtn");
+        const cancelBtn = document.getElementById("cancelBtn");
+
         function loadQuestions() {
             const selectedQuestionsJsonElement = document.getElementById("selectedQuestionsJson");
 
@@ -797,7 +820,6 @@
             }
             try {
                 let parsedQuestions = JSON.parse(jsonText);
-                console.log("✅ JSON parse thành công:", parsedQuestions);
 
                 selectedQuestionsFull = parsedQuestions;
 
@@ -1014,7 +1036,6 @@
         }
 
         function updateHiddenInput() {
-            console.log("🔍 Data gửi lên server:", JSON.stringify(newAddedQuestions));
             document.getElementById("newAddedQuestionsInput").value = JSON.stringify(newAddedQuestions);
         }
 
@@ -1034,10 +1055,71 @@
 
                 console.warn("📌 Danh sách câu hỏi đã reset vì là 'assignment' mà không phải 'quiz'.");
 
-                console.log("🔍 newAddedQuestions sau reset:", newAddedQuestions);
-                console.log("🔍 Hidden Input Value:", document.getElementById("newAddedQuestionsInput").value);
             }
         }
+
+        function checkSimilarQuestions(questionId, text, orderIndex) {
+            const requestBody = JSON.stringify({
+                newAddedQuestions: [...newAddedQuestions, { questionId, orderIndex, text }]
+            });
+            console.log("🚀 Sending request:", requestBody);
+
+            fetch("/assessments/edit/check-similarNewQuestions", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: requestBody
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log("✅ API Response:", data);
+
+                    // Trường hợp API trả về message (không có câu hỏi trùng lặp)
+                    if (data.message) {
+                        console.log("ℹ No duplicates found:", data.message);
+                        addQuestionToSelectedList(questionId, text, orderIndex, true);
+                        return;
+                    }
+
+                    // Kiểm tra nếu `similarQuestions` tồn tại và có dữ liệu
+                    if (data.similarQuestions && Array.isArray(data.similarQuestions) && data.similarQuestions.length > 0) {
+                        console.log("🔍 Found similar questions:", data.similarQuestions);
+
+                        // Lọc bỏ `orderIndex` của câu hỏi hiện tại
+                        let duplicateOrderIndexes = data.similarQuestions.filter(idx => idx !== orderIndex);
+
+                        if (duplicateOrderIndexes.length === 0) {
+                            console.log("ℹ No relevant duplicates found.");
+                            addQuestionToSelectedList(questionId, text, orderIndex, true);
+                            return;
+                        }
+
+                        let duplicateText = duplicateOrderIndexes.join(", ");
+
+                        modalBody.innerHTML = `
+                <p><strong style="color: red;"><em>Warning:</em></strong> The following question is a duplicate:</p>
+                <ul>
+                    <li>${text}</li>
+                </ul>
+                <p>This question duplicates others at order indexes: ${duplicateText}.</p>
+                <p>Do you still want to add it?</p>
+            `;
+
+                        addAnywayBtn.onclick = function () {
+                            addQuestionToSelectedList(questionId, text, orderIndex, true);
+                            bootstrap.Modal.getInstance(modal).hide();
+                        };
+
+                        bootstrap.Modal.getOrCreateInstance(modal).show();
+                        return; // Dừng lại, tránh chạy tiếp
+                    }
+
+                    // Nếu không tìm thấy câu hỏi trùng
+                    console.log("ℹ No similar questions detected.");
+                    addQuestionToSelectedList(questionId, text, orderIndex, true);
+                })
+                .catch(error => console.error("❌ Error checking similar questions:", error));
+        }
+
 
         document.getElementById("assessmentType").addEventListener("change", function () {
             resetQuestionsIfNeeded();
@@ -1054,7 +1136,7 @@
                     return;
                 }
 
-                addQuestionToSelectedList(parseInt(questionId, 10), questionText, newAddedQuestions.length + 1);
+                checkSimilarQuestions(parseInt(questionId, 10), questionText, newAddedQuestions.length + 1);
             }
         });
 
@@ -1063,13 +1145,55 @@
                 const quizId = event.target.closest(".add-questions").getAttribute("data-quiz-id");
                 const questions = document.querySelectorAll(`#collapse${quizId} .library-add-question`);
 
+                let newQuestions = [];
+                let existingTexts = [
+                    ...newAddedQuestions.map(q => q.text.toLowerCase()),
+                    ...selectedQuestionsFull.map(q => q.text.toLowerCase())
+                ];
+
                 questions.forEach(button => {
                     if (button.style.display !== "none") {
                         const questionId = button.getAttribute("data-question-id");
-                        const questionText = button.closest(".list-group-item").querySelector(".question-text").innerText;
-                        addQuestionToSelectedList(parseInt(questionId, 10), questionText, newAddedQuestions.length + 1);
+                        const questionText = button.closest(".list-group-item").querySelector(".question-text").innerText.trim();
+                        newQuestions.push({ id: parseInt(questionId, 10), text: questionText });
                     }
                 });
+
+                let duplicateQuestions = [];
+                let seenTexts = new Set();
+
+                newQuestions.forEach(q => {
+                    const lowerText = q.text.toLowerCase();
+                    if (seenTexts.has(lowerText) || existingTexts.includes(lowerText)) {
+                        duplicateQuestions.push(q);
+                    }
+                    seenTexts.add(lowerText);
+                });
+
+                if (duplicateQuestions.length > 0) {
+                    const modalBody = document.getElementById("similarQuestionBody");
+                    modalBody.innerHTML = `
+                <p><strong style="color: red;"><em>Warning:</em></strong> The following questions maybe duplicates:</p>
+                <ul>
+                    ${duplicateQuestions.map(q => `<li>${q.text}</li>`).join("")}
+                </ul>
+                <p>Do you still want to add them?</p>
+            `;
+
+                    const addAnywayBtn = document.getElementById("addAnywayBtn");
+                    addAnywayBtn.onclick = function () {
+                        newQuestions.forEach((q, index) => {
+                            addQuestionToSelectedList(q.id, q.text, newAddedQuestions.length + 1 + index);
+                        });
+                        bootstrap.Modal.getInstance(document.getElementById("similarQuestionModal")).hide();
+                    };
+
+                    bootstrap.Modal.getOrCreateInstance(document.getElementById("similarQuestionModal")).show();
+                } else {
+                    newQuestions.forEach((q, index) => {
+                        addQuestionToSelectedList(q.id, q.text, newAddedQuestions.length + 1 + index);
+                    });
+                }
 
                 updateAddAllButton();
             }
