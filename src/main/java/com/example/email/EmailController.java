@@ -51,8 +51,7 @@ public class EmailController {
 
 
         // Send invitations
-        String assessmentLink = inviteUrlHeader + assessmentService.encodeId(assessmentId) + "/take";
-        emailService.sendAssessmentInvite(emailList, assessmentId, expirationDate);
+          emailService.sendAssessmentInvite(emailList, assessmentId, expirationDate);
         // Store invited emails with full date-time values
         assessmentService.storeInvitedEmail(assessmentId, emailList, invitationDate, expirationDate);
         System.out.println("Invited email sent: "+ emailList);

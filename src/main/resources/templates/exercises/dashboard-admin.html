@@ -193,64 +193,82 @@
             display: none !important;
         }
         /* CSS dark mode sáng hơn, đẹp hơn với animation */
-.dark-mode {
-    background-color: #32373d; /* Xám đậm nhẹ nhàng hơn */
-    color: #f0f2f5; /* Màu chữ sáng dịu, dễ đọc */
-    transition: background-color 0.3s ease, color 0.3s ease; /* Hiệu ứng chuyển màu mượt */
-}
+        .dark-mode {
+            background-color: #32373d; /* Xám đậm nhẹ nhàng hơn */
+            color: #f0f2f5; /* Màu chữ sáng dịu, dễ đọc */
+            transition: background-color 0.3s ease, color 0.3s ease; /* Hiệu ứng chuyển màu mượt */
+        }
 
-.dark-mode .small-box {
-    color: #f0f2f5; /* Màu chữ sáng dịu */
-    background-color: #3e444b; /* Nền nhẹ nhàng hơn */
-    border-radius: 8px; /* Bo góc mềm mại */
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Đổ bóng nhẹ */
-    transition: transform 0.2s ease, box-shadow 0.2s ease; /* Animation khi hover */
-}
+        .dark-mode .small-box {
+            color: #f0f2f5; /* Màu chữ sáng dịu */
+            background-color: #3e444b; /* Nền nhẹ nhàng hơn */
+            border-radius: 8px; /* Bo góc mềm mại */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Đổ bóng nhẹ */
+            transition: transform 0.2s ease, box-shadow 0.2s ease; /* Animation khi hover */
+        }
 
-.dark-mode .small-box:hover {
-    transform: translateY(-5px); /* Nhấc lên nhẹ khi hover */
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* Đổ bóng đậm hơn */
-}
+        .dark-mode .small-box:hover {
+            transform: translateY(-5px); /* Nhấc lên nhẹ khi hover */
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* Đổ bóng đậm hơn */
+        }
 
-.dark-mode .chart-container,
-.dark-mode .leaderboard {
-    background-color: #40474f; /* Xám trung tính sáng hơn */
-    color: #f0f2f5;
-    border-radius: 10px; /* Bo góc hiện đại */
-    padding: 15px; /* Thêm khoảng đệm */
-    transition: background-color 0.3s ease; /* Chuyển màu mượt mà */
-}
+        .dark-mode .chart-container,
+        .dark-mode .leaderboard {
+            background-color: #40474f; /* Xám trung tính sáng hơn */
+            color: #f0f2f5;
+            border-radius: 10px; /* Bo góc hiện đại */
+            padding: 15px; /* Thêm khoảng đệm */
+            transition: background-color 0.3s ease; /* Chuyển màu mượt mà */
+        }
 
-.dark-mode .leaderboard th {
-    background-color: #0066cc; /* Xanh đậm tươi sáng hơn */
-    color: #ffffff; /* Chữ trắng cho tương phản */
-    padding: 10px;
-    border-bottom: 2px solid #f0f2f5; /* Đường viền dưới nổi bật */
-}
+        .dark-mode .leaderboard th {
+            background-color: #0066cc; /* Xanh đậm tươi sáng hơn */
+            color: #ffffff; /* Chữ trắng cho tương phản */
+            padding: 10px;
+            border-bottom: 2px solid #f0f2f5; /* Đường viền dưới nổi bật */
+        }
 
-.dark-mode .leaderboard tbody tr {
-    transition: background-color 0.2s ease, transform 0.2s ease; /* Animation cho hàng */
-}
+        .dark-mode .leaderboard tbody tr {
+            transition: background-color 0.2s ease, transform 0.2s ease; /* Animation cho hàng */
+        }
 
-.dark-mode .leaderboard tbody tr:nth-child(even) {
-    background-color: #4a5159; /* Xám nhạt hơn cho hàng chẵn */
-}
+        .dark-mode .leaderboard tbody tr:nth-child(even) {
+            background-color: #4a5159; /* Xám nhạt hơn cho hàng chẵn */
+        }
 
-.dark-mode .leaderboard tbody tr:hover {
-    background-color: #5c646d; /* Xám sáng hơn khi hover */
-    transform: scale(1.02); /* Phóng to nhẹ khi hover */
-    cursor: pointer; /* Con trỏ tay để tăng tương tác */
-}
+        .dark-mode .leaderboard tbody tr:hover {
+            background-color: #5c646d; /* Xám sáng hơn khi hover */
+            transform: scale(1.02); /* Phóng to nhẹ khi hover */
+            cursor: pointer; /* Con trỏ tay để tăng tương tác */
+        }
 
-/* Thêm hiệu ứng fade-in khi load */
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
+        /* Thêm hiệu ứng fade-in khi load */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
 
-.dark-mode {
-    animation: fadeIn 0.5s ease-in; /* Hiệu ứng mờ dần khi load */
-}
+        .dark-mode {
+            animation: fadeIn 0.5s ease-in; /* Hiệu ứng mờ dần khi load */
+        }
+        .search-bar {
+            width: 300px; /* Độ rộng của thanh tìm kiếm */
+        }
+
+        .search-bar input {
+            border-radius: 5px;
+        }
+
+        .leaderboard h2 {
+            font-size: 1.5rem; /* Kích thước tiêu đề */
+        }
+        #noExercisesRow td {
+            color: #888;
+            font-style: italic;
+        }
+        .swal-wide {
+            width: 800px !important;
+        }
     </style>
 </head>
 <body class="hold-transition layout-fixed">
@@ -334,7 +352,12 @@
         <!-- Bảng Leaderboard -->
         <div class="row mt-4">
             <div class="col-md-12 leaderboard">
-                <h2 class="text-center">Most Attempted Exercises</h2>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="mb-0">Attempted Exercises</h2>
+                    <div class="search-bar">
+                        <input type="text" id="searchInput" class="form-control" placeholder="Search Exercise By Name" onkeyup="searchExercises()">
+                    </div>
+                </div>
                 <table class="table table-bordered" id="exerciseTable">
                     <thead>
                     <tr class="bg-primary text-white">
@@ -346,12 +369,18 @@
                     </tr>
                     </thead>
                     <tbody id="exerciseTableBody">
-                    <tr th:each="exercise : ${mostAttemptedExercises}">
+                    <tr id="noExercisesRow" style="display: none;">
+                        <td colspan="5" class="text-center">No Exercises Found.</td>
+                    </tr>
+                    <tr th:each="exercise : ${mostAttemptedExercises}" class="exercise-row">
                         <td th:text="${exercise.submitted_exercise.name}"></td>
                         <td th:text="${#temporals.format(exercise.attemptDate, 'dd/MM/yyyy HH:mm:ss')}"></td> <!-- kiểu LocalDateTime -->
                         <td th:text="${exercise.score_exercise}"></td>
+                        <!--                            <button class="btn btn-info btn-sm" onclick="showCodeModal(this)"-->
+                        <!--                                    th:attr="data-code=${exercise.submitted_code} ?: '// No code submitted'">View Code</button>-->
+                        <!--                            <button class="btn btn-info btn-sm" onclick="showCodeModal(this)" th:data-code="${exercise.submitted_code}">View Code</button>-->
                         <td>
-                            <button class="btn btn-info btn-sm" onclick="showCodeModal(this)"
+                            <button class="btn btn-info btn-sm" onclick="showCodeSweetAlert(this)"
                                     th:attr="data-code=${exercise.submitted_code} ?: '// No code submitted'">View Code</button>
                         </td>
                         <td th:text="${exercise.attendant_user.username}"></td>
@@ -388,36 +417,52 @@
 <div th:replace="~{fragments :: footer}" class="mt-auto"></div>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        const rowsPerPage = 10; // Số hàng mỗi trang
+        const rowsPerPage = 5; // Số hàng mỗi trang
         const tableBody = document.getElementById("exerciseTableBody");
-        const rows = tableBody.getElementsByTagName("tr");
-        const totalRows = rows.length;
-        const totalPages = Math.ceil(totalRows / rowsPerPage);
+        const rows = Array.from(tableBody.getElementsByClassName("exercise-row")); // Lấy các hàng dữ liệu
+        const noExercisesRow = document.getElementById("noExercisesRow"); // Hàng "No exercises found"
+        let filteredRows = rows; // Danh sách các hàng sau khi lọc
         let currentPage = 1;
 
         // Hàm hiển thị các hàng cho trang hiện tại
         function displayRows(page) {
-            const start = (page - 1) * rowsPerPage;
+            const totalRows = filteredRows.length;
+            const totalPages = Math.ceil(totalRows / rowsPerPage);
+            currentPage = Math.min(page, totalPages) || 1; // Đảm bảo currentPage hợp lệ
+
+            const start = (currentPage - 1) * rowsPerPage;
             const end = start + rowsPerPage;
 
-            // Ẩn tất cả các hàng
-            for (let i = 0; i < totalRows; i++) {
-                rows[i].style.display = "none";
+            // Ẩn tất cả các hàng dữ liệu và hàng "No exercises found"
+            rows.forEach(row => row.style.display = "none");
+            noExercisesRow.style.display = "none";
+
+            // Nếu không có kết quả, hiển thị "No exercises found"
+            if (totalRows === 0) {
+                noExercisesRow.style.display = "";
+                updatePagination(0); // Ẩn phân trang
+                return;
             }
 
             // Hiển thị các hàng cho trang hiện tại
             for (let i = start; i < end && i < totalRows; i++) {
-                rows[i].style.display = "";
+                filteredRows[i].style.display = "";
             }
 
             // Cập nhật trạng thái phân trang
-            updatePagination();
+            updatePagination(totalRows);
         }
 
         // Hàm tạo các nút phân trang
-        function updatePagination() {
+        function updatePagination(totalRows) {
+            const totalPages = Math.ceil(totalRows / rowsPerPage);
             const pagination = document.getElementById("pagination");
             pagination.innerHTML = "";
+
+            // Nếu không có hàng nào, ẩn phân trang
+            if (totalRows === 0) {
+                return;
+            }
 
             // Nút First
             const firstLi = document.createElement("li");
@@ -455,36 +500,47 @@
         // Hàm chuyển trang
         window.changePage = function (event, page) {
             event.preventDefault(); // Ngăn hành vi mặc định của thẻ <a>
+            const totalRows = filteredRows.length;
+            const totalPages = Math.ceil(totalRows / rowsPerPage);
             if (page < 1 || page > totalPages) return;
             currentPage = page;
             displayRows(currentPage);
         };
 
+        // Hàm tìm kiếm
+        window.searchExercises = function () {
+            const searchInput = document.getElementById("searchInput").value.toLowerCase();
+            filteredRows = rows.filter(row => {
+                const exerciseName = row.cells[0].textContent.toLowerCase(); // Cột Exercise Name
+                const attendant = row.cells[4].textContent.toLowerCase();
+                return exerciseName.includes(searchInput) || attendant.includes(searchInput);
+            });
+
+            currentPage = 1; // Reset về trang đầu tiên sau khi tìm kiếm
+            displayRows(currentPage);
+        };
+
         // Hiển thị trang đầu tiên khi tải trang
-        if (totalRows > 0) {
+        if (rows.length > 0) {
             displayRows(currentPage);
         }
     });
 </script>
-<!-- Prism.js JS -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    function showCodeModal(button) {
-         let code = button.getAttribute("data-code") || "// No code submitted";
-         const codeContent = document.getElementById("codeContent");
-         const modalElement = document.getElementById('codeModal');
-
-         if (!modalElement) {
-             console.error("Modal element not found!");
-             return;
-         }
-
-         codeContent.textContent = code;
-         Prism.highlightElement(codeContent);
-
-         const modal = new bootstrap.Modal(modalElement);
-         modal.show();
-     }
+    function showCodeSweetAlert(button) {
+        let code = button.getAttribute("data-code") || "// No code submitted";
+        Swal.fire({
+            title: "Submitted Code",
+            html: `<pre style="text-align: left; max-height: 400px; overflow-y: auto;"><code>${code}</code></pre>`,
+            showCloseButton: true,
+            showConfirmButton: false,
+            customClass: {
+                popup: 'swal-wide'
+            }
+        });
+    }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
@@ -622,8 +678,8 @@
                                     labels: {
                                         color: labelColor,
                                         font: { size: 14 }
-                                        }
-                                    },
+                                    }
+                                },
                                 datalabels: {
                                     formatter: (value) => value,
                                     color: labelColor,

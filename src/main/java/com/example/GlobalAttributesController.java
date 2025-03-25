@@ -56,22 +56,4 @@ public class GlobalAttributesController {
         return roles;
     }
 
-    @ModelAttribute("user")
-    public User getUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication == null || !authentication.isAuthenticated() || authentication instanceof AnonymousAuthenticationToken) {
-            return null; // Return null if the user is not authenticated
-        }
-
-        String username = authentication.getName();
-
-        try {
-            return userService.findByUsername(username);
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
-    }
-
-
 }

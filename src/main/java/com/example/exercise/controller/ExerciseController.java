@@ -9,6 +9,7 @@ import com.example.exercise.service.ExerciseCategoryService;
 import com.example.exercise.service.ExerciseService;
 import com.example.exercise.service.StudentExerciseAttemptService;
 import com.example.testcase.*;
+import com.example.user.User;
 import com.example.user.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -1070,7 +1071,7 @@ public class ExerciseController {
                             @RequestParam(value = "language", required = false) String language,
                             @RequestParam(value = "year", required = false) Integer year,
                             Model model) {
-
+        User user = userService.getCurrentUser();
         if (year == null) {
             year = Year.now().getValue();
         }
@@ -1110,6 +1111,7 @@ public class ExerciseController {
         model.addAttribute("currentLanguage", language);
         model.addAttribute("chartData", chartResponse);
         model.addAttribute("studentAttempts", studentAttempts);
+        model.addAttribute("user", user);
         return "exercises/profile"; // Ensure this view exists
     }
 

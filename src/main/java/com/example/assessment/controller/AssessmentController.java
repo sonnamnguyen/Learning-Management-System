@@ -1128,33 +1128,42 @@ public class AssessmentController {
         return "assessments/AssessmentPreview";
     }
 
-    @GetMapping("/invite/{id}/verify-email")
-    public String showEmailSubmissionPage(@PathVariable("id") String id, Model model) {
+    @GetMapping("/invite/{encodedId}/verify-email")
+    public String showEmailSubmissionPage(@PathVariable("encodedId") String encodedId, Model model) {
         // Decode the ID
-        System.out.println("Stored assessmentId in model: " + id);
+        System.out.println("Stored assessmentId in model: " + encodedId);
 
-        model.addAttribute("assessmentId", id);
-        System.out.println("Return to take exam with id: " + id);
+        long[] decoded = hashids.decode(encodedId);
+
+        if (decoded.length == 0) {
+            throw new IllegalArgumentException("Invalid HashID: " + encodedId);
+        }
+
+        long assessmentId = decoded[0]; // Extract the first decoded long
+
+        model.addAttribute("assessmentId", assessmentId);
+        System.out.println("Return to take exam with id: " + assessmentId);
+
         return "assessments/verifyEmail"; // Show email input page
     }
-
     @PostMapping("/invite/take-exam/{id}")
+    //rawId is actually true Id
     public String verifyEmail(@PathVariable("id") String rawId, @RequestParam("email") String email, Model model) {
-        email = email.toLowerCase();
-        // Decode the ID (but don't overwrite rawId)
-        System.out.println("");
-        System.out.println("");
-        System.out.println("Take exam get id: " + rawId);
-        long id;
-        try {
-            long[] temp = assessmentService.decodeId(rawId);
-            if (temp.length == 0) {
-                throw new IllegalArgumentException("Invalid assessment ID!");
-            }
-            id = temp[0];
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to decode assessment ID: " + rawId, e);
+        //Check if invited candidate -> has_assessed = true or not
+        Optional<InvitedCandidate> invitedCandidateOpt = invitedCandidateRepository.findByAssessmentIdAndEmail(Long.parseLong(rawId), email);
+        if(invitedCandidateOpt.isEmpty()){
+            model.addAttribute("message", "You have already taken this exam.");
+            return "redirect:/assessments/invalid-link"; // Redirect to an "Already Taken" page
         }
+        InvitedCandidate invitedCandidate = invitedCandidateOpt.get();
+        if (invitedCandidate.isHasAssessed()) {
+            model.addAttribute("message", "You have already taken this exam.");
+            return "redirect:/assessments/already-assessed"; // Redirect to an "Already Taken" page
+        }
+        //Change has_assessed -> Invited Candidate to true
+        invitedCandidateRepository.updateHasAssessedByEmailAndAssessmentId(email, Long.parseLong(rawId));
+        email = email.toLowerCase();
+        long id = Long.parseLong(rawId);
 
         // Store the hashed ID (rawId) in the model instead of the decoded id
         model.addAttribute("assessmentId", rawId);
@@ -1178,7 +1187,7 @@ public class AssessmentController {
             return "redirect:/assessments/expired-link?time=" + formattedExpireTime;
         }
 
-        // Fetch the current invited count
+        // Fetch the current assessed_count count
         Integer invitedCount = jdbcTemplate.queryForObject(
                 "SELECT assessed_count FROM assessment WHERE id = ?",
                 Integer.class, id
