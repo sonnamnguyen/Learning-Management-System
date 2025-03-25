@@ -1405,6 +1405,8 @@
                 updateAchievements(userData);
             };
 
+            const totalExercises = userData.difficultyNoLanguage.totalEasyNoLanguage+userData.difficultyNoLanguage.totalMediumNoLanguage+userData.difficultyNoLanguage.totalHardNoLanguage;
+            const userCurrentExercises = userData.difficultyNoLanguage.easyNoLanguage+userData.difficultyNoLanguage.mediumNoLanguage+userData.difficultyNoLanguage.hardNoLanguage;
             // Define achievements
             const achievementTypes = {
                 HARD_MASTER: {
@@ -1493,6 +1495,18 @@
                         current: /*[[${chartData.perfectScoreUserExercises}]]*/0,
                         total: 1,
                         isCompleted: /*[[${chartData.perfectScoreUserExercises}]]*/0 >= 1
+                    })
+                },
+                MASTER_CHEF: {
+                    id: 'master-chef',
+                    title: 'Master Chef',
+                    description: 'Done 100% exercises',
+                    icon: 'fa-solid fa-utensils',
+                    requirement: totalExercises,
+                    checkProgress: (userData) => ({
+                        current: userCurrentExercises,
+                        total: totalExercises,
+                        isCompleted: Number(userCurrentExercises) === Number(totalExercises)
                     })
                 }
             };

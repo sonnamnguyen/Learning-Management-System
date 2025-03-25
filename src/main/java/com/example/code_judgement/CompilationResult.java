@@ -3,7 +3,6 @@ package com.example.code_judgement;
 import lombok.*;
 
 import java.io.File;
-import java.nio.file.Path;
 
 @NoArgsConstructor
 @Data

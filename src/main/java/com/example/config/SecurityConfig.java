@@ -36,6 +36,7 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/js/**").permitAll()
                         .requestMatchers(
                                 "/login",
                                 "/register",
@@ -44,8 +45,7 @@ public class SecurityConfig {
                                 "/materials/**",
                                 "/assessments/expired-link",
                                 "/assessments/invite/**",
-                                "/assessments/TakeAssessment/**",  // ✅ Explicitly allow this route
-                                "/assessments/invite/take-exam/**",  // ✅ Explicitly allow this route
+                                "/assessments/TakeAssessment",  // ✅ Explicitly allow this route
                                 "/already-assessed",
                                 "/assessments/create/**",
                                 "/assessments/detail/{id}",
