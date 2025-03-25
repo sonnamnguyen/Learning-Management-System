@@ -34,14 +34,6 @@
             display: block;
         }
 
-        .compact-question-item {
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: flex-start !important;
-            gap: 5px;
-            width: 100%;
-        }
-
         .custom-switch {
             width: 2.5rem;
             height: 1.4rem;
@@ -61,6 +53,56 @@
         .form-check-input {
             transition: all 0.3s ease-in-out;
         }
+
+        .btn-add-question:hover:not(:disabled) {
+            transform: scale(1.05);
+        }
+
+        .btn-add-question:active:not(:disabled) {
+            transform: scale(0.95);
+        }
+
+        .btn-add-question:disabled {
+            background-color: #a0aec0 !important;
+            color: #e2e8f0 !important;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .question-container {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+
+        .new-question {
+            padding: 12px;
+            background: #ffefc1;
+            border-left: 6px solid #ff9800;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .similar-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            font-size: 16px;
+        }
+
+        .similar-table th, .similar-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        .similar-table th {
+            background-color: #f2f2f2;
+            font-size: 17px;
+            font-weight: bold;
+        }
     </style>
 
 
@@ -70,13 +112,13 @@
         <input type="hidden" id="newAddedQuestionsInput" name="newAddedQuestions">
 
         <div class="d-flex justify-content-between mb-3">
-            <a th:href="@{/assessments}" style="text-decoration: none; color: #6c757d; transition: color 0.3s ease;"
+            <a id="backToList" th:href="@{/assessments}" style="text-decoration: none; color: #6c757d; transition: color 0.3s ease;"
                onmouseover="this.style.color='#343a40';"
                onmouseout="this.style.color='#6c757d';">
                 <i class="fas fa-arrow-left"></i> Back to List
             </a>
             <div>
-                <a th:href="@{/assessments/{id}/preview(id=${assessment.id})}" class="mx-2"
+                <a id="previewAssessment" th:href="@{/assessments/{id}/preview(id=${assessment.id})}" class="mx-2"
                    style="text-decoration: none; color: #007bff; transition: color 0.3s ease;"
                    onmouseover="this.style.color='#0056b3';"
                    onmouseout="this.style.color='#007bff';">
@@ -311,12 +353,12 @@
                                                                     <span class="badge bg-success" style="font-size: 0.7rem; padding: 0.2rem 0.5rem;"
                                                                           th:text="${#lists.size(quizQuestionsMap.get(quiz.id))} + ' questions'"></span>
                                                                 </div>
-                                                                <button type="button" class="btn btn-primary d-flex align-items-center justify-content-center position-relative btn-add-question add-questions"
+                                                                <button type="button" class="btn btn-add-question add-questions d-flex align-items-center justify-content-center"
                                                                         th:data-quiz-id="${quiz.id}"
                                                                         data-question-id=""
-                                                                        style="width: 35px; height: 35px; border-radius: 50%; transition: width 0.3s ease; overflow: hidden;">
-                                                                    <span class="plus-sign" style="font-size: 1.3rem; transition: opacity 0.3s ease;">+</span>
-                                                                    <span class="add-all-text position-absolute" style="opacity: 0; left: 20%; transform: translateX(-50%) translateY(-10px); font-size: 0.8rem; transition: opacity 0.3s ease, transform 0.3s ease;">Add All</span>
+                                                                        style="background-color: #007bff; color: white; border: none; width: auto; height: 40px; border-radius: 20px; padding: 0 12px; font-size: 1rem; display: flex; gap: 8px; transition: transform 0.2s ease;">
+                                                                    <span class="plus-sign" style="font-size: 1.3rem;">+</span>
+                                                                    <span class="add-all-text">Add All</span>
                                                                 </button>
                                                             </div>
 
@@ -1093,12 +1135,14 @@
                         let duplicateText = duplicateOrderIndexes.join(", ");
 
                         modalBody.innerHTML = `
-                <p><strong style="color: red;"><em>Warning:</em></strong> The following question is a duplicate:</p>
-                <ul>
-                    <li>${text}</li>
-                </ul>
-                <p>This question duplicates others at order indexes: ${duplicateText}.</p>
-                <p>Do you still want to add it?</p>
+               <div style="max-height: 50vh; overflow-y: auto; padding: 10px;">
+        <p><strong style="color: red;"><em>Warning:</em></strong> The following question maybe duplicate:</p>
+        <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; border-left: 4px solid red;">
+            <strong>${text}</strong>
+        </div>
+        <p style="margin-top: 10px;">This question duplicates others at order indexes: <strong>${duplicateText}</strong>.</p>
+        <p>Do you still want to add it?</p>
+    </div>
             `;
 
                         addAnywayBtn.onclick = function () {
@@ -1106,8 +1150,10 @@
                             bootstrap.Modal.getInstance(modal).hide();
                         };
 
+                        modal.querySelector(".modal-dialog").style.maxWidth = "75vw";
+                        modal.querySelector(".modal-content").style.minHeight = "50vh";
                         bootstrap.Modal.getOrCreateInstance(modal).show();
-                        return; // Dừng lại, tránh chạy tiếp
+                        return;
                     }
 
                     // Nếu không tìm thấy câu hỏi trùng
@@ -1116,7 +1162,6 @@
                 })
                 .catch(error => console.error("❌ Error checking similar questions:", error));
         }
-
 
         document.getElementById("assessmentType").addEventListener("change", function () {
             resetQuestionsIfNeeded();
@@ -1140,54 +1185,95 @@
         document.addEventListener("click", function (event) {
             if (event.target.closest(".add-questions")) {
                 const quizId = event.target.closest(".add-questions").getAttribute("data-quiz-id");
-                const questions = document.querySelectorAll(`#collapse${quizId} .library-add-question`);
+                const newQuestions = [];
 
-                let newQuestions = [];
-
-                questions.forEach(button => {
+                document.querySelectorAll(`#collapse${quizId} .library-add-question`).forEach(button => {
                     if (button.style.display !== "none") {
-                        const questionId = button.getAttribute("data-question-id");
-                        const questionText = button.closest(".list-group-item").querySelector(".question-text").innerText.trim();
-                        newQuestions.push({id: parseInt(questionId, 10), text: questionText});
+                        newQuestions.push({
+                            id: parseInt(button.getAttribute("data-question-id"), 10),
+                            text: button.closest(".list-group-item").querySelector(".question-text").innerText.trim()
+                        });
                     }
                 });
 
+                const questions = newAddedQuestions.map(q => ({
+                    questionId: q.questionId,
+                    text: q.text
+                }));
+
+                newQuestions.forEach(q => {
+                    if (!questions.some(existingQ => existingQ.questionId === q.id)) {
+                        questions.push({
+                            questionId: q.id,
+                            text: q.text
+                        });
+                    }
+                });
+
+                const selectedQuestions = newAddedQuestions.map(q => ({
+                    questionId: q.questionId,
+                    text: q.text
+                }));
+
+                const requestData = {
+                    questions: questions,
+                    selectedQuestions: selectedQuestions
+                };
+
+                console.log("🚀 Sending data to backend:", JSON.stringify(requestData, null, 2));
+
                 fetch("/assessments/edit/check-similar-new-question/add-batch", {
                     method: "POST",
-                    headers: {"Content-Type": "application/json"},
-                    body: JSON.stringify({
-                        questions: newQuestions,
-                        selectedQuestions: selectedQuestionsFull
-                    })
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(requestData)
                 })
                     .then(response => response.json())
                     .then(data => {
-                        console.log("✅ API Response:", data);
-
+                        console.log("Duplicate Questions:", data.duplicateQuestions);
                         if (data.duplicateQuestions && Object.keys(data.duplicateQuestions).length > 0) {
                             const modalBody = document.getElementById("similarQuestionBody");
                             modalBody.innerHTML = `
-                <p><strong style="color: red;"><em>Warning:</em></strong> The following new questions may be duplicates:</p>
-                <ul>
-                    ${Object.entries(data.duplicateQuestions).map(([index, dups]) => `
-                        <li>${newQuestions[index].text} (Similar to: ${dups.map(i => newQuestions[i].text).join(", ")})</li>
-                    `).join("")}
-                </ul>
-                <p>Do you still want to add them?</p>
-            `;
+                        <p><strong style="color: red;"><em>Warning:</em></strong> The following new questions may be duplicates:</p>
+                        ${Object.entries(data.duplicateQuestions).map(([questionId, duplicates]) => {
+                                const newQuestion = newQuestions.find(q => q.id == questionId);
+                                return `
+                                <div class="question-container">
+                                    <div class="new-question">
+                                        <strong>New Question:</strong>
+                                        <p>${newQuestion.text}</p>
+                                    </div>
+                                    <table class="similar-table">
+                                        <thead>
+                                            <tr><th>Similar Questions</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            ${duplicates.map(dupId => {
+                                    const dupQuestion = questions.find(q => q.questionId == dupId);
+                                    return `<tr><td>${dupQuestion ? dupQuestion.text : "Unknown Question"}</td></tr>`;
+                                }).join("")}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            `;
+                            }).join("")}
+                        <p style="margin-top: 15px;">Do you still want to add them?</p>
+                    `;
 
                             const addAnywayBtn = document.getElementById("addAnywayBtn");
                             addAnywayBtn.onclick = function () {
                                 newQuestions.forEach((q, index) => {
-                                    addQuestionToSelectedList(q.id, q.text, newAddedQuestions.length + 1 + index);
+                                    addQuestionToSelectedList(q.questionId, q.text, newAddedQuestions.length + 1 + index);
                                 });
                                 bootstrap.Modal.getInstance(document.getElementById("similarQuestionModal")).hide();
                             };
 
-                            bootstrap.Modal.getOrCreateInstance(document.getElementById("similarQuestionModal")).show();
+                            const modalElement = document.getElementById("similarQuestionModal");
+                            modalElement.querySelector(".modal-dialog").style.maxWidth = "75vw";
+                            modalElement.querySelector(".modal-content").style.minHeight = "50vh";
+                            bootstrap.Modal.getOrCreateInstance(modalElement).show();
                         } else {
                             newQuestions.forEach((q, index) => {
-                                addQuestionToSelectedList(q.id, q.text, newAddedQuestions.length + 1 + index);
+                                addQuestionToSelectedList(q.questionId, q.text, newAddedQuestions.length + 1 + index);
                             });
                         }
 
@@ -1211,6 +1297,7 @@
             });
         });
 
+        updateAddAllButton();
         loadAnswers();
         loadQuestions();
     });
@@ -1315,6 +1402,75 @@
 
         function updateSaveAssessmentButton() {
             saveAssessmentBtn.disabled = !isModified && !titleInput.classList.contains("d-none");
+        }
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+        let isFormChanged = false;
+
+        document.querySelector("form").addEventListener("input", function () {
+            isFormChanged = true;
+        });
+
+        document.querySelector("form").addEventListener("change", function () {
+            isFormChanged = true;
+        });
+
+        let questionList = document.getElementById("selected-questions");
+        if (questionList) {
+            new MutationObserver(function () {
+                isFormChanged = true;
+            }).observe(questionList, { childList: true, subtree: true });
+        }
+
+        document.querySelectorAll("#backToList, #previewAssessment").forEach(button => {
+            button.addEventListener("click", function (event) {
+                if (isFormChanged) {
+                    event.preventDefault();
+                    showSaveModal(this.href);
+                }
+            });
+        });
+
+        function showSaveModal(redirectUrl) {
+            let existingModal = document.getElementById("saveConfirmModal");
+            if (!existingModal) {
+                let modalHtml = `
+            <div class="modal fade" id="saveConfirmModal" tabindex="-1" aria-labelledby="saveConfirmLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="saveConfirmLabel">Unsaved Changes</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            You have unsaved changes. Do you want to save before leaving?
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" id="dontSaveBtn" data-bs-dismiss="modal">Don't Save</button>
+                            <button type="button" class="btn btn-success" id="confirmSave">Save & Proceed</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            `;
+                document.body.insertAdjacentHTML("beforeend", modalHtml);
+            }
+
+            let modalElement = document.getElementById("saveConfirmModal");
+            let modal = new bootstrap.Modal(modalElement);
+            modal.show();
+
+            document.getElementById("confirmSave").onclick = function () {
+                document.querySelector("button[type='submit'].btn-success").click(); // Giả lập click Save
+                modal.hide();
+                setTimeout(() => window.location.href = redirectUrl, 500);
+            };
+
+            document.getElementById("dontSaveBtn").onclick = function () {
+                modal.hide();
+                setTimeout(() => window.location.href = redirectUrl, 300);
+            };
         }
     });
 </script>

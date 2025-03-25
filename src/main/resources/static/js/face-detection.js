@@ -95,61 +95,65 @@ video.addEventListener("play", function () {
     let noFaceDetectedCount = 0;
     let multipleFacesDetectedCount = 0;
 
-    setInterval(async () => {
-        // Update dimensions on each frame to ensure accuracy
-        const currentWidth = video.clientWidth || video.offsetWidth || 320
-        const currentHeight = video.clientHeight || video.offsetHeight || 240
-        const currentDisplaySize = { width: currentWidth, height: currentHeight }
+    let previousMultipleFacesDetected = false;
+    let previousNoFaceDetected = false;
 
-        // Only update dimensions if they've changed
+    setInterval(async () => {
+        // Cập nhật kích thước video để vẽ chính xác
+        const currentWidth = video.clientWidth || video.offsetWidth || 320;
+        const currentHeight = video.clientHeight || video.offsetHeight || 240;
+        const currentDisplaySize = { width: currentWidth, height: currentHeight };
+
         if (displaySize.width !== currentWidth || displaySize.height !== currentHeight) {
-            faceapi.matchDimensions(canvas, currentDisplaySize)
+            faceapi.matchDimensions(canvas, currentDisplaySize);
         }
 
+        // Phát hiện khuôn mặt
         const detections = await faceapi
             .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
             .withFaceLandmarks()
             .withFaceExpressions();
 
-        const resizedDetections = faceapi.resizeResults(detections, displaySize);
+        const resizedDetections = faceapi.resizeResults(detections, currentDisplaySize);
         canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
 
-        // Draw detections
+        // Vẽ lên canvas
         faceapi.draw.drawDetections(canvas, resizedDetections);
-        faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
-        faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
 
-        // Check for violations (no face or multiple faces)
-        if (detections.length === 0) {
-            noFaceDetectedCount++;
-            if (noFaceDetectedCount > 10) {
-                // After ~1 second of no face
-                cameraStatus.textContent = "⚠️ Face not detected";
-                cameraStatus.style.backgroundColor = "rgba(255, 0, 0, 0.7)";
+        // Kiểm tra số khuôn mặt phát hiện được
+        let multipleFacesDetected = detections.length > 1;
+        let noFaceDetected = detections.length === 0;
 
-                // Update violation counter in session storage
-                violationFaceCount++;
-                sessionStorage.setItem("violationFaceCount", violationFaceCount.toString());
-            }
-        } else if (detections.length > 1) {
-            multipleFacesDetectedCount++;
-            if (multipleFacesDetectedCount > 10) {
-                // After ~1 second of multiple faces
-                cameraStatus.textContent = "⚠️ Multiple faces detected";
-                cameraStatus.style.backgroundColor = "rgba(255, 0, 0, 0.7)";
+        // Xử lý khi có nhiều khuôn mặt
+        if (multipleFacesDetected && !previousMultipleFacesDetected) {
+            violationFaceCount++;
+            sessionStorage.setItem("violationFaceCount", violationFaceCount.toString());
+        }
 
-                // Update violation counter in session storage
-                violationFaceCount++;
-                sessionStorage.setItem("violationFaceCount", violationFaceCount.toString());
-            }
+        // Xử lý khi không có khuôn mặt
+        if (noFaceDetected && !previousNoFaceDetected) {
+            violationFaceCount++;
+            sessionStorage.setItem("violationFaceCount", violationFaceCount.toString());
+        }
+
+        // Cập nhật trạng thái
+        previousMultipleFacesDetected = multipleFacesDetected;
+        previousNoFaceDetected = noFaceDetected;
+
+        // Hiển thị trạng thái
+        if (multipleFacesDetected) {
+            cameraStatus.textContent = `⚠️ Multiple faces detected (${violationFaceCount})`;
+            cameraStatus.style.backgroundColor = "rgba(255, 0, 0, 0.7)";
+        } else if (noFaceDetected) {
+            cameraStatus.textContent = `⚠️ Face not detected (${violationFaceCount})`;
+            cameraStatus.style.backgroundColor = "rgba(255, 0, 0, 0.7)";
         } else {
-            // Reset counters when face detection is normal
-            noFaceDetectedCount = 0;
-            multipleFacesDetectedCount = 0;
             cameraStatus.textContent = "Camera Active";
             cameraStatus.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
         }
     }, 100);
+
+
 })
 
 // Make sure canvas resizes with video

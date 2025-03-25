@@ -4,6 +4,7 @@ import com.example.assessment.model.Assessment;
 import com.example.assessment.model.StudentAssessmentAttempt;
 import com.example.assessment.repository.AssessmentRepository;
 import com.example.assessment.repository.StudentAssessmentAttemptRepository;
+import com.example.exercise.model.StudentExerciseAttempt;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.example.user.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +26,9 @@ public class StudentAssessmentAttemptService {
 
     @Autowired
     private UserRepository userRepository;
-
+    public List<StudentAssessmentAttempt> getListAttempt(){
+        return repository.findAll();
+    }
     public StudentAssessmentAttempt save(StudentAssessmentAttempt attempt) {
         return repository.save(attempt);
     }

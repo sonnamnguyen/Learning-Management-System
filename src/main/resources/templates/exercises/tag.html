@@ -360,9 +360,9 @@
 
   <div class="header">
     <div class="header-left">
-      <a href="/exercises/create" class="back-btn">
+      <button class="back-btn" onclick="goBack()">
         <i class="bi bi-arrow-left"></i> Back
-      </a>
+      </button>
       <h2>Tag Management</h2>
     </div>
     <div class="header-right">
@@ -611,6 +611,17 @@
       }, 5000);
     });
   });
+</script>
+<script>
+  function goBack() {
+    if (window.location.pathname.includes("/exercises/create")) {
+      window.location.href = "/exercises/create";
+    } else if (window.location.pathname.includes("/exercises/edit")) {
+      window.location.href = "/exercises/edit";
+    } else {
+      window.history.back();
+    }
+  }
 </script>
 </body>
 </html>

@@ -96,6 +96,14 @@ public class Assessment {
     @JoinColumn(name = "updated_by", nullable = true)
     private User updatedBy;
 
+    public int getExerciseCount() {
+        return exercises.size();
+    }
+
+    public int getQuestionCount() {
+        return assessmentQuestions.size();
+    }
+
 //    @PostPersist
 //    public void createProgressNotificationOnAssessmentAttempt() {
 //        try {

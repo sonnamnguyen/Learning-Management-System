@@ -298,10 +298,7 @@ public class AssessmentController {
         }
         System.out.println("Checking similar questions...");
         // If no valid questions are provided, return bad request
-        if (selectedQuestionsSet.isEmpty()) {
-            System.out.println("selectedQuestionsSet.isEmpty");
-            return ResponseEntity.badRequest().body("No valid questions provided or found.");
-        }
+
         try {
             // Create Weka Instances (keep this part as is)
             FastVector attributes = new FastVector();
@@ -1131,33 +1128,34 @@ public class AssessmentController {
         return "assessments/AssessmentPreview";
     }
 
-    @GetMapping("/invite/{id}/verify-email")
-    public String showEmailSubmissionPage(@PathVariable("id") String id, Model model) {
+    @GetMapping("/invite/{encodedId}/verify-email")
+    public String showEmailSubmissionPage(@PathVariable("encodedId") String encodedId, Model model) {
         // Decode the ID
-        System.out.println("Stored assessmentId in model: " + id);
+        System.out.println("Stored assessmentId in model: " + encodedId);
 
-        model.addAttribute("assessmentId", id);
-        System.out.println("Return to take exam with id: " + id);
+        long[] decoded = hashids.decode(encodedId);
+
+        if (decoded.length == 0) {
+            throw new IllegalArgumentException("Invalid HashID: " + encodedId);
+        }
+
+        long assessmentId = decoded[0]; // Extract the first decoded long
+
+        model.addAttribute("assessmentId", assessmentId);
+        System.out.println("Return to take exam with id: " + assessmentId);
+
         return "assessments/verifyEmail"; // Show email input page
     }
-
     @PostMapping("/invite/take-exam/{id}")
     public String verifyEmail(@PathVariable("id") String rawId, @RequestParam("email") String email, Model model) {
+        //Change has_assessed -> Invited Candidate to true
+        invitedCandidateRepository.updateHasAssessedByEmailAndAssessmentId(email, Long.parseLong(rawId));
         email = email.toLowerCase();
         // Decode the ID (but don't overwrite rawId)
         System.out.println("");
         System.out.println("");
         System.out.println("Take exam get id: " + rawId);
-        long id;
-        try {
-            long[] temp = assessmentService.decodeId(rawId);
-            if (temp.length == 0) {
-                throw new IllegalArgumentException("Invalid assessment ID!");
-            }
-            id = temp[0];
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to decode assessment ID: " + rawId, e);
-        }
+        long id = Long.parseLong(rawId);
 
         // Store the hashed ID (rawId) in the model instead of the decoded id
         model.addAttribute("assessmentId", rawId);
@@ -1339,7 +1337,9 @@ public class AssessmentController {
 
 
     @GetMapping("/viewReport/{assessmentId}")
-    public String viewReport(@PathVariable Long assessmentId, @RequestParam("attempt-id") Long attemptId, Model model) {
+    public String viewReport(@PathVariable Long assessmentId,
+                             @RequestParam("attempt-id") Long attemptId,
+                             Model model) {
 
         Optional<StudentAssessmentAttempt> attempt = studentAssessmentAttemptService.findById(attemptId);
 
@@ -1351,6 +1351,33 @@ public class AssessmentController {
             model.addAttribute("tabLeaveCount", tabLeaveCount);
             model.addAttribute("violationFaceCount", violationFaceCount);
             model.addAttribute("attemptInfo", attempt.get());
+
+            Assessment assessment = attempt.get().getAssessment();
+            if (assessment != null) {
+                model.addAttribute("assessment", assessment);
+
+                List<Question> questions = new ArrayList<>();
+                try {
+                    questions = questionService.findQuestionsByAssessmentId(assessment.getId());
+                } catch (Exception e) {
+                    model.addAttribute("errorMessage",
+                            "Error retrieving questions for assessment " + assessmentId + ": " + e.getMessage());
+                }
+                model.addAttribute("questions", questions);
+
+                Map<Long, List<AnswerOption>> questionAnswerOptionsMap = new HashMap<>();
+                for (Question q : questions) {
+                    try {
+                        List<AnswerOption> ansList = answerOptionService.getAnswerOptionByid(q.getId());
+                        questionAnswerOptionsMap.put(q.getId(), ansList);
+                    } catch (Exception e) {
+                        model.addAttribute("errorMessage",
+                                "Error retrieving answer options for question id " + q.getId() + ": " + e.getMessage());
+                        questionAnswerOptionsMap.put(q.getId(), new ArrayList<>());
+                    }
+                }
+                model.addAttribute("questionAnswerOptionsMap", questionAnswerOptionsMap);
+            }
         }
         model.addAttribute("content", "assessments/view_report");
         return "layout";

@@ -33,7 +33,8 @@
                 <h6 style="font-size: 0.875rem;" th:text="${attemptInfo.email}"></h6>
                 <!--                Reduced font size-->
                 <p style="font-size: 0.875rem; margin-bottom: 0;">
-                    Joined on: <span th:text="${#temporals.format(attemptInfo.attemptDate, 'dd-MM-yyyy, hh:mm a')}"></span>
+                    Joined on: <span
+                        th:text="${#temporals.format(attemptInfo.attemptDate, 'dd-MM-yyyy, hh:mm a')}"></span>
                 </p>
                 <!--                No margin-bottom-->
                 <p style="font-size: 0.875rem; margin-top: 0;">
@@ -77,9 +78,11 @@
                             </div>
 
                             <!--                            Card body-->
-                            <div class="card-body" style="background-color: #e8f5f4; display: flex; flex-direction: column; justify-content: space-evenly; align-items: center; height: 100%;">
+                            <div class="card-body"
+                                 style="background-color: #e8f5f4; display: flex; flex-direction: column; justify-content: space-evenly; align-items: center; height: 100%;">
                                 <!--                                Challenges percent-->
-                                <div class="d-flex justify-content-between align-items-center w-100" style="text-align: center">
+                                <div class="d-flex justify-content-between align-items-center w-100"
+                                     style="text-align: center">
                                     <span>Challenges</span>
                                     <span style="font-weight: bold;">68%</span>
                                 </div>
@@ -87,25 +90,31 @@
                                 <hr class="w-100 my-1">
 
                                 <!--                                Score Quiz percent-->
-                                <div class="d-flex justify-content-between align-items-center w-100" style="text-align: center;">
+                                <div class="d-flex justify-content-between align-items-center w-100"
+                                     style="text-align: center;">
                                     <span>Score Quiz</span>
-                                    <span style="color: #6c757d; font-size: 0.9rem;" th:text="${attemptInfo.scoreQuiz}"></span>
+                                    <span style="color: #6c757d; font-size: 0.9rem;"
+                                          th:text="${attemptInfo.scoreQuiz}"></span>
                                 </div>
 
                                 <hr class="w-100 my-1">
 
                                 <!--                                Score code percent-->
-                                <div class="d-flex justify-content-between align-items-center w-100" style="text-align: center;">
+                                <div class="d-flex justify-content-between align-items-center w-100"
+                                     style="text-align: center;">
                                     <span>Score Exercise</span>
-                                    <span style="color: #6c757d; font-size: 0.9rem;" th:text="${attemptInfo.scoreEx }"></span>
+                                    <span style="color: #6c757d; font-size: 0.9rem;"
+                                          th:text="${attemptInfo.scoreEx }"></span>
                                 </div>
 
                                 <hr class="w-100 my-1">
 
                                 <!--                                Personality test-->
-                                <div class="d-flex justify-content-between align-items-center w-100" style="text-align: center;">
+                                <div class="d-flex justify-content-between align-items-center w-100"
+                                     style="text-align: center;">
                                     <span>Score Assessment</span>
-                                    <span style="color: #6c757d; font-size: 0.9rem;" th:text="${attemptInfo.scoreAss}"></span>
+                                    <span style="color: #6c757d; font-size: 0.9rem;"
+                                          th:text="${attemptInfo.scoreAss}"></span>
                                 </div>
 
                             </div>
@@ -130,7 +139,7 @@
                                         <i class="fas fa-external-link-alt me-2"></i>
                                         Leaving tab
                                     </span>
-                                    <span style="color: #6c757d; font-size: 0.9rem;" >
+                                    <span style="color: #6c757d; font-size: 0.9rem;">
                                         <span th:text="${tabLeaveCount}"></span> times
                                     </span>
                                 </div>
@@ -171,7 +180,7 @@
                                         Violation Face Count
                                         <i class="fas fa-info-circle" style="color: #6c757d;"></i>
                                     </span>
-                                    <span style="color: #6c757d; font-size: 0.9rem;" >
+                                    <span style="color: #6c757d; font-size: 0.9rem;">
                                         <span th:text="${violationFaceCount}"></span> times
                                     </span>
                                 </div>
@@ -270,19 +279,23 @@
                                         <div class="vr mx-3" style="height: 30px; width: 2px;"></div>
                                         <!--                                        Text Formatting Buttons-->
                                         <div class="ml-auto" style="font-size: 12px;">
-                                            <button class="btn btn-secondary btn-sm" onclick="document.execCommand('bold')">
+                                            <button class="btn btn-secondary btn-sm"
+                                                    onclick="document.execCommand('bold')">
                                                 <b>B</b>
                                             </button>
-                                            <button class="btn btn-secondary btn-sm" onclick="document.execCommand('italic')">
+                                            <button class="btn btn-secondary btn-sm"
+                                                    onclick="document.execCommand('italic')">
                                                 <i>I</i>
                                             </button>
-                                            <button class="btn btn-secondary btn-sm" onclick="document.execCommand('underline')">
+                                            <button class="btn btn-secondary btn-sm"
+                                                    onclick="document.execCommand('underline')">
                                                 <u>U</u>
                                             </button>
                                         </div>
                                     </div>
                                     <div class="card-body p-2">
-                                        <div id="editor" class="form-control" contenteditable="true" style="min-height: 100px; border: 1px solid #ccc; padding: 1px;"
+                                        <div id="editor" class="form-control" contenteditable="true"
+                                             style="min-height: 100px; border: 1px solid #ccc; padding: 1px;"
                                              aria-placeholder="Private notes to share with your team...">
                                         </div>
                                     </div>
@@ -304,51 +317,148 @@
                 <div class="col-md-12 mb-4">
                     <div class="card card-body d-flex align-items-left mb-4">
                         <div class="d-flex align-items-center justify-content-between">
-                            <!--                            Quiz Title and Details-->
+                            <!-- Phần bên trái: Title & nút Edit -->
                             <div>
+                                <!-- Tiêu đề Assessment -->
                                 <p class="mb-0 d-flex align-items-center">
                                     <b style="line-height: 1;">ASSESSMENT</b>
-                                    <button type="button" class="btn btn-link p-0 ms-1 d-flex align-items-center" style="font-size: 0.875rem; color: #6c757d; text-decoration: none; box-shadow: none; line-height: 1; position: relative; top: 1px;" data-bs-toggle="modal" data-bs-target="#editScoreModal">
+
+                                    <!-- Nút mở modal Edit Score -->
+                                    <button type="button"
+                                            class="btn btn-link p-0 ms-1 d-flex align-items-center"
+                                            style="font-size: 0.875rem; color: #6c757d; text-decoration: none; box-shadow: none; line-height: 1; position: relative; top: 1px;"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editScoreModal">
                                         <i class="fas fa-edit"></i>
                                     </button>
-
                                 </p>
+
+                                <!-- Dòng chứa nút View Details và thông tin Duration -->
                                 <div class="d-flex align-items-center">
-                                    <a href="#" class="btn btn-link p-0">
+                                    <!-- Thay thẻ <a> bằng <button> để mở modal View Details -->
+                                    <button type="button"
+                                            class="btn btn-link p-0"
+                                            style="font-size: 0.875rem; color: #0d6efd; text-decoration: none; box-shadow: none;"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#quizDetailModal">
                                         View Details
-                                    </a>
+                                    </button>
                                     <span class="mx-2">|</span>
-                                    <span th:text="${attemptInfo.duration} +' seconds'"></span>
+                                    <span th:text="${attemptInfo.duration} + ' seconds'"></span>
                                     <span class="mx-2">|</span>
                                 </div>
                             </div>
-                            <!--                            Score Box-->
+
+                            <!-- Phần bên phải: Score Box -->
                             <div class="d-flex align-items-center ms-auto">
+                                <!-- Khung điểm -->
                                 <div class="bg-success text-white rounded d-flex justify-content-center align-items-center"
                                      style="width: 60px; height: 50px;">
-                                    <span th:text="${attemptInfo.scoreQuiz}"></span>
+                                    <span th:text="${attemptInfo.scoreQuiz}">0</span>
                                 </div>
+
                                 <div class="vr mx-3" style="height: 60px;"></div>
+
+                                <!-- Thông tin chung -->
                                 <div>
                                     <div>
                                         <span>
-                                            <b></b>
+                                            <b><!-- Có thể chèn gì đó nếu cần --></b>
                                         </span>
                                     </div>
                                     <div>
-                                        <span>
-                                            <i class="bi bi-ui-checks"></i>
-                                            <b>Multiple choice</b>
-                                        </span>
+                                    <span>
+                                        <i class="bi bi-ui-checks"></i>
+                                        <b>Multiple choice</b>
+                                    </span>
                                     </div>
                                 </div>
                             </div>
                         </div>
+
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Modal: quizDetailModal -->
+    <div class="modal fade" id="quizDetailModal"
+         tabindex="-1"
+         aria-labelledby="quizDetailModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 80%; width: 80%;">
+            <div class="modal-content">
+
+                <!-- Header của Modal -->
+                <div class="modal-header">
+                    <h5 class="modal-title" id="quizDetailModalLabel">Detailed Quiz Review</h5>
+                    <button type="button" class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Close">
+                    </button>
+                </div>
+
+                <!-- Body của Modal -->
+                <div class="modal-body">
+                    <div class="scrollable-table" style="max-height: 600px; overflow-y: auto;">
+                        <!--
+                            Lặp qua danh sách câu hỏi & câu trả lời
+                            tương tự như bạn đang làm ở ngoài
+                        -->
+                        <div th:each="question, iterStat : ${questions}"
+                             class="mb-4 border-bottom pb-3">
+
+                            <p class="fw-bold">
+                                <span th:text="${iterStat.count}"></span>.
+                                <span th:text="${question?.questionText ?: 'Question text not available'}">
+                                Question text
+                            </span>
+                            </p>
+
+                            <ul class="list-group">
+                                <li class="list-group-item"
+                                    th:each="ans : ${questionAnswerOptionsMap[question.id] != null
+                                               ? questionAnswerOptionsMap[question.id]
+                                               : T(java.util.Collections).emptyList()}">
+                                    <span th:text="${ans.optionText}">Answer Option Text</span>
+
+                                    <!-- Nếu người dùng chọn ans này -->
+                                    <span th:if="${userAnswersMap != null
+                                             and userAnswersMap[question.id] == ans.id}"
+                                          class="badge ms-2"
+                                          style="background-color: #85C8FF;">
+                                    Your Answer
+                                </span>
+
+                                    <!-- Nếu ans.isCorrect == true -->
+                                    <span th:if="${ans.isCorrect}"
+                                          class="badge bg-success ms-2">
+                                    Correct
+                                </span>
+                                </li>
+                                <li class="list-group-item text-muted"
+                                    th:if="${#lists.isEmpty(questionAnswerOptionsMap[question.id])}">
+                                    No answers assigned.
+                                </li>
+                            </ul>
+                        </div> <!-- end each question -->
+
+                    </div> <!-- end scrollable-table -->
+                </div>
+
+                <!-- Footer của Modal -->
+                <div class="modal-footer">
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <!-- **MODAL STRUCTURE - Add this right before the closing `</div>` of `main-container` or at the end of `body`** -->
     <div class="modal fade" id="editScoreModal" tabindex="-1" aria-labelledby="editScoreModalLabel" aria-hidden="true">
@@ -368,10 +478,12 @@
                     <div class="alert alert-secondary" role="alert">
                         <div class="row">
                             <div class="col-md-6">
-                                <p class="mb-1"><strong>Current Exercise Score:</strong> <span id="currentScoreEx">Loading...</span></p>
+                                <p class="mb-1"><strong>Current Exercise Score:</strong> <span id="currentScoreEx">Loading...</span>
+                                </p>
                             </div>
                             <div class="col-md-6">
-                                <p class="mb-1"><strong>Current Quiz Score:</strong> <span id="currentScoreQuiz">Loading...</span></p>
+                                <p class="mb-1"><strong>Current Quiz Score:</strong> <span id="currentScoreQuiz">Loading...</span>
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -382,7 +494,8 @@
                         <div class="mb-4">
                             <label for="scoreEx" class="form-label">Exercise Score</label>
                             <div class="input-group score-input">
-                                <input type="number" class="form-control" id="scoreEx" placeholder="Enter assignment score"
+                                <input type="number" class="form-control" id="scoreEx"
+                                       placeholder="Enter assignment score"
                                        min="0" max="100" step="0.1" aria-describedby="scoreExHelp">
 
                             </div>
@@ -400,9 +513,11 @@
                         </div>
 
                         <div class="mb-4">
-                            <label for="comment" class="form-label">Reason for Score Adjustment <span class="text-danger">*</span></label>
+                            <label for="comment" class="form-label">Reason for Score Adjustment <span
+                                    class="text-danger">*</span></label>
                             <textarea class="form-control" id="comment" rows="4"
-                                      placeholder="Please provide a detailed explanation for this score adjustment..." required></textarea>
+                                      placeholder="Please provide a detailed explanation for this score adjustment..."
+                                      required></textarea>
                             <div class="form-text">This will be recorded in the edit history</div>
                         </div>
 
@@ -461,7 +576,7 @@
     }
 
     // **INCLUDE EDIT SCORE SCRIPTS HERE -  Copy from `editscore.html` and paste below**
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         // ... (JavaScript code from editscore.html inside this block) ...
         // **IMPORTANT:  Adjust any selectors if necessary to work within the modal context**
         const editScoreForm = document.getElementById('editScoreForm'); // Should be fine as IDs are unique
@@ -480,6 +595,7 @@
             // Gọi fetch dữ liệu khi modal mở
             fetchCurrentScores();
         });
+
         // Function to show result message
         function showResult(message, isSuccess) {
             resultContainer.classList.remove('d-none');
@@ -488,7 +604,7 @@
             resultAlert.innerHTML = message;
 
             // Scroll to the result - Scroll within modal if needed, or to the main view report
-            resultContainer.scrollIntoView({ behavior: 'smooth' }); // Scrolls the whole page
+            resultContainer.scrollIntoView({behavior: 'smooth'}); // Scrolls the whole page
 
             // Hide the message after 5 seconds if it's a success
             if (isSuccess) {
@@ -499,7 +615,7 @@
         }
 
         // Form submission handler
-        editScoreForm.addEventListener('submit', async function(e) {
+        editScoreForm.addEventListener('submit', async function (e) {
             e.preventDefault();
 
             const attemptId = document.getElementById('attemptId').value;
@@ -575,7 +691,7 @@
         });
 
         // Fetch history button handler
-        fetchHistoryBtn.addEventListener('click', function() {
+        fetchHistoryBtn.addEventListener('click', function () {
             fetchScoreHistory();
         });
 
@@ -674,6 +790,7 @@
                 console.error('Fetch error:', error);
             }
         }
+
         // **NEW FUNCTION - To update scores displayed in the main viewreport page**
         async function fetchCurrentScoresInViewReport() {
             const attemptId = document.getElementById('attemptId').value;
@@ -711,44 +828,54 @@
         box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
         padding: 30px; /* Adjust padding for modal */
     }
+
     .header-section { /* You might not need this header section class in modal context */
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 20px;
     }
+
     .form-label {
         font-weight: 500;
     }
+
     .score-input {
         position: relative;
     }
+
     .score-input .input-group-text {
         background-color: #f8f9fa;
     }
+
     .history-section {
         margin-top: 30px;
         border-top: 1px solid #dee2e6;
         padding-top: 20px;
     }
+
     .history-item {
         background-color: #f8f9fa;
         border-radius: 6px;
         padding: 15px;
         margin-bottom: 10px;
     }
+
     .btn-back { /* You might not need btn-back class in modal context */
         color: #6c757d;
         text-decoration: none;
         display: inline-flex;
         align-items: center;
     }
+
     .btn-back:hover {
         color: #495057;
     }
+
     .btn-back i {
         margin-right: 5px;
     }
+
     .percentage-suffix {
         position: absolute;
         right: 12px;
@@ -784,6 +911,7 @@
         opacity: 1;
         background: linear-gradient(45deg, #2575fc, #6a11cb);
     }
+
     /* **END INCLUDE EDIT SCORE STYLES** */
 
 </style>

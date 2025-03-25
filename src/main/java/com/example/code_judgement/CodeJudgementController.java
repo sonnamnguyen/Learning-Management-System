@@ -145,7 +145,6 @@ public class CodeJudgementController {
             model.addAttribute("code", code);
             model.addAttribute("score", score);
             model.addAttribute("user", user);
-
         return "judgement/view_result";
     }
 }

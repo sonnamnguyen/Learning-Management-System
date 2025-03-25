@@ -45,15 +45,8 @@ public class SecurityConfig {
                                 "/materials/**",
                                 "/assessments/expired-link",
                                 "/assessments/invite/**",
-                                "/assessments/TakeAssessment",  // ✅ Explicitly allow this route
-                                "/already-assessed",
-                                "/assessments/create/**",
-                                "/assessments/detail/{id}",
-                                "/assessments/export",
-                                "/assessments/import",
-                                "/assessments/duplicate/{id}",
-                                "/assessments/edit/",
-                                "/assessments/{id}/preview"
+                                "/assessments/invalid-link",
+                                "/assessments/already-assessed"
                         ).permitAll()
                         .requestMatchers("/exercises/profile/**").authenticated()
                         .anyRequest().authenticated()
