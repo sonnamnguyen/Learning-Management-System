@@ -1495,16 +1495,16 @@
                 totalEasy: /*[[${chartData.easyExercises}]]*/0,
                 totalMedium: /*[[${chartData.mediumExercises}]]*/0,
                 totalHard: /*[[${chartData.hardExercises}]]*/0,
-                totalJava: /*[[${chartData.totalJavaExercises}]]*/0,
-                totalC: /*[[${chartData.totalCExercises}]]*/0,
-                totalCsharp: /*[[${chartData.totalCSharpExercises}]]*/0,
-                totalCpp: /*[[${chartData.totalCppExercises}]]*/0,
-                totalSql: /*[[${chartData.totalSQLExercises}]]*/0,
+                totalJava: /*[[${chartData.totalJava}]]*/0,
+                totalC: /*[[${chartData.totalC}]]*/0,
+                totalCsharp: /*[[${chartData.totalCsharp}]]*/0,
+                totalCpp: /*[[${chartData.totalCpp}]]*/0,
+                totalSql: /*[[${chartData.totalSql}]]*/0,
                 userJava: /*[[${chartData.userJava}]]*/0,
                 userC: /*[[${chartData.userC}]]*/0,
-                userCsharp: /*[[${chartData.CSharp}]]*/0,
+                userCsharp: /*[[${chartData.userCsharp}]]*/0,
                 userCpp: /*[[${chartData.userCpp}]]*/0,
-                userSql: /*[[${chartData.userSQL}]]*/0
+                userSql: /*[[${chartData.userSql}]]*/0
             },
             difficultyNoLanguage: {
                 easyNoLanguage: /*[[${chartData.userEasyExercisesNoLanguage}]]*/0,
@@ -1645,7 +1645,7 @@
                 })
             },
             MASTER_CHEF: {
-                id: 'master-chef',
+                id: 'masterchef',
                 title: 'Master Chef',
                 description: 'Done 100% exercises',
                 icon: 'fa-solid fa-utensils',
@@ -1660,7 +1660,7 @@
                 id: 'Java-Master',
                 title: 'Java Master',
                 description: 'Done 100% Java exercises and pass with >= 70 score',
-                icon: 'fa-brands fa-java fa-lg',
+                icon: 'fa-brands fa-java',
                 requirement: userData.difficulty.totalJava,
                 checkProgress: (userData) => ({
                     current: userData.difficulty.userJava,
@@ -1709,13 +1709,14 @@
                 title: 'C# Master',
                 description: 'Done 100% C++ exercises and pass with >= 70 score',
                 icon: 'devicon-csharp-plain',
-                requirement: userData.difficulty.totalCpp,
+                requirement: userData.difficulty.totalCsharp,
                 checkProgress: (userData) => ({
-                    current: userData.difficulty.userCpp,
-                    total: userData.difficulty.totalCpp,
-                    isCompleted: Number(userData.difficulty.userCpp) === Number(userData.difficulty.totalCpp)
+                    current: userData.difficulty.userCsharp,
+                    total: userData.difficulty.totalCsharp,
+                    isCompleted: Number(userData.difficulty.userCsharp) === Number(userData.difficulty.totalCsharp)
                 })
             }
+
         };
 
         // Hàm tạo HTML cho achievement
@@ -1759,128 +1760,7 @@
             }));
         }
 
-        // Hàm xuất achievements ra Excel
-        function exportAchievementsToExcel() {
-            // Kiểm tra xem thư viện XLSX đã được tải chưa
-            if (typeof XLSX === 'undefined') {
-                console.error("Thư viện XLSX chưa được tải");
-                alert("Không thể xuất file Excel vì thư viện chưa được tải. Vui lòng tải lại trang và thử lại.");
-                return;
-            }
 
-            let achievementsDiv = document.querySelector(".achievements-grid");
-
-            // Kiểm tra nếu không có container hoặc không có achievement nào
-            if (!achievementsDiv || achievementsDiv.children.length === 0) {
-                console.error("Không tìm thấy achievements để xuất");
-                alert("Không có thành tựu nào để xuất. Vui lòng đợi trang tải đầy đủ và thử lại.");
-                return;
-            }
-
-            console.log("Bắt đầu xuất Excel, số lượng achievements:", achievementsDiv.children.length);
-
-            let data = [["Tiêu đề", "Mô tả", "Tiến độ", "Trạng thái"]]; // Header bằng tiếng Việt
-            let hasData = false;
-
-            achievementsDiv.querySelectorAll(".achievement-item").forEach((item, index) => {
-                if (item) {
-                    hasData = true;
-                    // Lấy tên achievement
-                    let title = item.querySelector(".achievement-name")?.innerText || "Unknown";
-
-                    // Lấy mô tả từ thuộc tính title hoặc data-bs-original-title (Bootstrap tooltip)
-                    let description = item.getAttribute("title") || item.getAttribute("data-bs-original-title") || "";
-
-                    // Lấy tiến độ
-                    let progress = item.querySelector(".achievement-progress")?.innerText || "0/0";
-
-                    // Kiểm tra trạng thái hoàn thành
-                    let isCompleted = item.querySelector(".achievement-icon.unlocked") ? "Đã hoàn thành" : "Chưa hoàn thành";
-
-                    data.push([title, description, progress, isCompleted]);
-                }
-            });
-
-            if (!hasData) {
-                alert("Không tìm thấy thông tin thành tựu để xuất");
-                return;
-            }
-
-            try {
-                // Tạo workbook và worksheet
-                let wb = XLSX.utils.book_new();
-                let ws = XLSX.utils.aoa_to_sheet(data);
-
-                // Thiết lập độ rộng cột
-                ws['!cols'] = [
-                    {wch: 20}, // Tiêu đề
-                    {wch: 50}, // Mô tả
-                    {wch: 10}, // Tiến độ
-                    {wch: 15}  // Trạng thái
-                ];
-
-                // Thêm worksheet vào workbook
-                XLSX.utils.book_append_sheet(wb, ws, "Achievements");
-
-                // Xuất file Excel
-                XLSX.writeFile(wb, "achievements.xlsx");
-
-                console.log("Excel exported successfully");
-            } catch (error) {
-                console.error("Error exporting to Excel:", error);
-                alert("Có lỗi khi xuất file Excel: " + error.message);
-            }
-        }
-
-        // Hàm xuất achievements ra CSV
-        function exportAchievementsToCSV() {
-            let achievementsDiv = document.querySelector(".achievements-grid");
-
-            // Kiểm tra nếu không có container hoặc không có achievement nào
-            if (!achievementsDiv || achievementsDiv.children.length === 0) {
-                console.error("Không tìm thấy achievements để xuất");
-                alert("Không có thành tựu nào để xuất. Vui lòng đợi trang tải đầy đủ và thử lại.");
-                return;
-            }
-
-            let data = "Title,Description,Progress,Status\n"; // Header
-
-            achievementsDiv.querySelectorAll(".achievement-item").forEach(item => {
-                if (item) {
-                    // Lấy tên achievement
-                    let title = item.querySelector(".achievement-name")?.innerText || "Unknown";
-
-                    // Lấy mô tả từ thuộc tính title hoặc data-bs-original-title (Bootstrap tooltip)
-                    let description = item.getAttribute("title") || item.getAttribute("data-bs-original-title") || "";
-
-                    // Lấy tiến độ
-                    let progress = item.querySelector(".achievement-progress")?.innerText || "0/0";
-
-                    // Kiểm tra trạng thái hoàn thành
-                    let isCompleted = item.querySelector(".achievement-icon.unlocked") ? "Đã hoàn thành" : "Chưa hoàn thành";
-
-                    // Escape quotes trong CSV
-                    title = title.replace(/"/g, '""');
-                    description = description.replace(/"/g, '""');
-
-                    data += `"${title}","${description}","${progress}","${isCompleted}"\n`;
-                }
-            });
-
-            if (data === "Title,Description,Progress,Status\n") {
-                alert("Không tìm thấy thông tin thành tựu để xuất");
-                return;
-            }
-
-            // Tạo file với encoding UTF-8 để hỗ trợ tiếng Việt
-            let blob = new Blob(["\ufeff" + data], { type: "text/csv;charset=utf-8;" });
-            let link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = "achievements.csv";
-            link.click();
-
-            console.log("CSV exported successfully");
-        }
 
         // Khởi tạo charts khi scroll đến gần vị trí hiển thị
         const observerOptions = {
@@ -2224,129 +2104,7 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-<script>
-    // Định nghĩa các hàm xuất dữ liệu trong phạm vi global
-    function exportAchievementsToExcel() {
-        // Kiểm tra xem thư viện XLSX đã được tải chưa
-        if (typeof XLSX === 'undefined') {
-            console.error("Thư viện XLSX chưa được tải");
-            alert("Không thể xuất file Excel vì thư viện chưa được tải. Vui lòng tải lại trang và thử lại.");
-            return;
-        }
 
-        let achievementsDiv = document.querySelector(".achievements-grid");
-
-        // Kiểm tra nếu không có container hoặc không có achievement nào
-        if (!achievementsDiv || achievementsDiv.children.length === 0) {
-            console.error("Không tìm thấy achievements để xuất");
-            alert("Không có thành tựu nào để xuất. Vui lòng đợi trang tải đầy đủ và thử lại.");
-            return;
-        }
-
-        console.log("Bắt đầu xuất Excel, số lượng achievements:", achievementsDiv.children.length);
-
-        let data = [["Tiêu đề", "Mô tả", "Tiến độ", "Trạng thái"]]; // Header bằng tiếng Việt
-        let hasData = false;
-
-        achievementsDiv.querySelectorAll(".achievement-item").forEach((item, index) => {
-            if (item) {
-                hasData = true;
-                // Lấy tên achievement
-                let title = item.querySelector(".achievement-name")?.innerText || "Unknown";
-
-                // Lấy mô tả từ thuộc tính title hoặc data-bs-original-title (Bootstrap tooltip)
-                let description = item.getAttribute("title") || item.getAttribute("data-bs-original-title") || "";
-
-                // Lấy tiến độ
-                let progress = item.querySelector(".achievement-progress")?.innerText || "0/0";
-
-                // Kiểm tra trạng thái hoàn thành
-                let isCompleted = item.querySelector(".achievement-icon.unlocked") ? "Completed" : "Not Completed";
-
-                data.push([title, description, progress, isCompleted]);
-            }
-        });
-
-        if (!hasData) {
-            alert("Không tìm thấy thông tin thành tựu để xuất");
-            return;
-        }
-
-        try {
-            // Tạo workbook và worksheet
-            let wb = XLSX.utils.book_new();
-            let ws = XLSX.utils.aoa_to_sheet(data);
-
-            // Thiết lập độ rộng cột
-            ws['!cols'] = [
-                {wch: 20}, // Tiêu đề
-                {wch: 50}, // Mô tả
-                {wch: 10}, // Tiến độ
-                {wch: 15}  // Trạng thái
-            ];
-
-            // Thêm worksheet vào workbook
-            XLSX.utils.book_append_sheet(wb, ws, "Achievements");
-
-            // Xuất file Excel
-            XLSX.writeFile(wb, "achievements.xlsx");
-
-            console.log("Excel exported successfully");
-        } catch (error) {
-            console.error("Error exporting to Excel:", error);
-            alert("Có lỗi khi xuất file Excel: " + error.message);
-        }
-    }
-
-    function exportAchievementsToCSV() {
-        let achievementsDiv = document.querySelector(".achievements-grid");
-
-        // Kiểm tra nếu không có container hoặc không có achievement nào
-        if (!achievementsDiv || achievementsDiv.children.length === 0) {
-            console.error("Không tìm thấy achievements để xuất");
-            alert("Không có thành tựu nào để xuất. Vui lòng đợi trang tải đầy đủ và thử lại.");
-            return;
-        }
-
-        let data = "Title,Description,Progress,Status\n"; // Header
-
-        achievementsDiv.querySelectorAll(".achievement-item").forEach(item => {
-            if (item) {
-                // Lấy tên achievement
-                let title = item.querySelector(".achievement-name")?.innerText || "Unknown";
-
-                // Lấy mô tả từ thuộc tính title hoặc data-bs-original-title (Bootstrap tooltip)
-                let description = item.getAttribute("title") || item.getAttribute("data-bs-original-title") || "";
-
-                // Lấy tiến độ
-                let progress = item.querySelector(".achievement-progress")?.innerText || "0/0";
-
-                // Kiểm tra trạng thái hoàn thành
-                let isCompleted = item.querySelector(".achievement-icon.unlocked") ? "Đã hoàn thành" : "Chưa hoàn thành";
-
-                // Escape quotes trong CSV
-                title = title.replace(/"/g, '""');
-                description = description.replace(/"/g, '""');
-
-                data += `"${title}","${description}","${progress}","${isCompleted}"\n`;
-            }
-        });
-
-        if (data === "Title,Description,Progress,Status\n") {
-            alert("Không tìm thấy thông tin thành tựu để xuất");
-            return;
-        }
-
-        // Tạo file với encoding UTF-8 để hỗ trợ tiếng Việt
-        let blob = new Blob(["\ufeff" + data], { type: "text/csv;charset=utf-8;" });
-        let link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "achievements.csv";
-        link.click();
-
-        console.log("CSV exported successfully");
-    }
-</script>
 
 </body>
 

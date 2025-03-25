@@ -94,8 +94,8 @@ public interface ExerciseRepository extends PagingAndSortingRepository<Exercise,
 
 // son nam them
 
-    @Query("SELECT COUNT(e) FROM Exercise e WHERE e.language.language LIKE %:languageId%")
-    Integer countTotalExercisesByLanguage(@Param("language") String languageId);
+    @Query("SELECT COUNT(e) FROM Exercise e WHERE e.language.language = :language")
+    Integer countTotalExercisesByLanguage(@Param("language") String language);
 
     @Query("Select COUNT(e) FROM Exercise e JOIN e.language WHERE e.level = 'EASY' and e.language.language like %:language% ")
     Integer countNumberEasyExercises(@Param("language") String language );
@@ -135,7 +135,7 @@ public interface ExerciseRepository extends PagingAndSortingRepository<Exercise,
     @Query("Select COUNT(DISTINCT e.id) FROM Exercise e " +
             "JOIN e.studentExerciseAttempts sea " +
             "JOIN e.language WHERE sea.attendant_email is null " +
-            "AND sea.attendant_user.id =:id  and e.language.language like %:language% and sea.score_exercise >= :passingScore")
+            "AND sea.attendant_user.id =:id  and e.language.language = :language and sea.score_exercise >= :passingScore")
     Integer countUserExercisesByLanguage(@Param("id") Long userId,
                                          @Param("language") String language,
                                          @Param("passingScore") double passingScore);
