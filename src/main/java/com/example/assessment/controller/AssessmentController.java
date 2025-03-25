@@ -915,7 +915,7 @@ public class AssessmentController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/edit/check-similarNewQuestions")
+    @PostMapping("/edit/check-similar-new-question/add")
     public ResponseEntity<?> checkSimilarNewQuestions(@RequestBody Map<String, List<Map<String, String>>> requestData) {
         List<Map<String, String>> newAddedQuestions = requestData.get("newAddedQuestions");
         System.out.println("📝 Received newAddedQuestions: " + newAddedQuestions);
@@ -1006,6 +1006,101 @@ public class AssessmentController {
             }
 
             return ResponseEntity.ok(Collections.singletonMap("similarQuestions", similarQuestions));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500)
+                    .body(Collections.singletonMap("error", "An error occurred while processing similarity: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/edit/check-similar-new-question/add-batch")
+    public ResponseEntity<?> checkSimilarQuestionsBatch(@RequestBody Map<String, List<Map<String, String>>> requestData) {
+        List<Map<String, String>> questionsList = requestData.get("questions");
+        List<Map<String, String>> selectedQuestions = requestData.get("selectedQuestions");
+
+        if (questionsList == null || questionsList.isEmpty()) {
+            return ResponseEntity.badRequest().body("No questions provided.");
+        }
+
+        List<String> questionTexts = questionsList.stream()
+                .map(q -> q.get("text"))
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .collect(Collectors.toList());
+
+        List<String> selectedTexts = selectedQuestions != null ? selectedQuestions.stream()
+                .map(q -> q.get("text"))
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .map(String::toLowerCase)
+                .collect(Collectors.toList()) : new ArrayList<>();
+
+        if (questionTexts.isEmpty()) {
+            return ResponseEntity.badRequest().body("No valid questions found.");
+        }
+
+        try {
+            // Chuẩn bị dữ liệu TF-IDF
+            ArrayList<Attribute> attributes = new ArrayList<>();
+            attributes.add(new Attribute("content", (List<String>) null));
+            Instances data = new Instances("questions", attributes, questionTexts.size());
+            data.setClassIndex(0);
+
+            for (String text : questionTexts) {
+                double[] instanceValue = new double[data.numAttributes()];
+                instanceValue[0] = data.attribute(0).addStringValue(assessmentService.preprocessText(text));
+                Instance instance = new DenseInstance(1.0, instanceValue);
+                instance.setDataset(data);
+                data.add(instance);
+            }
+
+            if (data.numInstances() == 0) {
+                return ResponseEntity.badRequest().body("No valid questions found.");
+            }
+
+            // Áp dụng TF-IDF
+            StringToWordVector filter = new StringToWordVector();
+            filter.setOutputWordCounts(true);
+            filter.setLowerCaseTokens(true);
+            filter.setWordsToKeep(5000);
+            filter.setDoNotOperateOnPerClassBasis(true);
+            filter.setMinTermFreq(1);
+            filter.setAttributeIndices("first-last");
+
+            filter.setInputFormat(data);
+            Instances tfidfData = Filter.useFilter(data, filter);
+
+            Map<Integer, List<Integer>> duplicateQuestions = new HashMap<>();
+
+            for (int i = 0; i < tfidfData.numInstances(); i++) {
+                for (int j = i + 1; j < tfidfData.numInstances(); j++) {
+                    double similarity = assessmentService.cosineSimilarity(
+                            tfidfData.instance(i).toDoubleArray(),
+                            tfidfData.instance(j).toDoubleArray()
+                    );
+
+                    if (similarity >= 0.80) {
+                        duplicateQuestions.computeIfAbsent(i, k -> new ArrayList<>()).add(j);
+                    }
+                }
+            }
+
+            // Chỉ lấy các câu mới bị trùng mà chưa có trong selectedQuestions
+            Map<Integer, List<Integer>> newDuplicateQuestions = new HashMap<>();
+            for (Map.Entry<Integer, List<Integer>> entry : duplicateQuestions.entrySet()) {
+                int index = entry.getKey();
+                List<Integer> similarIndexes = entry.getValue();
+
+                if (!selectedTexts.contains(questionTexts.get(index).toLowerCase())) {
+                    newDuplicateQuestions.put(index, similarIndexes);
+                }
+            }
+
+            if (newDuplicateQuestions.isEmpty()) {
+                return ResponseEntity.ok(Collections.singletonMap("message", "No duplicate questions found."));
+            }
+
+            return ResponseEntity.ok(Collections.singletonMap("duplicateQuestions", newDuplicateQuestions));
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500)

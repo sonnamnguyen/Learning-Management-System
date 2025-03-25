@@ -1064,7 +1064,7 @@
             });
             console.log("🚀 Sending request:", requestBody);
 
-            fetch("/assessments/edit/check-similarNewQuestions", {
+            fetch("/assessments/edit/check-similar-new-question/add", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: requestBody
@@ -1073,18 +1073,15 @@
                 .then(data => {
                     console.log("✅ API Response:", data);
 
-                    // Trường hợp API trả về message (không có câu hỏi trùng lặp)
                     if (data.message) {
                         console.log("ℹ No duplicates found:", data.message);
                         addQuestionToSelectedList(questionId, text, orderIndex, true);
                         return;
                     }
 
-                    // Kiểm tra nếu `similarQuestions` tồn tại và có dữ liệu
                     if (data.similarQuestions && Array.isArray(data.similarQuestions) && data.similarQuestions.length > 0) {
                         console.log("🔍 Found similar questions:", data.similarQuestions);
 
-                        // Lọc bỏ `orderIndex` của câu hỏi hiện tại
                         let duplicateOrderIndexes = data.similarQuestions.filter(idx => idx !== orderIndex);
 
                         if (duplicateOrderIndexes.length === 0) {
@@ -1146,56 +1143,57 @@
                 const questions = document.querySelectorAll(`#collapse${quizId} .library-add-question`);
 
                 let newQuestions = [];
-                let existingTexts = [
-                    ...newAddedQuestions.map(q => q.text.toLowerCase()),
-                    ...selectedQuestionsFull.map(q => q.text.toLowerCase())
-                ];
 
                 questions.forEach(button => {
                     if (button.style.display !== "none") {
                         const questionId = button.getAttribute("data-question-id");
                         const questionText = button.closest(".list-group-item").querySelector(".question-text").innerText.trim();
-                        newQuestions.push({ id: parseInt(questionId, 10), text: questionText });
+                        newQuestions.push({id: parseInt(questionId, 10), text: questionText});
                     }
                 });
 
-                let duplicateQuestions = [];
-                let seenTexts = new Set();
+                fetch("/assessments/edit/check-similar-new-question/add-batch", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({
+                        questions: newQuestions,
+                        selectedQuestions: selectedQuestionsFull
+                    })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log("✅ API Response:", data);
 
-                newQuestions.forEach(q => {
-                    const lowerText = q.text.toLowerCase();
-                    if (seenTexts.has(lowerText) || existingTexts.includes(lowerText)) {
-                        duplicateQuestions.push(q);
-                    }
-                    seenTexts.add(lowerText);
-                });
-
-                if (duplicateQuestions.length > 0) {
-                    const modalBody = document.getElementById("similarQuestionBody");
-                    modalBody.innerHTML = `
-                <p><strong style="color: red;"><em>Warning:</em></strong> The following questions maybe duplicates:</p>
+                        if (data.duplicateQuestions && Object.keys(data.duplicateQuestions).length > 0) {
+                            const modalBody = document.getElementById("similarQuestionBody");
+                            modalBody.innerHTML = `
+                <p><strong style="color: red;"><em>Warning:</em></strong> The following new questions may be duplicates:</p>
                 <ul>
-                    ${duplicateQuestions.map(q => `<li>${q.text}</li>`).join("")}
+                    ${Object.entries(data.duplicateQuestions).map(([index, dups]) => `
+                        <li>${newQuestions[index].text} (Similar to: ${dups.map(i => newQuestions[i].text).join(", ")})</li>
+                    `).join("")}
                 </ul>
                 <p>Do you still want to add them?</p>
             `;
 
-                    const addAnywayBtn = document.getElementById("addAnywayBtn");
-                    addAnywayBtn.onclick = function () {
-                        newQuestions.forEach((q, index) => {
-                            addQuestionToSelectedList(q.id, q.text, newAddedQuestions.length + 1 + index);
-                        });
-                        bootstrap.Modal.getInstance(document.getElementById("similarQuestionModal")).hide();
-                    };
+                            const addAnywayBtn = document.getElementById("addAnywayBtn");
+                            addAnywayBtn.onclick = function () {
+                                newQuestions.forEach((q, index) => {
+                                    addQuestionToSelectedList(q.id, q.text, newAddedQuestions.length + 1 + index);
+                                });
+                                bootstrap.Modal.getInstance(document.getElementById("similarQuestionModal")).hide();
+                            };
 
-                    bootstrap.Modal.getOrCreateInstance(document.getElementById("similarQuestionModal")).show();
-                } else {
-                    newQuestions.forEach((q, index) => {
-                        addQuestionToSelectedList(q.id, q.text, newAddedQuestions.length + 1 + index);
-                    });
-                }
+                            bootstrap.Modal.getOrCreateInstance(document.getElementById("similarQuestionModal")).show();
+                        } else {
+                            newQuestions.forEach((q, index) => {
+                                addQuestionToSelectedList(q.id, q.text, newAddedQuestions.length + 1 + index);
+                            });
+                        }
 
-                updateAddAllButton();
+                        updateAddAllButton();
+                    })
+                    .catch(error => console.error("❌ Error checking similar questions:", error));
             }
         });
 
