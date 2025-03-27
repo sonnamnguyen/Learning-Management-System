@@ -2103,7 +2103,101 @@
 </script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    // Định nghĩa các chuỗi tiếng Việt
+    const translations = {
+        title: "Tiêu đề",
+        progress: "Tiến độ",
+        current: "Hiện tại",
+        total: "Tổng số",
+        status: "Trạng thái",
+        completed: "Hoàn thành",
+        notCompleted: "Chưa hoàn thành"
+    };
 
+    // Hàm lấy dữ liệu achievements từ DOM
+    function getAchievementsData() {
+        const achievements = [];
+        document.querySelectorAll('.achievement-item').forEach(item => {
+            const title = item.querySelector('.achievement-name').textContent;
+            const progress = item.querySelector('.achievement-progress').textContent;
+            const [current, total] = progress.split('/');
+            const isCompleted = item.querySelector('.achievement-icon').classList.contains('unlocked');
+
+            achievements.push({
+                title: title,
+                progress: progress,
+                current: current,
+                total: total,
+                status: isCompleted ? translations.completed : translations.notCompleted
+            });
+        });
+        return achievements;
+    }
+
+    // Hàm export sang Excel
+    function exportAchievementsToExcel() {
+        const achievements = getAchievementsData();
+
+        // Tạo workbook mới
+        const wb = XLSX.utils.book_new();
+
+        // Chuyển đổi dữ liệu thành định dạng worksheet
+        const ws = XLSX.utils.json_to_sheet(achievements);
+
+        // Thêm worksheet vào workbook
+        XLSX.utils.book_append_sheet(wb, ws, "Achievements");
+
+        // Tạo tên file với timestamp
+        const fileName = `achievements_${new Date().toISOString().slice(0,10)}.xlsx`;
+
+        // Tải file
+        XLSX.writeFile(wb, fileName);
+    }
+
+    // Hàm export sang CSV
+    function exportAchievementsToCSV() {
+        const achievements = getAchievementsData();
+
+        // Tạo header cho CSV
+        const headers = [
+            translations.title,
+            translations.progress,
+            translations.current,
+            translations.total,
+            translations.status
+        ];
+
+        // Chuyển đổi dữ liệu thành định dạng CSV
+        const csvContent = [
+            headers.join(','),
+            ...achievements.map(achievement => [
+                `"${achievement.title}"`,
+                `"${achievement.progress}"`,
+                achievement.current,
+                achievement.total,
+                `"${achievement.status}"`
+            ].join(','))
+        ].join('\n');
+
+        // Tạo blob và tải file
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const fileName = `achievements_${new Date().toISOString().slice(0,10)}.csv`;
+
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', fileName);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    }
+    /*]]>*/
+</script>
 
 
 </body>
