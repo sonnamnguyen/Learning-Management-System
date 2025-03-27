@@ -9,9 +9,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
             integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
             crossorigin="anonymous"></script>
-    <!-- Face detection api-->
-    <script defer src="/js/face-api.min.js"></script>
-    <script defer src="/js/face-detection.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
     <!-- Face detection api-->
     <script defer src="/js/face-api.min.js"></script>
@@ -106,7 +103,7 @@
             height: 90%;
             overflow-y: auto;
             margin-top: 14px;
-            width: 25%;
+            width: 17%;
         }
 
         /* Main content area margin adjustment */
@@ -136,6 +133,18 @@
             user-select: none;
         }
 
+        @media (min-width: 992px) {
+
+            /* Màn hình lớn (lg) */
+            .col-lg-2_4 {
+
+                flex: 0 0 20%; /* 100% / 5 = 20% (Mỗi hàng 5 cột) */
+
+                max-width: 20%;
+
+            }
+
+        }
     </style>
 </head>
 <body>
@@ -172,13 +181,14 @@
                     <div class="text-center">
                         <h5>Questions</h5>
                         <div class="row">
-                            <div th:each="question, iterStat : ${questions}" class="mb-2 col-3 col-md-3 col-xl-2">
-                                <div class="d-flex align-items-center">
-                                    <button type="button" class="btn btn-outline-primary" style="min-width: 40px"
-                                            th:attr="onclick='document.getElementById(\'question_' + ${question.id} + '\').scrollIntoView({behavior: \'smooth\'})'">
-                                        <span th:text="${iterStat.count}"></span>
-                                    </button>
-                                </div>
+                            <div th:each="question, iterStat : ${questions}"
+                                 class="mb-2 col-2 col-md-3 col-lg-2_4 d-flex justify-content-center">
+                                <button type="button"
+                                        class="btn btn-outline-primary d-flex align-items-center justify-content-center"
+                                        style="width: 35px; height: 35px;"
+                                        th:attr="onclick='document.getElementById(\'question_' + ${question.id} + '\').scrollIntoView({behavior: \'smooth\'})'">
+                                    <span th:text="${iterStat.count}"></span>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -208,44 +218,64 @@
             </div>
         </nav>
         <!-- Left Section (Content Area) -->
-        <main role="main" class="col-md-9 ms-sm-auto px-2 d-flex flex-column main-content">
+        <main role="main" class="col-md-10 ms-sm-auto px-2 d-flex flex-column main-content">
             <form id="form-assessment" th:action="@{/assessments/{id}/submit(id=${assessment.id})}" method="post">
                 <div class="flex-grow-1">
                     <div style="height: 100%;">
-                        <!-- Questions -->
+                        <!-- Display Questions -->
                         <div class="mb-4" th:if="${questions != null and not #lists.isEmpty(questions)}">
                             <h3 style="margin-top: 10px">Questions</h3>
-                            <div class="border rounded p-3" style="max-height: 80vh; overflow-y: auto;">
+                            <div class="border rounded p-3"
+                                 style="max-height: 80vh; overflow-y: auto;">
                                 <!-- Loop through questions -->
                                 <div th:each="question, iterStat : ${questions}"
                                      class="card mb-4 shadow-sm question-card" th:id="'question_' + ${question.id}">
+                                    <input type="hidden" name="questionId" th:value="${question.id}">
                                     <div class="card-body">
                                         <div class="d-flex align-items-start">
                                             <h5 class="me-2 question-number">
-                                                <strong th:text="${iterStat.index + 1}"></strong>
+                                                <strong th:text="${iterStat.index + 1} +'.'"></strong>
                                             </h5>
                                             <p class="question-text" th:utext="${question.questionText}"></p>
                                             <input type="checkbox" class="form-check-input me-2"
                                                    th:attr="id='check_' + ${question.id}">
                                             <i class="bi bi-flag"></i>
                                         </div>
-                                        <!-- Hidden input để gửi danh sách câu hỏi -->
-                                        <input type="hidden" name="questionId" th:value="${question.id}">
-                                        <!-- Answers -->
-                                        <ul class="list-group mt-3">
-                                            <li class="list-group-item option-item"
-                                                th:each="option : ${question.answerOptions}">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="radio"
-                                                           th:name="'answers[' + ${question.id} + ']'"
-                                                           th:value="${option.id}"
-                                                           th:id="'option_' + ${question.id} + '_' + ${option.id}">
-                                                    <label class="form-check-label"
-                                                           th:for="'option_' + ${question.id} + '_' + ${option.id}"
-                                                           th:text="${option.optionText}"></label>
-                                                </div>
-                                            </li>
+                                        <!-- Câu hỏi MCQ -->
+                                        <ul class="list-group mt-3"
+                                            th:if="${question.questionType.toString() == 'MCQ'}">
+                                            <th:block
+                                                    th:if="${question.answerOptions != null and not #lists.isEmpty(question.answerOptions)}">
+                                                <li th:each="option : ${question.answerOptions}"
+                                                    class="list-group-item">
+                                                    <label>
+                                                        <input type="checkbox" th:name="|answers[${question.id}]|"
+                                                               th:value="${option.id}">
+                                                        <span th:text="${option.optionText}"></span>
+                                                    </label>
+                                                </li>
+                                            </th:block>
                                         </ul>
+                                        <!-- Câu hỏi SCQ -->
+                                        <ul class="list-group mt-3"
+                                            th:if="${question.questionType.toString() == 'SCQ'}">
+                                            <th:block
+                                                    th:if="${question.answerOptions != null and not #lists.isEmpty(question.answerOptions)}">
+                                                <li th:each="option : ${question.answerOptions}"
+                                                    class="list-group-item">
+                                                    <label>
+                                                        <input type="radio" th:name="|answers[${question.id}]|"
+                                                               th:value="${option.id}">
+                                                        <span th:text="${option.optionText}"></span>
+                                                    </label>
+                                                </li>
+                                            </th:block>
+                                        </ul>
+                                        <!-- Xử lý câu hỏi tự luận -->
+                                        <div class="mt-3" th:if="${question.questionType.toString() == 'TEXT'}">
+                                            <textarea class="form-control" rows="3" th:name="|answers[${question.id}]|"
+                                                      placeholder="Nhập câu trả lời..."></textarea>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -255,20 +285,22 @@
                                th:value="${exercises != null and not #lists.isEmpty(exercises)}">
                         <div class="mb-4" th:if="${exercises != null and not #lists.isEmpty(exercises)}">
                             <h3>Exercises</h3>
-                            <div class="border rounded p-3" style="max-height: 50vh; overflow-y: auto;">
+                            <div class="border rounded p-3" style="max-height: 80vh; overflow-y: auto;">
                                 <!-- Loop through exercises -->
                                 <div th:each="exercise, stat : ${exercises}" class="card mb-4 shadow-sm exercise-card"
                                      th:id="'exercise_' + ${exercise.id}">
                                     <div class="card-body d-flex justify-content-between align-items-center">
                                         <h6 class="exercise-title btn btn-light">
-                                            <span th:text="'Exercise ' + (${stat.index} + 1) + ': '"></span>
-                                            <a th:href="@{/judgement/assessment/code_space/{id}(id=${exercise.id})}"
-                                               th:text="${exercise.name}" target="_blank"></a>
+                                            <span style="font-weight: bold"
+                                                  th:text="'Exercise ' + (${stat.index} + 1) + ': '"></span>
+                                            <span th:text="${exercise.name}"></span>
                                         </h6>
                                         <input type="checkbox" class="form-check-input me-2"
-                                               th:id="'check_' + ${exercise.id}">
+                                               th:attr="id='check_' + ${exercise.id}">
                                         <i class="bi bi-flag"></i>
                                     </div>
+                                    <iframe th:src="@{/judgement/assessment/code_space/{id}(id=${exercise.id})}"
+                                            style="width: 100%; height: 600px; border: none;"></iframe>
                                 </div>
                             </div>
                         </div>
@@ -283,8 +315,16 @@
         </main>
     </div>
 </div>
-<!--Duration-->
+<!--Duration & Cheating check-->
 <script th:inline="javascript">
+    // Initial tabLeaveCount from sessionStorage
+    let tabLeaveCount = sessionStorage.getItem("tabLeaveCount")
+        ? parseInt(sessionStorage.getItem("tabLeaveCount"), 10)
+        : 0;
+    let violationFaceCount = sessionStorage.getItem("violationFaceCount")
+        ? parseInt(sessionStorage.getItem("violationFaceCount"), 10)
+        : 0;
+
     var durationInMinutes = /*[[${assessment.getTimeLimit()}]]*/ 120;
     var durationInSeconds = durationInMinutes * 60;
 
@@ -309,59 +349,23 @@
         } else {
             clearInterval(timerInterval);
             document.getElementById("elapsedTime").value = (durationInMinutes * 60); // Lưu tổng thời gian khi hết giờ
+
+            // Ensure to attach hidden input
+            attachHiddenInputs();
+
             document.getElementById("form-assessment").submit();
         }
     }
 
     // Cập nhật thời gian khi người dùng nhấn nút Submit
     document.getElementById("form-assessment").addEventListener("submit", function () {
+        // Ensure hidden inputs are attached on both manual and auto submit
+        attachHiddenInputs();
         document.getElementById("elapsedTime").value = (durationInMinutes * 60) - durationInSeconds;
     });
 
     var timerInterval = setInterval(updateTime, 1000);
     updateTime();
-</script>
-
-<!--Side bar in phone UI-->
-<script>
-    function toggleSidebar() {
-        var sidebar = document.getElementById("sidebar");
-        sidebar.classList.toggle("active");
-        if (sidebar.classList.contains("active")) {
-            sidebar.classList.remove("d-none");
-        } else {
-            setTimeout(() => sidebar.classList.add("d-none"), 300); // Ẩn sidebar sau hiệu ứng
-        }
-    }
-</script>
-<!--Mark-->
-<script>
-    document.querySelectorAll('input[type="checkbox"][id^="check_"]').forEach(function (checkbox) {
-        checkbox.addEventListener('change', function () {
-            var id = checkbox.id.split('_')[1];
-            var type = checkbox.closest('.question-card') ? 'question' : 'exercise';
-            var button = document.querySelector(
-                type === 'question'
-                    ? 'button[onclick*="question_' + id + '"]'
-                    : 'button[onclick*="exercise_' + id + '"]'
-            );
-            if (checkbox.checked) {
-                button.classList.add('bg-primary', 'text-dark');
-            } else {
-                button.classList.remove('bg-primary', 'text-dark');
-            }
-        });
-    });
-</script>
-<!--Cheating check-->
-<script>
-    // Initial tabLeaveCount from sessionStorage
-    let tabLeaveCount = sessionStorage.getItem("tabLeaveCount")
-        ? parseInt(sessionStorage.getItem("tabLeaveCount"), 10)
-        : 0;
-    let violationFaceCount = sessionStorage.getItem("violationFaceCount")
-        ? parseInt(sessionStorage.getItem("violationFaceCount"), 10)
-        : 0;
 
     // Detect when user leaves/switches tab
     document.addEventListener("visibilitychange", function () {
@@ -398,21 +402,65 @@
         });
     })
 
-    // Attach tabLeaveCount to form before submission
-    document.getElementById("form-assessment").addEventListener("submit", function () {
-        let tabLeaveCountInput = document.createElement("input");
-        tabLeaveCountInput.type = "hidden";
-        tabLeaveCountInput.name = "tabLeaveCount";
-        tabLeaveCountInput.value = tabLeaveCount.toString();
-        this.appendChild(tabLeaveCountInput);
+    // Function to attach tabLeaveCount and violationFaceCount
+    function attachHiddenInputs() {
+        let form = document.getElementById("form-assessment");
 
-        let violationFaceCountInput = document.createElement("input");
-        violationFaceCountInput.type = "hidden";
-        violationFaceCountInput.name = "violationFaceCount";
-        violationFaceCountInput.value = violationFaceCount.toString();
-        this.appendChild(violationFaceCountInput);
-    })
+        let existingTabLeaveInput = document.querySelector("input[name='tabLeaveCount']");
+        let existingViolationInput = document.querySelector("input[name='violationFaceCount']");
+
+        if (!existingTabLeaveInput) {
+            let tabLeaveCountInput = document.createElement("input");
+            tabLeaveCountInput.type = "hidden";
+            tabLeaveCountInput.name = "tabLeaveCount";
+            tabLeaveCountInput.value = tabLeaveCount.toString();
+            form.appendChild(tabLeaveCountInput);
+        } else {
+            existingTabLeaveInput.value = tabLeaveCount.toString();
+        }
+
+        if (!existingViolationInput) {
+            let violationFaceCountInput = document.createElement("input");
+            violationFaceCountInput.type = "hidden";
+            violationFaceCountInput.name = "violationFaceCount";
+            violationFaceCountInput.value = violationFaceCount.toString();
+            form.appendChild(violationFaceCountInput);
+        } else {
+            existingViolationInput.value = violationFaceCount.toString();
+        }
+    }
 </script>
 
+<!--Side bar in phone UI-->
+<script>
+    function toggleSidebar() {
+        var sidebar = document.getElementById("sidebar");
+        sidebar.classList.toggle("active");
+        if (sidebar.classList.contains("active")) {
+            sidebar.classList.remove("d-none");
+        } else {
+            setTimeout(() => sidebar.classList.add("d-none"), 300); // Ẩn sidebar sau hiệu ứng
+        }
+    }
+</script>
+<!--Mark-->
+<script>
+    document.querySelectorAll('input[type="checkbox"][id^="check_"]').forEach(function (checkbox) {
+        checkbox.addEventListener('change', function () {
+            var id = checkbox.id.split('_')[1];
+            var type = checkbox.closest('.question-card') ? 'question' : 'exercise';
+            var button = document.querySelector(
+                type === 'question'
+                    ? 'button[onclick*="question_' + id + '"]'
+                    : 'button[onclick*="exercise_' + id + '"]'
+            );
+            if (checkbox.checked) {
+                button.classList.add('bg-primary', 'text-dark');
+            } else {
+                button.classList.remove('bg-primary', 'text-dark');
+            }
+        });
+    });
+</script>
 </body>
 </html>
