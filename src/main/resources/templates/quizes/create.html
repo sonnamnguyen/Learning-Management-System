@@ -90,6 +90,7 @@
                     <h5 class="text-primary mt-2 mb-1">Tags</h5>
                     <div class="row">
                         <div class="col-md-12 mb-1">
+                            <input type="hidden" name="tagIds" id="selectedTagsInput">
                             <button type="button" class="btn btn-secondary mt-2" data-bs-toggle="modal"
                                     data-bs-target="#tagsModal">
                                 Manage Tags
@@ -513,34 +514,26 @@
 
     function saveSelectedTags() {
         const selectedTags = Array.from(document.querySelectorAll('input[name="tagIds"]:checked'))
-            .map(checkbox => ({
-                id: checkbox.value,
-                name: checkbox.nextElementSibling.textContent.trim()
-            }));
+            .map(checkbox => checkbox.value);
 
-        // Store the selected tags in a hidden input field in the main form
-        let hiddenInput = document.getElementById('selectedTagsInput');
-        if (!hiddenInput) {
-            hiddenInput = document.createElement('input');
-            hiddenInput.type = 'hidden';
-            hiddenInput.name = 'tagIds';
-            hiddenInput.id = 'selectedTagsInput';
-            document.querySelector('form').appendChild(hiddenInput);
-        }
-        hiddenInput.value = selectedTags.map(tag => tag.id);
+        // Cập nhật hidden input với danh sách tag IDs
+        document.getElementById('selectedTagsInput').value = selectedTags.join(',');
 
-        // Update selected tags display
+        // Hiển thị tags đã chọn
+        const selectedTagNames = Array.from(document.querySelectorAll('input[name="tagIds"]:checked'))
+            .map(checkbox => checkbox.nextElementSibling.textContent.trim());
+
         const countDisplay = document.getElementById('selectedTagsCount');
-        if (selectedTags.length > 0) {
-            const tagsList = selectedTags.map(tag =>
-                `<span class="badge bg-secondary me-1">${tag.name}</span>`
+        if (selectedTagNames.length > 0) {
+            const tagsList = selectedTagNames.map(name =>
+                `<span class="badge bg-secondary me-1">${name}</span>`
             ).join('');
             countDisplay.innerHTML = tagsList;
         } else {
             countDisplay.innerHTML = '';
         }
 
-        // Đóng modal sử dụng Bootstrap data-bs-dismiss
+        // Đóng modal
         const closeButton = document.querySelector('#tagsModal .btn-secondary[data-bs-dismiss="modal"]');
         if (closeButton) {
             closeButton.click();

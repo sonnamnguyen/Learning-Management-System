@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Repository
 public interface AnswerRepository extends JpaRepository<Answer, Long> {
     @Transactional
@@ -19,4 +21,5 @@ public interface AnswerRepository extends JpaRepository<Answer, Long> {
     @Query("SELECT COUNT(a) FROM Answer a WHERE a.isCorrect = false")
     long countTotalIncorrectAnswers();
 
+    List<Answer> findByTestSessionId(Long testSessionId);
 }

@@ -55,6 +55,7 @@ public class QuestionService {
 
     @Autowired
     private AssessmentQuestionRepository assessmentQuestionRepository;
+
     @Autowired
     private QuizRepository quizRepository;
     @Autowired
@@ -1483,6 +1484,17 @@ public class QuestionService {
     public long count() {
         return questionRepository.count();
     }
+
+//    @Transactional
+//    public List<Question> findQuestionsByAssessmentId(Long assessmentId) {
+//        List<AssessmentQuestion> assessmentQuestions =
+//                assessmentQuestionRepository.findByAssessmentIdOrderByOrderIndex(assessmentId);
+//
+//        // Chuyển đổi danh sách AssessmentQuestion -> danh sách Question
+//        return assessmentQuestions.stream()
+//                .map(AssessmentQuestion::getQuestion)
+//                .collect(Collectors.toList());
+//    }
 
     @Transactional
     public List<Question> findQuestionsByAssessmentId(Long assessmentId) {

@@ -1398,6 +1398,7 @@ public class AssessmentController {
                                    @RequestParam("violationFaceCount") int violationFaceCount,
                                    @RequestParam MultiValueMap<String, String> responses,
                                    @RequestParam("hasExercise") boolean hasExercise,
+                                   @RequestParam StudentAssessmentAttempt assessmentStudentAttemptId,
                                    SessionStatus sessionStatus,
                                    Principal principal,
                                    Model model) {
@@ -1406,7 +1407,7 @@ public class AssessmentController {
         int quizScore = 0;
         int scoreExercise = 0;
         if (questionIds != null && !questionIds.isEmpty()) {
-            double rawScore = quizService.calculateScore(questionIds, assessmentId, responses, user);
+            double rawScore = quizService.calculateScore(questionIds, assessmentId, responses, user, assessmentStudentAttemptId);
             quizScore = (int) Math.round(rawScore);
         }
         //Save cheating count

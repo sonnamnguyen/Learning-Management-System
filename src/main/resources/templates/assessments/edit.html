@@ -250,7 +250,7 @@
                                                 </option>
                                             </select>
                                             <i class="bi bi-funnel filter-icon_assessment-edit"></i>
-                                            <input type="hidden" name="exerciseIds" id="exerciseIds">
+
                                         </div>
                                     </div>
                                     <div class="search-container" style="display: flex; align-items: center; gap: 8px;">
@@ -271,6 +271,8 @@
 
                                 <!-- Exercise List -->
                                 <div id="exercise-list" class="list-group overflow-auto border" style="max-height: 300px;">
+                                    <input type="hidden" name="exerciseIds" id="exerciseIds">
+
                                     <!-- Iterate over exercises -->
                                     <th:block th:each="exercise : ${exercises}">
                                         <div class="list-group-item exercise-item d-flex align-items-center"
@@ -805,16 +807,26 @@
         const selectedIds = Array.from(document.querySelectorAll("input[name='exercises']:checked"))
             .map(checkbox => checkbox.value);
 
-        console.log("🔥 Selected Exercise IDs:", selectedIds);
+        console.log("🔥 Selected Exercise IDs:", selectedIds); // Log danh sách ID đã chọn
 
         const hiddenInput = document.getElementById("exerciseIds");
         if (hiddenInput) {
             hiddenInput.value = selectedIds.join(",");
+            console.log("📌 Updated Hidden Input Value:", hiddenInput.value);
+        } else {
+            console.error("❌ Error: Hidden input #exerciseIds not found!");
         }
     }
 
-    document.querySelectorAll("input[name='exercises']").forEach(checkbox => {
-        checkbox.addEventListener("change", updateSelectedExercises);
+    document.addEventListener("DOMContentLoaded", function () {
+        updateSelectedExercises();
+
+        document.querySelectorAll("input[name='exercises']").forEach(checkbox => {
+            checkbox.addEventListener("change", function () {
+                console.log(`🔄 Checkbox Changed: ${checkbox.value}, Checked: ${checkbox.checked}`);
+                updateSelectedExercises();
+            });
+        });
     });
 
     // Javascript for adding and remove question function
