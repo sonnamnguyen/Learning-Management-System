@@ -173,13 +173,15 @@ public interface ExerciseRepository extends PagingAndSortingRepository<Exercise,
             "HAVING COUNT(sea.id) >= 5 AND SUM(CASE WHEN sea.score_exercise >= 70 THEN 1 ELSE 0 END) > 0")
     Integer countExercisesWithMoreThanFiveAttemptsAndAtLeastOneAbove70(@Param("userId") Long userId);
 
-    @Query("SELECT COUNT(sea.id) FROM StudentExerciseAttempt sea " +
+    @Query("SELECT COUNT(DISTINCT sea.submitted_exercise.id) FROM StudentExerciseAttempt sea " +
             "WHERE sea.attendant_user.id = :userId  AND sea.attendant_email is null " +
-            "AND HOUR(sea.attemptDate) BETWEEN :startHour AND :endHour")
+            "AND HOUR(sea.attemptDate) BETWEEN :startHour AND :endHour AND sea.score_exercise >= :passingScore")
     Integer countExercisesSubmittedBetweenHours(
             @Param("userId") Long userId,
             @Param("startHour") int startHour,
-            @Param("endHour") int endHour);
+            @Param("endHour") int endHour,
+            @Param("passingScore") double passingScore  );
+
 
     //-----------Duplicate
     @Query("SELECT e FROM Exercise e WHERE LOWER(e.name) LIKE LOWER(CONCAT('%', :name, '%'))")

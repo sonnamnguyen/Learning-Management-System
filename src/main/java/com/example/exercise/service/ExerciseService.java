@@ -575,11 +575,11 @@ public class ExerciseService {
     }
 
     public Integer countExercisesSubmittedMidnight(Long userId) {
-        return Optional.ofNullable(exerciseRepository.countExercisesSubmittedBetweenHours(userId, start_lateTime, end_lateTime)).orElse(0);
+        return Optional.ofNullable(exerciseRepository.countExercisesSubmittedBetweenHours(userId, start_lateTime, end_lateTime,pass_score)).orElse(0);
     }
 
     public Integer countExercisesSubmittedEarly(Long userId) {
-        return Optional.ofNullable(exerciseRepository.countExercisesSubmittedBetweenHours(userId, start_earlyTime, end_earlyTime)).orElse(0);
+        return Optional.ofNullable(exerciseRepository.countExercisesSubmittedBetweenHours(userId, start_earlyTime, end_earlyTime,pass_score)).orElse(0);
     }
 
 

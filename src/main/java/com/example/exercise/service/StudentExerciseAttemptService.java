@@ -21,9 +21,10 @@ public class StudentExerciseAttemptService {
     @Autowired
     private StudentExerciseAttemptRepository studentExerciseAttemptRepository;
 
-    public List<StudentExerciseAttempt> getListAttempt(){
+    public List<StudentExerciseAttempt> getListAttempt() {
         return studentExerciseAttemptRepository.findAll();
     }
+
     public void save(StudentExerciseAttempt studentExerciseAttempt) {
         studentExerciseAttemptRepository.save(studentExerciseAttempt);
     }
@@ -42,17 +43,22 @@ public class StudentExerciseAttemptService {
 
         for (StudentExerciseAttempt attempt : attempts) {
             responseList.add(new StudentExerciseAttemptResponse(
-                    attempt.getSubmitted_exercise().getId(),
+                    attempt.getId(),
                     attempt.getSubmitted_exercise().getName(),
-                    attempt.getSubmitted_code(),
-                    attempt.getAttemptDate(),
-                    attempt.getScore_exercise()
+                    attempt.getAttemptDate()
             ));
         }
 
         return responseList;
     }
 
+    public StudentExerciseAttempt getStudentAttemptById(Long studentAttemptId) {
+            StudentExerciseAttempt attempt = studentExerciseAttemptRepository.getStudentExerciseAttempt(studentAttemptId);
+            if (attempt == null) {
+                throw new NullPointerException("Student attempt not found for ID: " + studentAttemptId);
+            }
+            return attempt;
+    }
 }
 
 

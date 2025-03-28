@@ -1387,16 +1387,14 @@
         const start = (page - 1) * ITEMS_PER_PAGE;
         const end = start + ITEMS_PER_PAGE;
         const paginatedData = submissionsData.slice(start, end);
-
+        let userId = document.getElementById("userId").value;
         submissionsList.innerHTML = '';
 
         paginatedData.forEach(submission => {
             submissionsList.innerHTML += `
 <div class="submission-item"
-     onclick="window.location.href='/judgement/get_exercise?exerciseId=' + this.dataset.id + '&code=' + encodeURIComponent(this.dataset.code) + '&score=' + this.dataset.score"
-     data-id="${submission.id}"
-     data-code="${submission.code}"
-     data-score="${submission.score}">
+     onclick="window.location.href='/judgement/get_exercise?userId=' + document.getElementById('userId').value  + '&exerciseAttemptId=' + this.dataset.id"
+     data-id="${submission.id}">
                         <div class="submission-title">${submission.name}</div>
                         <div class="submission-meta">
                             <span class="submission-time">${submission.time}</span>
