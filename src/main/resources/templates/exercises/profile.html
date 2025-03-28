@@ -1318,19 +1318,20 @@
             <!-- Phân trang -->
             <div class="pagination-container">
                 <div class="pagination">
+                    <button class="page-btn" id="first-btn">« First</button>
                     <button class="page-btn" id="prev-btn">
                         <i class="fas fa-chevron-left"></i>
                     </button>
 
-                    <div class="page-numbers" id="page-numbers">
-                        <!-- Số trang sẽ được thêm vào bằng JavaScript -->
-                    </div>
+                    <div class="page-numbers" id="page-numbers"></div>
 
                     <button class="page-btn" id="next-btn">
                         <i class="fas fa-chevron-right"></i>
                     </button>
+                    <button class="page-btn" id="last-btn">Last »</button>
                 </div>
             </div>
+
         </div>
     </div>
 
@@ -1409,32 +1410,56 @@
         const pageNumbers = document.getElementById('page-numbers');
         const prevBtn = document.getElementById('prev-btn');
         const nextBtn = document.getElementById('next-btn');
+        const firstBtn = document.getElementById('first-btn');
+        const lastBtn = document.getElementById('last-btn');
 
+        // Vô hiệu hóa các nút khi cần thiết
         prevBtn.disabled = currentPage === 1;
-        prevBtn.onclick = () => {
-            if (currentPage > 1) {
-                currentPage--;
-                updateDisplayWithAnimation();
-            }
-        };
-
         nextBtn.disabled = currentPage === totalPages;
-        nextBtn.onclick = () => {
-            if (currentPage < totalPages) {
-                currentPage++;
-                updateDisplayWithAnimation();
-            }
-        };
+        firstBtn.disabled = currentPage === 1;
+        lastBtn.disabled = currentPage === totalPages;
+
+        // Xử lý sự kiện click
+        prevBtn.onclick = () => goToPage(currentPage - 1);
+        nextBtn.onclick = () => goToPage(currentPage + 1);
+        firstBtn.onclick = () => goToPage(1);
+        lastBtn.onclick = () => goToPage(totalPages);
 
         pageNumbers.innerHTML = '';
-        for (let i = 1; i <= totalPages; i++) {
-            pageNumbers.innerHTML += `
-                    <button class="page-btn ${i === currentPage ? 'active' : ''}"
-                            onclick="goToPage(${i})">
-                        ${i}
-                    </button>
-                `;
+
+        let pagesToShow = [];
+        if (totalPages <= 5) {
+            // Hiển thị tất cả nếu có ít trang
+            pagesToShow = Array.from({ length: totalPages }, (_, i) => i + 1);
+        } else {
+            if (currentPage <= 3) {
+                pagesToShow = [1, 2, 3, '...', totalPages];
+            } else if (currentPage >= totalPages - 2) {
+                pagesToShow = [1, '...', totalPages - 2, totalPages - 1, totalPages];
+            } else {
+                pagesToShow = [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
+            }
         }
+
+        // Render các nút trang
+        pagesToShow.forEach(page => {
+            if (page === '...') {
+                pageNumbers.innerHTML += `<span class="ellipsis">...</span>`;
+            } else {
+                pageNumbers.innerHTML += `
+                <button class="page-btn ${page === currentPage ? 'active' : ''}"
+                        onclick="goToPage(${page})">
+                    ${page}
+                </button>
+            `;
+            }
+        });
+    }
+
+    function goToPage(page) {
+        if (page < 1 || page > Math.ceil(submissionsData.length / ITEMS_PER_PAGE)) return;
+        currentPage = page;
+        updateDisplayWithAnimation();
     }
 
     // Thêm hiệu ứng chuyển trang
@@ -1459,11 +1484,6 @@
         }, 300);
     }
 
-    // Thay thế các hàm điều hướng trang
-    function goToPage(page) {
-        currentPage = page;
-        updateDisplayWithAnimation();
-    }
 
     function updateDisplay() {
         displaySubmissions(currentPage);
@@ -1731,8 +1751,10 @@
                         </div>
                         <div class="achievement-info">
                             <div class="achievement-name">${achievement.title}</div>
-                            <div class="achievement-progress">${progress.current}/${progress.total}</div>
+                        <div class="achievement-progress">
+                    ${progress.isCompleted ? '<span class="completed-text">Completed</span>' : `${progress.current}/${progress.total}`}
                         </div>
+                 </div>
                     </div>
                 `;
         }
