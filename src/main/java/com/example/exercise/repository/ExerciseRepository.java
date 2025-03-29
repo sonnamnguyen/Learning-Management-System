@@ -1,7 +1,6 @@
 package com.example.exercise.repository;
 
 import com.example.exercise.model.Exercise;
-import com.example.testcase.TestCase;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -33,7 +32,7 @@ public interface ExerciseRepository extends PagingAndSortingRepository<Exercise,
     List<Exercise> searchByTitle(@Param("title") String title);
 
 
-    @Query("SELECT e FROM Exercise e WHERE e.name LIKE %:searchQuery%")
+    @Query("SELECT e FROM Exercise e WHERE LOWER(TRIM(e.name)) LIKE LOWER(CONCAT('%', LOWER(:searchQuery), '%'))")
     Page<Exercise> searchExercises(@Param("searchQuery") String searchQuery, Pageable pageable);
 
     @Query("SELECT e FROM Exercise e " +
@@ -95,6 +94,8 @@ public interface ExerciseRepository extends PagingAndSortingRepository<Exercise,
 
 // son nam them
 
+    @Query("SELECT COUNT(e) FROM Exercise e WHERE e.language.language = :language")
+    Integer countTotalExercisesByLanguage(@Param("language") String language);
 
     @Query("Select COUNT(e) FROM Exercise e JOIN e.language WHERE e.level = 'EASY' and e.language.language like %:language% ")
     Integer countNumberEasyExercises(@Param("language") String language );
@@ -130,6 +131,14 @@ public interface ExerciseRepository extends PagingAndSortingRepository<Exercise,
     Integer countUserNumberEasyExercises(@Param("id") Long userId,
                                          @Param("language") String language,
                                          @Param("passingScore") double passingScore );
+
+    @Query("Select COUNT(DISTINCT e.id) FROM Exercise e " +
+            "JOIN e.studentExerciseAttempts sea " +
+            "JOIN e.language WHERE sea.attendant_email is null " +
+            "AND sea.attendant_user.id =:id  and e.language.language = :language and sea.score_exercise >= :passingScore")
+    Integer countUserExercisesByLanguage(@Param("id") Long userId,
+                                         @Param("language") String language,
+                                         @Param("passingScore") double passingScore);
 
     @Query("Select COUNT(DISTINCT e.id) FROM Exercise e " +
             "JOIN e.studentExerciseAttempts sea " +
@@ -261,6 +270,7 @@ public interface ExerciseRepository extends PagingAndSortingRepository<Exercise,
 
     @Query("SELECT COUNT(e) > 0 FROM Exercise e WHERE e.name = :name AND e.language.id = :languageId")
     boolean existsByNameAndLanguage(@Param("name") String name, @Param("languageId") Integer languageId);
+
 }
 
 

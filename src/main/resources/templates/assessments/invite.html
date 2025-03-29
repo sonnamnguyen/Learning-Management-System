@@ -46,9 +46,16 @@
                             <!-- Nút Import từ Excel -->
                             <div class="form-group mt-3 d-flex align-items-center">
                                 <label for="fileUpload" class="me-2">Import from Excel:</label>
-                                <input type="file" id="fileUpload" class="form-control-file d-none" accept=".xls,.xlsx">
+                                <input
+                                        type="file"
+                                        id="fileUpload"
+                                        class="form-control-file d-none"
+                                        accept=".xls,.xlsx"
+                                        onchange="displayFileName(event)"
+                                >
                                 <label for="fileUpload" class="btn btn-outline-secondary me-2">Choose File</label>
-                                <button id="downloadExcelButton" class="btn btn-primary">Download Form Excel</button>
+                                <button id="downloadExcelButton" class="btn btn-primary me-2">Download Form Excel</button>
+                                <span id="selectedFileName" class="text-muted ms-2"></span>
                             </div>
 
                             <div class="text-end mt-3">
@@ -199,8 +206,20 @@
 
 
 <script>
+    function displayFileName(event) {
+        const fileInput = event.target;
+        const fileNameSpan = document.getElementById('selectedFileName');
+
+        if (fileInput.files.length > 0) {
+            fileNameSpan.textContent = fileInput.files[0].name;
+        } else {
+            fileNameSpan.textContent = '';
+        }
+    }
+
     function importEmails() {
         const fileInput = document.getElementById('fileUpload');
+        const fileNameSpan = document.getElementById('selectedFileName');
         const emailTextArea = document.getElementById('id_emails');
 
         if (fileInput.files.length === 0) {
@@ -228,8 +247,10 @@
 
             if (emails.size > 0) {
                 emailTextArea.value = Array.from(emails).join(", ");
+                fileNameSpan.textContent = fileInput.files[0].name; // Ensure filename is displayed
             } else {
                 alert("No valid emails found in the file.");
+                fileNameSpan.textContent = ''; // Clear filename if no emails found
             }
         };
 

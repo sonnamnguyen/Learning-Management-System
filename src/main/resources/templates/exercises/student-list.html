@@ -9,6 +9,11 @@
     <!-- Bootstrap Icons CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet"/>
     <style>
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
 
         #tagContainer {
             max-width: 200px;
@@ -588,37 +593,78 @@
         <div class="d-flex justify-content-center mt-4" th:if="${totalPages >= 1}">
             <nav>
                 <ul class="pagination">
-                    <!-- Nút First (<<) -->
-                    <li class="page-item" th:if="${totalPages > 1 and currentPage > 0}">
-                        <a class="page-link"
-                           th:href="@{/exercises(page=0, language=${currentLanguage}, level=${currentLevel})}">&laquo;</a>
-                    </li>
-                    <!-- Nút Previous (<) -->
-                    <li class="page-item" th:if="${totalPages > 1 and currentPage > 0}">
-                        <a class="page-link"
-                           th:href="@{/exercises(page=${currentPage - 1}, language=${currentLanguage}, level=${currentLevel})}">&lt;</a>
-                    </li>
-                    <!-- Danh sách số trang -->
-                    <th:block th:with="startPage=${T(java.lang.Math).max(0, T(java.lang.Math).min(currentPage - 2, totalPages - 5))},
-                           endPage=${T(java.lang.Math).min(totalPages - 1, T(java.lang.Math).max(currentPage + 2, 4))},
-                           visiblePages=${#numbers.sequence(startPage, endPage)}">
-                        <li class="page-item" th:each="i : ${visiblePages}"
-                            th:classappend="${i == currentPage} ? 'active'">
-                            <a class="page-link"
-                               th:href="@{/exercises(page=${i}, language=${currentLanguage}, level=${currentLevel}, title=${paramTitle})}"
-                               th:text="${i + 1}">Page</a>
+                    <!-- Trường hợp chỉ có 1 trang -->
+                    <th:block th:if="${totalPages == 1}">
+                        <li class="page-item active">
+                            <a class="page-link" href="#">1</a>
                         </li>
                     </th:block>
-                    <!-- Nút Next (>) -->
-                    <li class="page-item" th:if="${totalPages > 1 and currentPage < totalPages - 1}">
-                        <a class="page-link"
-                           th:href="@{/exercises(page=${currentPage + 1}, language=${currentLanguage}, level=${currentLevel})}">&gt;</a>
-                    </li>
-                    <!-- Nút Last (>>) -->
-                    <li class="page-item" th:if="${totalPages > 1 and currentPage < totalPages - 1}">
-                        <a class="page-link"
-                           th:href="@{/exercises(page=${totalPages - 1}, language=${currentLanguage}, level=${currentLevel})}">&raquo;</a>
-                    </li>
+                    <!-- Trường hợp có nhiều hơn 1 trang -->
+                    <th:block th:if="${totalPages > 1}">
+                        <!-- Nút First (<<) -->
+                        <li class="page-item" th:if="${currentPage > 0}">
+                            <a class="page-link"
+                               th:href="@{/exercises(page=0, language=${currentLanguage}, level=${currentLevel}, description=${paramDescription}, title=${paramTitle})}">«</a>
+                        </li>
+                        <!-- Nút Previous (<) -->
+                        <li class="page-item" th:if="${currentPage > 0}">
+                            <a class="page-link"
+                               th:href="@{/exercises(page=${currentPage - 1}, language=${currentLanguage}, level=${currentLevel}, description=${paramDescription}, title=${paramTitle})}"><</a>
+                        </li>
+                        <!-- Danh sách số trang -->
+                        <th:block th:with="isNearStart=${currentPage == 0},
+                                  isNearEnd=${currentPage >= totalPages - 3},
+                                  startPage=${isNearStart ? 0 : (isNearEnd ? totalPages - 3 : currentPage)},
+                                  startPage=${T(java.lang.Math).max(0, startPage)},
+                                  endPage=${T(java.lang.Math).min(startPage + 2, totalPages - 1)}">
+                            <!-- Trang đầu tiên (chỉ hiển thị nếu ở gần cuối) -->
+                            <li class="page-item" th:if="${isNearEnd}"
+                                th:classappend="${currentPage == 0} ? 'active'">
+                                <a class="page-link"
+                                   th:href="@{/exercises(page=0, language=${currentLanguage}, level=${currentLevel}, title=${paramTitle}, description=${paramDescription})}">1</a>
+                            </li>
+                            <!-- Dấu ba chấm nếu cần (trước các trang chính, chỉ hiển thị khi ở gần cuối) -->
+                            <li class="page-item disabled" th:if="${isNearEnd and startPage > 1}">
+                                <span class="page-link">...</span>
+                            </li>
+                            <!-- Hiển thị tối đa 3 trang từ startPage -->
+                            <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
+                                th:classappend="${i == currentPage} ? 'active'">
+                                <a class="page-link"
+                                   th:href="@{/exercises(page=${i}, language=${currentLanguage}, level=${currentLevel}, title=${paramTitle}, description=${paramDescription})}"
+                                   th:text="${i + 1}">Page</a>
+                            </li>
+                            <!-- Dấu ba chấm nếu cần (sau các trang chính) -->
+                            <li class="page-item disabled" th:if="${endPage < totalPages - 1 and !isNearEnd}">
+                                <span class="page-link">...</span>
+                            </li>
+                            <!-- Trang cuối cùng (hiển thị nếu không ở gần cuối) -->
+                            <li class="page-item" th:if="${endPage < totalPages - 1 and !isNearEnd}"
+                                th:classappend="${currentPage == totalPages - 1} ? 'active'">
+                                <a class="page-link"
+                                   th:href="@{/exercises(page=${totalPages - 1}, language=${currentLanguage}, level=${currentLevel}, title=${paramTitle}, description=${paramDescription})}"
+                                   th:text="${totalPages}">Last</a>
+                            </li>
+                        </th:block>
+                        <!-- Nút Next (>) -->
+                        <li class="page-item" th:if="${currentPage < totalPages - 1}">
+                            <a class="page-link"
+                               th:href="@{/exercises(page=${currentPage + 1}, language=${currentLanguage}, level=${currentLevel}, description=${paramDescription}, title=${paramTitle})}">></a>
+                        </li>
+                        <!-- Nút Last (>>) -->
+                        <li class="page-item" th:if="${currentPage < totalPages - 1}">
+                            <a class="page-link"
+                               th:href="@{/exercises(page=${totalPages - 1}, language=${currentLanguage}, level=${currentLevel}, description=${paramDescription}, title=${paramTitle})}">»</a>
+                        </li>
+                    </th:block>
+                    <!-- Ô nhập số trang -->
+                    <div class="input-group input-group-sm ms-2 page-item" style="width: 130px;">
+                        <input type="number" class="form-control" id="pageInput"
+                               th:attr="max=${totalPages}, min=1"
+                               placeholder="Go to"
+                               style="text-align: center;">
+                        <button class="btn btn-outline-primary" type="button" onclick="goToPage()">⩥</button>
+                    </div>
                 </ul>
             </nav>
         </div>
@@ -909,7 +955,50 @@
         searchInput.dispatchEvent(event);
     });
 </script>
+<script th:inline="javascript">
+    function goToPage() {
+        var pageInput = document.getElementById('pageInput').value;
+        var totalPages = /*[[${totalPages}]]*/ 0;
+        var currentLanguage = /*[[${currentLanguage}]]*/ null;
+        var currentLevel = /*[[${currentLevel}]]*/ '' || '';
+        var paramDescription = /*[[${paramDescription}]]*/ '' || '';
+        var paramTitle = /*[[${paramTitle}]]*/ '' || '';
 
+        if (pageInput && !isNaN(pageInput)) {
+            var page = parseInt(pageInput) - 1; // Trừ 1 vì page bắt đầu từ 0
+            if (page >= 0 && page < totalPages) {
+                var url = '/exercises?page=' + page;
+                if (currentLanguage !== null && currentLanguage !== undefined && currentLanguage !== '') {
+                    url += '&language=' + encodeURIComponent(currentLanguage);
+                }
+                if (currentLevel) url += '&level=' + encodeURIComponent(currentLevel);
+                if (paramDescription) url += '&description=' + encodeURIComponent(paramDescription);
+                if (paramTitle) url += '&title=' + encodeURIComponent(paramTitle);
+                window.location.href = url;
+            } else {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Invalid Page!',
+                    text: 'Please enter a page number between 1 and ' + totalPages,
+                    confirmButtonText: 'OK'
+                });
+            }
+        } else {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Invalid Input!',
+                text: 'Please enter a valid number',
+                confirmButtonText: 'OK'
+            });
+        }
+    }
+
+    document.getElementById('pageInput').addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            goToPage();
+        }
+    });
+</script>
 
 </body>
 </html>

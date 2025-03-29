@@ -1,5 +1,6 @@
 package com.example.quiz.model;
 
+import com.example.assessment.model.StudentAssessmentAttempt;
 import com.example.user.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -21,13 +22,13 @@ public class TestSession {
     private Long id;
 
     @Column(name = "assessment_id")
-    private Long assessmentId; // Không gán mặc định bằng quizId
+    private Long assessmentId;
 
     @Column(name = "check_practice", nullable = false)
-    private boolean checkPractice; // Đảm bảo không null trong cơ sở dữ liệu
+    private boolean checkPractice;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = true)
     private User user;
 
     private LocalDateTime startTime;
@@ -41,16 +42,18 @@ public class TestSession {
     @OneToMany(mappedBy = "testSession", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PracticeResult> practiceResults;
 
-    // Constructor với Quiz để gán checkPractice
     public TestSession(User user, Quiz quiz, Long assessmentId) {
         this.user = user;
         this.startTime = LocalDateTime.now();
-        this.assessmentId = assessmentId; // Lấy từ request
+        this.assessmentId = assessmentId;
         setCheckPracticeBasedOnQuiz(quiz);
     }
 
-    // Phương thức gán checkPractice dựa trên quizCategory
     private void setCheckPracticeBasedOnQuiz(Quiz quiz) {
         this.checkPractice = (quiz.getQuizCategory() == Quiz.QuizCategory.PRACTICE);
     }
+
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "student_assessment_attempt_id", unique = true, nullable = true)
+    private StudentAssessmentAttempt studentAssessmentAttempt;
 }

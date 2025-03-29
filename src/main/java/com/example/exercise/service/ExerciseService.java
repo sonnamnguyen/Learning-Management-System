@@ -526,6 +526,14 @@ public class ExerciseService {
     int start_earlyTime = 5;
     int end_earlyTime = 6;
 
+    public Integer countTotalExercisesByLanguage(String language) {
+        return Optional.ofNullable(exerciseRepository.countTotalExercisesByLanguage(language)).orElse(0);
+    }
+
+    public Integer countUserExercisesByLanguage(Long userId, String language) {
+        return Optional.ofNullable(exerciseRepository.countUserExercisesByLanguage(userId, language, pass_score)).orElse(0);
+    }
+
     public Integer countEasyExercises(String language) {
         return Optional.ofNullable(exerciseRepository.countNumberEasyExercises(language)).orElse(0);
     }

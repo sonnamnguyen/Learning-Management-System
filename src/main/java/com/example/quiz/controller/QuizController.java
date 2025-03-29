@@ -1,5 +1,6 @@
 package com.example.quiz.controller;
 
+import com.example.assessment.model.StudentAssessmentAttempt;
 import com.example.course.Course;
 import com.example.course.CourseService;
 import com.example.exception.NotFoundException;
@@ -108,39 +109,28 @@ public class QuizController {
 //    }
 
 
+
     @GetMapping
     public String list(Model model,
                        @RequestParam(value = "searchQuery", required = false) String searchQuery,
                        @RequestParam(value = "page", defaultValue = "0") int page,
                        @RequestParam(value = "pageSize", defaultValue = "10") int pageSize,
                        @RequestParam(value = "course", required = false) Long courseId,
-                       @RequestParam(value = "tags", required = false) List<Long> tagIds) {
+                       @RequestParam(value = "tags", required = false) List<Long> tagIds,
+                       Principal principal) {
+
+        // Get current user and their roles
+        User currentUser = userService.findByUsername(principal.getName());
+        boolean isStudent = currentUser.getRoles().stream()
+                .anyMatch(role -> "STUDENT".equals(role.getName()));
+
         Page<Quiz> quizes;
         Pageable pageable = PageRequest.of(page, pageSize);
 
-        if (courseId != null) {
-            if (searchQuery != null && !searchQuery.isEmpty()) {
-                // Tìm kiếm trong phạm vi course đã chọn
-                quizes = quizService.searchByCourseAndName(courseId, searchQuery, pageable);
-            } else {
-                // Chỉ lọc theo course
-                quizes = quizService.findByCourseId(courseId, pageable);
-            }
-        } else {
-            if (searchQuery != null && !searchQuery.isEmpty()) {
-                // Tìm kiếm tất cả
-                quizes = quizService.search(searchQuery, pageable);
-            } else {
-                // Hiển thị tất cả
-                quizes = quizService.findAll(pageable);
-            }
-        }
+        // Sử dụng service method mới để kết hợp tất cả điều kiện filter
+        quizes = quizService.findQuizesWithFilters(courseId, searchQuery, tagIds, pageable);
 
-        // Filter by tags if tagIds are provided
-        if (tagIds != null && !tagIds.isEmpty()) {
-            quizes = quizService.filterByTags(tagIds, pageable);
-        }
-
+        // Add all the necessary attributes to the model
         model.addAttribute("quizes", quizes.getContent());
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", quizes.getTotalPages());
@@ -148,10 +138,13 @@ public class QuizController {
         model.addAttribute("searchQuery", searchQuery);
         model.addAttribute("courses", courseService.getAllCourses());
         model.addAttribute("tags", quizTagService.getAllQuizTag());
+        model.addAttribute("isStudent", isStudent); // Add this for the view to use
         model.addAttribute("content", "quizes/list");
 
         return "layout";
     }
+
+
 
 
     @GetMapping("/create")
@@ -187,12 +180,11 @@ public class QuizController {
 
     @PostMapping("/create")
     @Transactional
-    public String createQuiz(@Valid @ModelAttribute Quiz quizz,
+    public String createQuiz(@Valid @RequestBody String quiz,
                              @RequestParam(value = "tagIds", required = false) List<Long> tagIds,
                              @RequestParam(value = "newTagNames", required = false) List<String> newTagNames,
                              BindingResult result, Model model) {
-        ObjectMapper mapper = new ObjectMapper();
-
+        Quiz quizz = quizService.jsonToQuiz(quiz);
 
         quizz.validateTime(result);
 
@@ -233,7 +225,6 @@ public class QuizController {
 
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable("id") Long id, Model model, Principal principal) {
-        // Sử dụng fetch join để load tags cùng với quiz
         Quiz quiz = quizService.getQuizWithTags(id);
         List<Course> courses = courseService.getAllCourses();
         User user = userService.findByUsername(principal.getName());
@@ -344,49 +335,129 @@ public class QuizController {
         return "redirect:/quizes/detail/" + quizId;
     }
 
+    @GetMapping("/participants/{quizId}/result/{testSessionId}")
+    public String getResultByTestSession(
+            @PathVariable Long quizId,
+            @PathVariable Long testSessionId,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+        try {
+            Quiz quiz = quizService.findById(quizId)
+                    .orElseThrow(() -> new NotFoundException("Quiz not found"));
 
-    /*@PostMapping("/import")
-    public String importExcel(@RequestParam("file") MultipartFile file, @RequestParam("course") String courseName, RedirectAttributes redirectAttributes) {
-        try{
-            questionService.importExcel(file, courseName);
-            return "redirect:/quizes";
-        }catch (Exception e){
+            QuizParticipant participant = quizParticipantRepository.findByQuizIdAndTestSessionId(quizId, testSessionId)
+                    .orElseThrow(() -> new NotFoundException("Participant not found for this quiz and test session"));
+
+            TestSession testSession = testSessionRepository.findByIdWithAnswers(testSessionId)
+                    .orElseThrow(() -> new NotFoundException("Test session not found"));
+
+            if (testSession.getEndTime() == null) {
+                throw new IllegalStateException("Test session has not been completed");
+            }
+
+            List<PracticeResult> practiceResults = testSession.getPracticeResults();
+            if (practiceResults == null || practiceResults.isEmpty()) {
+                throw new IllegalStateException("No result found for this test session");
+            }
+
+            List<Question> sortedQuestions = new ArrayList<>(quiz.getQuestions());
+            sortedQuestions.sort(Comparator.comparingInt(Question::getQuestionNo));
+            quiz.setQuestions(new HashSet<>(sortedQuestions));
+
+            long durationInMinutes = Duration.between(testSession.getStartTime(), testSession.getEndTime()).toMinutes();
+
+            model.addAttribute("quiz", quiz);
+            model.addAttribute("testSession", testSession);
+            model.addAttribute("participant", participant);
+            model.addAttribute("practiceResults", practiceResults);
+            model.addAttribute("durationInMinutes", durationInMinutes);
+            model.addAttribute("content", "quizes/session-result");
+
+            return "layout";
+
+        } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
-            //redirectAttributes.addFlashAttribute("modalOpen", true);
-            return "redirect:/quizes?openModal=importModal";
+            return "redirect:/quizes/participants/" + quizId;
         }
-
-    }*/
+    }
 
 
     @GetMapping("/participants/{quizId}")
     public String getQuizParticipants(@PathVariable Long quizId, Model model) {
-        List<QuizParticipant> participants = quizParticipantService.getParticipantsByQuiz(quizId);
-        model.addAttribute("participants", participants);
-        model.addAttribute("content", "quizes/participants");
-        return "layout";
+        try {
+            // Lấy thông tin quiz
+            Quiz quiz = quizService.getQuizById(quizId);
+            if (quiz == null) {
+                throw new NotFoundException("Quiz not found");
+            }
+
+            List<QuizParticipant> participants = quizParticipantService.getParticipantsByQuiz(quizId);
+
+            long totalParticipants = participants.size();
+            long completedCount = participants.stream()
+                .filter(p -> p.getTestSession() != null && p.getTestSession().getEndTime() != null)
+                .count();
+            long inProgressCount = participants.stream()
+                .filter(p -> p.getTestSession() != null && p.getTestSession().getEndTime() == null)
+                .count();
+            long notStartedCount = participants.stream()
+                .filter(p -> p.getTestSession() == null)
+                .count();
+
+            // Add attributes to model
+            model.addAttribute("participants", participants);
+            model.addAttribute("quiz", quiz);
+            model.addAttribute("quizId", quizId);
+
+            // Add statistics
+            model.addAttribute("totalParticipants", totalParticipants);
+            model.addAttribute("completedCount", completedCount);
+            model.addAttribute("inProgressCount", inProgressCount);
+            model.addAttribute("notStartedCount", notStartedCount);
+
+            model.addAttribute("content", "quizes/participants");
+            return "layout";
+        } catch (Exception e) {
+            model.addAttribute("error", "Could not load participants: " + e.getMessage());
+            return "redirect:/quizes";
+        }
     }
 
     @GetMapping("/{quizId}/participants/search")
-    public String searchQuizParticipants(@PathVariable Long quizId, @RequestParam String searchTerm, Model model) {
-        List<User> participants = quizService.searchParticipants(quizId, searchTerm);
-        model.addAttribute("participants", participants);
-        return "quizParticipants";
+    public String searchQuizParticipants(
+            @PathVariable Long quizId,
+            @RequestParam(required = false) String searchTerm,
+            Model model) {
+        try {
+            Quiz quiz = quizService.getQuizById(quizId);
+            List<QuizParticipant> participants;
+
+            if (searchTerm != null && !searchTerm.trim().isEmpty()) {
+                participants = quizParticipantService.searchParticipants(quizId, searchTerm);
+            } else {
+                participants = quizParticipantService.getParticipantsByQuiz(quizId);
+            }
+
+            model.addAttribute("participants", participants);
+            model.addAttribute("quiz", quiz);
+            model.addAttribute("quizId", quizId);
+            model.addAttribute("searchTerm", searchTerm);
+            model.addAttribute("content", "quizes/participants");
+
+            return "layout";
+        } catch (Exception e) {
+            model.addAttribute("error", "Error searching participants: " + e.getMessage());
+            return "redirect:/quizes/participants/" + quizId;
+        }
     }
 
     @GetMapping("/{quizId}/participants/export")
     public ResponseEntity<InputStreamResource> exportQuizParticipants(@PathVariable Long quizId) {
-        // Fetch participants for the quiz
         List<User> participants = quizService.getParticipants(quizId);
 
-        // Convert participants list to Excel file
         ByteArrayInputStream excelFile = quizService.exportParticipantsToExcel(participants);
-
-        // Set headers to prompt file download
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-Disposition", "attachment; filename=participants.xlsx");
-
-        // Return the file in the response
         return ResponseEntity.ok()
                 .headers(headers)
                 .body(new InputStreamResource(excelFile));
@@ -394,18 +465,9 @@ public class QuizController {
 
     @GetMapping("/{quizId}/participants/print")
     public String printAllParticipants(@PathVariable Long quizId, Model model) {
-        // Fetch all participants for the given quiz ID
-//        List<Quiz> participants = quizService.getParticipants(quizId);
         List<QuizParticipant> participants = quizParticipantService.getParticipantsByQuiz(quizId);
-        // Log each participant's details (for debugging or printing purposes)
-//        participants.forEach(participant -> {
-//            System.out.println("Participant Name: " + participant.getUsername());
-//            System.out.println("Participant Email: " + participant.getEmail());
-//        });
-
-        // Add participants to the model for rendering in Thymeleaf
         model.addAttribute("participants", participants);
-        return "printParticipants";  // The name of the Thymeleaf template
+        return "printParticipants";
     }
 
     @PostMapping("/apply/{quizId}")
@@ -419,13 +481,11 @@ public class QuizController {
         if (optionalQuizParticipant.isPresent()) {
             quizParticipant = optionalQuizParticipant.get();
 
-            // Kiểm tra nếu đã đạt maxAttempt
             if (quizParticipant.getAttemptUsed() >= quiz.getAttemptLimit()) {
                 redirectAttributes.addFlashAttribute("errorMessage", "You have reached the maximum number of attempts!");
                 return "redirect:/quizes";
             }
 
-            // Tăng số lần attempt
             quizParticipant.setAttemptUsed(quizParticipant.getAttemptUsed() + 1);
         } else {
             // Nếu chưa có, tạo mới
@@ -442,8 +502,7 @@ public class QuizController {
         redirectAttributes.addFlashAttribute("attemptUsed", quizParticipant.getAttemptUsed());
         redirectAttributes.addFlashAttribute("attemptLimit", quiz.getAttemptLimit());
 
-//        return "redirect:/quizes";
-        Set<Question> questions = quiz.getQuestions(); // Lấy danh sách câu hỏi của Quiz
+        Set<Question> questions = quiz.getQuestions();
         model.addAttribute("quiz", quiz);
         model.addAttribute("questions", questions);
         if (Quiz.QuizCategory.PRACTICE==(quiz.getQuizCategory())) {
@@ -466,7 +525,6 @@ public class QuizController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Quiz not found");
         }
 
-        // Lấy danh sách câu hỏi và sắp xếp theo questionNo
         List<Question> questions = new ArrayList<>(quiz.getQuestions());
         questions.sort(Comparator.comparingInt(Question::getQuestionNo));
 
@@ -485,6 +543,7 @@ public class QuizController {
             @RequestParam MultiValueMap<String, String> responses,
             @RequestParam("elapsedTime") int elapsedTime,
             @RequestParam("questionIds") List<String> questionIds,
+            @RequestParam(required = false) StudentAssessmentAttempt studentAssessmentAttemptId,
             Model model) {
 
         System.out.println("Dữ liệu nhận được từ form: " + questionIds);
@@ -507,8 +566,7 @@ public class QuizController {
         int totalTime = quiz.getDuration();
         int remainingTime = (totalTime * 60) - elapsedTime;
 
-        // ✅ Tính điểm sử dụng MultiValueMap
-        double score = quizService.calculateScore(questionIds, assessmentId, responses, user);
+        double score = quizService.calculateScore(questionIds, assessmentId, responses, user,studentAssessmentAttemptId);
 
         List<Question> questions = questionRepository.findAllById(
                 questionIds.stream().map(Long::parseLong).collect(Collectors.toList())
@@ -516,28 +574,23 @@ public class QuizController {
 
         int correctCount = 0;
         Map<Long, List<Long>> selectedAnswers = new HashMap<>();
-        Map<Long, Long> correctAnswers = new HashMap<>();
-        List<Answer> answerList = new ArrayList<>();
+        Map<Long, String> textAnswers = new HashMap<>();
+        Map<Long, Map<Long, Double>> selectedAnswerScores = new HashMap<>(); // ✅ QuizID -> (OptionID -> Score)
+        int totalCorrectAnswers = 0;
+        int userCorrectAnswers = 0;
 
-        System.out.println("📌 Dữ liệu nhận được từ form: " + responses);
+
+        System.out.println(" Dữ liệu nhận được từ form: " + responses);
 
         for (Question question : questions) {
             List<String> selectedOptionIds = responses.get("answers[" + question.getId() + "]");
 
             if (selectedOptionIds != null && !selectedOptionIds.isEmpty()) {
                 if (question.getQuestionType().toString().equals("TEXT")) {
-                    // ✅ Xử lý câu hỏi dạng TEXT
+                    // ✅ Lưu câu trả lời dạng TEXT
                     String textAnswer = selectedOptionIds.get(0);
-
-                    Answer textResponse = new Answer();
-                    textResponse.setQuestion(question);
-                    textResponse.setAnswerText(textAnswer); // Lưu nội dung tự luận
-                    textResponse.setIsCorrect(null); // Không có đúng/sai ngay lập tức
-                    answerList.add(textResponse);
-                    answerRepository.save(textResponse);
-
+                    textAnswers.put(question.getId(), textAnswer);
                 } else {
-                    // ✅ Xử lý MCQ & SCQ (Chỉ lấy ID hợp lệ)
                     List<Long> selectedOptionLongs = selectedOptionIds.stream()
                             .filter(id -> id.matches("\\d+")) // Chỉ giữ lại số hợp lệ
                             .map(Long::parseLong)
@@ -546,42 +599,49 @@ public class QuizController {
                     selectedAnswers.put(question.getId(), selectedOptionLongs);
 
                     List<AnswerOption> correctOptions = answerOptionRepository.findCorrectAnswersByQuestionId(question.getId());
+                    List<Long> correctOptionIds = correctOptions.stream().map(AnswerOption::getId).toList();
 
-                    if (!correctOptions.isEmpty()) {
-                        correctAnswers.put(question.getId(), correctOptions.get(0).getId());
-                    }
+                    totalCorrectAnswers += correctOptionIds.size();
 
-                    boolean isCorrect = correctOptions.stream().allMatch(opt -> selectedOptionLongs.contains(opt.getId()))
-                            && selectedOptionLongs.containsAll(correctOptions.stream().map(AnswerOption::getId).toList());
-
-                    if (isCorrect) {
-                        correctCount++;
+                    for (Long selectedOptionId : selectedOptionLongs) {
+                        if (correctOptionIds.contains(selectedOptionId)) {
+                            userCorrectAnswers++;
+                        }
                     }
 
                     for (Long selectedOptionId : selectedOptionLongs) {
                         AnswerOption selectedOption = answerOptionRepository.findById(selectedOptionId).orElse(null);
                         if (selectedOption != null) {
-                            Answer answer = new Answer();
-                            answer.setSelectedOption(selectedOption);
-                            answer.setQuestion(question);
-                            answer.setAnswerText(selectedOption.getOptionText());
-                            answer.setIsCorrect(correctOptions.stream().anyMatch(opt -> opt.getId().equals(selectedOptionId)));
-                            answerList.add(answer);
-                            answerRepository.save(answer);
+                            List<Answer> answers = answerRepository.findAllByQuestionIdAndSelectedOptionId(question.getId(), selectedOptionId);
+
+                            if (question.getQuestionType() == Question.QuestionType.TEXT) {
+                                continue;
+                            }
+
+                            Map<Long, Double> optionScores = selectedAnswerScores.getOrDefault(question.getId(), new HashMap<>());
+
+                            for (Answer answer : answers) {
+                                if (answer.getIsCorrect() != null && answer.getIsCorrect()) {
+                                    optionScores.put(answer.getSelectedOption().getId(), answer.getScore());
+                                }
+                            }
+
+                            selectedAnswerScores.put(question.getId(), optionScores);
                         }
                     }
                 }
             }
         }
 
+
         TestSession testSession = testSessionRepository.findTopByUserOrderByStartTimeDesc(user);
         if (testSession == null) {
             throw new NotFoundException("TestSession not found");
         }
-        System.out.println("📌 selectedAnswers lưu lại:");
+
+        System.out.println(" selectedAnswers lưu lại:");
         selectedAnswers.forEach((key, value) -> System.out.println("Câu " + key + ": " + value));
 
-        testSession.setAnswers(answerList);
         testSession.setEndTime(LocalDateTime.now());
         testSessionRepository.save(testSession);
 
@@ -596,8 +656,14 @@ public class QuizController {
         participant.setTimeEnd(testSession.getEndTime());
         quizParticipantRepository.save(participant);
 
+        System.out.println(" Selected Answers: " + selectedAnswers);
+
         model.addAttribute("correctAnswers", correctCount);
         model.addAttribute("selectedAnswers", selectedAnswers);
+        model.addAttribute("textAnswers", textAnswers);
+        model.addAttribute("selectedAnswerScores", selectedAnswerScores);
+        model.addAttribute("correctAnswers", userCorrectAnswers);
+        model.addAttribute("totalCorrectAnswers", totalCorrectAnswers);
         model.addAttribute("questions", questions);
         model.addAttribute("quizId", quizId);
         model.addAttribute("score", score);
@@ -608,6 +674,7 @@ public class QuizController {
 
         return "layout";
     }
+
 
 
 
@@ -630,15 +697,20 @@ public class QuizController {
         return "layout";
     }
 
-    @GetMapping("/detail/test/{name}")
+    @GetMapping("/detail/review/{name}")
     public String viewDetailQuiz(@PathVariable String name, Model model){
         try{
-            model.addAttribute("Questions", quizService.getQuestionsOfQuiz(name));
+            List<Question> questionList = new ArrayList<>(quizService.getQuestionsOfQuiz(name));
+            questionList.sort(Comparator.comparingInt(Question::getQuestionNo));
+            model.addAttribute("Questions", questionList);
+            model.addAttribute("content", "quizes/review-no-import");
+            return "layout";
         } catch (Exception e){
             model.addAttribute("Errors", e.getMessage());
+            return "tools/generate_exams";
         }
-        return "test";
     }
+
     @GetMapping("/detail/questions/{questionId}")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> getQuestion(@PathVariable Long questionId) {
@@ -646,13 +718,11 @@ public class QuizController {
             Question question = questionService.findById(questionId)
                     .orElseThrow(() -> new NotFoundException("Question not found"));
 
-            // Tạo map đơn giản chỉ chứa thông tin cần thiết
             Map<String, Object> response = new HashMap<>();
             response.put("id", question.getId());
             response.put("questionText", question.getQuestionText());
             response.put("questionType", question.getQuestionType());
 
-            // Đơn giản hóa answerOptions
             List<Map<String, Object>> answerOptions = question.getAnswerOptions().stream()
                     .map(option -> {
                         Map<String, Object> optionMap = new HashMap<>();
@@ -685,8 +755,6 @@ public class QuizController {
                     .body("Error updating question: " + e.getMessage());
         }
     }
-    /*@GetMapping("review")
-    public*/
 
     @PutMapping("/detail/{quizId}/questions/{questionId}/move")
     public ResponseEntity<String> moveQuestion(
@@ -708,12 +776,10 @@ public class QuizController {
     @GetMapping("/dashboard/{studentId}")
     public String getStudentDashboard(@PathVariable Long studentId, Model model) {
         try {
-            // Lấy thông tin sinh viên
             User student = userRepository.findById(studentId)
                     .orElseThrow(() -> new NotFoundException("User not found"));
             model.addAttribute("student", student);
 
-            // Lấy dữ liệu điểm số quiz
             Map<Long, String> quizCourses = quizService.getQuizCourses(studentId);
             Map<String, Object> scoresData = quizService.getScoreByQuiz(studentId);
             model.addAttribute("quizScores", scoresData.get("quizScores"));
@@ -723,7 +789,6 @@ public class QuizController {
 
 
 
-            // Lấy dữ liệu số lượng quiz theo khóa học
             Map<String, Integer> courseQuizData = quizService.getQuizFromCourse(studentId);
             model.addAttribute("courseQuizCount", courseQuizData);
 
@@ -732,7 +797,7 @@ public class QuizController {
             System.out.println("Quiz Courses: " + quizCourses);
             System.out.println("Quiz Durations: " + scoresData.get("quizDurations"));
 
-            return "layout"; // Trả về layout chính
+            return "layout";
         } catch (Exception e) {
             model.addAttribute("error", e.getMessage());
             return "error";
@@ -742,7 +807,6 @@ public class QuizController {
     @DeleteMapping("/detail/{quizId}/questions")
     public ResponseEntity<String> deleteAllQuestions(@PathVariable Long quizId) {
         try {
-            // Kiểm tra quyền truy cập (nếu cần)
             questionService.deleteAllQuestions(quizId);
             return ResponseEntity.ok("All questions deleted successfully.");
         } catch (Exception e) {
@@ -752,7 +816,6 @@ public class QuizController {
     @DeleteMapping("/detail/{quizId}/questions/{questionId}")
     public ResponseEntity<String> deleteQuestion(@PathVariable Long quizId, @PathVariable Long questionId) {
         try {
-            // Kiểm tra quyền truy cập (nếu cần)
             questionService.deleteQuestion(questionId);
             return ResponseEntity.ok("Question deleted successfully.");
         } catch (Exception e) {
@@ -770,7 +833,6 @@ public class QuizController {
         if(action.equals("import")){
             try{
                 if(fileType.equals("Excel")){
-                    //questionService.importExcel(file, courseName);
                     questionService.importExcelTEST(file, courseName);
                     redirectAttributes.addFlashAttribute("successMessage", "Quizzes imported successfully from Excel");
                 } else if (fileType.equals("Json")) {
@@ -794,7 +856,6 @@ public class QuizController {
             try{
                 Map<String, Object> reviewData = new HashMap<>();
                 if(fileType.equals("Excel")){
-                    //reviewData = questionService.reviewQuiz(file, courseName);
                     reviewData = questionService.reviewQuizTEST(file, courseName);
                 } else if (fileType.equals("Json")) {
                     reviewData = questionService.reviewFileJson(file, courseName);
@@ -812,7 +873,6 @@ public class QuizController {
                 return "layout";
                 //return "quizes/review";
             }catch (Exception e){
-                //model.addAttribute("Error", e.getMessage());
                 redirectAttributes.addFlashAttribute("error", e.getMessage());
                 redirectAttributes.addFlashAttribute("chosenCourse", courseName);
                 redirectAttributes.addFlashAttribute("chosenType", fileType);
@@ -839,7 +899,6 @@ public class QuizController {
         }
         model.addAttribute("content", "quizes/review");
         return "layout";
-        //return "quizes/review";
     }
 
     @PostMapping("/importFromReview")
@@ -860,15 +919,23 @@ public class QuizController {
     }
     @PostMapping("/create/AI")
     @ResponseBody
-    public Set<Question> createQuizByAI(@ModelAttribute("AIRequestBody") AIRequestBody aiRequest, RedirectAttributes redirectAttributes) {
+    public Set<Question> createQuizByAI(@ModelAttribute AIRequestBody aiRequest) {
 
         AIResponse response = aiService.getResponseAIGenerate(aiRequest.getType(), aiRequest.getNumOfQuestions(),
                 aiRequest.getNumOfAnswerOptions(),
                 aiRequest.getQuestionDescription());
-        String json = response.getChoices().getLast().getMessage().getContent();
-        System.out.println(json);
-        return questionService.jsonToQuestionSet(json);
+        try {
+            String json = response.getChoices().getLast().getMessage().getContent();
+            System.out.println(json);
+            return questionService.jsonToQuestionSet(json);
+        } catch (Exception e) {
+            return null;
+        }
     }
+
+
+
+
 
 
     @PostMapping("/import")
@@ -951,8 +1018,7 @@ public class QuizController {
             quizService.updateQuizTags(quizId, tagIds);
             return ResponseEntity.ok("Tags updated successfully");
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Failed to update tags: " + e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
@@ -980,12 +1046,15 @@ public class QuizController {
 
     @PostMapping("/tags/create")
     @ResponseBody
-    public ResponseEntity<String> createTag(@RequestParam String name) {
+    public ResponseEntity<Map<String, Object>> createTag(@RequestParam String name) {
         try {
-            QuizTag newTag = quizTagService.createTag(name);
-            return ResponseEntity.ok("Tag created successfully with ID: " + newTag.getId());
+            QuizTag tag = quizTagService.createTag(name);
+            Map<String, Object> response = new HashMap<>();
+            response.put("id", tag.getId());
+            response.put("name", tag.getName());
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error creating tag: " + e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
@@ -1041,7 +1110,7 @@ public class QuizController {
             List<QuizTag> tags = quizTagService.searchTagsByName(name);
             return ResponseEntity.ok(tags);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.badRequest().build();
         }
     }
 

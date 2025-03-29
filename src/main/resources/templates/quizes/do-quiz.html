@@ -55,6 +55,9 @@
             transform: translateX(-50%);
             z-index: 1051;
         }
+
+
+
   </style>
 </head>
 <body>
@@ -195,54 +198,88 @@
 
 <!-- Timer Script -->
 <script th:inline="javascript">
-var durationInMinutes = /*[[${timeLimit != null ? timeLimit : 60}]]*/ 60; // Mặc định 60 nếu null
+  var durationInMinutes = /*[[${timeLimit != null ? timeLimit : 60}]]*/ 60; // Mặc định 60 phút nếu null
   var durationInSeconds = durationInMinutes * 60;
+  var timeUp = false; // Xác định bài nộp có phải do hết giờ không
+  var timerInterval;
 
   function updateTime() {
-        var hours = Math.floor(durationInSeconds / 3600);
-        var minutes = Math.floor((durationInSeconds % 3600) / 60);
-        var seconds = durationInSeconds % 60;
-        var timeFormatted = hours.toString().padStart(2, '0') + ':' +
-            minutes.toString().padStart(2, '0') + ':' +
-            seconds.toString().padStart(2, '0');
+      var hours = Math.floor(durationInSeconds / 3600);
+      var minutes = Math.floor((durationInSeconds % 3600) / 60);
+      var seconds = durationInSeconds % 60;
+      var timeFormatted = hours.toString().padStart(2, '0') + ':' +
+          minutes.toString().padStart(2, '0') + ':' +
+          seconds.toString().padStart(2, '0');
 
-        var timeDisplay = document.getElementById('time_display');
-        if (timeDisplay) {
-            timeDisplay.textContent = timeFormatted;
-        }
+      var timeDisplay = document.getElementById('time_display');
+      if (timeDisplay) {
+          timeDisplay.textContent = timeFormatted;
+      }
 
-        var warningMessage = document.getElementById('time-warning-message');
-        if (warningMessage) {
-            if (durationInSeconds <= 300 && durationInSeconds > 0) { // 5 phút cuối
-                warningMessage.style.display = 'block';
-                timeDisplay.style.color = durationInSeconds % 2 === 0 ? "red" : "black";
-            } else {
-                warningMessage.style.display = 'none';
-                timeDisplay.style.color = '';
-            }
-        }
+      var warningMessage = document.getElementById('time-warning-message');
+      if (warningMessage) {
+          if (durationInSeconds <= 300 && durationInSeconds > 0) { // Cảnh báo 5 phút cuối
+              warningMessage.style.display = 'block';
+              timeDisplay.style.color = durationInSeconds % 2 === 0 ? "red" : "black";
+          } else {
+              warningMessage.style.display = 'none';
+              timeDisplay.style.color = '';
+          }
+      }
 
-        if (durationInSeconds > 0) {
-            durationInSeconds--;
-        } else {
-            clearInterval(timerInterval);
-            document.getElementById("elapsedTime").value = durationInMinutes * 60;
-            document.getElementById("quiz-form").submit();
-        }
-    }
+      if (durationInSeconds > 0) {
+          durationInSeconds--;
+      } else {
+          clearInterval(timerInterval);
+          timeUp = true;
+          document.getElementById("elapsedTime").value = durationInMinutes * 60; // Lưu tổng thời gian khi hết giờ
+          document.getElementById("quiz-form").submit(); // Tự động nộp bài
+      }
+  }
 
   document.addEventListener("DOMContentLoaded", function () {
       var quizForm = document.getElementById("quiz-form");
       if (quizForm) {
-          quizForm.addEventListener("submit", function () {
-              document.getElementById("elapsedTime").value = (durationInMinutes * 60) - durationInSeconds;
+          quizForm.addEventListener("submit", function (event) {
+              if (timeUp) {
+                  return; // Nếu bài nộp do hết giờ, bỏ qua kiểm tra
+              }
+
+              // Cập nhật elapsedTime dựa trên thời gian đã trôi qua
+              var elapsedTimeInput = document.getElementById("elapsedTime");
+              elapsedTimeInput.value = (durationInMinutes * 60) - durationInSeconds;
+
+              var questions = document.querySelectorAll("[id^='question_']");
+              var unansweredQuestions = [];
+
+              questions.forEach(function (question, index) {
+                  var questionId = question.id.split("_")[1];
+
+                  var textArea = document.querySelector("textarea[name='answers[" + questionId + "]']");
+                  if (textArea) return; // Bỏ qua kiểm tra nếu là câu hỏi tự luận
+
+                  var options = document.querySelectorAll("input[name='answers[" + questionId + "]']:checked");
+                  question.style.border = "";
+
+                  if (options.length === 0) {
+                      unansweredQuestions.push("Question " + (index + 1));
+                      question.style.border = "2px solid red";
+                  }
+              });
+
+              if (unansweredQuestions.length > 0) {
+                  event.preventDefault(); // Ngăn submit nếu còn câu chưa trả lời
+                  alert("You haven't selected an answer for the following questions:\n" + unansweredQuestions.join(", "));
+              }
           });
       }
 
-      var timerInterval = setInterval(updateTime, 1000);
+      // Bắt đầu đếm ngược thời gian
+      timerInterval = setInterval(updateTime, 1000);
       updateTime();
   });
 </script>
+
 
 <!-- Sidebar Toggle Script -->
 <script>
@@ -301,6 +338,8 @@ var durationInMinutes = /*[[${timeLimit != null ? timeLimit : 60}]]*/ 60; // M�
     }
 });
 </script>
+
+
 
 </body>
 </html>

@@ -9,6 +9,11 @@
     <!-- Bootstrap Icons CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet"/>
     <style>
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
 
         #toggleView {
             display: inline-flex;
@@ -986,40 +991,83 @@
             <div class="d-flex justify-content-center mt-4" th:if="${totalPages >= 1}">
                 <nav>
                     <ul class="pagination">
-                        <!-- Nút First (<<) -->
-                        <li class="page-item" th:if="${totalPages > 1 and currentPage > 0}">
-                            <a class="page-link"
-                               th:href="@{/exercises(page=0, language=${currentLanguage}, level=${currentLevel}, description=${paramDescription}, title=${paramTitle})}">«</a>
-                        </li>
-                        <!-- Nút Previous (<) -->
-                        <li class="page-item" th:if="${totalPages > 1 and currentPage > 0}">
-                            <a class="page-link"
-                               th:href="@{/exercises(page=${currentPage - 1}, language=${currentLanguage}, level=${currentLevel}, description=${paramDescription}, title=${paramTitle})}"><</a>
-                        </li>
-                        <!-- Danh sách số trang -->
-                        <th:block th:with="startPage=${T(java.lang.Math).max(0, T(java.lang.Math).min(currentPage - 2, totalPages - 5))},
-                                   endPage=${T(java.lang.Math).min(totalPages - 1, T(java.lang.Math).max(currentPage + 2, 4))},
-                                   visiblePages=${#numbers.sequence(startPage, endPage)}">
-                            <li class="page-item" th:each="i : ${visiblePages}"
-                                th:classappend="${i == currentPage} ? 'active'">
-                                <a class="page-link"
-                                   th:href="@{/exercises(page=${i}, language=${currentLanguage}, level=${currentLevel}, title=${paramTitle}, description=${paramDescription})}"
-                                   th:text="${i + 1}">Page</a>
+                        <!-- Trường hợp chỉ có 1 trang -->
+                        <th:block th:if="${totalPages == 1}">
+                            <li class="page-item active">
+                                <a class="page-link" href="#">1</a>
                             </li>
                         </th:block>
-                        <!-- Nút Next (>) -->
-                        <li class="page-item" th:if="${totalPages > 1 and currentPage < totalPages - 1}">
-                            <a class="page-link"
-                               th:href="@{/exercises(page=${currentPage + 1}, language=${currentLanguage}, level=${currentLevel}, description=${paramDescription}, title=${paramTitle})}">></a>
-                        </li>
-                        <!-- Nút Last (>>) -->
-                        <li class="page-item" th:if="${totalPages > 1 and currentPage < totalPages - 1}">
-                            <a class="page-link"
-                               th:href="@{/exercises(page=${totalPages - 1}, language=${currentLanguage}, level=${currentLevel}, description=${paramDescription}, title=${paramTitle})}">»</a>
-                        </li>
+                        <!-- Trường hợp có nhiều hơn 1 trang -->
+                        <th:block th:if="${totalPages > 1}">
+                            <!-- Nút First (<<) -->
+                            <li class="page-item" th:if="${currentPage > 0}">
+                                <a class="page-link"
+                                   th:href="@{/exercises(page=0, language=${currentLanguage}, level=${currentLevel}, description=${paramDescription}, title=${paramTitle})}">«</a>
+                            </li>
+                            <!-- Nút Previous (<) -->
+                            <li class="page-item" th:if="${currentPage > 0}">
+                                <a class="page-link"
+                                   th:href="@{/exercises(page=${currentPage - 1}, language=${currentLanguage}, level=${currentLevel}, description=${paramDescription}, title=${paramTitle})}"><</a>
+                            </li>
+                            <!-- Danh sách số trang -->
+                            <th:block th:with="isNearStart=${currentPage == 0},
+                                  isNearEnd=${currentPage >= totalPages - 3},
+                                  startPage=${isNearStart ? 0 : (isNearEnd ? totalPages - 3 : currentPage)},
+                                  startPage=${T(java.lang.Math).max(0, startPage)},
+                                  endPage=${T(java.lang.Math).min(startPage + 2, totalPages - 1)}">
+                                <!-- Trang đầu tiên (chỉ hiển thị nếu ở gần cuối) -->
+                                <li class="page-item" th:if="${isNearEnd}"
+                                    th:classappend="${currentPage == 0} ? 'active'">
+                                    <a class="page-link"
+                                       th:href="@{/exercises(page=0, language=${currentLanguage}, level=${currentLevel}, title=${paramTitle}, description=${paramDescription})}">1</a>
+                                </li>
+                                <!-- Dấu ba chấm nếu cần (trước các trang chính, chỉ hiển thị khi ở gần cuối) -->
+                                <li class="page-item disabled" th:if="${isNearEnd and startPage > 1}">
+                                    <span class="page-link">...</span>
+                                </li>
+                                <!-- Hiển thị tối đa 3 trang từ startPage -->
+                                <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
+                                    th:classappend="${i == currentPage} ? 'active'">
+                                    <a class="page-link"
+                                       th:href="@{/exercises(page=${i}, language=${currentLanguage}, level=${currentLevel}, title=${paramTitle}, description=${paramDescription})}"
+                                       th:text="${i + 1}">Page</a>
+                                </li>
+                                <!-- Dấu ba chấm nếu cần (sau các trang chính) -->
+                                <li class="page-item disabled" th:if="${endPage < totalPages - 1 and !isNearEnd}">
+                                    <span class="page-link">...</span>
+                                </li>
+                                <!-- Trang cuối cùng (hiển thị nếu không ở gần cuối) -->
+                                <li class="page-item" th:if="${endPage < totalPages - 1 and !isNearEnd}"
+                                    th:classappend="${currentPage == totalPages - 1} ? 'active'">
+                                    <a class="page-link"
+                                       th:href="@{/exercises(page=${totalPages - 1}, language=${currentLanguage}, level=${currentLevel}, title=${paramTitle}, description=${paramDescription})}"
+                                       th:text="${totalPages}">Last</a>
+                                </li>
+                            </th:block>
+                            <!-- Nút Next (>) -->
+                            <li class="page-item" th:if="${currentPage < totalPages - 1}">
+                                <a class="page-link"
+                                   th:href="@{/exercises(page=${currentPage + 1}, language=${currentLanguage}, level=${currentLevel}, description=${paramDescription}, title=${paramTitle})}">></a>
+                            </li>
+                            <!-- Nút Last (>>) -->
+                            <li class="page-item" th:if="${currentPage < totalPages - 1}">
+                                <a class="page-link"
+                                   th:href="@{/exercises(page=${totalPages - 1}, language=${currentLanguage}, level=${currentLevel}, description=${paramDescription}, title=${paramTitle})}">»</a>
+                            </li>
+                        </th:block>
+                        <!-- Ô nhập số trang -->
+                        <div class="input-group input-group-sm ms-2 page-item" style="width: 130px;">
+                            <input type="number" class="form-control" id="pageInput"
+                                   th:attr="max=${totalPages}, min=1"
+                                   placeholder="Go to"
+                                   style="text-align: center;">
+                            <button class="btn btn-outline-primary" type="button" onclick="goToPage()">⩥</button>
+                        </div>
                     </ul>
                 </nav>
             </div>
+
+
 
         </div>
     </div>
@@ -1226,12 +1274,6 @@
             filterForm.submit();
         });
 
-        // document.querySelectorAll('input[name="tags"]').forEach(checkbox => {
-        //     checkbox.addEventListener("change", function () {
-        //         filterForm.submit();
-        //     });
-        // });
-
     });
 
     function clearFilters() {
@@ -1249,20 +1291,6 @@
         document.getElementById('filterForm').submit();
     }
 
-    // function showDetails(index) {
-    //     const details = document.getElementById(`details-${index}`);
-    //     const overlay = document.getElementById('overlay');
-    //     details.classList.add('active');
-    //     overlay.classList.add('active');
-    // }
-    //
-    // function closeDetails(index) {
-    //     const details = document.getElementById(`details-${index}`);
-    //     const overlay = document.getElementById('overlay');
-    //     details.classList.remove('active');
-    //     overlay.classList.remove('active');
-    // }
-
     // Close popup when clicking outside
     document.getElementById('overlay').addEventListener('click', function () {
         document.querySelectorAll('.warning-details.active').forEach(detail => {
@@ -1270,65 +1298,6 @@
         });
         this.classList.remove('active');
     });
-
-    // function updateSelectedTags() {
-    //     selectedTagsContainer.innerHTML = '';
-    //     let selectedCount = 0;
-    //     let selectedTags = [];
-    //
-    //     tagCheckboxes.forEach(checkbox => {
-    //         if (checkbox.checked) {
-    //             selectedCount++;
-    //             selectedTags.push(checkbox.value);
-    //             const tag = document.createElement('span');
-    //             tag.className = 'selected-tag';
-    //             const label = checkbox.nextElementSibling.textContent;
-    //             tag.innerHTML = `${label} <span class="remove-tag" data-id="${checkbox.value}">&times;</span>`;
-    //             selectedTagsContainer.appendChild(tag);
-    //         }
-    //     });
-    //
-    //     dropdownButton.textContent = selectedCount > 0 ? `${selectedCount} tag(s) selected` : 'Select Tags';
-    //
-    //     // Update form's hidden input for tags
-    //     let form = document.getElementById('filterForm');
-    //     // Remove existing tag inputs
-    //     form.querySelectorAll('input[name="tags"]').forEach(input => {
-    //         if (!input.checked) {
-    //             input.remove();
-    //         }
-    //     });
-    //
-    //     // Add selected tags as hidden inputs
-    //     selectedTags.forEach(tagId => {
-    //         if (!form.querySelector(`input[name="tags"][value="${tagId}"]`)) {
-    //             const input = document.createElement('input');
-    //             input.type = 'hidden';
-    //             input.name = 'tags';
-    //             input.value = tagId;
-    //             form.appendChild(input);
-    //         }
-    //     });
-    // }
-
-    // tagCheckboxes.forEach(checkbox => {
-    //     checkbox.addEventListener('change', () => {
-    //         updateSelectedTags();
-    //         // document.getElementById('filterForm').submit();
-    //     });
-    // });
-    //
-    // selectedTagsContainer.addEventListener('click', (e) => {
-    //     if (e.target.classList.contains('remove-tag')) {
-    //         const tagId = e.target.dataset.id;
-    //         const checkbox = document.querySelector(`input[value="${tagId}"]`);
-    //         if (checkbox) {
-    //             checkbox.checked = false;
-    //             updateSelectedTags();
-    //             document.getElementById('filterForm').submit();
-    //         }
-    //     }
-    // });
 
     // Initialize selected tags
     updateSelectedTags();
@@ -1489,6 +1458,144 @@
             });
         });
     });
+</script>
+<script th:inline="javascript">
+    function goToPage() {
+        var pageInput = document.getElementById('pageInput').value;
+        var totalPages = /*[[${totalPages}]]*/ 0;
+        var currentLanguage = /*[[${currentLanguage}]]*/ null;
+        var currentLevel = /*[[${currentLevel}]]*/ '' || '';
+        var paramDescription = /*[[${paramDescription}]]*/ '' || '';
+        var paramTitle = /*[[${paramTitle}]]*/ '' || '';
+
+        if (pageInput && !isNaN(pageInput)) {
+            var page = parseInt(pageInput) - 1; // Trừ 1 vì page bắt đầu từ 0
+            if (page >= 0 && page < totalPages) {
+                var url = '/exercises?page=' + page;
+                if (currentLanguage !== null && currentLanguage !== undefined && currentLanguage !== '') {
+                    url += '&language=' + encodeURIComponent(currentLanguage);
+                }
+                if (currentLevel) url += '&level=' + encodeURIComponent(currentLevel);
+                if (paramDescription) url += '&description=' + encodeURIComponent(paramDescription);
+                if (paramTitle) url += '&title=' + encodeURIComponent(paramTitle);
+                window.location.href = url;
+            } else {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Invalid Page!',
+                    text: 'Please enter a page number between 1 and ' + totalPages,
+                    confirmButtonText: 'OK'
+                });
+            }
+        } else {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Invalid Input!',
+                text: 'Please enter a valid number',
+                confirmButtonText: 'OK'
+            });
+        }
+    }
+
+    document.getElementById('pageInput').addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            goToPage();
+        }
+    });
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const languageFilter = document.getElementById("languageFilter");
+        const levelFilter = document.getElementById("levelFilter");
+        const filterForm = document.getElementById("filterForm");
+        const params = new URLSearchParams(new URL(window.location.href).search);
+        const page = params.get('page') || 0;
+        console.log("page" + page);
+        sessionStorage.setItem("currentPage", page);
+
+        function saveFilters() {
+            sessionStorage.setItem("selectedLanguage", languageFilter.value);
+            sessionStorage.setItem("selectedLevel", levelFilter.value);
+            const selectedTags = [...document.querySelectorAll('input[name="tags"]:checked')].map(cb => cb.value);
+            sessionStorage.setItem("selectedTags", JSON.stringify(selectedTags));
+
+            // Đánh dấu cần áp dụng lại bộ lọc sau khi reload
+            sessionStorage.setItem("shouldFilterOnce", "true");
+        }
+
+        function submitFormWithSave() {
+            saveFilters();
+            filterForm.submit();
+        }
+
+        // Sự kiện thay đổi bộ lọc -> Lưu & Submit
+        languageFilter.addEventListener("change", submitFormWithSave);
+        levelFilter.addEventListener("change", submitFormWithSave);
+        document.querySelectorAll('input[name="tags"]').forEach(checkbox => {
+            checkbox.addEventListener("change", submitFormWithSave);
+        });
+        function restoreFilters() {
+            const selectedLanguage = sessionStorage.getItem("selectedLanguage");
+            const selectedLevel = sessionStorage.getItem("selectedLevel");
+            const selectedTags = JSON.parse(sessionStorage.getItem("selectedTags")) || [];
+
+            if (selectedLanguage) {
+                languageFilter.value = selectedLanguage;
+            }
+
+            if (selectedLevel) {
+                levelFilter.value = selectedLevel;
+            }
+
+            document.querySelectorAll('input[name="tags"]').forEach(checkbox => {
+                checkbox.checked = selectedTags.includes(checkbox.value);
+            });
+
+        }
+
+        restoreFilters(); // Khôi phục bộ lọc khi tải trang
+        console.log(sessionStorage.getItem("shouldFilterOnce"));
+        // 🟢 Khi quay lại từ trang Edit, tự động submit lại 1 lần với bộ lọc đã chọn
+        if (sessionStorage.getItem("shouldFilterOnce") === "true") {
+            const successMessage = document.getElementById("successMessage")?.textContent.trim();
+
+            // 🟢 Hiển thị thông báo trước
+            if (successMessage) {
+                Swal.fire({
+                    icon: 'success',
+                    title: successMessage,
+                    timer: 2000,
+                    timerProgressBar: true,
+                    showConfirmButton: false
+                }).then(() => {
+                    // 🟢 Sau khi thông báo đóng, mới submit form
+                    filterForm.submit();
+
+                    // 🟢 Xóa shouldFilterOnce sau khi submit xong
+                    sessionStorage.removeItem("shouldFilterOnce");
+                    sessionStorage.removeItem("successMessage");
+                });
+            }
+        }
+    });
+    // Hàm xóa bộ lọc và reset về giá trị mặc định
+    function clearFilters() {
+        sessionStorage.removeItem("selectedLanguage");
+        sessionStorage.removeItem("selectedLevel");
+        sessionStorage.removeItem("selectedTags");
+        sessionStorage.removeItem("shouldFilterOnce"); // Ngăn form tự động submit lại
+
+        document.getElementById("searchInput").value = "";
+        document.getElementById("languageFilter").value = "";
+        document.getElementById("levelFilter").value = "";
+
+        document.querySelectorAll('#tagFilter input[type="checkbox"]').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+
+        // Submit lại form với bộ lọc trống
+        document.getElementById("filterForm").submit();
+    }
 </script>
 </body>
 </html>

@@ -81,8 +81,12 @@
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         /* Marking checkbox */
@@ -100,7 +104,7 @@
         .sidebar {
             position: fixed;
             right: 0;
-            height: 90%;
+            height: 97%;
             overflow-y: auto;
             margin-top: 14px;
             width: 17%;
@@ -219,7 +223,7 @@
         </nav>
         <!-- Left Section (Content Area) -->
         <main role="main" class="col-md-10 ms-sm-auto px-2 d-flex flex-column main-content">
-            <form id="form-assessment" th:action="@{/assessments/{id}/submit(id=${assessment.id})}" method="post">
+            <form id="form-assessment" th:action="@{/assessments/submit/{id}(id=${assessment.id})}" method="post">
                 <div class="flex-grow-1">
                     <div style="height: 100%;">
                         <!-- Display Questions -->
@@ -285,7 +289,7 @@
                                th:value="${exercises != null and not #lists.isEmpty(exercises)}">
                         <div class="mb-4" th:if="${exercises != null and not #lists.isEmpty(exercises)}">
                             <h3>Exercises</h3>
-                            <div class="border rounded p-3" style="max-height: 80vh; overflow-y: auto;">
+                            <div class="border rounded p-3" style="max-height: 100vh; overflow-y: auto;">
                                 <!-- Loop through exercises -->
                                 <div th:each="exercise, stat : ${exercises}" class="card mb-4 shadow-sm exercise-card"
                                      th:id="'exercise_' + ${exercise.id}">
@@ -315,8 +319,22 @@
         </main>
     </div>
 </div>
-<!--Duration-->
+<!--Duration & Cheating check-->
 <script th:inline="javascript">
+    // Initial tabLeaveCount from sessionStorage
+    let tabLeaveCount = sessionStorage.getItem("tabLeaveCount")
+        ? parseInt(sessionStorage.getItem("tabLeaveCount"), 10)
+        : 0;
+
+    // Initial violationFaceCount from sessionStorage
+    let violationFaceCount = sessionStorage.getItem("violationFaceCount")
+        ? parseInt(sessionStorage.getItem("violationFaceCount"), 10)
+        : 0;
+
+    // Initial copy & paste from sessionStorage
+    let exerciseCopyPasteData = JSON.parse(sessionStorage.getItem("exerciseCopyPasteData")) || {};
+
+
     var durationInMinutes = /*[[${assessment.getTimeLimit()}]]*/ 120;
     var durationInSeconds = durationInMinutes * 60;
 
@@ -341,59 +359,23 @@
         } else {
             clearInterval(timerInterval);
             document.getElementById("elapsedTime").value = (durationInMinutes * 60); // Lưu tổng thời gian khi hết giờ
+
+            // Ensure to attach hidden input
+            attachHiddenInputs();
+
             document.getElementById("form-assessment").submit();
         }
     }
 
     // Cập nhật thời gian khi người dùng nhấn nút Submit
     document.getElementById("form-assessment").addEventListener("submit", function () {
+        // Ensure hidden inputs are attached on both manual and auto submit
+        attachHiddenInputs();
         document.getElementById("elapsedTime").value = (durationInMinutes * 60) - durationInSeconds;
     });
 
     var timerInterval = setInterval(updateTime, 1000);
     updateTime();
-</script>
-
-<!--Side bar in phone UI-->
-<script>
-    function toggleSidebar() {
-        var sidebar = document.getElementById("sidebar");
-        sidebar.classList.toggle("active");
-        if (sidebar.classList.contains("active")) {
-            sidebar.classList.remove("d-none");
-        } else {
-            setTimeout(() => sidebar.classList.add("d-none"), 300); // Ẩn sidebar sau hiệu ứng
-        }
-    }
-</script>
-<!--Mark-->
-<script>
-    document.querySelectorAll('input[type="checkbox"][id^="check_"]').forEach(function (checkbox) {
-        checkbox.addEventListener('change', function () {
-            var id = checkbox.id.split('_')[1];
-            var type = checkbox.closest('.question-card') ? 'question' : 'exercise';
-            var button = document.querySelector(
-                type === 'question'
-                    ? 'button[onclick*="question_' + id + '"]'
-                    : 'button[onclick*="exercise_' + id + '"]'
-            );
-            if (checkbox.checked) {
-                button.classList.add('bg-primary', 'text-dark');
-            } else {
-                button.classList.remove('bg-primary', 'text-dark');
-            }
-        });
-    });
-</script>
-<!--Cheating check-->
-<script>
-    // Initial tabLeaveCount from sessionStorage
-    let tabLeaveCount = sessionStorage.getItem("tabLeaveCount")
-        ? parseInt(sessionStorage.getItem("tabLeaveCount"), 10)
-        : 0;
-    let violationFaceCount = sessionStorage.getItem("violationFaceCount")
-        ? parseInt(sessionStorage.getItem("violationFaceCount"), 10)
-        : 0;
 
     // Detect when user leaves/switches tab
     document.addEventListener("visibilitychange", function () {
@@ -430,21 +412,103 @@
         });
     })
 
-    // Attach tabLeaveCount to form before submission
-    document.getElementById("form-assessment").addEventListener("submit", function () {
-        let tabLeaveCountInput = document.createElement("input");
-        tabLeaveCountInput.type = "hidden";
-        tabLeaveCountInput.name = "tabLeaveCount";
-        tabLeaveCountInput.value = tabLeaveCount.toString();
-        this.appendChild(tabLeaveCountInput);
+    // Listen for messages from the iframe
+    window.addEventListener("message", function (event) {
+        // Check the event origin if necessary
+        if (!event.origin.includes(window.location.origin)) {
+            return;
+        }
 
-        let violationFaceCountInput = document.createElement("input");
-        violationFaceCountInput.type = "hidden";
-        violationFaceCountInput.name = "violationFaceCount";
-        violationFaceCountInput.value = violationFaceCount.toString();
-        this.appendChild(violationFaceCountInput);
+        let {eventType, exerciseId} = event.data;
+
+        if (exerciseId) {
+            // Initialize if not present
+            if (!exerciseCopyPasteData[exerciseId]) {
+                exerciseCopyPasteData[exerciseId] = {copy: 0, paste: 0};
+            }
+
+            // Increment counters based on event type
+            if (eventType === "copy") {
+                exerciseCopyPasteData[exerciseId].copy++;
+            } else if (eventType === "paste") {
+                exerciseCopyPasteData[exerciseId].paste++;
+            }
+
+            // Save updated data to sessionStorage
+            sessionStorage.setItem("exerciseCopyPasteData", JSON.stringify(exerciseCopyPasteData));
+        }
     })
+
+    // Function to attach tabLeaveCount and violationFaceCount
+    function attachHiddenInputs() {
+        let form = document.getElementById("form-assessment");
+
+        let existingTabLeaveInput = document.querySelector("input[name='tabLeaveCount']");
+        let existingViolationInput = document.querySelector("input[name='violationFaceCount']");
+        let existingCopyPasteDataInput = document.querySelector("input[name='exerciseCopyPasteData']");
+
+        if (!existingTabLeaveInput) {
+            let tabLeaveCountInput = document.createElement("input");
+            tabLeaveCountInput.type = "hidden";
+            tabLeaveCountInput.name = "tabLeaveCount";
+            tabLeaveCountInput.value = tabLeaveCount.toString();
+            form.appendChild(tabLeaveCountInput);
+        } else {
+            existingTabLeaveInput.value = tabLeaveCount.toString();
+        }
+
+        if (!existingViolationInput) {
+            let violationFaceCountInput = document.createElement("input");
+            violationFaceCountInput.type = "hidden";
+            violationFaceCountInput.name = "violationFaceCount";
+            violationFaceCountInput.value = violationFaceCount.toString();
+            form.appendChild(violationFaceCountInput);
+        } else {
+            existingViolationInput.value = violationFaceCount.toString();
+        }
+
+        if (!existingCopyPasteDataInput) {
+            let copyPasteDataInput = document.createElement("input");
+            copyPasteDataInput.type = "hidden";
+            copyPasteDataInput.name = "exerciseCopyPasteData";
+            copyPasteDataInput.value = JSON.stringify(exerciseCopyPasteData);
+            form.appendChild(copyPasteDataInput);
+        } else {
+            existingCopyPasteDataInput.value = JSON.stringify(exerciseCopyPasteData);
+        }
+    }
 </script>
 
+<!--Side bar in phone UI-->
+<script>
+    function toggleSidebar() {
+        var sidebar = document.getElementById("sidebar");
+        sidebar.classList.toggle("active");
+        if (sidebar.classList.contains("active")) {
+            sidebar.classList.remove("d-none");
+        } else {
+            setTimeout(() => sidebar.classList.add("d-none"), 300); // Ẩn sidebar sau hiệu ứng
+        }
+    }
+</script>
+<!--Mark-->
+<script>
+    document.querySelectorAll('input[type="checkbox"][id^="check_"]').forEach(function (checkbox) {
+        checkbox.addEventListener('change', function () {
+            var id = checkbox.id.split('_')[1];
+            var type = checkbox.closest('.question-card') ? 'question' : 'exercise';
+            var button = document.querySelector(
+                type === 'question'
+                    ? 'button[onclick*="question_' + id + '"]'
+                    : 'button[onclick*="exercise_' + id + '"]'
+            );
+            if (checkbox.checked) {
+                button.classList.add('bg-primary', 'text-dark');
+            } else {
+                button.classList.remove('bg-primary', 'text-dark');
+            }
+        });
+    });
+</script>
 </body>
 </html>

@@ -1,5 +1,6 @@
 package com.example.assessment.model;
 
+import com.example.quiz.model.TestSession;
 import com.example.user.User;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.persistence.*;
@@ -67,6 +68,8 @@ public class StudentAssessmentAttempt {
     }
 
 
+    @OneToOne(mappedBy = "studentAssessmentAttempt", fetch = FetchType.LAZY)
+    private TestSession testSession;
 
 
 

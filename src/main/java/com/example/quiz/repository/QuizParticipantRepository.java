@@ -3,15 +3,29 @@ package com.example.quiz.repository;
 import com.example.quiz.model.Quiz;
 import com.example.quiz.model.QuizParticipant;
 import com.example.user.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface QuizParticipantRepository extends JpaRepository<QuizParticipant, Long> {
-    List<QuizParticipant> findByQuizId(Long quizId);
-    List<QuizParticipant> findByUserId(Long userId);
+    Page<QuizParticipant> findByQuizId(Long quizId, Pageable pageable);
+
+    @Query("SELECT qp FROM QuizParticipant qp " +
+            "JOIN qp.user u " +
+            "WHERE qp.quiz.id = :quizId " +
+            "AND (LOWER(u.firstName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) " +
+            "OR LOWER(u.lastName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) " +
+            "OR LOWER(u.email) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
+    Page<QuizParticipant> findByQuizIdAndSearchTerm(
+            @Param("quizId") Long quizId,
+            @Param("searchTerm") String searchTerm,
+            Pageable pageable
+    );
 
     Optional<QuizParticipant> findByQuizAndUser(Quiz quiz, User user);
 
@@ -28,8 +42,20 @@ public interface QuizParticipantRepository extends JpaRepository<QuizParticipant
 //            @Param("firstName") String firstName,
 //            @Param("lastName") String lastName);
 
-    @Query("SELECT q.name, COUNT(p) FROM QuizParticipant p JOIN p.quiz q GROUP BY q.name")
-    List<Object[]> countAttemptsByQuiz();
+    @Query("SELECT qp FROM QuizParticipant qp " +
+           "JOIN qp.user u " +
+           "WHERE qp.quiz.id = :quizId " +
+           "AND (LOWER(u.firstName) LIKE LOWER(:searchTerm) " +
+           "OR LOWER(u.lastName) LIKE LOWER(:searchTerm))")
+    List<QuizParticipant> findByQuizIdAndUserName(
+            @Param("quizId") Long quizId, 
+            @Param("searchTerm") String searchTerm
+    );
 
-
+    @Query("SELECT qp FROM QuizParticipant qp " +
+           "JOIN FETCH qp.quiz q " +
+           "JOIN FETCH qp.testSession ts " +
+           "WHERE q.id = :quizId AND ts.id = :testSessionId")
+    Optional<QuizParticipant> findByQuizIdAndTestSessionId(@Param("quizId") Long quizId, 
+                                                          @Param("testSessionId") Long testSessionId);
 }

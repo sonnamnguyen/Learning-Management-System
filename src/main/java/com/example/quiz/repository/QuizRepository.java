@@ -47,4 +47,11 @@ public interface QuizRepository extends JpaRepository<Quiz, Long> {
     Optional<Quiz> findQuizWithTags(@Param("id") Long id);
 
     long count();
+
+    Page<Quiz> findByCourseIdAndNameContainingIgnoreCaseAndTagsIn(Long courseId, String name, List<Long> tagIds, Pageable pageable);
+
+    Page<Quiz> findByCourseIdAndTagsIn(Long courseId, List<Long> tagIds, Pageable pageable);
+
+    Page<Quiz> findByNameContainingIgnoreCaseAndTagsIn(String name, List<Long> tagIds, Pageable pageable);
+
 }

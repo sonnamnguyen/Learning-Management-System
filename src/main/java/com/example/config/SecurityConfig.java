@@ -36,13 +36,17 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/js/**").permitAll()
+                        .requestMatchers("/js/**", "/models/**").permitAll()
                         .requestMatchers(
                                 "/login",
                                 "/register",
                                 "/otp",
                                 "/verify-otp",
+                                "/assessments/submit/**",
                                 "/materials/**",
+                                "/judgement/assessment/code_space/**",
+                                "/exercises/submit/120/0/0/**",
+                                "/judgement/**",
                                 "/assessments/expired-link",
                                 "/assessments/invite/**",
                                 "/assessments/invalid-link",

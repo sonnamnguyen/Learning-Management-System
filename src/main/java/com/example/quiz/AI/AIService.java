@@ -16,10 +16,11 @@ public class AIService {
     @Value("${ai.api}")
     private String API;
 
-//    @Value("ai.token")
-//    private String TOKEN;
+    @Value("${ai.token}")
+    private String TOKEN;
 
-    private final String TOKEN = "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";
+    @Value("${ai.models}")
+    private String MODEL;
 
     @Value("${ai.username}")
     private String USERNAME;
@@ -27,15 +28,14 @@ public class AIService {
     @Value("${ai.password}")
     private String PASSWORD;
 
+//    private final boolean STREAM = false;
+
     @Autowired
     private RestTemplate restTemplate;
 
     public AIService(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
-
-    private final String MODEL = "google/gemini-2.0-pro-exp-02-05:free";
-//    private final boolean STREAM = false;
 
     // generate question type MCQ (Multiple Choice Question)
     private String generatePromptForMCQ(int numOfQuestions, int numOfAnswerOptions,
@@ -116,18 +116,6 @@ public class AIService {
     }
 
     // generate AIRequest
-//    private AIRequest generateRequestBody(String model, String prompt, boolean stream) {
-//        return new AIRequest(model, prompt, stream);
-//    }
-//
-//    private AIRequest generateRequestBody(String prompt, boolean stream) {
-//        return new AIRequest(MODEL, prompt, stream);
-//    }
-//
-//    private AIRequest generateRequestBody(String prompt) {
-//        return new AIRequest(MODEL, prompt, STREAM);
-//    }
-
     private AIRequest generateRequestBody(String content){
         return new AIRequest(MODEL, content);
     }
@@ -136,28 +124,27 @@ public class AIService {
     private HttpEntity<AIRequest> getHttpEntity(AIRequest aiRequest) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-//        headers.set("Authorization", "Basic " + encodeCredentials(USERNAME, PASSWORD));
-//        headers.set("Authorization", "Bearer " + TOKEN);
+//        headers.setBasicAuth(encodeCredentials(USERNAME, PASSWORD));
         headers.setBearerAuth(TOKEN);
 
         return new HttpEntity<>(aiRequest, headers);
     }
 
     // get Response from AI
-    public String getResponseAIGenerate(AIRequest aiRequest) {
+    public AIResponse getResponseAIGenerate(AIRequest aiRequest) {
         HttpEntity<AIRequest> request = getHttpEntity(aiRequest);
 
         try {
             ResponseEntity<AIResponse> response = restTemplate.exchange(API, HttpMethod.POST, request, AIResponse.class);
 
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                return response.getBody().getChoices().getLast().getMessage().getContent();
+                return response.getBody();
             }
         } catch (Exception e) {
-            return "Failed to connect to AI service";
+            return new AIResponse("No response from AI service");
         }
 
-        return "No response from AI";
+        return new AIResponse("No response from AI");
     }
 
     // type, numOfQuestion, numOfAnswerOptions, questionDescription
@@ -193,10 +180,6 @@ public class AIService {
         return Base64.getEncoder().encodeToString(credentials.getBytes());
     }
 
-//    public String[] getModelNames() {
-//        return new String[]{"deepseek-r1:latest", "llama3.1:latest", "qwen2.5-coder:32b"};
-//    }
-
     public String AIWarning() {
         String[] warnings = {"This AI is stupid, please don't hope too much",
                 "You may have to edit a lot after creating, think carefully before using",
@@ -210,10 +193,6 @@ public class AIService {
     public int[] getNumOfAnswerOptions() {
         return new int[]{2, 3, 4, 5, 6};
     }
-
-//    public int[] getNumOfCorrectAnswer() {
-//        return new int[]{2, 3, 4};
-//    }
 
     public String[] getTypes(){
         return new String[]{"Single Choice Question", "True/False Question"};

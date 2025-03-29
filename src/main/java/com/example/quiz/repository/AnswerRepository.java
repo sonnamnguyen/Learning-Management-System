@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Repository
 public interface AnswerRepository extends JpaRepository<Answer, Long> {
     @Transactional
@@ -18,5 +20,10 @@ public interface AnswerRepository extends JpaRepository<Answer, Long> {
     // Đếm tổng số câu trả lời sai
     @Query("SELECT COUNT(a) FROM Answer a WHERE a.isCorrect = false")
     long countTotalIncorrectAnswers();
+
+    List<Answer> findByTestSessionId(Long testSessionId);
+
+    @Query("SELECT a FROM Answer a WHERE a.question.id = :questionId AND a.selectedOption.id = :selectedOptionId")
+    List<Answer> findAllByQuestionIdAndSelectedOptionId(Long questionId, Long selectedOptionId);
 
 }

@@ -32,7 +32,9 @@ public class CategoryService {
     }
 
     public Category saveCategory(Category category) throws Exception {
-
+        if(categoryRepository.existsByTag(category.getTag())) {
+            throw new Exception("Tag already exists");
+        }
         return categoryRepository.save(category);
     }
 

@@ -18,6 +18,9 @@
         .container-fluid {
             display: flex;
             flex-direction: column;
+            flex-wrap: wrap;
+            justify-content: center;
+            min-width: 1200px;
         }
 
         .row {
@@ -1887,6 +1890,22 @@ Exercises
         });
     }
 
+    // Extract exercise ID from the URL
+    function getExerciseId() {
+        let pathParts = window.location.pathname.split('/');
+        return pathParts[pathParts.length - 1];
+    }
+
+    let exerciseId = getExerciseId();
+
+    // Listen for copy and paste events
+    document.addEventListener("copy", function () {
+        window.parent.postMessage({eventType: "copy", exerciseId: exerciseId}, "*");
+    });
+
+    document.addEventListener("paste", function () {
+        window.parent.postMessage({eventType: "paste", exerciseId: exerciseId}, "*");
+    })
 </script>
 
 </html>

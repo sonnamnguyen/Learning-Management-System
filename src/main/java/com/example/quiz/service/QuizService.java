@@ -1,6 +1,7 @@
 package com.example.quiz.service;
 
 
+import com.example.assessment.model.StudentAssessmentAttempt;
 import com.example.course.Course;
 import com.example.course.CourseRepository;
 import com.example.exception.DateException;
@@ -11,6 +12,9 @@ import com.example.quiz.model.*;
 import com.example.quiz.repository.*;
 import com.example.user.User;
 import com.example.user.UserService;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -129,11 +133,6 @@ public class QuizService {
         question.setQuestionType(request.getQuestionType() != null ? request.getQuestionType() : Question.QuestionType.MCQ);
         question.setQuizzes(quiz);
         question.setQuestionNo(currentQuestionCount + 1);
-
-
-//        int currentQuestionCount = questionRepository.countByQuiz(quiz);
-//        question.setQuestionNo(currentQuestionCount + 1);
-
         question = questionRepository.saveAndFlush(question);
         System.out.println("Question saved with ID: " + question.getId());
 
@@ -163,29 +162,6 @@ public class QuizService {
 
 
     @Transactional
-    public void updateQuestionPosition(Long quizId, Long questionId, int newPosition) {
-        Quiz quiz = quizRepository.findById(quizId)
-                .orElseThrow(() -> new RuntimeException("Quiz not found"));
-
-        Question question = questionRepository.findById(questionId)
-                .orElseThrow(() -> new RuntimeException("Question not found"));
-
-        int oldPosition = question.getQuestionNo();
-
-        if (oldPosition < newPosition) {
-            // Di chuyển xuống => Dịch chuyển các câu ở giữa lên 1
-            questionRepository.decrementQuestionNo(quiz, oldPosition, newPosition);
-        } else if (oldPosition > newPosition) {
-            // Di chuyển lên => Dịch chuyển các câu ở giữa xuống 1
-            questionRepository.incrementQuestionNo(quiz, newPosition, oldPosition);
-        }
-
-        // Cập nhật vị trí mới cho câu hỏi
-        question.setQuestionNo(newPosition);
-        questionRepository.save(question);
-    }
-
-    @Transactional
     public void moveQuestion(Long quizId, Long questionId, int newPosition) {
         Quiz quiz = quizRepository.findById(quizId)
                 .orElseThrow(() -> new EntityNotFoundException("Quiz not found"));
@@ -193,7 +169,6 @@ public class QuizService {
         Question questionToMove = questionRepository.findById(questionId)
                 .orElseThrow(() -> new EntityNotFoundException("Question not found"));
 
-        // Lấy danh sách câu hỏi theo thứ tự
         List<Question> questions = questionRepository.findByQuizzesOrderByQuestionNo(quiz);
 
         int oldPosition = questionToMove.getQuestionNo();
@@ -202,12 +177,10 @@ public class QuizService {
             throw new IllegalArgumentException("Invalid position");
         }
 
-        // Nếu vị trí không thay đổi thì không làm gì
         if (oldPosition == newPosition) return;
 
-        // Cập nhật vị trí của các câu hỏi khác
         for (Question q : questions) {
-            if (oldPosition < newPosition) { // Di chuyển xuống
+            if (oldPosition < newPosition) {
                 if (q.getQuestionNo() > oldPosition && q.getQuestionNo() <= newPosition) {
                     q.setQuestionNo(q.getQuestionNo() - 1);
                 }
@@ -218,16 +191,13 @@ public class QuizService {
             }
         }
 
-        // Cập nhật vị trí mới cho câu hỏi
         questionToMove.setQuestionNo(newPosition);
         questionRepository.saveAll(questions);
         questionRepository.save(questionToMove);
     }
 
 
-    /**
-     * Hàm tạo optionLabel theo thứ tự (A, B, C, ..., Z, AA, AB, ...)
-     */
+
     private String generateOptionLabel(int index) {
         StringBuilder label = new StringBuilder();
         do {
@@ -240,19 +210,17 @@ public class QuizService {
 
 
     @Autowired
-    private Scheduler scheduler; // Inject từ Spring, không dùng SchedulerUtil nữa
+    private Scheduler scheduler;
     public void createQuiz(Quiz quiz, List<Long> tagIds, List<String> newTagNames) {
         User user = userService.getCurrentUser();
         if (user == null) {
             throw new RuntimeException("User not found");
         }
 
-        // Kiểm tra startTime không nằm trong quá khứ
         if (quiz.getStartTime() != null && quiz.getStartTime().isBefore(LocalDateTime.now())) {
             throw new DateException("Start time cannot be in the past.");
         }
 
-        // Kiểm tra endTime không nhỏ hơn startTime
         if (quiz.getEndTime() != null && quiz.getEndTime().isBefore(quiz.getStartTime())) {
             throw new DateException("End time cannot be before start time.");
         }
@@ -261,7 +229,6 @@ public class QuizService {
         quiz.setCreatedBy(user);
         quiz.setQuizType(Quiz.QuizType.CLOSE);
 
-        // Create new tags if any
         if (newTagNames != null) {
             for (String tagName : newTagNames) {
                 QuizTag newTag = quizTagService.createTag(tagName);
@@ -269,7 +236,6 @@ public class QuizService {
             }
         }
 
-        // Associate selected tags with the quiz
         if (tagIds != null) {
             Set<QuizTag> selectedTags = new HashSet<>(quizTagRepository.findAllById(tagIds));
             quiz.getTags().addAll(selectedTags);
@@ -278,7 +244,6 @@ public class QuizService {
         Quiz savedQuiz = quizRepository.save(quiz);
 
         try {
-            // 🔹 Chỉ lên lịch job nếu startTime và endTime không null
             if (savedQuiz.getStartTime() != null) {
                 JobKey openJobKey = JobKey.jobKey("quizOpenJob-" + savedQuiz.getId(), "quizJobs");
                 if (!scheduler.checkExists(openJobKey)) {
@@ -350,21 +315,21 @@ public class QuizService {
             int rowCount = sheet.getPhysicalNumberOfRows();
             List<Quiz> quizs = new ArrayList<>();
 
-            for (int i = 1; i < rowCount; i++) { // Bỏ qua hàng tiêu đề
+            for (int i = 1; i < rowCount; i++) {
                 Row row = sheet.getRow(i);
                 if (row == null) continue;
 
                 Cell nameCell = row.getCell(1);
                 Cell descriptionCell = row.getCell(2);
-                Cell attemptsAllowedCell = row.getCell(3); // attemptsAllowed
-                Cell groupCell = row.getCell(4); // course group
+                Cell attemptsAllowedCell = row.getCell(3);
+                Cell groupCell = row.getCell(4);
 
                 String quizName = (nameCell != null) ? getCellValueAsString(nameCell).trim() : null;
                 Integer quizAttemptsAllowed = (attemptsAllowedCell != null) ? (int) attemptsAllowedCell.getNumericCellValue() : null;
                 String courseName = (groupCell != null) ? getCellValueAsString(groupCell).trim() : null;
 
                 if (quizName == null || quizName.isEmpty()) {
-                    quizName = generateQuizName(); // Tạo tên tự động nếu trống
+                    quizName = generateQuizName();
                 }
 
                 if (!existsByName(quizName)) {
@@ -386,9 +351,7 @@ public class QuizService {
         }
     }
 
-    /**
-     * Tạo tên Quiz tự động theo format "Quiz_YYYYMMdd_HHmmss"
-     */
+
     private String generateQuizName() {
         return "Quiz_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
     }
@@ -423,7 +386,6 @@ public class QuizService {
         XSSFWorkbook workbook = new XSSFWorkbook();
         XSSFSheet sheet = workbook.createSheet("Quizs");
 
-        // Create the header row
         String[] headers = {"ID", "Name", "Description", "AttemptsAllowed", "Quiz Group"};
         sheet.createRow(0).createCell(0).setCellValue(headers[0]);
         sheet.getRow(0).createCell(1).setCellValue(headers[1]);
@@ -431,18 +393,15 @@ public class QuizService {
         sheet.getRow(0).createCell(3).setCellValue(headers[3]);
         sheet.getRow(0).createCell(4).setCellValue(headers[4]);
 
-        // Populate data rows
         int rowNum = 1;
         for (Quiz quiz : quizs) {
             sheet.createRow(rowNum).createCell(0).setCellValue(quiz.getId());
             sheet.getRow(rowNum).createCell(1).setCellValue(quiz.getName());
             sheet.getRow(rowNum).createCell(2).setCellValue(quiz.getDescription());
-//            sheet.getRow(rowNum).createCell(3).setCellValue(quiz.getAttemptsAllowed());
             sheet.getRow(rowNum).createCell(4).setCellValue(quiz.getCourse().getName());
             rowNum++;
         }
 
-        // Write to ByteArrayOutputStream
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {
             workbook.write(out);
@@ -532,18 +491,14 @@ public class QuizService {
     }
 
     public List<User> getParticipants(Long quizId) {
-        // Fetch the quiz by its ID from the repository
         Optional<Quiz> quizOptional = quizRepository.findById(quizId);
 
-        // If quiz is found, return the participants, else return an empty list
         return quizOptional.map(Quiz::getParticipants).orElseGet(List::of);
     }
 
     public List<User> searchParticipants(Long quizId, String searchTerm) {
-        // Fetch the quiz and its participants
         List<User> participants = getParticipants(quizId);
 
-        // Filter participants based on the search term (name or email)
         return participants.stream()
                 .filter(user -> user.getUsername().toLowerCase().contains(searchTerm.toLowerCase()) ||
                         user.getEmail().toLowerCase().contains(searchTerm.toLowerCase()))
@@ -580,7 +535,7 @@ public class QuizService {
     }
 
 
-    public double calculateScore(List<String> questionId, Long assessmentId, MultiValueMap<String, String> responses, User user) {
+    public double calculateScore(List<String> questionId, Long assessmentId, MultiValueMap<String, String> responses, User user, StudentAssessmentAttempt studentAssessmentAttemptId) {
         if (questionId == null || questionId.isEmpty()) {
             throw new IllegalArgumentException("Danh sách câu hỏi không được rỗng");
         }
@@ -591,16 +546,24 @@ public class QuizService {
             return 0.0;
         }
 
-        boolean isPractice = (assessmentId == null);
+        boolean isPractice = studentAssessmentAttemptId == null;
+
+        if (isPractice) {
+            assessmentId = null;
+        }
 
         TestSession session = new TestSession();
         session.setUser(user);
         session.setStartTime(LocalDateTime.now());
-        session.setAssessmentId(assessmentId);
         session.setCheckPractice(isPractice);
+
+        if (!isPractice) {
+            session.setAssessmentId(assessmentId);
+            session.setStudentAssessmentAttempt(studentAssessmentAttemptId);
+        }
         testSessionRepository.save(session);
 
-        // ✅ Tính số câu hỏi MCQ & SCQ (Bỏ qua TEXT)
+
         long totalScoredQuestions = questions.stream()
                 .filter(q -> !q.getQuestionType().toString().equals("TEXT"))
                 .count();
@@ -609,7 +572,6 @@ public class QuizService {
         double pointsPerQuestion = totalScoredQuestions > 0 ? totalPoints / totalScoredQuestions : 0;
         double score = 0;
 
-        // ✅ Lấy tất cả đáp án đúng một lần duy nhất
         List<AnswerOption> correctOptionsList = answerOptionRepository.findCorrectAnswersByQuestionIds(questionIds);
         Map<Long, List<Long>> correctAnswersMap = correctOptionsList.stream()
                 .collect(Collectors.groupingBy(
@@ -621,33 +583,45 @@ public class QuizService {
             List<String> userAnswerIdsStr = responses.get("answers[" + question.getId() + "]");
             List<Long> correctAnswerIds = correctAnswersMap.getOrDefault(question.getId(), Collections.emptyList());
 
-            System.out.println("📌 Câu hỏi ID: " + question.getId() + " | Dạng: " + question.getQuestionType());
+            System.out.println(" Câu hỏi ID: " + question.getId() + " | Dạng: " + question.getQuestionType());
 
             if (question.getQuestionType().toString().equals("TEXT")) {
-                // ✅ Nếu là câu hỏi TEXT, chỉ lưu nội dung, không lưu answer_option_id, không tính điểm
                 if (userAnswerIdsStr != null && !userAnswerIdsStr.isEmpty()) {
                     String textAnswer = userAnswerIdsStr.get(0);
                     Answer textResponse = new Answer();
                     textResponse.setQuestion(question);
                     textResponse.setAnswerText(textAnswer);
-                    textResponse.setIsCorrect(null); // ✅ Không xác định đúng/sai
-                    textResponse.setSelectedOption(null); // ✅ Không có AnswerOption
+                    textResponse.setIsCorrect(null);
+                    textResponse.setSelectedOption(null);
                     answerRepository.save(textResponse);
                 }
-                continue; // ⛔ Bỏ qua tính điểm cho TEXT
+                continue;
             }
 
             if (userAnswerIdsStr != null && !userAnswerIdsStr.isEmpty()) {
-                // ✅ Lọc bỏ các giá trị không hợp lệ trước khi `parseLong()`
                 List<Long> userAnswerIds = userAnswerIdsStr.stream()
-                        .filter(id -> id.matches("\\d+")) // Chỉ giữ lại số hợp lệ
+                        .filter(id -> id.matches("\\d+"))
                         .map(Long::parseLong)
                         .collect(Collectors.toList());
 
                 int totalCorrect = correctAnswerIds.size();
                 int userCorrectCount = (int) userAnswerIds.stream().filter(correctAnswerIds::contains).count();
+                int excessSelections = userAnswerIds.size() - totalCorrect; // ✅ Tính số câu chọn dư
 
-                double questionScore = (totalCorrect > 0) ? (pointsPerQuestion / totalCorrect) * userCorrectCount : 0;
+                double questionScore = 0;
+                if (totalCorrect > 0) {
+                    questionScore = (pointsPerQuestion / totalCorrect) * userCorrectCount;
+                    if (excessSelections > 0) {
+                        double penalty = excessSelections * (pointsPerQuestion / totalCorrect);
+                        questionScore -= penalty;
+
+                        if (questionScore < 0) {
+                            score += questionScore;
+                            questionScore = 0;
+                        }
+                    }
+                }
+
                 score += questionScore;
 
                 for (Long selectedOptionId : userAnswerIds) {
@@ -658,10 +632,24 @@ public class QuizService {
                         answer.setQuestion(question);
                         answer.setAnswerText(selectedOption.getOptionText());
                         answer.setIsCorrect(correctAnswerIds.contains(selectedOptionId));
+                        answer.setTestSession(session);
+
+                        double calculatedScore = 0.0;
+                        if (correctAnswerIds.contains(selectedOptionId)) {
+                            calculatedScore = (pointsPerQuestion / correctAnswerIds.size());
+                        }
+
+                        answer.setScore(calculatedScore);
+
+                        System.out.println(" Lưu Answer - Question ID: " + question.getId());
+                        System.out.println(" Selected Option ID: " + selectedOptionId);
+                        System.out.println(" Answer Text: " + selectedOption.getOptionText());
+                        System.out.println(" Is Correct: " + answer.getIsCorrect());
+                        System.out.println(" Score: " + calculatedScore);
+
                         answerRepository.save(answer);
                     }
                 }
-
                 if (isPractice) {
                     practiceResultRepository.save(new PracticeResult(session, question, userCorrectCount == totalCorrect, questionScore));
                 } else {
@@ -670,9 +658,9 @@ public class QuizService {
             }
         }
 
-        // ✅ Làm tròn score đến 2 chữ số thập phân
         return BigDecimal.valueOf(score).setScale(2, RoundingMode.HALF_UP).doubleValue();
     }
+
 
 
 
@@ -690,46 +678,6 @@ public class QuizService {
         return questionRepository.findQuestionsByQuizId(quizID);
     }
 
-    public void submitQuiz(Long quizId, String username, Map<String, String> responses) {
-        User user = userService.findByUsername(username);
-        List<Question> questions = totalQuestions(quizId);
-        int correctCount = 0;
-
-        Map<Long, Long> selectedAnswers = new HashMap<>();
-        Map<Long, Long> correctAnswers = new HashMap<>();
-
-        System.out.println("Dữ liệu nhận được từ form: " + responses); // Kiểm tra log
-
-        for (Question question : questions) {
-            String selectedOptionId = responses.get("answers[" + question.getId() + "]");
-            if (selectedOptionId != null) {
-                Long selectedOptionLong = Long.parseLong(selectedOptionId);
-                selectedAnswers.put(question.getId(), selectedOptionLong);
-
-                AnswerOption selectedOption = answerOptionRepository.findById(selectedOptionLong).orElse(null);
-                AnswerOption correctOption = answerOptionRepository.findCorrectAnswerByQuestionId(question.getId());
-
-                if (correctOption != null) {
-                    correctAnswers.put(question.getId(), correctOption.getId());
-                }
-
-                if (selectedOption != null) {
-                    if (selectedOption.getIsCorrect()) {
-                        correctCount++;
-                    }
-                    Answer answer = new Answer();
-                    answer.setSelectedOption(selectedOption);
-                    answer.setQuestion(question);
-                    answer.setAnswerText(selectedOption.getOptionText());
-                    answer.setIsCorrect(selectedOption.getIsCorrect());
-                    answerRepository.save(answer);
-                }
-            }
-        }
-
-        double score = (double) correctCount / questions.size() * 10; // Thang điểm 10
-
-    }
 
     public int countCorrectAnswers(Long quizId, Map<String, String> responses) {
         List<Question> questions = questionRepository.findByQuizzes_Id(quizId);
@@ -751,26 +699,22 @@ public class QuizService {
     }
 
     public Map<String, Object> getScoreByQuiz(Long studentId) {
-        // Lấy danh sách Quiz của sinh viên
         List<Quiz> quizzes = quizRepository.findByParticipants_Id(studentId);
         if (quizzes.isEmpty()) {
             throw new NotFoundException("Quiz not found!");
         }
         System.out.println("Số lượng quiz tìm thấy: " + quizzes.size());
 
-        // Lấy danh sách kết quả bài làm của sinh viên
         List<PracticeResult> results = practiceResultRepository.findResultByTestSession_User_Id(studentId);
         if (results.isEmpty()) {
             throw new NotFoundException("No results found for this student!");
         }
         System.out.println("✅ Số lượng kết quả bài làm: " + results.size());
 
-        // Map lưu ID quiz và tên quiz
         Map<Long, String> quizMap = quizzes.stream()
                 .collect(Collectors.toMap(Quiz::getId, Quiz::getName));
-        System.out.println("✅ Quiz Map: " + quizMap);
+        System.out.println("Quiz Map: " + quizMap);
 
-        // Map lưu điểm số, thời gian hoàn thành và thời gian làm bài
         Map<String, Integer> quizScores = new LinkedHashMap<>();
         Map<String, String> quizTimestamps = new LinkedHashMap<>();
         Map<String, Long> quizDurations = new LinkedHashMap<>(); // Đơn vị: phút
@@ -807,18 +751,16 @@ public class QuizService {
         System.out.println("Final quizCourses: " + quizCourses);
 
 
-        // Tính chênh lệch điểm giữa các lần làm quiz
         List<Integer> scoreDifferences = new ArrayList<>();
         List<Integer> scores = new ArrayList<>(quizScores.values());
 
         if (!scores.isEmpty()) {
-            scoreDifferences.add(0); // Quiz đầu tiên không có chênh lệch
+            scoreDifferences.add(0);
             for (int i = 1; i < scores.size(); i++) {
                 scoreDifferences.add(scores.get(i) - scores.get(i - 1));
             }
         }
 
-        // Trả về Map kết quả
         Map<String, Object> response = new HashMap<>();
         response.put("quizScores", quizScores);
         response.put("scoreDifferences", scoreDifferences);
@@ -831,10 +773,8 @@ public class QuizService {
     }
 
     public Map<Long, String> getQuizCourses(Long studentId) {
-        // Lấy danh sách quiz mà sinh viên đã tham gia
         List<Quiz> quizzes = quizRepository.findByParticipants_Id(studentId);
 
-        // Tạo một Map để lưu khóa học theo Quiz
         Map<Long, String> quizCourses = new HashMap<>();
 
         for (Quiz quiz : quizzes) {
@@ -846,23 +786,19 @@ public class QuizService {
         return quizCourses;
     }
 
-    /**
-     * Lấy danh sách số lượng quiz theo từng khóa học mà sinh viên tham gia
-     */
     public Map<String, Integer> getQuizFromCourse(Long studentId) {
         User user = userService.getUserById(studentId);
         if (user == null) {
             throw new NotFoundException("User not found !");
         }
-        System.out.println("✅ User tìm thấy: " + user.getId());
+        System.out.println("User tìm thấy: " + user.getId());
 
         List<Quiz> quizzes = quizRepository.findByParticipants_Id(user.getId());
         if (quizzes.isEmpty()) {
             throw new NotFoundException("Quiz not found !");
         }
-        System.out.println("✅ Số lượng quiz tìm thấy: " + quizzes.size());
+        System.out.println("Số lượng quiz tìm thấy: " + quizzes.size());
 
-        // Map lưu số lượng quiz theo từng khóa học
         Map<String, Integer> courseQuizCount = new HashMap<>();
         for (Quiz quiz : quizzes) {
             Course course = quiz.getCourse();
@@ -871,7 +807,7 @@ public class QuizService {
             }
         }
 
-        System.out.println("✅ Số lượng quiz theo khóa học: " + courseQuizCount);
+        System.out.println("Số lượng quiz theo khóa học: " + courseQuizCount);
         return courseQuizCount;
     }
 
@@ -890,15 +826,12 @@ public class QuizService {
         Question question = questionRepository.findById(questionId)
                 .orElseThrow(() -> new RuntimeException("Question not found with id: " + questionId));
 
-        // Cập nhật thông tin cơ bản của câu hỏi
         question.setQuestionText(request.getQuestionText());
         question.setQuestionType(request.getQuestionType());
 
-        // Xóa tất cả các answer options cũ
         answerOptionRepository.deleteAll(question.getAnswerOptions());
         question.getAnswerOptions().clear();
 
-        // Thêm các answer options mới
         if (request.getAnswerOptions() != null && !request.getAnswerOptions().isEmpty()) {
             for (int i = 0; i < request.getAnswerOptions().size(); i++) {
                 AnswerOptionRequestDTO optionDTO = request.getAnswerOptions().get(i);
@@ -944,17 +877,14 @@ public class QuizService {
         Quiz quiz = findById(quizId)
                 .orElseThrow(() -> new EntityNotFoundException("Quiz not found"));
 
-        // Nếu tagIds là null, xóa tất cả tags
         if (tagIds == null) {
             quiz.getTags().clear();
         } else {
-            // Lấy tất cả tags từ danh sách ID
             Set<QuizTag> tags = tagIds.stream()
                     .map(tagId -> quizTagService.getQuizTagById(tagId))
                     .filter(Objects::nonNull)
                     .collect(Collectors.toSet());
 
-            // Cập nhật tags cho quiz
             quiz.setTags(tags);
         }
 
@@ -971,6 +901,100 @@ public class QuizService {
                 .orElseThrow(() -> new EntityNotFoundException("Quiz not found"));
         return new ArrayList<>(quiz.getTags());
     }
+    public Page<Quiz> findQuizesWithFilters(Long courseId, String searchQuery, List<Long> tagIds, Pageable pageable) {
+        if (tagIds != null && !tagIds.isEmpty()) {
+            if (courseId != null) {
+                if (searchQuery != null && !searchQuery.isEmpty()) {
+                    return quizRepository.findByCourseIdAndNameContainingIgnoreCaseAndTagsIn(courseId, searchQuery, tagIds, pageable);
+                } else {
+                    return quizRepository.findByCourseIdAndTagsIn(courseId, tagIds, pageable);
+                }
+            } else if (searchQuery != null && !searchQuery.isEmpty()) {
+                return quizRepository.findByNameContainingIgnoreCaseAndTagsIn(searchQuery, tagIds, pageable);
+            } else {
+                return filterByTags(tagIds, pageable);
+            }
+        } else {
+            if (courseId != null) {
+                if (searchQuery != null && !searchQuery.isEmpty()) {
+                    return searchByCourseAndName(courseId, searchQuery, pageable);
+                } else {
+                    return findByCourseId(courseId, pageable);
+                }
+            } else if (searchQuery != null && !searchQuery.isEmpty()) {
+                // Chỉ search
+                return search(searchQuery, pageable);
+            } else {
+                return findAll(pageable);
+            }
+        }
+    }
+
+    public Quiz jsonToQuiz(String json) {
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        Quiz quiz = new Quiz();
+        // Sử dụng jsonToQuestionSet để lấy danh sách câu hỏi
+
+        try {
+            JsonNode rootNode = objectMapper.readTree(json);
+
+            String questionsJson = rootNode.get("questions").toString();
+            // Deserialize "questions" thành danh sách Question
+            Set<Question> questions = objectMapper.readValue(questionsJson, new TypeReference<Set<Question>>() {
+            });
+
+            quiz.setName(rootNode.get("name").asText());
+            quiz.setDescription(rootNode.get("description").asText());
+
+            quiz.setStartTime(LocalDateTime.parse(rootNode.get("startTime").asText()));
+            quiz.setEndTime(LocalDateTime.parse(rootNode.get("endTime").asText()));
+
+            quiz.setAttemptLimit(rootNode.get("attemptLimit").asInt());
+            quiz.setCourse(courseRepository.findById(rootNode.get("course").asLong()));
+
+            quiz.setQuizType(Quiz.QuizType.CLOSE);
+
+            quiz.setQuizCategory(rootNode.get("quizCategory").asText().equals("EXAM")
+                    ? Quiz.QuizCategory.EXAM : Quiz.QuizCategory.PRACTICE);
+
+            quiz.setCreatedBy(userService.getUserById(rootNode.get("createdBy").asLong()));
+
+            if (questions != null && !questions.isEmpty()) {
+                int questionNo = 1;
+                for (Question question : questions) {
+                    question.setQuestionNo(questionNo);
+                    questionNo++;
+                    int answerNo = 0;
+                    for (AnswerOption answerOption : question.getAnswerOptions()) {
+                        answerOption.setOptionLabel(generateOptionLabel(answerNo));
+                        answerNo++;
+                    }
+                    questionRepository.save(question);
+                    quiz.addQuestion(question);
+                }
+            }
+
+            quizRepository.save(quiz);
+
+            Course course = courseRepository.findById(rootNode.get("course").asLong());
+            course.addQuiz(quiz);
+            courseRepository.save(course);
+
+            SchedulerUtil.startScheduler();
+
+            Scheduler scheduler = SchedulerUtil.getScheduler();
+            scheduleJob.scheduleQuizOpenJob(quiz.getId(), quiz.getStartTime());
+            scheduleJob.scheduleQuizCloseJob(quiz.getId(), quiz.getEndTime());
+
+            return quiz;
+        } catch (Exception e) {
+            return null;
+        }
+
+    }
+
+
 
 
 }

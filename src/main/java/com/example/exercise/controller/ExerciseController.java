@@ -1098,6 +1098,16 @@ public class ExerciseController {
         Integer exercisesWithMoreThanFiveAttempts = exerciseService.countExercisesWithMoreThanFiveAttempts(id);
         Integer exercisesSubmittedMidnight = exerciseService.countExercisesSubmittedMidnight(id);
         Integer exercisesSubmittedEarly = exerciseService.countExercisesSubmittedEarly(id);
+        Integer totalJavaExercises = exerciseService.countTotalExercisesByLanguage("Java");
+        Integer totalCExercises = exerciseService.countTotalExercisesByLanguage("C");
+        Integer totalCSharpExercises = exerciseService.countTotalExercisesByLanguage("C#");
+        Integer totalSQLExercises = exerciseService.countTotalExercisesByLanguage("SQL");
+        Integer totalCppExercises = exerciseService.countTotalExercisesByLanguage("C++");
+        Integer userJava = exerciseService.countUserExercisesByLanguage(id,"Java");
+        Integer userC = exerciseService.countUserExercisesByLanguage(id,"Java");
+        Integer userCSharp = exerciseService.countUserExercisesByLanguage(id,"C#");
+        Integer userCpp = exerciseService.countUserExercisesByLanguage(id,"C++");
+        Integer userSQL = exerciseService.countUserExercisesByLanguage(id,"SQL");
         List<StudentExerciseAttemptResponse> studentAttempts = studentExerciseAttemptService.getStudentAttemptsByUser(id);
 
         StudentExerciseResponse chartResponse = new StudentExerciseResponse(
@@ -1105,7 +1115,9 @@ public class ExerciseController {
                 perfectScoreUserExercises, userEasyExercises, userHardExercises,
                 userMediumExercises, passedTestsPerMonth, exercisesWithMoreThanFiveAttempts,
                 exercisesSubmittedMidnight, exercisesSubmittedEarly,easyExercisesNoLanguage,hardExercisesNoLanguage,
-                mediumExercisesNoLanguage,userEasyExercisesNoLanguage,userHardExercisesNoLanguage,userMediumExercisesNoLanguage
+                mediumExercisesNoLanguage,userEasyExercisesNoLanguage,userHardExercisesNoLanguage,userMediumExercisesNoLanguage,
+                totalJavaExercises, totalCExercises, totalCSharpExercises, totalCppExercises, totalSQLExercises,
+                userJava, userC, userCSharp, userCpp, userSQL
         );
         model.addAttribute("languages", programmingLanguageService.findAll());
         model.addAttribute("currentLanguage", language);

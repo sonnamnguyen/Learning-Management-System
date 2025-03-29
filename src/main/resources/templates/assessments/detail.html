@@ -241,11 +241,12 @@
         </div>
     </div>
 
+
     <!-- CHARTS SECTION -->
     <div class="row mb-4" th:switch="${#strings.toUpperCase(assessment.assessmentType.name)}">
 
         <!-- CASE 1: QUIZ ONLY -->
-        <div th:case="'QUIZ'">
+        <div th:case="QUIZ" th:if="${assessment.assessmentType}">
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
@@ -259,18 +260,20 @@
         </div>
 
         <!-- CASE 2: ASSIGNMENT ONLY -->
-        <div th:case="'ASSIGNMENT'">
+        <!-- CASE 2: ASSIGNMENT ONLY -->
+        <div th:case="'ASSIGNMENT'" th:if="${assessment.assessmentType}">
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
                         <h3>Exercise Score Chart</h3>
                     </div>
-                    <div class="chart-container" style="height: 400px; width: 100%; margin: 0 auto;">
+                    <div class="chart-container" style="height: 400px; width: 90%; margin: 0 auto;">
                         <canvas id="exerciseScoreChart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
+
 
         <!-- CASE 3: QUIZ & ASSIGNMENT -->
         <div th:case="'QUIZ & ASSIGNMENT'">
@@ -302,32 +305,8 @@
 
         <!-- OPTIONAL: default case if type is unknown -->
         <div th:case="*">
-            <div class="row mb-4">
-                <div class="col-12 col-md-6">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3>Quiz Score Chart</h3>
-                        </div>
-                        <div class="chart-container" style="height: 400px; width: 100%; margin: 0 auto;">
-                            <canvas id="quizScoreChart"></canvas>
-                        </div>
-                    </div>
-                </div>
 
-                <div class="col-12 col-md-6 mt-3 mt-md-0">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3>Exercise Score Chart</h3>
-                        </div>
-                        <div class="chart-container" style="height: 400px; width: 100%; margin: 0 auto;">
-                            <canvas id="exerciseScoreChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <!-- If you want to handle unknown types, do so here, or just omit. -->
         </div>
-
     </div>
 
     <!-- Two-Column Layout for Exercises and Questions -->
@@ -951,10 +930,6 @@
     </script>
 
 
-
-
-
-
     <!-- Scroll to top button -->
     <button onclick="scrollToTop()" id="scrollToTopButton" title="Go to top">
         <i class="fas fa-arrow-up"></i>
@@ -963,6 +938,7 @@
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+
 <script>
     // Show/hide scrollToTopButton on scroll
     window.onscroll = function () {
@@ -982,76 +958,67 @@
 <!-- Initialize Charts using Chart.js -->
 <script th:inline="javascript">
     /*<![CDATA[*/
-    // 1. Read the arrays from the model
-    const quizScoreData = /*[[${quizScores}]]*/ [];
-    const exerciseScoreData = /*[[${exerciseScores}]]*/ [];
-    const dateLabels = /*[[${dateLabels}]]*/ []; // the attempt dates as strings
+    document.addEventListener("DOMContentLoaded", function() {
+        // Read arrays from model
+        const quizScoreData = /*[[${quizScores}]]*/ [];
+        const exerciseScoreData = /*[[${exerciseScores}]]*/ [];
+        const dateLabels = /*[[${dateLabels}]]*/ []; // the attempt dates as strings
 
-    // 2. Build the Quiz Score chart
-    const ctxQuiz = document.getElementById('quizScoreChart').getContext('2d');
-    const quizScoreChart = new Chart(ctxQuiz, {
-        type: 'bar',
-        data: {
-            labels: dateLabels,
-            datasets: [{
-                label: 'Quiz Score',
-                data: quizScoreData,
-                backgroundColor: 'rgba(54, 162, 235, 1)', // Blue color
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                x: {
-                    ticks: {
-                        display: false // hide x-axis labels if you want
-                    },
-                    grid: {
-                        display: false // optionally hide x-axis grid lines
-                    }
+        // Initialize Quiz Score Chart if canvas exists
+        const quizCanvas = document.getElementById('quizScoreChart');
+        if (quizCanvas) {
+            const ctxQuiz = quizCanvas.getContext('2d');
+            const quizScoreChart = new Chart(ctxQuiz, {
+                type: 'bar',
+                data: {
+                    labels: dateLabels,
+                    datasets: [{
+                        label: 'Quiz Score',
+                        data: quizScoreData,
+                        backgroundColor: 'rgba(54, 162, 235, 1)',
+                    }]
                 },
-                y: {
-                    beginAtZero: true,
-                    max: 100
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { display: false }, grid: { display: false } },
+                        y: { beginAtZero: true, max: 100 }
+                    }
                 }
-            }
+            });
         }
-    });
 
-    // 3. Build the Exercise Score chart
-    const ctxEx = document.getElementById('exerciseScoreChart').getContext('2d');
-    const exerciseScoreChart = new Chart(ctxEx, {
-        type: 'bar',
-        data: {
-            labels: dateLabels,
-            datasets: [{
-                label: 'Exercise Score',
-                data: exerciseScoreData,
-                backgroundColor: 'rgba(255, 99, 132, 1)', // Red color
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                x: {
-                    ticks: {
-                        display: false
-                    },
-                    grid: {
-                        display: false
-                    }
+        // Initialize Exercise Score Chart if canvas exists
+        const exerciseCanvas = document.getElementById('exerciseScoreChart');
+        if (exerciseCanvas) {
+            const ctxEx = exerciseCanvas.getContext('2d');
+            const exerciseScoreChart = new Chart(ctxEx, {
+                type: 'bar',
+                data: {
+                    labels: dateLabels,
+                    datasets: [{
+                        label: 'Exercise Score',
+                        data: exerciseScoreData,
+                        backgroundColor: 'rgba(255, 99, 132, 1)',
+                    }]
                 },
-                y: {
-                    beginAtZero: true,
-                    max: 100
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { display: false }, grid: { display: false } },
+                        y: { beginAtZero: true, max: 100 }
+                    }
                 }
-            }
+            });
+        } else {
+            console.error("Exercise Score Chart canvas not found.");
         }
     });
     /*]]>*/
 </script>
+
 
 </body>
 </html>
