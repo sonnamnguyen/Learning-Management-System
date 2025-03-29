@@ -578,26 +578,34 @@
 
     function saveSelectedTags() {
         const selectedTags = Array.from(document.querySelectorAll('input[name="tagIds"]:checked'))
-            .map(checkbox => checkbox.value);
+            .map(checkbox => ({
+                id: checkbox.value,
+                name: checkbox.nextElementSibling.textContent.trim()
+            }));
 
-        // Cập nhật hidden input với danh sách tag IDs
-        document.getElementById('selectedTagsInput').value = selectedTags.join(',');
+        // Store the selected tags in a hidden input field in the main form
+        let hiddenInput = document.getElementById('selectedTagsInput');
+        if (!hiddenInput) {
+            hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'tagIds';
+            hiddenInput.id = 'selectedTagsInput';
+            document.querySelector('form').appendChild(hiddenInput);
+        }
+        hiddenInput.value = selectedTags.map(tag => tag.id);
 
-        // Hiển thị tags đã chọn
-        const selectedTagNames = Array.from(document.querySelectorAll('input[name="tagIds"]:checked'))
-            .map(checkbox => checkbox.nextElementSibling.textContent.trim());
-
+        // Update selected tags display
         const countDisplay = document.getElementById('selectedTagsCount');
-        if (selectedTagNames.length > 0) {
-            const tagsList = selectedTagNames.map(name =>
-                `<span class="badge bg-secondary me-1">${name}</span>`
+        if (selectedTags.length > 0) {
+            const tagsList = selectedTags.map(tag =>
+                `<span class="badge bg-secondary me-1">${tag.name}</span>`
             ).join('');
             countDisplay.innerHTML = tagsList;
         } else {
             countDisplay.innerHTML = '';
         }
 
-        // Đóng modal
+        // Đóng modal sử dụng Bootstrap data-bs-dismiss
         const closeButton = document.querySelector('#tagsModal .btn-secondary[data-bs-dismiss="modal"]');
         if (closeButton) {
             closeButton.click();
