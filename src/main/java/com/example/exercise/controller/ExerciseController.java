@@ -1104,7 +1104,7 @@ public class ExerciseController {
         Integer totalSQLExercises = exerciseService.countTotalExercisesByLanguage("SQL");
         Integer totalCppExercises = exerciseService.countTotalExercisesByLanguage("C++");
         Integer userJava = exerciseService.countUserExercisesByLanguage(id,"Java");
-        Integer userC = exerciseService.countUserExercisesByLanguage(id,"Java");
+        Integer userC = exerciseService.countUserExercisesByLanguage(id,"C");
         Integer userCSharp = exerciseService.countUserExercisesByLanguage(id,"C#");
         Integer userCpp = exerciseService.countUserExercisesByLanguage(id,"C++");
         Integer userSQL = exerciseService.countUserExercisesByLanguage(id,"SQL");

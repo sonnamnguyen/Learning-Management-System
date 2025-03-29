@@ -2105,31 +2105,30 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script th:inline="javascript">
     /*<![CDATA[*/
-    // Định nghĩa các chuỗi tiếng Việt
     const translations = {
-        title: "Tiêu đề",
-        progress: "Tiến độ",
-        current: "Hiện tại",
-        total: "Tổng số",
-        status: "Trạng thái",
-        completed: "Hoàn thành",
-        notCompleted: "Chưa hoàn thành"
+        title: "Title",
+        description: "Description",
+        progress: "Progress",
+        status: "Status",
+        completed: "Completed",
+        notCompleted: "Not completed"
     };
+
 
     // Hàm lấy dữ liệu achievements từ DOM
     function getAchievementsData() {
         const achievements = [];
         document.querySelectorAll('.achievement-item').forEach(item => {
             const title = item.querySelector('.achievement-name').textContent;
+            // Lấy description từ thuộc tính title
+            let description = item.getAttribute("title") || item.getAttribute("data-bs-original-title") || "";
             const progress = item.querySelector('.achievement-progress').textContent;
-            const [current, total] = progress.split('/');
             const isCompleted = item.querySelector('.achievement-icon').classList.contains('unlocked');
 
             achievements.push({
                 title: title,
+                description: description,
                 progress: progress,
-                current: current,
-                total: total,
                 status: isCompleted ? translations.completed : translations.notCompleted
             });
         });
@@ -2149,6 +2148,14 @@
         // Thêm worksheet vào workbook
         XLSX.utils.book_append_sheet(wb, ws, "Achievements");
 
+        // Cấu hình độ rộng cột
+        ws['!cols'] = [
+            {wch: 20}, // Tiêu đề
+            {wch: 50}, // Mô tả
+            {wch: 10}, // Tiến độ
+            {wch: 15}  // Trạng thái
+        ];
+
         // Tạo tên file với timestamp
         const fileName = `achievements_${new Date().toISOString().slice(0,10)}.xlsx`;
 
@@ -2163,9 +2170,8 @@
         // Tạo header cho CSV
         const headers = [
             translations.title,
+            translations.description,
             translations.progress,
-            translations.current,
-            translations.total,
             translations.status
         ];
 
@@ -2174,9 +2180,8 @@
             headers.join(','),
             ...achievements.map(achievement => [
                 `"${achievement.title}"`,
+                `"${achievement.description}"`,
                 `"${achievement.progress}"`,
-                achievement.current,
-                achievement.total,
                 `"${achievement.status}"`
             ].join(','))
         ].join('\n');
