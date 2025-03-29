@@ -430,7 +430,10 @@
                                            class="form-control"
                                            placeholder="Enter minimum score to qualify"
                                            required
-                                           id="id_qualify_score">
+                                           id="id_qualify_score"
+                                           min = "0"
+                                           max="100">
+
                                 </div>
 
                                 <div class="col-md-4">
@@ -440,7 +443,8 @@
                                            class="form-control"
                                            placeholder="Enter time limit for assessment"
                                            required
-                                           id="id_time_limit">
+                                           id="id_time_limit"
+                                    min="10">
                                 </div>
                             </div>
                             <hr>
@@ -455,6 +459,7 @@
                                            class="form-control"
                                            placeholder="Enter quiz score ratio"
                                            min="0"
+                                           max="100"
                                            required
                                            id="id_quiz_score_ratio">
                                 </div>
@@ -465,6 +470,7 @@
                                            class="form-control"
                                            placeholder="Enter exercise score ratio"
                                            min="0"
+                                           max="100"
                                            required
                                            id="id_exercise_score_ratio">
                                 </div>

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Exercise Dashboard</title>
-    <!-- Load Chart.js (only once) -->
+    <!-- Load Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
     <!-- Load chartjs-plugin-datalabels -->
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
@@ -14,16 +14,13 @@
     <!-- Prism.js CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
     <style>
+        /* Light mode (mặc định) */
         body {
             font-family: Arial, sans-serif;
             padding: 20px;
             background: #f4f4f4;
-        }
-
-        .container {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
+            color: #333;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         .small-box {
@@ -31,54 +28,16 @@
             border-radius: 10px;
             color: white;
             text-align: center;
-        }
-
-        .chart-container {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .chart-container canvas {
-            max-height: 300px;
-        }
-
-        .leaderboard {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .leaderboard table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .leaderboard th, .leaderboard td {
-            padding: 10px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-
-        .leaderboard th {
-            background: #007bff;
-            color: white;
-        }
-
-        .chart-container {
-            margin-bottom: 20px;
-        }
-
-        .small-box {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
             min-height: 120px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .small-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
         }
 
         .small-box .icon {
@@ -87,12 +46,17 @@
         }
 
         .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             text-align: center;
             height: 400px;
+            margin-bottom: 20px;
         }
 
         .chart-container canvas {
@@ -101,7 +65,15 @@
         }
 
         .leaderboard {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
             margin-top: 30px;
+        }
+
+        .leaderboard h2 {
+            font-size: 1.5rem;
         }
 
         .leaderboard table {
@@ -128,11 +100,68 @@
             background-color: #e9ecef;
         }
 
-        #difficultyChart {
-            max-width: 400px;
-            max-height: 400px;
-            display: block;
-            margin: auto;
+        #noExercisesRow td {
+            color: #888;
+            font-style: italic;
+        }
+
+        .search-bar {
+            width: 300px;
+        }
+
+        .search-bar input {
+            border-radius: 5px;
+            background-color: #fff;
+            color: #333;
+            border: 1px solid #ccc;
+        }
+
+        .search-bar input::placeholder {
+            color: #666;
+        }
+
+        .pagination .page-item .page-link {
+            background-color: #fff;
+            color: #333;
+            border: 1px solid #ccc;
+        }
+
+        .pagination .page-item.active .page-link {
+            background-color: #007bff;
+            color: #fff;
+            border-color: #007bff;
+        }
+
+        .pagination .page-item.disabled .page-link {
+            background-color: #f8f9fa;
+            color: #999;
+            border-color: #ccc;
+        }
+
+        .pagination .page-item .page-link:hover {
+            background-color: #e9ecef;
+            color: #333;
+        }
+
+
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+
+        .btn-outline-secondary {
+            color: #333;
+            border-color: #ccc;
+        }
+
+        .btn-outline-secondary:hover {
+            background-color: #e9ecef;
+            color: #333;
         }
 
         .difficulty-container {
@@ -167,6 +196,7 @@
             left: 15px;
             font-size: 18px;
             font-weight: bold;
+            color: #333;
         }
 
         canvas {
@@ -174,11 +204,23 @@
             max-height: 300px;
         }
 
+        .difficulty-chart-canvas {
+            max-width: 300px !important;
+            max-height: 300px !important;
+            width: 300px !important;
+            height: 300px !important;
+        }
+
         @media print {
+            /* Không ép buộc nền trắng, giữ giao diện dark mode nếu có */
             body {
-                background: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                margin: 10mm !important; /* Đảm bảo có lề khi in */
+                padding: 0 !important;
             }
 
+            /* Ẩn các thành phần không cần thiết */
             .btn, nav, footer, .hidden-box, select {
                 display: none !important;
             }
@@ -188,86 +230,238 @@
                 margin: 0;
                 padding: 0;
             }
+
+            /* Đảm bảo giao diện dark mode được giữ */
+            .dark-mode {
+                background-color: #32373d !important;
+                color: #f0f2f5 !important;
+            }
+
+            .dark-mode .chart-container,
+            .dark-mode .leaderboard {
+                background-color: #40474f !important;
+                color: #f0f2f5 !important;
+            }
+
+            .dark-mode .leaderboard th {
+                background-color: #0066cc !important;
+                color: #ffffff !important;
+            }
+
+            .dark-mode .leaderboard tbody tr:nth-child(even) {
+                background-color: #4a5159 !important;
+            }
+
+            .dark-mode .leaderboard tbody tr {
+                background-color: #40474f !important;
+            }
+
+            /* Ẩn cột "Submitted Code" (cột thứ 4) khi in */
+            .leaderboard th:nth-child(4) {
+                display: none !important;
+            }
+
+            .leaderboard td:nth-child(4) {
+                display: none !important;
+            }
+
+            /* Đảm bảo tiêu đề hiển thị khi in */
+            h1 {
+                display: block !important;
+                color: #000 !important; /* Màu đen cho light mode */
+                margin: 10px 0 !important;
+                text-align: center !important;
+                font-size: 24px !important;
+            }
+
+            /* Tiêu đề trong dark mode */
+            .dark-mode h1 {
+                color: #ffffff !important; /* Màu trắng cho dark mode */
+            }
         }
+
         .hidden-box {
             display: none !important;
         }
-        /* CSS dark mode sáng hơn, đẹp hơn với animation */
+
+        /* Dark mode */
         .dark-mode {
-            background-color: #32373d; /* Xám đậm nhẹ nhàng hơn */
-            color: #f0f2f5; /* Màu chữ sáng dịu, dễ đọc */
-            transition: background-color 0.3s ease, color 0.3s ease; /* Hiệu ứng chuyển màu mượt */
+            background-color: #32373d;
+            color: #f0f2f5;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .dark-mode h1 {
+            color: #ffffff;
         }
 
         .dark-mode .small-box {
-            color: #f0f2f5; /* Màu chữ sáng dịu */
-            background-color: #3e444b; /* Nền nhẹ nhàng hơn */
-            border-radius: 8px; /* Bo góc mềm mại */
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Đổ bóng nhẹ */
-            transition: transform 0.2s ease, box-shadow 0.2s ease; /* Animation khi hover */
+            color: #f0f2f5;
+            background-color: #3e444b;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
         .dark-mode .small-box:hover {
-            transform: translateY(-5px); /* Nhấc lên nhẹ khi hover */
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* Đổ bóng đậm hơn */
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
         }
 
         .dark-mode .chart-container,
         .dark-mode .leaderboard {
-            background-color: #40474f; /* Xám trung tính sáng hơn */
+            background-color: #40474f;
             color: #f0f2f5;
-            border-radius: 10px; /* Bo góc hiện đại */
-            padding: 15px; /* Thêm khoảng đệm */
-            transition: background-color 0.3s ease; /* Chuyển màu mượt mà */
+            border-radius: 10px;
+            padding: 15px;
+            transition: background-color 0.3s ease;
+        }
+
+        .dark-mode .chart-header {
+            color: #ffffff;
+        }
+
+        .dark-mode .leaderboard h2 {
+            color: #ffffff;
         }
 
         .dark-mode .leaderboard th {
-            background-color: #0066cc; /* Xanh đậm tươi sáng hơn */
-            color: #ffffff; /* Chữ trắng cho tương phản */
+            background-color: #0066cc;
+            color: #ffffff;
             padding: 10px;
-            border-bottom: 2px solid #f0f2f5; /* Đường viền dưới nổi bật */
+            border-bottom: 2px solid #f0f2f5;
         }
 
         .dark-mode .leaderboard tbody tr {
-            transition: background-color 0.2s ease, transform 0.2s ease; /* Animation cho hàng */
+            transition: background-color 0.2s ease, transform 0.2s ease;
         }
 
         .dark-mode .leaderboard tbody tr:nth-child(even) {
-            background-color: #4a5159; /* Xám nhạt hơn cho hàng chẵn */
+            background-color: #4a5159;
         }
 
         .dark-mode .leaderboard tbody tr:hover {
-            background-color: #5c646d; /* Xám sáng hơn khi hover */
-            transform: scale(1.02); /* Phóng to nhẹ khi hover */
-            cursor: pointer; /* Con trỏ tay để tăng tương tác */
+            background-color: #5c646d;
+            transform: scale(1.02);
+            cursor: pointer;
         }
 
-        /* Thêm hiệu ứng fade-in khi load */
+        .dark-mode #noExercisesRow td {
+            color: #aaa;
+        }
+
+        .dark-mode .search-bar input {
+            background-color: #3a3a3a;
+            color: #f0f2f5;
+            border: 1px solid #555;
+        }
+
+        .dark-mode .search-bar input::placeholder {
+            color: #aaa;
+        }
+
+        .dark-mode .pagination .page-item .page-link {
+            background-color: #3a3a3a;
+            color: #f0f2f5;
+            border: 1px solid #555;
+        }
+
+        .dark-mode .pagination .page-item.active .page-link {
+            background-color: #0066cc;
+            color: #ffffff;
+            border-color: #0066cc;
+        }
+
+        .dark-mode .pagination .page-item.disabled .page-link {
+            background-color: #2a2a2a;
+            color: #666;
+            border-color: #555;
+        }
+
+        .dark-mode .pagination .page-item .page-link:hover {
+            background-color: #4a4a4a;
+            color: #ffffff;
+        }
+
+        .dark-mode .btn-primary {
+            background-color: #0066cc;
+            border-color: #0066cc;
+        }
+
+        .dark-mode .btn-primary:hover {
+            background-color: #004d99;
+            border-color: #004d99;
+        }
+
+        .dark-mode .btn-outline-secondary {
+            color: #f0f2f5;
+            border-color: #555;
+        }
+
+        .dark-mode .btn-outline-secondary:hover {
+            background-color: #4a4a4a;
+            color: #ffffff;
+        }
+
+        .dark-mode .form-select {
+            background-color: #3a3a3a;
+            color: #f0f2f5;
+            border: 1px solid #555;
+        }
+
+        .dark-mode .form-select option {
+            background-color: #3a3a3a;
+            color: #f0f2f5;
+        }
+
+        /* Header trong dark mode */
+        .dark-mode .main-header {
+            background-color: #3e444b;
+            color: #ffffff;
+            border-bottom: 1px solid #555;
+        }
+
+        .dark-mode .main-header a,
+        .dark-mode .main-header .nav-link,
+        .dark-mode .main-header .navbar-brand,
+        .dark-mode .main-header .navbar-nav .nav-item .nav-link {
+            color: #ffffff !important;
+        }
+
+        .dark-mode .main-header a:hover,
+        .dark-mode .main-header .nav-link:hover {
+            color: #e0e0e0 !important;
+        }
+
+        .dark-mode .main-header .navbar-toggler-icon {
+            filter: invert(1);
+        }
+
+        /* Footer trong dark mode */
+        .dark-mode .main-footer {
+            background-color: #3e444b;
+            color: #ffffff;
+            border-top: 1px solid #555;
+        }
+
+        .dark-mode .main-footer a,
+        .dark-mode .main-footer p,
+        .dark-mode .main-footer span {
+            color: #ffffff !important;
+        }
+
+        .dark-mode .main-footer a:hover {
+            color: #e0e0e0 !important;
+        }
+
+        /* Hiệu ứng fade-in */
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
         }
 
         .dark-mode {
-            animation: fadeIn 0.5s ease-in; /* Hiệu ứng mờ dần khi load */
-        }
-        .search-bar {
-            width: 300px; /* Độ rộng của thanh tìm kiếm */
-        }
-
-        .search-bar input {
-            border-radius: 5px;
-        }
-
-        .leaderboard h2 {
-            font-size: 1.5rem; /* Kích thước tiêu đề */
-        }
-        #noExercisesRow td {
-            color: #888;
-            font-style: italic;
-        }
-        .swal-wide {
-            width: 800px !important;
+            animation: fadeIn 0.5s ease-in;
         }
     </style>
 </head>
@@ -281,7 +475,7 @@
 <button onclick="printDashboard()" class="btn btn-outline-secondary me-2">
     <i class="bi bi-printer me-1"></i> Print
 </button>
-<!-- Thêm nút toggle dark mode -->
+<!-- Nút toggle dark mode -->
 <button onclick="toggleDarkMode()" class="btn btn-outline-secondary me-2" id="darkModeToggle">
     <i class="bi bi-moon-stars me-1"></i> Dark Mode
 </button>
@@ -338,7 +532,7 @@
                     <h3>Difficulty</h3>
                 </div>
                 <div class="difficulty-chart">
-                    <canvas id="difficultyChart"></canvas>
+                    <canvas id="difficultyChart" class="difficulty-chart-canvas"></canvas>
                 </div>
                 <div class="difficulty-select">
                     <select id="languageFilter" class="form-select mt-2">
@@ -373,21 +567,18 @@
                         <td colspan="5" class="text-center">No Exercises Found.</td>
                     </tr>
                     <tr th:each="exercise : ${mostAttemptedExercises}" class="exercise-row">
-                        <td th:text="${exercise.submitted_exercise.name}"></td>
-                        <td th:text="${#temporals.format(exercise.attemptDate, 'dd/MM/yyyy HH:mm:ss')}"></td> <!-- kiểu LocalDateTime -->
+                        <td th:text="${exercise.submitted_exercise?.name} ?: ''"></td>
+                        <td th:text="${#temporals.format(exercise.attemptDate, 'dd/MM/yyyy HH:mm:ss')}"></td>
                         <td th:text="${exercise.score_exercise}"></td>
-                        <!--                            <button class="btn btn-info btn-sm" onclick="showCodeModal(this)"-->
-                        <!--                                    th:attr="data-code=${exercise.submitted_code} ?: '// No code submitted'">View Code</button>-->
-                        <!--                            <button class="btn btn-info btn-sm" onclick="showCodeModal(this)" th:data-code="${exercise.submitted_code}">View Code</button>-->
                         <td>
-                            <button class="btn btn-info btn-sm" onclick="showCodeSweetAlert(this)"
+                            <button class="btn btn-info btn-sm" onclick="showCodeModal(this)"
                                     th:attr="data-code=${exercise.submitted_code} ?: '// No code submitted'">View Code</button>
                         </td>
-                        <td th:text="${exercise.attendant_user?.username} ?: ''"></td>
+                        <td th:text="${exercise.attendant_user?.email} ?: ''"></td>
                     </tr>
                     </tbody>
                 </table>
-                <!-- Thêm container cho phân trang -->
+                <!-- Container cho phân trang -->
                 <nav aria-label="Page navigation">
                     <ul class="pagination justify-content-center" id="pagination"></ul>
                 </nav>
@@ -415,6 +606,10 @@
 
 <!-- Footer -->
 <div th:replace="~{fragments :: footer}" class="mt-auto"></div>
+
+<!-- Prism.js JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const rowsPerPage = 5; // Số hàng mỗi trang
@@ -459,7 +654,6 @@
             const pagination = document.getElementById("pagination");
             pagination.innerHTML = "";
 
-            // Nếu không có hàng nào, ẩn phân trang
             if (totalRows === 0) {
                 return;
             }
@@ -476,12 +670,59 @@
             prevLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(event, ${currentPage - 1})">Previous</a>`;
             pagination.appendChild(prevLi);
 
-            // Các nút số trang
-            for (let i = 1; i <= totalPages; i++) {
-                const li = document.createElement("li");
-                li.className = "page-item" + (i === currentPage ? " active" : "");
-                li.innerHTML = `<a class="page-link" href="#" onclick="changePage(event, ${i})">${i}</a>`;
-                pagination.appendChild(li);
+            if (totalPages <= 3) {
+                for (let i = 1; i <= totalPages; i++) {
+                    const li = document.createElement("li");
+                    li.className = "page-item" + (i === currentPage ? " active" : "");
+                    li.innerHTML = `<a class="page-link" href="#" onclick="changePage(event, ${i})">${i}</a>`;
+                    pagination.appendChild(li);
+                }
+            } else {
+                // Hiển thị các trang gần trang hiện tại
+                let startPage = Math.max(1, currentPage - 1);
+                let endPage = Math.min(totalPages, startPage + 2);
+
+                if (endPage === totalPages) {
+                    startPage = Math.max(1, totalPages - 2);
+                }
+
+                // Nếu không bắt đầu từ trang 1, thêm dấu "..." trước
+                if (startPage > 1) {
+                    const firstPageLi = document.createElement("li");
+                    firstPageLi.className = "page-item" + (1 === currentPage ? " active" : "");
+                    firstPageLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(event, 1)">1</a>`;
+                    pagination.appendChild(firstPageLi);
+
+                    if (startPage > 2) {
+                        const dotsLi = document.createElement("li");
+                        dotsLi.className = "page-item disabled";
+                        dotsLi.innerHTML = `<span class="page-link">...</span>`;
+                        pagination.appendChild(dotsLi);
+                    }
+                }
+
+                // Hiển thị các trang gần trang hiện tại
+                for (let i = startPage; i <= endPage; i++) {
+                    const li = document.createElement("li");
+                    li.className = "page-item" + (i === currentPage ? " active" : "");
+                    li.innerHTML = `<a class="page-link" href="#" onclick="changePage(event, ${i})">${i}</a>`;
+                    pagination.appendChild(li);
+                }
+
+                // Nếu không kết thúc ở trang cuối, thêm dấu "..." và trang cuối
+                if (endPage < totalPages) {
+                    if (endPage < totalPages - 1) {
+                        const dotsLi = document.createElement("li");
+                        dotsLi.className = "page-item disabled";
+                        dotsLi.innerHTML = `<span class="page-link">...</span>`;
+                        pagination.appendChild(dotsLi);
+                    }
+
+                    const lastPageLi = document.createElement("li");
+                    lastPageLi.className = "page-item" + (totalPages === currentPage ? " active" : "");
+                    lastPageLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(event, ${totalPages})">${totalPages}</a>`;
+                    pagination.appendChild(lastPageLi);
+                }
             }
 
             // Nút Next
@@ -510,10 +751,11 @@
         // Hàm tìm kiếm
         window.searchExercises = function () {
             const searchInput = document.getElementById("searchInput").value.toLowerCase();
+
+            // Lọc các hàng dựa trên từ khóa tìm kiếm
             filteredRows = rows.filter(row => {
-                const exerciseName = row.cells[0].textContent.toLowerCase(); // Cột Exercise Name
-                const attendant = row.cells[4].textContent.toLowerCase();
-                return exerciseName.includes(searchInput) || attendant.includes(searchInput);
+                const exerciseName = row.cells[0].textContent.toLowerCase();
+                return exerciseName.includes(searchInput);
             });
 
             currentPage = 1; // Reset về trang đầu tiên sau khi tìm kiếm
@@ -525,26 +767,24 @@
             displayRows(currentPage);
         }
     });
-</script>
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-    function showCodeSweetAlert(button) {
+    function showCodeModal(button) {
         let code = button.getAttribute("data-code") || "// No code submitted";
-        Swal.fire({
-            title: "Submitted Code",
-            html: `<pre style="text-align: left; max-height: 400px; overflow-y: auto;"><code>${code}</code></pre>`,
-            showCloseButton: true,
-            showConfirmButton: false,
-            customClass: {
-                popup: 'swal-wide'
-            }
-        });
+        const codeContent = document.getElementById("codeContent");
+        const modalElement = document.getElementById('codeModal');
+
+        if (!modalElement) {
+            console.error("Modal element not found!");
+            return;
+        }
+
+        codeContent.textContent = code;
+        Prism.highlightElement(codeContent);
+
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
     }
-</script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    // Thêm hàm toggle dark mode
+
     function toggleDarkMode() {
         const body = document.body;
         const button = document.getElementById('darkModeToggle');
@@ -567,15 +807,13 @@
             document.getElementById('darkModeToggle').innerHTML = '<i class="bi bi-sun me-1"></i> Light Mode';
         }
     });
-</script>
-<script>
+
     function printDashboard() {
         document.querySelectorAll('.hidden-box, nav, footer, .btn, select').forEach(el => el.style.display = 'none');
         window.print();
         document.querySelectorAll('.hidden-box, nav, footer, .btn, select').forEach(el => el.style.display = '');
     }
-</script>
-<script>
+
     document.addEventListener("DOMContentLoaded", function () {
         // Đăng ký ChartDataLabels nếu có
         if (typeof ChartDataLabels !== 'undefined') {
@@ -631,9 +869,11 @@
                         console.error("⚠ API trả về dữ liệu không hợp lệ:", data);
                         return;
                     }
+
                     // Xác định màu dựa trên dark mode
                     const isDarkMode = document.body.classList.contains('dark-mode');
-                    const labelColor = isDarkMode ? '#f0f2f5' : '#000'; // Trắng cho dark mode, đen cho light mode
+                    const labelColor = isDarkMode ? '#f0f2f5' : '#000';
+
                     // 1️⃣ Biểu đồ Chủ đề (Topic Chart)
                     const languageCanvas = document.getElementById('lineChart');
                     if (!languageCanvas) {
@@ -643,7 +883,6 @@
                     const languageCtx = languageCanvas.getContext('2d');
 
                     let languageLabels = Object.keys(data.topicChartData || {}).filter(lang => lang !== "All Languages");
-                    // Đưa "All Languages" xuống cuối danh sách nếu tồn tại
                     if (data.topicChartData["All Languages"]) {
                         languageLabels.push("All Languages");
                     }
@@ -651,7 +890,6 @@
                     let unassessedValues = languageLabels.map(lang => data.topicChartData[lang]?.notAssessed ?? 0);
                     let totalValues = languageLabels.map(lang => data.topicChartData[lang]?.total ?? 0);
 
-                    // Kiểm tra và thêm dữ liệu "All Languages"
                     if (data.topicChartData["All Languages"] && !languageLabels.includes("All Languages")) {
                         languageLabels.push("All Languages");
                         assessedValues.push(data.topicChartData["All Languages"].assessed);
@@ -685,11 +923,11 @@
                                     color: labelColor,
                                     font: { weight: 'bold', size: 14 }
                                 },
-                                tooltip: { //  hover
+                                tooltip: {
                                     callbacks: {
                                         label: function (tooltipItem) {
                                             const value = tooltipItem.raw || 0;
-                                            return value > 1 ? `${value} exercises` : `${value} exercise`; // Hiển thị số liệu + chữ "exercises"
+                                            return value > 1 ? `${value} exercises` : `${value} exercise`;
                                         }
                                     }
                                 }
@@ -738,20 +976,19 @@
                                         const dataset = ctx.chart.data.datasets[0].data;
                                         const total = dataset.reduce((a, b) => a + b, 0);
                                         const percentage = total > 0 ? ((value / total) * 100).toFixed(1) + "%" : "";
-                                        return value > 0 ? percentage : ""; // Nếu giá trị > 0 thì hiển thị, ngược lại ẩn
+                                        return value > 0 ? percentage : "";
                                     },
                                     font: { weight: 'bold', size: 14 },
                                     color: labelColor
                                 },
-                                tooltip: { // 🎯 Cập nhật tooltip khi hover
+                                tooltip: {
                                     callbacks: {
                                         label: function (tooltipItem) {
                                             const value = tooltipItem.raw || 0;
-                                            return value > 1 ? `${value} exercises` : `${value} exercise`; // Hiển thị số liệu + chữ "exercises"
+                                            return value > 1 ? `${value} exercises` : `${value} exercise`;
                                         }
                                     }
                                 }
-
                             }
                         }
                     });
@@ -773,6 +1010,7 @@
         } else {
             console.error("❌ Không tìm thấy phần tử #languageFilter");
         }
+
         // Cập nhật biểu đồ khi toggle dark mode
         const darkModeToggle = document.getElementById('darkModeToggle');
         if (darkModeToggle) {
@@ -781,7 +1019,6 @@
             });
         }
     });
-
 </script>
 </body>
 </html>

@@ -32,7 +32,7 @@ public interface ExerciseRepository extends PagingAndSortingRepository<Exercise,
     List<Exercise> searchByTitle(@Param("title") String title);
 
 
-    @Query("SELECT e FROM Exercise e WHERE e.name LIKE %:searchQuery%")
+    @Query("SELECT e FROM Exercise e WHERE LOWER(TRIM(e.name)) LIKE LOWER(CONCAT('%', LOWER(:searchQuery), '%'))")
     Page<Exercise> searchExercises(@Param("searchQuery") String searchQuery, Pageable pageable);
 
     @Query("SELECT e FROM Exercise e " +

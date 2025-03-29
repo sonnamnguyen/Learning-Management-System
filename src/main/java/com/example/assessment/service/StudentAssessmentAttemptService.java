@@ -26,9 +26,11 @@ public class StudentAssessmentAttemptService {
 
     @Autowired
     private UserRepository userRepository;
-    public List<StudentAssessmentAttempt> getListAttempt(){
+
+    public List<StudentAssessmentAttempt> getListAttempt() {
         return repository.findAll();
     }
+
     public StudentAssessmentAttempt save(StudentAssessmentAttempt attempt) {
         return repository.save(attempt);
     }
@@ -36,6 +38,11 @@ public class StudentAssessmentAttemptService {
     public Optional<StudentAssessmentAttempt> findById(Long id) {
         return repository.findById(id);
     }
+
+    public StudentAssessmentAttempt findStudentAssessmentAttemptById(Long id) {
+        return repository.findById(id).orElse(null);
+    }
+
 
     public List<StudentAssessmentAttempt> findByAssessment_Id(Long assessmentId) {
         return repository.findByAssessment_Id(assessmentId);
@@ -80,14 +87,15 @@ public class StudentAssessmentAttemptService {
         return savedAttempt;
     }
 
-    public StudentAssessmentAttempt saveTestAttempt(Long attemptId, int timeTaken, int quizScore,int scoreEx, JsonNode proctoringData) {
+    public StudentAssessmentAttempt saveTestAttempt(Long attemptId, int timeTaken, int quizScore, int scoreEx, JsonNode proctoringData) {
         StudentAssessmentAttempt testAttempt = repository.findById(attemptId).orElseThrow(()
                 -> new RuntimeException("Attempt not found!"));
         Assessment assessment = assessmentRepository.findById(testAttempt.getAssessment().getId())
                 .orElseThrow(() -> new RuntimeException("Assessment not found!"));
         double quizRatio = assessment.getQuizScoreRatio();
         double exerciseRatio = assessment.getExerciseScoreRatio();
-        double scoreAss = (quizScore * quizRatio / 100.0) + (scoreEx * exerciseRatio / 100.0);
+        double scoreAss = 0;
+        scoreAss = (quizScore * quizRatio / 100.0) + (scoreEx * exerciseRatio / 100.0);
         testAttempt.setDuration(timeTaken);
         testAttempt.setScoreQuiz(quizScore);
         testAttempt.setScoreEx(scoreEx);

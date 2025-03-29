@@ -180,12 +180,11 @@ public class QuizController {
 
     @PostMapping("/create")
     @Transactional
-    public String createQuiz(@Valid @ModelAttribute Quiz quizz,
+    public String createQuiz(@Valid @RequestBody String quiz,
                              @RequestParam(value = "tagIds", required = false) List<Long> tagIds,
                              @RequestParam(value = "newTagNames", required = false) List<String> newTagNames,
                              BindingResult result, Model model) {
-        ObjectMapper mapper = new ObjectMapper();
-
+        Quiz quizz = quizService.jsonToQuiz(quiz);
 
         quizz.validateTime(result);
 
@@ -544,7 +543,7 @@ public class QuizController {
             @RequestParam MultiValueMap<String, String> responses,
             @RequestParam("elapsedTime") int elapsedTime,
             @RequestParam("questionIds") List<String> questionIds,
-            @RequestParam StudentAssessmentAttempt assessmentStudentAttemptId,
+            @RequestParam(required = false) StudentAssessmentAttempt studentAssessmentAttemptId,
             Model model) {
 
         System.out.println("Dữ liệu nhận được từ form: " + questionIds);
@@ -567,8 +566,7 @@ public class QuizController {
         int totalTime = quiz.getDuration();
         int remainingTime = (totalTime * 60) - elapsedTime;
 
-        // ✅ Tính điểm sử dụng MultiValueMap
-        double score = quizService.calculateScore(questionIds, assessmentId, responses, user, assessmentStudentAttemptId);
+        double score = quizService.calculateScore(questionIds, assessmentId, responses, user,studentAssessmentAttemptId);
 
         List<Question> questions = questionRepository.findAllById(
                 questionIds.stream().map(Long::parseLong).collect(Collectors.toList())
@@ -576,28 +574,23 @@ public class QuizController {
 
         int correctCount = 0;
         Map<Long, List<Long>> selectedAnswers = new HashMap<>();
-        Map<Long, Long> correctAnswers = new HashMap<>();
-        List<Answer> answerList = new ArrayList<>();
+        Map<Long, String> textAnswers = new HashMap<>();
+        Map<Long, Map<Long, Double>> selectedAnswerScores = new HashMap<>(); // ✅ QuizID -> (OptionID -> Score)
+        int totalCorrectAnswers = 0;
+        int userCorrectAnswers = 0;
 
-        System.out.println("📌 Dữ liệu nhận được từ form: " + responses);
+
+        System.out.println(" Dữ liệu nhận được từ form: " + responses);
 
         for (Question question : questions) {
             List<String> selectedOptionIds = responses.get("answers[" + question.getId() + "]");
 
             if (selectedOptionIds != null && !selectedOptionIds.isEmpty()) {
                 if (question.getQuestionType().toString().equals("TEXT")) {
-                    // ✅ Xử lý câu hỏi dạng TEXT
+                    // ✅ Lưu câu trả lời dạng TEXT
                     String textAnswer = selectedOptionIds.get(0);
-
-                    Answer textResponse = new Answer();
-                    textResponse.setQuestion(question);
-                    textResponse.setAnswerText(textAnswer); // Lưu nội dung tự luận
-                    textResponse.setIsCorrect(null); // Không có đúng/sai ngay lập tức
-                    answerList.add(textResponse);
-                    answerRepository.save(textResponse);
-
+                    textAnswers.put(question.getId(), textAnswer);
                 } else {
-                    // ✅ Xử lý MCQ & SCQ (Chỉ lấy ID hợp lệ)
                     List<Long> selectedOptionLongs = selectedOptionIds.stream()
                             .filter(id -> id.matches("\\d+")) // Chỉ giữ lại số hợp lệ
                             .map(Long::parseLong)
@@ -606,42 +599,49 @@ public class QuizController {
                     selectedAnswers.put(question.getId(), selectedOptionLongs);
 
                     List<AnswerOption> correctOptions = answerOptionRepository.findCorrectAnswersByQuestionId(question.getId());
+                    List<Long> correctOptionIds = correctOptions.stream().map(AnswerOption::getId).toList();
 
-                    if (!correctOptions.isEmpty()) {
-                        correctAnswers.put(question.getId(), correctOptions.get(0).getId());
-                    }
+                    totalCorrectAnswers += correctOptionIds.size();
 
-                    boolean isCorrect = correctOptions.stream().allMatch(opt -> selectedOptionLongs.contains(opt.getId()))
-                            && selectedOptionLongs.containsAll(correctOptions.stream().map(AnswerOption::getId).toList());
-
-                    if (isCorrect) {
-                        correctCount++;
+                    for (Long selectedOptionId : selectedOptionLongs) {
+                        if (correctOptionIds.contains(selectedOptionId)) {
+                            userCorrectAnswers++;
+                        }
                     }
 
                     for (Long selectedOptionId : selectedOptionLongs) {
                         AnswerOption selectedOption = answerOptionRepository.findById(selectedOptionId).orElse(null);
                         if (selectedOption != null) {
-                            Answer answer = new Answer();
-                            answer.setSelectedOption(selectedOption);
-                            answer.setQuestion(question);
-                            answer.setAnswerText(selectedOption.getOptionText());
-                            answer.setIsCorrect(correctOptions.stream().anyMatch(opt -> opt.getId().equals(selectedOptionId)));
-                            answerList.add(answer);
-                            answerRepository.save(answer);
+                            List<Answer> answers = answerRepository.findAllByQuestionIdAndSelectedOptionId(question.getId(), selectedOptionId);
+
+                            if (question.getQuestionType() == Question.QuestionType.TEXT) {
+                                continue;
+                            }
+
+                            Map<Long, Double> optionScores = selectedAnswerScores.getOrDefault(question.getId(), new HashMap<>());
+
+                            for (Answer answer : answers) {
+                                if (answer.getIsCorrect() != null && answer.getIsCorrect()) {
+                                    optionScores.put(answer.getSelectedOption().getId(), answer.getScore());
+                                }
+                            }
+
+                            selectedAnswerScores.put(question.getId(), optionScores);
                         }
                     }
                 }
             }
         }
 
+
         TestSession testSession = testSessionRepository.findTopByUserOrderByStartTimeDesc(user);
         if (testSession == null) {
             throw new NotFoundException("TestSession not found");
         }
+
         System.out.println(" selectedAnswers lưu lại:");
         selectedAnswers.forEach((key, value) -> System.out.println("Câu " + key + ": " + value));
 
-        testSession.setAnswers(answerList);
         testSession.setEndTime(LocalDateTime.now());
         testSessionRepository.save(testSession);
 
@@ -656,8 +656,14 @@ public class QuizController {
         participant.setTimeEnd(testSession.getEndTime());
         quizParticipantRepository.save(participant);
 
+        System.out.println(" Selected Answers: " + selectedAnswers);
+
         model.addAttribute("correctAnswers", correctCount);
         model.addAttribute("selectedAnswers", selectedAnswers);
+        model.addAttribute("textAnswers", textAnswers);
+        model.addAttribute("selectedAnswerScores", selectedAnswerScores);
+        model.addAttribute("correctAnswers", userCorrectAnswers);
+        model.addAttribute("totalCorrectAnswers", totalCorrectAnswers);
         model.addAttribute("questions", questions);
         model.addAttribute("quizId", quizId);
         model.addAttribute("score", score);
@@ -668,6 +674,7 @@ public class QuizController {
 
         return "layout";
     }
+
 
 
 
@@ -925,6 +932,7 @@ public class QuizController {
             return null;
         }
     }
+
 
 
 

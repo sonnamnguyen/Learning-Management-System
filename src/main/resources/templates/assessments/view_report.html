@@ -1,157 +1,106 @@
 <div class="main-container px-5 flex-grow-1">
-    <h1 class="text-center">Assessments</h1>
-
-    <div>
-        <!-- Header Section -->
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <!-- Reduced bottom margin -->
-            <div class="mb-3">
-                <h1 class="text-center mb-1">Assessment Report</h1>
-                <!--                Reduced font size-->
-                <span class="text-primary" style="font-size: 1rem;">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <!-- Reduced bottom margin -->
+        <div class="mb-3">
+            <h1 class="text-center mb-1">Assessment Report</h1>
+            <!--                Reduced font size-->
+            <span class="text-primary" style="font-size: 1rem;">
                     <i class="bi bi-box-arrow-up-right"></i>
                     ASM
                 </span>
-
-            </div>
-            <div class="d-flex">
-                <!-- Thêm nút Edit Score -->
-
-
-                <a href="/assessments" class="btn btn-outline-secondary" style="font-size: 0.875rem;">
-                    Back to List
-                </a>
-            </div>
         </div>
-
-
-        <hr>
-
-        <div class="row">
-            <!--            Use Information on the left, using sticky positioning-->
-            <div class="col-md-3" style="padding-right: 0; position: sticky; top: 0; height: 100vh; overflow-y: auto;">
-                <h6 style="font-size: 0.875rem;" th:text="${attemptInfo.email}"></h6>
-                <!--                Reduced font size-->
-                <p style="font-size: 0.875rem; margin-bottom: 0;">
-                    Joined on: <span
-                        th:text="${#temporals.format(attemptInfo.attemptDate, 'dd-MM-yyyy, hh:mm a')}"></span>
-                </p>
-                <!--                No margin-bottom-->
-                <p style="font-size: 0.875rem; margin-top: 0;">
-                    Invite by: <span th:text="${attemptInfo.assessment.createdBy}"></span>
-                </p>
-
-                <!--                Links container-->
-                <nav class="nav flex-column">
-                    <a href="#score-point" class="fw-bold text-secondary text-decoration-none mb-2 link-hover"
-                       style="border-left: 4px solid gray; padding-left: 10px; font-size: 0.875rem; height: 100% !important;">
-                        Score
-                    </a>
-                    <a href="#score-card" class="fw-bold text-secondary text-decoration-none mb-2 link-hover"
-                       style="border-left: 4px solid gray; padding-left: 10px; font-size: 0.875rem; height: 100% !important;">
-                        Score Card
-                    </a>
-                    <a href="#quiz-result" class="fw-bold text-secondary text-decoration-none mb-2 link-hover"
-                       style="border-left: 4px solid gray; padding-left: 10px; font-size: 0.875rem; height: 100% !important;">
-                        Quiz Result
-                    </a>
-                </nav>
-            </div>
-
-            <!--            Report-->
-            <div class="col-md-9">
-                <!--                Score and Cheating section-->
-                <h4 id="score-point" style="margin-left: -10px; font-size: 1.25rem; margin-bottom: 2rem;">
-                    Score
-                </h4>
-                <div class="row">
-                    <!--                    Score card-->
-                    <div class="col-md-6">
-                        <div class="card shadow-sm h-100">
-                            <!--                            Card header-->
-                            <div class="card-header d-flex justify-content-between align-items-center"
-                                 style="background-color: #20c997; color: white; font-weight: bold; text-align: center; padding: 10px;">
-                                <span>Scores</span>
-                                <span style="width: 20%">Average 2.0%</span>
-                                <span style="width: 20%">Qualifying 60%</span>
-                                <span style="width: 20%; font-weight: bold;">Final Score 68%</span>
+        <div class="d-flex">
+            <!-- Thêm nút Edit Score -->
+            <a href="/assessments" class="btn btn-outline-secondary" style="font-size: 0.875rem;">
+                Back to List
+            </a>
+        </div>
+    </div>
+    <hr>
+    <div class="row">
+        <!--            Use Information on the left, using sticky positioning-->
+        <div class="col-md-3" style="padding-right: 0; position: sticky; top: 0;">
+            <h6 style="font-size: 0.875rem;" th:text="${attemptInfo.email}"></h6>
+            <!--                Reduced font size-->
+            <p style="font-size: 0.875rem; margin-bottom: 0;">
+                Joined on: <span
+                    th:text="${#temporals.format(attemptInfo.attemptDate, 'dd-MM-yyyy, hh:mm a')}"></span>
+            </p>
+            <!--                No margin-bottom-->
+            <p style="font-size: 0.875rem; margin-top: 0;">
+                Invite by: <span th:text="${attemptInfo.assessment.createdBy}"></span>
+            </p>
+        </div>
+        <!--            Report-->
+        <div class="col-md-9">
+            <div class="row">
+                <!--                    Score card-->
+                <div class="col-md-6">
+                    <div class="card shadow-sm h-100">
+                        <!--                            Card header-->
+                        <div class="card-header d-flex"
+                             style="background-color: #20c997; color: white; font-weight: bold; text-align: center; padding: 10px;">
+                            <span>Result</span>
+                        </div>
+                        <!--                            Card body-->
+                        <div class="card-body"
+                             style="background-color: #e8f5f4; display: flex; flex-direction: column; justify-content: space-evenly; align-items: center; height: 100%;">
+                            <!--                                Score Quiz percent-->
+                            <div class="d-flex justify-content-between align-items-center w-100"
+                                 style="text-align: center;">
+                                <span>Score Quiz</span>
+                                <span style="color: #6c757d; font-size: 0.9rem;"
+                                      th:text="${attemptInfo.scoreQuiz}"></span>
                             </div>
-
-                            <!--                            Card body-->
-                            <div class="card-body"
-                                 style="background-color: #e8f5f4; display: flex; flex-direction: column; justify-content: space-evenly; align-items: center; height: 100%;">
-                                <!--                                Challenges percent-->
-                                <div class="d-flex justify-content-between align-items-center w-100"
-                                     style="text-align: center">
-                                    <span>Challenges</span>
-                                    <span style="font-weight: bold;">68%</span>
-                                </div>
-
-                                <hr class="w-100 my-1">
-
-                                <!--                                Score Quiz percent-->
-                                <div class="d-flex justify-content-between align-items-center w-100"
-                                     style="text-align: center;">
-                                    <span>Score Quiz</span>
-                                    <span style="color: #6c757d; font-size: 0.9rem;"
-                                          th:text="${attemptInfo.scoreQuiz}"></span>
-                                </div>
-
-                                <hr class="w-100 my-1">
-
-                                <!--                                Score code percent-->
-                                <div class="d-flex justify-content-between align-items-center w-100"
-                                     style="text-align: center;">
-                                    <span>Score Exercise</span>
-                                    <span style="color: #6c757d; font-size: 0.9rem;"
-                                          th:text="${attemptInfo.scoreEx }"></span>
-                                </div>
-
-                                <hr class="w-100 my-1">
-
-                                <!--                                Personality test-->
-                                <div class="d-flex justify-content-between align-items-center w-100"
-                                     style="text-align: center;">
-                                    <span>Score Assessment</span>
-                                    <span style="color: #6c757d; font-size: 0.9rem;"
-                                          th:text="${attemptInfo.scoreAss}"></span>
-                                </div>
-
+                            <hr class="w-100 my-1">
+                            <!--                                Score code percent-->
+                            <div class="d-flex justify-content-between align-items-center w-100"
+                                 style="text-align: center;">
+                                <span>Score Exercise</span>
+                                <span style="color: #6c757d; font-size: 0.9rem;"
+                                      th:text="${attemptInfo.scoreEx }"></span>
+                            </div>
+                            <hr class="w-100 my-1">
+                            <!--                                Personality test-->
+                            <div class="d-flex justify-content-between align-items-center w-100"
+                                 style="text-align: center;">
+                                <span>Score Assessment</span>
+                                <span style="color: #6c757d; font-size: 0.9rem;"
+                                      th:text="${attemptInfo.scoreAss}"></span>
                             </div>
                         </div>
                     </div>
-                    <!--                    Cheating card-->
-                    <div class="col-md-6">
-                        <div class="card shadow-sm">
-                            <div class="card-header d-flex justify-content-between align-items-center"
-                                 style="background-color: #6c757d; color: white; font-weight: bold; text-align: center; padding: 10px;">
-                                <span style="width: 20%;">Cheating</span>
-                                <span style="width: 20%; font-weight: bold;">
-                                    Overall
-                                    <br>
-                                    No issues
-                                </span>
-                            </div>
-                            <div class="card-body">
-                                <!--                                Leaving tab-->
-                                <div class="d-flex justify-content-between align-items-center mb-3">
+                </div>
+                <!--                    Cheating card-->
+                <div class="col-md-6">
+                    <div class="card shadow-sm">
+                        <div class="card-header d-flex justify-content-between align-items-center"
+                             style="background-color: #6c757d; color: white; font-weight: bold; text-align: center; padding: 10px;">
+                            <span style="width: 20%;">Cheating</span>
+                        </div>
+                        <div class="card-body">
+                            <!--                                Leaving tab-->
+                            <div class="d-flex justify-content-between align-items-center mb-3">
                                     <span>
                                         <i class="fas fa-external-link-alt me-2"></i>
                                         Leaving tab
                                     </span>
-                                    <span style="color: #6c757d; font-size: 0.9rem;">
+                                <span style="color: #6c757d; font-size: 0.9rem;">
                                         <span th:text="${tabLeaveCount}"></span> times
                                     </span>
-                                </div>
-                                <hr class="my-1">
-                                <!--                                Pasted check-->
-                                <div class="d-flex justify-content-between align-items-center mb-3">
+                            </div>
+                            <hr class="my-1">
+                            <!--                                Pasted check-->
+                            <div class="d-flex justify-content-between align-items-center mb-3">
                                     <span>
                                         <i class="fas fa-cut me-2"></i>
                                         Pasted
                                         <span style="font-style: italic; color: #6c757d;">from external sources</span>
                                     </span>
-                                    <span style="color: #6c757d; font-size: 0.9rem;">Not detected</span>
+                                    <span style="color: #6c757d; font-size: 0.9rem;">
+                                        <span th:text="${pasteCount}"></span> times
+                                    </span>
                                 </div>
                                 <hr class="my-1">
                                 <!--                                Copied check-->
@@ -161,7 +110,9 @@
                                         Copied
                                         <span style="font-style: italic; color: #6c757d;">from internal sources</span>
                                     </span>
-                                    <span style="color: #6c757d; font-size: 0.9rem;">Not detected</span>
+                                    <span style="color: #6c757d; font-size: 0.9rem;">
+                                        <span th:text="${copyCount}"></span> times
+                                    </span>
                                 </div>
                                 <hr class="my-1">
                                 <!--                                AI usage-->
@@ -170,295 +121,58 @@
                                         <i class="fas fa-robot me-2"></i>
                                         AI usage
                                     </span>
-                                    <span style="color: #6c757d; font-size: 0.9rem;">Not detected</span>
-                                </div>
-                                <hr class="my-1">
-                                <!--                                Violation Face Count-->
-                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span style="color: #6c757d; font-size: 0.9rem;">Not detected</span>
+                            </div>
+                            <hr class="my-1">
+                            <!--                                Violation Face Count-->
+                            <div class="d-flex justify-content-between align-items-center mb-3">
                                     <span>
                                         <i class="fas fa-user-secret me-2"></i>
                                         Violation Face Count
                                         <i class="fas fa-info-circle" style="color: #6c757d;"></i>
                                     </span>
-                                    <span style="color: #6c757d; font-size: 0.9rem;">
+                                <span style="color: #6c757d; font-size: 0.9rem;">
                                         <span th:text="${violationFaceCount}"></span> times
                                     </span>
-                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-                <hr style="margin-top: 2rem; margin-bottom: 3rem;">
-                <!--                Score card section-->
-                <div class="score-card-section mt-3">
-                    <div>
-                        <h4 style="font-size: 1.25rem; margin-bottom: 2rem;" id="score-card">
-                            Score card
-                        </h4>
-                    </div>
-
-                    <div class="col-md-12">
-                        <div class="card" style="max-width: 100%; margin: 0 auto; padding: 0;">
-                            <div class="card-header d-flex justify-content-around" style="padding: 10px;">
-                                <!--                                Algorithm section-->
-                                <div class="text-center" id="algorithm-skill">
-                                    <h6 class="mb-1 bg-light fw-bold small-title">Algorithm skill</h6>
-                                    <div class="d-flex justify-content-center">
-                                        <!--                                        Stars for rating-->
-                                        <button type="button" class="btn btn-link star" data-value="1">
-                                            <i class="bi bi-star" style="font-size: 13px;"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-link star" data-value="2">
-                                            <i class="bi bi-star" style="font-size: 13px;"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-link star" data-value="3">
-                                            <i class="bi bi-star" style="font-size: 13px;"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-link star" data-value="4">
-                                            <i class="bi bi-star" style="font-size: 13px;"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-link star" data-value="5">
-                                            <i class="bi bi-star" style="font-size: 13px;"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <!--                                Vertical Separator-->
-                                <div class="vr" style="height: 50px; width: 2px;"></div>
-                                <!--                                Code Quality section-->
-                                <div class="text-center" id="code-quality">
-                                    <h6 class="mb-1 bg-light fw-bold small-title">Code Quality</h6>
-                                    <div class="d-flex justify-content-center">
-                                        <!--                                        Stars for rating-->
-                                        <button type="button" class="btn btn-link star" data-value="1">
-                                            <i class="bi bi-star" style="font-size: 13px;"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-link star" data-value="2">
-                                            <i class="bi bi-star" style="font-size: 13px;"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-link star" data-value="3">
-                                            <i class="bi bi-star" style="font-size: 13px;"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-link star" data-value="4">
-                                            <i class="bi bi-star" style="font-size: 13px;"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-link star" data-value="5">
-                                            <i class="bi bi-star" style="font-size: 13px;"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <!--                                Vertical Separator-->
-                                <div class="vr" style="height: 50px; width: 2px;"></div>
-                                <!--                                TypeScript Skill section-->
-                                <div class="text-center" id="typescript-skill">
-                                    <h6 class="mb-1 bg-light fw-bold small-title">TypeScript skills</h6>
-                                    <div class="d-flex justify-content-center">
-                                        <!--                                        Stars for rating-->
-                                        <button type="button" class="btn btn-link star" data-value="1">
-                                            <i class="bi bi-star" style="font-size: 13px;"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-link star" data-value="2">
-                                            <i class="bi bi-star" style="font-size: 13px;"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-link star" data-value="3">
-                                            <i class="bi bi-star" style="font-size: 13px;"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-link star" data-value="4">
-                                            <i class="bi bi-star" style="font-size: 13px;"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-link star" data-value="5">
-                                            <i class="bi bi-star" style="font-size: 13px;"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            <!--                            Private Note section-->
-                            <div class="card-body p-2">
-                                <div class="card">
-                                    <div class="card-header d-flex align-items-center p-2">
-                                        <h5 class="mb-0 small-title">Private Notes</h5>
-                                        <div class="vr mx-3" style="height: 30px; width: 2px;"></div>
-                                        <!--                                        Text Formatting Buttons-->
-                                        <div class="ml-auto" style="font-size: 12px;">
-                                            <button class="btn btn-secondary btn-sm"
-                                                    onclick="document.execCommand('bold')">
-                                                <b>B</b>
-                                            </button>
-                                            <button class="btn btn-secondary btn-sm"
-                                                    onclick="document.execCommand('italic')">
-                                                <i>I</i>
-                                            </button>
-                                            <button class="btn btn-secondary btn-sm"
-                                                    onclick="document.execCommand('underline')">
-                                                <u>U</u>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div class="card-body p-2">
-                                        <div id="editor" class="form-control" contenteditable="true"
-                                             style="min-height: 100px; border: 1px solid #ccc; padding: 1px;"
-                                             aria-placeholder="Private notes to share with your team...">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <!--                            Save button-->
-                            <div class="card-footer text-center">
-                                <button id="saveRatings" class="btn btn-primary">Save Ratings</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <hr style="margin-top: 3rem; margin-bottom: 3rem;">
-                <!--                Quiz Result section-->
-                <h4 style="font-size: 1.25rem; margin-bottom: 2rem;" id="quiz-result">
-                    Results
-                </h4>
-                <!--                Quiz Result Card-->
-                <div class="col-md-12 mb-4">
-                    <div class="card card-body d-flex align-items-left mb-4">
-                        <div class="d-flex align-items-center justify-content-between">
-                            <!-- Phần bên trái: Title & nút Edit -->
-                            <div>
-                                <!-- Tiêu đề Assessment -->
-                                <p class="mb-0 d-flex align-items-center">
-                                    <b style="line-height: 1;">ASSESSMENT</b>
-
-                                    <!-- Nút mở modal Edit Score -->
-                                    <button type="button"
-                                            class="btn btn-link p-0 ms-1 d-flex align-items-center"
-                                            style="font-size: 0.875rem; color: #6c757d; text-decoration: none; box-shadow: none; line-height: 1; position: relative; top: 1px;"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#editScoreModal">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                </p>
-
-                                <!-- Dòng chứa nút View Details và thông tin Duration -->
-                                <div class="d-flex align-items-center">
-                                    <!-- Thay thẻ <a> bằng <button> để mở modal View Details -->
-                                    <button type="button"
-                                            class="btn btn-link p-0"
-                                            style="font-size: 0.875rem; color: #0d6efd; text-decoration: none; box-shadow: none;"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#quizDetailModal">
-                                        View Details
-                                    </button>
-                                    <span class="mx-2">|</span>
-                                    <span th:text="${attemptInfo.duration} + ' seconds'"></span>
-                                    <span class="mx-2">|</span>
-                                </div>
-                            </div>
-
-                            <!-- Phần bên phải: Score Box -->
-                            <div class="d-flex align-items-center ms-auto">
-                                <!-- Khung điểm -->
-                                <div class="bg-success text-white rounded d-flex justify-content-center align-items-center"
-                                     style="width: 60px; height: 50px;">
-                                    <span th:text="${attemptInfo.scoreQuiz}">0</span>
-                                </div>
-
-                                <div class="vr mx-3" style="height: 60px;"></div>
-
-                                <!-- Thông tin chung -->
-                                <div>
-                                    <div>
-                                        <span>
-                                            <b><!-- Có thể chèn gì đó nếu cần --></b>
-                                        </span>
-                                    </div>
-                                    <div>
-                                    <span>
-                                        <i class="bi bi-ui-checks"></i>
-                                        <b>Multiple choice</b>
-                                    </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
+            <!--                Quiz Result Card-->
+            <div class="col-md-12 mb-4" style="margin-top: 20px">
+                <div class="card card-body d-flex align-items-left mb-4">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <!--                            Quiz Title and Details-->
+                        <div>
+                            <p class="mb-0 d-flex align-items-center">
+                                <b style="line-height: 1;">Attempt</b>
+                                <button type="button" class="btn btn-link p-0 ms-1 d-flex align-items-center"
+                                        style="font-size: 0.875rem; color: #6c757d; text-decoration: none; box-shadow: none; line-height: 1; position: relative; top: 1px;"
+                                        data-bs-toggle="modal" data-bs-target="#editScoreModal">
+                                    <i class="fas fa-edit"></i>
+                                </button>
 
-    <!-- Modal: quizDetailModal -->
-    <div class="modal fade" id="quizDetailModal"
-         tabindex="-1"
-         aria-labelledby="quizDetailModalLabel"
-         aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" style="max-width: 80%; width: 80%;">
-            <div class="modal-content">
-
-                <!-- Header của Modal -->
-                <div class="modal-header">
-                    <h5 class="modal-title" id="quizDetailModalLabel">Detailed Quiz Review</h5>
-                    <button type="button" class="btn-close"
-                            data-bs-dismiss="modal"
-                            aria-label="Close">
-                    </button>
-                </div>
-
-                <!-- Body của Modal -->
-                <div class="modal-body">
-                    <div class="scrollable-table" style="max-height: 600px; overflow-y: auto;">
-                        <!--
-                            Lặp qua danh sách câu hỏi & câu trả lời
-                            tương tự như bạn đang làm ở ngoài
-                        -->
-                        <div th:each="question, iterStat : ${questions}"
-                             class="mb-4 border-bottom pb-3">
-
-                            <p class="fw-bold">
-                                <span th:text="${iterStat.count}"></span>.
-                                <span th:text="${question?.questionText ?: 'Question text not available'}">
-                                Question text
-                            </span>
                             </p>
-
-                            <ul class="list-group">
-                                <li class="list-group-item"
-                                    th:each="ans : ${questionAnswerOptionsMap[question.id] != null
-                                               ? questionAnswerOptionsMap[question.id]
-                                               : T(java.util.Collections).emptyList()}">
-                                    <span th:text="${ans.optionText}">Answer Option Text</span>
-
-                                    <!-- Nếu người dùng chọn ans này -->
-                                    <span th:if="${userAnswersMap != null
-                                             and userAnswersMap[question.id] == ans.id}"
-                                          class="badge ms-2"
-                                          style="background-color: #85C8FF;">
-                                    Your Answer
-                                </span>
-
-                                    <!-- Nếu ans.isCorrect == true -->
-                                    <span th:if="${ans.isCorrect}"
-                                          class="badge bg-success ms-2">
-                                    Correct
-                                </span>
-                                </li>
-                                <li class="list-group-item text-muted"
-                                    th:if="${#lists.isEmpty(questionAnswerOptionsMap[question.id])}">
-                                    No answers assigned.
-                                </li>
-                            </ul>
-                        </div> <!-- end each question -->
-
-                    </div> <!-- end scrollable-table -->
-                </div>
-
-                <!-- Footer của Modal -->
-                <div class="modal-footer">
-                    <button type="button"
-                            class="btn btn-secondary"
-                            data-bs-dismiss="modal">
-                        Close
-                    </button>
+                            <div class="d-flex align-items-center">
+                                <a href="#" class="btn btn-link p-0">
+                                    Attempt detail
+                                </a>
+                                <span class="mx-2">|</span>
+                                <a href="#" class="btn btn-link p-0">
+                                    Quiz Details
+                                </a>
+                                <span class="mx-2">|</span>
+                                <a href="#" class="btn btn-link p-0">
+                                    Exercise Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-
 
     <!-- **MODAL STRUCTURE - Add this right before the closing `</div>` of `main-container` or at the end of `body`** -->
     <div class="modal fade" id="editScoreModal" tabindex="-1" aria-labelledby="editScoreModalLabel" aria-hidden="true">

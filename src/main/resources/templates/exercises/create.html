@@ -4,6 +4,8 @@
     <title>Add New Exercise</title>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="path/to/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v6.7.2/css/all.css">
     <link
             rel="stylesheet"
             href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
@@ -210,6 +212,88 @@
             color: #6c757d;
             font-style: italic;
         }
+
+        .tag-dropdown-content {
+            position: relative;
+        }
+
+        .tag-checkbox-list {
+            max-height: 200px; /* Chiều cao tối đa cho danh sách checkbox */
+            overflow-y: auto; /* Thêm thanh cuộn nếu cần */
+            padding-bottom: 40px; /* Để nút Clear All không bị che khuất */
+        }
+
+        .clear-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 10px; /* Đệm để button trông cân đối */
+            border-radius: 5px; /* Bo góc nhẹ */
+            border: 1px solid #ced4da; /* Viền mặc định của btn-outline-secondary */
+            background-color: transparent; /* Nền trong suốt */
+            transition: all 0.3s ease; /* Hiệu ứng mượt mà */
+        }
+
+        /* Style cho icon broom */
+        .clear-btn .fa-broom-wide {
+            font-size: 1.2rem; /* Kích thước icon */
+            color: #ff6666; /* Màu đỏ nhẹ như yêu cầu trước đó */
+            transition: color 0.3s ease, transform 0.3s ease; /* Hiệu ứng mượt mà */
+        }
+
+        /* Hiệu ứng hover cho button */
+        .clear-btn:hover {
+            background-color: #f8f9fa; /* Màu nền nhạt khi hover */
+            border-color: #ff6666; /* Đổi màu viền thành đỏ nhẹ */
+        }
+
+        /* Hiệu ứng hover cho icon */
+        .clear-btn:hover .fa-broom-wide {
+            color: #ff3333; /* Màu đỏ đậm hơn khi hover */
+            transform: rotate(15deg); /* Xoay nhẹ icon khi hover */
+        }
+
+        /* Đảm bảo button không bị quá nhỏ */
+        .clear-btn {
+            min-width: 40px; /* Chiều rộng tối thiểu */
+            height: 38px; /* Chiều cao phù hợp với input bên cạnh */
+        }
+
+        .search-container {
+            position: relative;
+        }
+
+        .input-group.position-relative {
+            position: relative;
+        }
+
+        .form-control {
+            padding-right: 30px; /* Tạo không gian cho icon x */
+        }
+
+        /* Style cho icon x trong input */
+        .clear-search-icon {
+            position: absolute;
+            right: 50px; /* Đặt icon x trước nút Clear Tags */
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #6c757d; /* Màu xám mặc định */
+            font-size: 1rem;
+            display: none; /* Ẩn icon khi input rỗng */
+            z-index: 10; /* Đảm bảo icon nằm trên input */
+            transition: color 0.3s ease;
+        }
+
+        /* Hiển thị icon x khi input có nội dung */
+        .form-control:not(:placeholder-shown) ~ .clear-search-icon {
+            display: block;
+        }
+
+        /* Hiệu ứng hover cho icon x */
+        .clear-search-icon:hover {
+            color: #ff6666; /* Màu đỏ nhẹ khi hover */
+        }
     </style>
 </head>
 <body onload="toggleTestCaseMethod(); updateJSONSample();">
@@ -260,7 +344,7 @@
                 <div class="mb-3">
                     <div class="d-flex align-items-center gap-2 mb-2">
                         <label for="tagIds" class="form-label mb-0">Tags</label>
-                        <a href="/category" class="tag-button">+</a>
+                        <a href="/category?redirect=" id="tagRedirect" class="tag-button">+</a>
                     </div>
                     <!-- Display selected tags -->
                     <div id="selected-tags" class="mt-2"></div>
@@ -274,6 +358,30 @@
                                 Select Tags <i class="bi bi-chevron-down"></i>
                             </button>
                             <div class="tag-dropdown-content" id="tagDropdown">
+                                <div class="search-container mb-2 p-2" onclick="event.stopPropagation()">
+                                    <div class="input-group position-relative">
+                                        <input
+                                                type="text"
+                                                class="form-control"
+                                                id="tagSearch"
+                                                placeholder="Search tags..."
+                                                onkeyup="filterTags(this); toggleClearIcon()"
+                                                onfocus="event.stopPropagation()"
+                                        />
+                                        <span class="clear-search-icon"
+                                              onclick="clearSearchInput(); event.stopPropagation()">
+                                            <i class="bi bi-x-lg"></i>
+                                        </span>
+                                        <button
+                                                type="button"
+                                                class="btn btn-outline-secondary clear-btn"
+                                                onclick="clearAllCheckboxes(); event.stopPropagation()"
+                                                title="Clear Tags"
+                                        >
+                                            <i class="fa-solid fa-broom-wide"></i>
+                                        </button>
+                                    </div>
+                                </div>
                                 <div th:each="t : ${tags}" class="tag-checkbox-item">
                                     <input
                                             class="form-check-input"
@@ -292,7 +400,7 @@
                         </div>
                     </div>
 
-                    <input type="hidden" name="tag" id="tagIds" />
+                    <input type="hidden" name="tag" id="tagIds"/>
                 </div>
 
                 <!-- Programming Language -->
@@ -863,6 +971,7 @@
 
         languageSelect.addEventListener("change", updateSQLUI);
         updateSQLUI();
+        toggleClearIcon()
     });
 
     function handleTagSelection(checkbox) {
@@ -950,6 +1059,57 @@
             }
         }
     };
+
+    function clearAllTags() {
+        const checkboxes = document.querySelectorAll('#tagDropdown .form-check-input');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = false;
+            const tagSpan = document.querySelector(`span[data-value="${checkbox.value}"]`);
+            if (tagSpan) {
+                tagSpan.remove();
+            }
+        });
+        updateHiddenInput();
+    }
+
+    function filterTags(input) {
+        const filter = input.value.toLowerCase();
+        const items = document.getElementsByClassName('tag-checkbox-item');
+
+        for (let item of items) {
+            const label = item.getElementsByTagName('label')[0];
+            const text = label.textContent || label.innerText;
+            item.style.display = text.toLowerCase().includes(filter) ? '' : 'none';
+        }
+    }
+
+    function clearSearchInput() {
+        const input = document.getElementById('tagSearch');
+        input.value = ''; // Xóa nội dung input
+        filterTags(input); // Gọi lại hàm lọc để cập nhật danh sách tags
+        input.focus(); // Đưa con trỏ về input
+    }
+
+    // Hàm xóa tất cả checkbox
+    function clearAllCheckboxes() {
+        const checkboxes = document.querySelectorAll('.tag-checkbox-item input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = false;
+            handleTagSelection(checkbox); // Gọi hàm xử lý nếu cần
+        });
+    }
+
+    function toggleClearIcon() {
+        const input = document.getElementById('tagSearch');
+        const clearIcon = document.querySelector('.clear-search-icon');
+        if (input.value.length > 0) {
+            clearIcon.classList.add('active');
+        } else {
+            clearIcon.classList.remove('active');
+        }
+    }
+
+    document.getElementById("tagRedirect").href += encodeURIComponent(window.location.href);
 </script>
 </body>
 </html>

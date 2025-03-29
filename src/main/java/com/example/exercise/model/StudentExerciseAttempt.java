@@ -1,10 +1,7 @@
 package com.example.exercise.model;
 
 
-import com.example.exercise.model.Exercise;
 import com.example.user.User;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import lombok.*;

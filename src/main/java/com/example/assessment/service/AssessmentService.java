@@ -517,13 +517,59 @@ public class AssessmentService {
         return faceDectections.toArray().length;
     }
 
-    public void updateQualifiedCount(Long assessmentId, StudentAssessmentAttempt attempt) {
+    public void updateQualifiedCount(Long assessmentId) {
         Assessment assessment = assessmentRepository.findById(assessmentId)
                 .orElseThrow(() -> new RuntimeException("Assessment not found"));
+        assessment.setQualifiedCount(assessment.getQualifiedCount() + 1);
+        assessmentRepository.save(assessment); // Lưu vào DB
+    }
 
-        if (attempt.getScoreAss() >= assessment.getQualifiedCount()) {
-            assessment.setQualifiedCount(assessment.getQualifiedCount() + 1);
-            assessmentRepository.save(assessment); // Lưu vào DB
+    public double cosineSimilarityForEdit(double[] vectorA, double[] vectorB) {
+        double dotProduct = 0.0;
+        double normA = 0.0;
+        double normB = 0.0;
+
+        for (int i = 0; i < vectorA.length; i++) {
+            dotProduct += vectorA[i] * vectorB[i];
+            normA += Math.pow(vectorA[i], 2);
+            normB += Math.pow(vectorB[i], 2);
+        }
+
+        return (normA == 0 || normB == 0) ? 0 : (dotProduct / (Math.sqrt(normA) * Math.sqrt(normB)));
+    }
+
+    public Map<Integer, Set<Integer>> groupSimilarQuestions(Map<Integer, List<Integer>> duplicateQuestions) {
+        Map<Integer, Set<Integer>> groupedQuestions = new HashMap<>();
+        Set<Integer> visited = new HashSet<>();
+        int groupIndex = 0;
+
+        for (Integer startIndex : duplicateQuestions.keySet()) {
+            if (!visited.contains(startIndex)) {
+                Set<Integer> group = new HashSet<>();
+                dfs(startIndex, duplicateQuestions, visited, group);
+                groupedQuestions.put(groupIndex++, group);
+            }
+        }
+        return groupedQuestions;
+    }
+
+    private void dfs(int currentIndex, Map<Integer, List<Integer>> duplicateQuestions, Set<Integer> visited, Set<Integer> group) {
+        if (visited.contains(currentIndex)) return;
+        visited.add(currentIndex);
+        group.add(currentIndex);
+        if (duplicateQuestions.containsKey(currentIndex)) {
+            for (int neighbor : duplicateQuestions.get(currentIndex)) {
+                dfs(neighbor, duplicateQuestions, visited, group);
+            }
+        }
+    }
+
+    public void incrementAssessedCount(Long assessmentId) {
+        Optional<Assessment> assessmentOpt = assessmentRepository.findById(assessmentId);
+        if (assessmentOpt.isPresent()) {
+            Assessment assessment = assessmentOpt.get();
+            assessment.setAssessedCount(assessment.getAssessedCount() + 1);
+            assessmentRepository.save(assessment);
         }
     }
 }

@@ -34,6 +34,10 @@ public class Answer {
     @Column(name = "is_correct", nullable = true)
     private Boolean isCorrect;
 
+    @Column(name = "score")
+    private Double score;
+
+
 }
 
 // ANSWER LÀ ĐÁP ÁN CỦA NGƯỜI DÙNG

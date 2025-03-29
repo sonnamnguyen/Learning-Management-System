@@ -28,7 +28,7 @@ public class TestSession {
     private boolean checkPractice;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = true)
     private User user;
 
     private LocalDateTime startTime;
@@ -42,15 +42,13 @@ public class TestSession {
     @OneToMany(mappedBy = "testSession", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PracticeResult> practiceResults;
 
-    // Constructor với Quiz để gán checkPractice
     public TestSession(User user, Quiz quiz, Long assessmentId) {
         this.user = user;
         this.startTime = LocalDateTime.now();
-        this.assessmentId = assessmentId; // Lấy từ request
+        this.assessmentId = assessmentId;
         setCheckPracticeBasedOnQuiz(quiz);
     }
 
-    // Phương thức gán checkPractice dựa trên quizCategory
     private void setCheckPracticeBasedOnQuiz(Quiz quiz) {
         this.checkPractice = (quiz.getQuizCategory() == Quiz.QuizCategory.PRACTICE);
     }

@@ -16,6 +16,7 @@ import com.example.assessment.service.InvitedCandidateService;
 import com.example.exercise.model.ExerciseSession;
 import com.example.exercise.model.StudentExerciseAttempt;
 import com.example.exercise.service.ExerciseSessionService;
+import com.example.exercise.service.StudentExerciseAttemptService;
 import com.example.utils.CalendarEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -92,6 +93,8 @@ import weka.filters.unsupervised.attribute.StringToWordVector;
 public class AssessmentController {
     @Value("${invite.url.header}")
     private String inviteUrlHeader;
+    @Autowired
+    private StudentExerciseAttemptService studentExerciseAttemptService;
 
     @ModelAttribute("exerciseSession")
     public ExerciseSession createExerciseSession() {
@@ -184,6 +187,7 @@ public class AssessmentController {
     private AssessmentQuestionService assessmentQuestionService;
     @Autowired
     private ExerciseSessionService exerciseSessionService;
+
     @GetMapping("/create")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'SUPERADMIN')")
     public String createAssessment(Model model) {
@@ -222,6 +226,7 @@ public class AssessmentController {
         return "layout";//  return "assessments/create2";
 
     }
+
     @PostMapping("/create")
     public String createAssessment(@ModelAttribute Assessment assessment, @RequestParam(value = "exercises-ids", required = false) List<String> exerciseIdsStr, @RequestParam(value = "questions-ids", required = false) List<String> questionIdsStr, Model model) {
         Set<Exercise> selectedExercisesSet = new LinkedHashSet<>();
@@ -887,8 +892,8 @@ public class AssessmentController {
         }
 
         // Update the list of questions in the assessment
-            assessmentQuestionService.updateAssessmentQuestions(id, questionOrders);
-            System.out.println("Updated question list in the assessment.");
+        assessmentQuestionService.updateAssessmentQuestions(id, questionOrders);
+        System.out.println("Updated question list in the assessment.");
 
         // Save the updated assessment in the database
         assessmentService.saveAssessment(existingAssessment);
@@ -912,125 +917,26 @@ public class AssessmentController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/edit/check-similar-new-question/add")
-    public ResponseEntity<?> checkSimilarNewQuestions(@RequestBody Map<String, List<Map<String, String>>> requestData) {
-        List<Map<String, String>> newAddedQuestions = requestData.get("newAddedQuestions");
-        System.out.println("📝 Received newAddedQuestions: " + newAddedQuestions);
-
-        if (newAddedQuestions == null || newAddedQuestions.isEmpty()) {
-            return ResponseEntity.badRequest().body("No questions provided.");
-        }
-
-        Map<String, String> newestQuestion = newAddedQuestions.get(newAddedQuestions.size() - 1);
-        String newestText = newestQuestion.get("text");
-
-        if (newestText == null || newestText.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body("Newest question is empty.");
-        }
-
-        List<String> oldQuestions = new ArrayList<>();
-        for (int i = 0; i < newAddedQuestions.size() - 1; i++) {
-            String text = newAddedQuestions.get(i).get("text");
-            if (text != null && !text.trim().isEmpty()) {
-                oldQuestions.add(text);
-            }
-        }
-
-        if (oldQuestions.isEmpty()) {
-            return ResponseEntity.ok(Collections.singletonMap("message", "No previous questions to compare."));
-        }
-
-        System.out.println("📌 Newest question: " + newestText);
-        System.out.println("📌 Old questions: " + oldQuestions);
-
-        try {
-            ArrayList<Attribute> attributes = new ArrayList<>();
-            attributes.add(new Attribute("content", (List<String>) null));
-            Instances data = new Instances("questions", attributes, oldQuestions.size() + 1);
-            data.setClassIndex(0);
-
-            for (String text : oldQuestions) {
-                double[] instanceValue = new double[data.numAttributes()];
-                instanceValue[0] = data.attribute(0).addStringValue(assessmentService.preprocessText(text));
-                Instance instance = new DenseInstance(1.0, instanceValue);
-                instance.setDataset(data);
-                data.add(instance);
-            }
-
-            double[] newestInstanceValue = new double[data.numAttributes()];
-            newestInstanceValue[0] = data.attribute(0).addStringValue(assessmentService.preprocessText(newestText));
-            Instance newestInstance = new DenseInstance(1.0, newestInstanceValue);
-            newestInstance.setDataset(data);
-            data.add(newestInstance);
-
-            if (data.numInstances() == 0) {
-                return ResponseEntity.badRequest().body("No valid questions found.");
-            }
-
-            StringToWordVector filter = new StringToWordVector();
-            filter.setOutputWordCounts(true);
-            filter.setLowerCaseTokens(true);
-            filter.setWordsToKeep(5000);
-            filter.setDoNotOperateOnPerClassBasis(true);
-            filter.setMinTermFreq(1);
-            filter.setAttributeIndices("first-last");
-
-            filter.setInputFormat(data);
-            Instances tfidfData = Filter.useFilter(data, filter);
-
-            System.out.println("🔍 TF-IDF vector size: " + tfidfData.numAttributes());
-
-            List<Integer> similarQuestions = new ArrayList<>();
-
-            // So sánh câu mới nhất với tất cả câu cũ
-            int newestIndex = tfidfData.numInstances() - 1; // Vị trí câu mới nhất
-            for (int i = 0; i < tfidfData.numInstances() - 1; i++) { // Chỉ xét câu cũ
-                double similarity = assessmentService.cosineSimilarity(
-                        tfidfData.instance(newestIndex).toDoubleArray(),
-                        tfidfData.instance(i).toDoubleArray()
-                );
-
-                System.out.println("🔍 Comparing newest question with question " + (i + 1));
-                System.out.println("➡ Cosine Similarity: " + similarity);
-
-                if (similarity >= 0.80) { // Nếu giống nhau >= 80%, thêm vào danh sách
-                    similarQuestions.add(i + 1);
-                }
-            }
-
-            if (similarQuestions.isEmpty()) {
-                return ResponseEntity.ok(Collections.singletonMap("message", "No duplicate questions found."));
-            }
-
-            return ResponseEntity.ok(Collections.singletonMap("similarQuestions", similarQuestions));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(500)
-                    .body(Collections.singletonMap("error", "An error occurred while processing similarity: " + e.getMessage()));
-        }
-    }
-
     @PostMapping("/edit/check-similar-new-question/add-batch")
-    public ResponseEntity<?> checkSimilarQuestionsBatch(@RequestBody Map<String, List<Map<String, String>>> requestData) {
-        List<Map<String, String>> questionsList = requestData.get("questions");
-        List<Map<String, String>> selectedQuestions = requestData.get("selectedQuestions");
+    public ResponseEntity<?> checkSimilarQuestionsBatch(@RequestBody Map<String, List<Map<String, Object>>> requestData) {
+        List<Map<String, Object>> questionsList = requestData.get("questions"); // ✅ Lấy danh sách câu hỏi mới
+
+        System.out.println("📌 Received questionsList: " + questionsList);
 
         if (questionsList == null || questionsList.isEmpty()) {
             return ResponseEntity.badRequest().body("No questions provided.");
         }
 
+        // Lấy danh sách văn bản câu hỏi và ID từ danh sách câu hỏi mới
         List<String> questionTexts = questionsList.stream()
-                .map(q -> q.get("text"))
+                .map(q -> String.valueOf(q.get("text")))
                 .filter(Objects::nonNull)
-                .map(String::trim)
+                .map(text -> text.replaceAll("\\<.*?\\>", "").trim())
                 .collect(Collectors.toList());
 
-        List<String> selectedTexts = selectedQuestions != null ? selectedQuestions.stream()
-                .map(q -> q.get("text"))
-                .filter(Objects::nonNull)
-                .map(String::trim)
-                .map(String::toLowerCase)
-                .collect(Collectors.toList()) : new ArrayList<>();
+        List<Integer> questionIds = questionsList.stream()
+                .map(q -> (Integer) q.get("questionId")) // ✅ Lấy questionId kiểu Integer
+                .collect(Collectors.toList());
 
         if (questionTexts.isEmpty()) {
             return ResponseEntity.badRequest().body("No valid questions found.");
@@ -1045,10 +951,11 @@ public class AssessmentController {
 
             for (String text : questionTexts) {
                 double[] instanceValue = new double[data.numAttributes()];
-                instanceValue[0] = data.attribute(0).addStringValue(assessmentService.preprocessText(text));
+                instanceValue[0] = data.attribute(0).addStringValue(text);
                 Instance instance = new DenseInstance(1.0, instanceValue);
                 instance.setDataset(data);
                 data.add(instance);
+                System.out.println("  - " + text);
             }
 
             if (data.numInstances() == 0) {
@@ -1067,37 +974,40 @@ public class AssessmentController {
             filter.setInputFormat(data);
             Instances tfidfData = Filter.useFilter(data, filter);
 
+            // Bước 1: Xác định các câu hỏi trùng nhau
             Map<Integer, List<Integer>> duplicateQuestions = new HashMap<>();
 
             for (int i = 0; i < tfidfData.numInstances(); i++) {
                 for (int j = i + 1; j < tfidfData.numInstances(); j++) {
-                    double similarity = assessmentService.cosineSimilarity(
+                    double similarity = assessmentService.cosineSimilarityForEdit(
                             tfidfData.instance(i).toDoubleArray(),
                             tfidfData.instance(j).toDoubleArray()
                     );
 
                     if (similarity >= 0.80) {
                         duplicateQuestions.computeIfAbsent(i, k -> new ArrayList<>()).add(j);
+                        duplicateQuestions.computeIfAbsent(j, k -> new ArrayList<>()).add(i);
                     }
                 }
             }
 
-            // Chỉ lấy các câu mới bị trùng mà chưa có trong selectedQuestions
-            Map<Integer, List<Integer>> newDuplicateQuestions = new HashMap<>();
+            // Chuyển đổi kết quả về dạng mong muốn
+            Map<Integer, List<Integer>> duplicateLists = new HashMap<>();
             for (Map.Entry<Integer, List<Integer>> entry : duplicateQuestions.entrySet()) {
-                int index = entry.getKey();
-                List<Integer> similarIndexes = entry.getValue();
-
-                if (!selectedTexts.contains(questionTexts.get(index).toLowerCase())) {
-                    newDuplicateQuestions.put(index, similarIndexes);
-                }
+                int questionId = questionIds.get(entry.getKey());
+                List<Integer> similarQuestionIds = entry.getValue().stream()
+                        .map(questionIds::get)
+                        .collect(Collectors.toList());
+                duplicateLists.put(questionId, similarQuestionIds);
             }
 
-            if (newDuplicateQuestions.isEmpty()) {
+            System.out.println("📌 Final Duplicate Lists: " + duplicateLists);
+
+            if (duplicateLists.isEmpty()) {
                 return ResponseEntity.ok(Collections.singletonMap("message", "No duplicate questions found."));
             }
 
-            return ResponseEntity.ok(Collections.singletonMap("duplicateQuestions", newDuplicateQuestions));
+            return ResponseEntity.ok(Collections.singletonMap("duplicateLists", duplicateLists));
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500)
@@ -1146,15 +1056,24 @@ public class AssessmentController {
 
         return "assessments/verifyEmail"; // Show email input page
     }
+
     @PostMapping("/invite/take-exam/{id}")
+    //rawId is actually true Id
     public String verifyEmail(@PathVariable("id") String rawId, @RequestParam("email") String email, Model model) {
+        //Check if invited candidate -> has_assessed = true or not
+        Optional<InvitedCandidate> invitedCandidateOpt = invitedCandidateRepository.findByAssessmentIdAndEmail(Long.parseLong(rawId), email);
+        if (invitedCandidateOpt.isEmpty()) {
+            model.addAttribute("message", "You have already taken this exam.");
+            return "redirect:/assessments/invalid-link"; // Redirect to an "Already Taken" page
+        }
+        InvitedCandidate invitedCandidate = invitedCandidateOpt.get();
+        if (invitedCandidate.isHasAssessed()) {
+            model.addAttribute("message", "You have already taken this exam.");
+            return "redirect:/assessments/already-assessed"; // Redirect to an "Already Taken" page
+        }
         //Change has_assessed -> Invited Candidate to true
         invitedCandidateRepository.updateHasAssessedByEmailAndAssessmentId(email, Long.parseLong(rawId));
         email = email.toLowerCase();
-        // Decode the ID (but don't overwrite rawId)
-        System.out.println("");
-        System.out.println("");
-        System.out.println("Take exam get id: " + rawId);
         long id = Long.parseLong(rawId);
 
         // Store the hashed ID (rawId) in the model instead of the decoded id
@@ -1179,7 +1098,7 @@ public class AssessmentController {
             return "redirect:/assessments/expired-link?time=" + formattedExpireTime;
         }
 
-        // Fetch the current invited count
+        // Fetch the current assessed_count count
         Integer invitedCount = jdbcTemplate.queryForObject(
                 "SELECT assessed_count FROM assessment WHERE id = ?",
                 Integer.class, id
@@ -1227,6 +1146,7 @@ public class AssessmentController {
 
         // create exercise session for participant
         model.addAttribute("exerciseSession", exerciseSessionService.assessmentExerciseSession(assessment, nowUtc, exercises, attempt));
+        assessmentService.incrementAssessedCount(Long.parseLong(rawId));
         // Add to model
         model.addAttribute("assessment", assessment);
         model.addAttribute("questions", questions);
@@ -1235,6 +1155,7 @@ public class AssessmentController {
         model.addAttribute("attempt", attempt);
         return "assessments/TakeAssessment";
     }
+
     @GetMapping("/invalid-link")
     public String showInvalidLinkPage() {
         return "assessments/invalid-link"; // Directly returns the invalid-link.html page
@@ -1348,8 +1269,34 @@ public class AssessmentController {
             int tabLeaveCount = proctoringData.has("tabLeaveCount") ? proctoringData.get("tabLeaveCount").asInt() : 0;
             int violationFaceCount = proctoringData.has("violationFaceCount") ? proctoringData.get("violationFaceCount").asInt() : 0;
 
+            int copyCount = 0;
+            int pasteCount = 0;
+
+            if (proctoringData.has("exerciseCopyPasteData")) {
+                String copyPasteDataStr = proctoringData.get("exerciseCopyPasteData").asText();
+
+                try {
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    JsonNode copyPasteData = objectMapper.readTree(copyPasteDataStr);
+
+                    // Iterate through each exercise ID
+                    Iterator<Map.Entry<String, JsonNode>> fields = copyPasteData.fields();
+                    while (fields.hasNext()) {
+                        Map.Entry<String, JsonNode> entry = fields.next();
+                        JsonNode exerciseData = entry.getValue();
+
+                        copyCount += exerciseData.has("copy") ? exerciseData.get("copy").asInt() : 0;
+                        pasteCount += exerciseData.has("paste") ? exerciseData.get("paste").asInt() : 0;
+                    }
+                } catch (Exception e) {
+                    System.out.println("Error parsing copyPasteData JSON: " + e.getMessage());
+                }
+            }
+
             model.addAttribute("tabLeaveCount", tabLeaveCount);
             model.addAttribute("violationFaceCount", violationFaceCount);
+            model.addAttribute("copyCount", copyCount);
+            model.addAttribute("pasteCount", pasteCount);
             model.addAttribute("attemptInfo", attempt.get());
 
             Assessment assessment = attempt.get().getAssessment();
@@ -1389,32 +1336,32 @@ public class AssessmentController {
     }
 
     //Update attempt after user submit their assessment
-    @PostMapping("/{id}/submit")
+    @PostMapping("/submit/{id}")
     public String submitAssessment(@PathVariable("id") Long assessmentId,
                                    @RequestParam("attemptId") Long attemptId,
                                    @RequestParam("elapsedTime") int elapsedTime,
                                    @RequestParam(value = "questionId", required = false) List<String> questionIds,
                                    @RequestParam("tabLeaveCount") int tabLeaveCount,
                                    @RequestParam("violationFaceCount") int violationFaceCount,
+                                   @RequestParam("exerciseCopyPasteData") String exerciseCopyPasteData,
                                    @RequestParam MultiValueMap<String, String> responses,
                                    @RequestParam("hasExercise") boolean hasExercise,
-                                   @RequestParam StudentAssessmentAttempt assessmentStudentAttemptId,
                                    SessionStatus sessionStatus,
-                                   Principal principal,
                                    Model model) {
-        // Lấy thông tin user
-        User user = userService.findByUsername(principal.getName());
+        User user = null;
         int quizScore = 0;
         int scoreExercise = 0;
+        StudentAssessmentAttempt studentAssessmentAttempt = studentAssessmentAttemptService.findStudentAssessmentAttemptById(attemptId);
         if (questionIds != null && !questionIds.isEmpty()) {
-            double rawScore = quizService.calculateScore(questionIds, assessmentId, responses, user, assessmentStudentAttemptId);
+            double rawScore = quizService.calculateScore(questionIds, assessmentId, responses, user, studentAssessmentAttempt);
             quizScore = (int) Math.round(rawScore);
         }
         //Save cheating count
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode proctoringData = objectMapper.createObjectNode()
                 .put("tabLeaveCount", tabLeaveCount)
-                .put("violationFaceCount", violationFaceCount);
+                .put("violationFaceCount", violationFaceCount)
+                .put("exerciseCopyPasteData", exerciseCopyPasteData);
         if (hasExercise) {
             // Tính điểm phần Exercise
             ExerciseSession exerciseSession = (ExerciseSession) model.getAttribute("exerciseSession");
@@ -1427,7 +1374,7 @@ public class AssessmentController {
         StudentAssessmentAttempt attempt = studentAssessmentAttemptService.saveTestAttempt(attemptId, elapsedTime, quizScore, scoreExercise, proctoringData);
         Optional<Assessment> assessment = assessmentService.findById(assessmentId);
         if (attempt.getScoreAss() >= assessment.get().getQualifyScore()) {
-            assessmentService.updateQualifiedCount(assessmentId, attempt);
+            assessmentService.updateQualifiedCount(assessmentId);
         }
         model.addAttribute("timeTaken", elapsedTime);
         return "assessments/submitAssessment";
@@ -1530,6 +1477,7 @@ public class AssessmentController {
     public String showAlreadyAssessedError() {
         return "assessments/already-assessed";  // This will load the calendar.html template
     }
+
     @Controller
     @RequestMapping("/api/score")
     public class AssessmentScoreController {
@@ -1540,7 +1488,7 @@ public class AssessmentController {
         public ResponseEntity<?> editScore(@PathVariable Long attemptId,
                                            @RequestBody Map<String, Object> requestMap) {
             try {
-                Map<String, Object> result =   assessmentScoreService.editScore(attemptId, requestMap);
+                Map<String, Object> result = assessmentScoreService.editScore(attemptId, requestMap);
                 return ResponseEntity.ok(result);
             } catch (ResourceNotFoundException e) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -1553,11 +1501,13 @@ public class AssessmentController {
                         .body(Map.of("error", "Lỗi khi chỉnh sửa điểm: " + e.getMessage()));
             }
         }
+
         @GetMapping("/edit/{attemptId}")
         public String editScorePage(@PathVariable Long attemptId, Model model) {
             model.addAttribute("attemptId", attemptId);
             return "assessments/editscore";
         }
+
         @GetMapping("/current/{attemptId}")
         public ResponseEntity<Map<String, Object>> getCurrentScores(@PathVariable Long attemptId) {
             Map<String, Object> currentScores = assessmentScoreService.getCurrentScores(attemptId);

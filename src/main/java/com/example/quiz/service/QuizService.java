@@ -535,7 +535,7 @@ public class QuizService {
     }
 
 
-    public double calculateScore(List<String> questionId, Long assessmentId, MultiValueMap<String, String> responses, User user, StudentAssessmentAttempt assessmentStudentAttemptId){
+    public double calculateScore(List<String> questionId, Long assessmentId, MultiValueMap<String, String> responses, User user, StudentAssessmentAttempt studentAssessmentAttemptId) {
         if (questionId == null || questionId.isEmpty()) {
             throw new IllegalArgumentException("Danh sách câu hỏi không được rỗng");
         }
@@ -546,15 +546,23 @@ public class QuizService {
             return 0.0;
         }
 
-        boolean isPractice = (assessmentId == null);
+        boolean isPractice = studentAssessmentAttemptId == null;
+
+        if (isPractice) {
+            assessmentId = null;
+        }
 
         TestSession session = new TestSession();
         session.setUser(user);
         session.setStartTime(LocalDateTime.now());
-        session.setAssessmentId(assessmentId);
         session.setCheckPractice(isPractice);
-        session.setStudentAssessmentAttempt(assessmentStudentAttemptId);
+
+        if (!isPractice) {
+            session.setAssessmentId(assessmentId);
+            session.setStudentAssessmentAttempt(studentAssessmentAttemptId);
+        }
         testSessionRepository.save(session);
+
 
         long totalScoredQuestions = questions.stream()
                 .filter(q -> !q.getQuestionType().toString().equals("TEXT"))
@@ -575,7 +583,7 @@ public class QuizService {
             List<String> userAnswerIdsStr = responses.get("answers[" + question.getId() + "]");
             List<Long> correctAnswerIds = correctAnswersMap.getOrDefault(question.getId(), Collections.emptyList());
 
-            System.out.println("Câu hỏi ID: " + question.getId() + " | Dạng: " + question.getQuestionType());
+            System.out.println(" Câu hỏi ID: " + question.getId() + " | Dạng: " + question.getQuestionType());
 
             if (question.getQuestionType().toString().equals("TEXT")) {
                 if (userAnswerIdsStr != null && !userAnswerIdsStr.isEmpty()) {
@@ -598,8 +606,22 @@ public class QuizService {
 
                 int totalCorrect = correctAnswerIds.size();
                 int userCorrectCount = (int) userAnswerIds.stream().filter(correctAnswerIds::contains).count();
+                int excessSelections = userAnswerIds.size() - totalCorrect; // ✅ Tính số câu chọn dư
 
-                double questionScore = (totalCorrect > 0) ? (pointsPerQuestion / totalCorrect) * userCorrectCount : 0;
+                double questionScore = 0;
+                if (totalCorrect > 0) {
+                    questionScore = (pointsPerQuestion / totalCorrect) * userCorrectCount;
+                    if (excessSelections > 0) {
+                        double penalty = excessSelections * (pointsPerQuestion / totalCorrect);
+                        questionScore -= penalty;
+
+                        if (questionScore < 0) {
+                            score += questionScore;
+                            questionScore = 0;
+                        }
+                    }
+                }
+
                 score += questionScore;
 
                 for (Long selectedOptionId : userAnswerIds) {
@@ -610,10 +632,24 @@ public class QuizService {
                         answer.setQuestion(question);
                         answer.setAnswerText(selectedOption.getOptionText());
                         answer.setIsCorrect(correctAnswerIds.contains(selectedOptionId));
+                        answer.setTestSession(session);
+
+                        double calculatedScore = 0.0;
+                        if (correctAnswerIds.contains(selectedOptionId)) {
+                            calculatedScore = (pointsPerQuestion / correctAnswerIds.size());
+                        }
+
+                        answer.setScore(calculatedScore);
+
+                        System.out.println(" Lưu Answer - Question ID: " + question.getId());
+                        System.out.println(" Selected Option ID: " + selectedOptionId);
+                        System.out.println(" Answer Text: " + selectedOption.getOptionText());
+                        System.out.println(" Is Correct: " + answer.getIsCorrect());
+                        System.out.println(" Score: " + calculatedScore);
+
                         answerRepository.save(answer);
                     }
                 }
-
                 if (isPractice) {
                     practiceResultRepository.save(new PracticeResult(session, question, userCorrectCount == totalCorrect, questionScore));
                 } else {
@@ -624,6 +660,7 @@ public class QuizService {
 
         return BigDecimal.valueOf(score).setScale(2, RoundingMode.HALF_UP).doubleValue();
     }
+
 
 
 
@@ -897,11 +934,13 @@ public class QuizService {
         ObjectMapper objectMapper = new ObjectMapper();
 
         Quiz quiz = new Quiz();
+        // Sử dụng jsonToQuestionSet để lấy danh sách câu hỏi
 
         try {
             JsonNode rootNode = objectMapper.readTree(json);
 
             String questionsJson = rootNode.get("questions").toString();
+            // Deserialize "questions" thành danh sách Question
             Set<Question> questions = objectMapper.readValue(questionsJson, new TypeReference<Set<Question>>() {
             });
 
@@ -921,17 +960,19 @@ public class QuizService {
 
             quiz.setCreatedBy(userService.getUserById(rootNode.get("createdBy").asLong()));
 
-            int questionNo = 1;
-            for (Question question : questions) {
-                question.setQuestionNo(questionNo);
-                questionNo++;
-                int answerNo = 0;
-                for (AnswerOption answerOption : question.getAnswerOptions()) {
-                    answerOption.setOptionLabel(generateOptionLabel(answerNo));
-                    answerNo++;
+            if (questions != null && !questions.isEmpty()) {
+                int questionNo = 1;
+                for (Question question : questions) {
+                    question.setQuestionNo(questionNo);
+                    questionNo++;
+                    int answerNo = 0;
+                    for (AnswerOption answerOption : question.getAnswerOptions()) {
+                        answerOption.setOptionLabel(generateOptionLabel(answerNo));
+                        answerNo++;
+                    }
+                    questionRepository.save(question);
+                    quiz.addQuestion(question);
                 }
-                questionRepository.save(question);
-                quiz.addQuestion(question);
             }
 
             quizRepository.save(quiz);
@@ -952,6 +993,7 @@ public class QuizService {
         }
 
     }
+
 
 
 

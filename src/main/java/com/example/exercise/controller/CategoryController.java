@@ -19,13 +19,15 @@ public class CategoryController {
     private CategoryService categoryService;
 
     @GetMapping
-    public String showCategoryForm(Model model, @RequestParam(defaultValue = "0") int page) {
+    public String showCategoryForm(Model model, @RequestParam(defaultValue = "0") int page, @RequestParam(value = "redirect", required = false) String redirectUrl) {
         Page<Category> categoryPage = categoryService.getAllCategoryPaginated(page, 10);
+        model.addAttribute("redirectUrl", redirectUrl);
         model.addAttribute("categories", categoryPage.getContent());
         model.addAttribute("category", new Category());
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", categoryPage.getTotalPages());
         model.addAttribute("totalItems", categoryPage.getTotalElements());
+
 
         return "exercises/tag";
     }

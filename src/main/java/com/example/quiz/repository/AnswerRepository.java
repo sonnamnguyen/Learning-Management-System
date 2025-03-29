@@ -22,4 +22,8 @@ public interface AnswerRepository extends JpaRepository<Answer, Long> {
     long countTotalIncorrectAnswers();
 
     List<Answer> findByTestSessionId(Long testSessionId);
+
+    @Query("SELECT a FROM Answer a WHERE a.question.id = :questionId AND a.selectedOption.id = :selectedOptionId")
+    List<Answer> findAllByQuestionIdAndSelectedOptionId(Long questionId, Long selectedOptionId);
+
 }

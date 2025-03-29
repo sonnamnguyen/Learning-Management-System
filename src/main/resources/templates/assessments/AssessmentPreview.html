@@ -194,7 +194,7 @@
                     <div class="mb-4" th:if="${exercises != null and not #lists.isEmpty(exercises)}">
                         <h3>Exercises</h3>
                         <div class="border rounded p-3"
-                             style="max-height: 80vh; overflow-y: auto;">
+                             style="max-height: 100vh; overflow-y: auto;">
                             <!-- Loop through exercises -->
                             <div th:each="exercise, stat : ${exercises}" class="card mb-4 shadow-sm exercise-card"
                                  th:id="'exercise_' + ${exercise.id}">
