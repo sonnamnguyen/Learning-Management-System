@@ -13,18 +13,14 @@ import java.time.temporal.ChronoUnit;
 @AllArgsConstructor
 @NoArgsConstructor
 public class StudentExerciseAttemptResponse {
-    Long id;
+    Integer id;
     String name;
-    String code;
     String time;
-    Double score;
 
-    public StudentExerciseAttemptResponse(Long id, String name, String code, LocalDateTime attemptDate, Double score) {
+    public StudentExerciseAttemptResponse(Integer id, String name, LocalDateTime attemptDate) {
         this.id = id;
         this.name = name;
-        this.code = code;
         this.time = formatRelativeTime(attemptDate);
-        this.score = score;
     }
 
     private String formatRelativeTime(LocalDateTime attemptDate) {

@@ -3,7 +3,9 @@ package com.example.code_judgement;
 import com.example.exercise.model.Exercise;
 import com.example.exercise.model.ExerciseSession;
 import com.example.exercise.model.StudentExerciseAttempt;
+import com.example.exercise.model.StudentExerciseAttemptResponse;
 import com.example.exercise.service.ExerciseService;
+import com.example.exercise.service.StudentExerciseAttemptService;
 import com.example.testcase.TestCase;
 import com.example.user.User;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +23,7 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class CodeJudgementController {
     private final ExerciseService exerciseService;
-
+ private final StudentExerciseAttemptService studentExerciseAttemptService;
     private final UserService userService;
 
     // Hiển thị giao diện code space cho một bài tập
@@ -132,19 +134,21 @@ public class CodeJudgementController {
     }
 
     @GetMapping("/get_exercise")
-    @PreAuthorize("hasAuthority('STUDENT')")
-    public String getExercise(@RequestParam("exerciseId") Long exerciseId,
-                                 @RequestParam("code") String code,
-                              @RequestParam("score") Double score,
-                              Model model){
+    @PreAuthorize("#userId == @userService.getCurrentUser().id and hasAuthority('STUDENT')")
+    public String getExercise(@RequestParam("userId") Long userId,
+                              @RequestParam("exerciseAttemptId") Long exerciseAttemptId,
+                              Model model) {
         User user = userService.getCurrentUser();
-        Exercise exercise = exerciseService.getExerciseById(exerciseId)
+        StudentExerciseAttempt studentExerciseAttempt = studentExerciseAttemptService.getStudentAttemptById(exerciseAttemptId);
+        Exercise exercise = exerciseService.getExerciseById(studentExerciseAttempt.getSubmitted_exercise().getId())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));
 
-            model.addAttribute("exercise", exercise);
-            model.addAttribute("code", code);
-            model.addAttribute("score", score);
-            model.addAttribute("user", user);
+        model.addAttribute("exercise", exercise);
+        model.addAttribute("code", studentExerciseAttempt.getSubmitted_code());
+        model.addAttribute("score", studentExerciseAttempt.getScore_exercise());
+        model.addAttribute("user", user);
+
         return "judgement/view_result";
     }
+
 }
