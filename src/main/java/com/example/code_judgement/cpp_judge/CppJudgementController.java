@@ -94,13 +94,12 @@ public class CppJudgementController {
             model.addAttribute("score", response.getScore());
             model.addAttribute("compileTime", response.getCompileTimeMillis());
             model.addAttribute("runTime", response.getRunTimeMillis());
-
+            model.addAttribute("type", type);
             if(response.getErrorMessage()!=null){
                 model.addAttribute("error", response.getErrorMessage());
                 return "judgement/result_exercise";
             }
             model.addAttribute("testResults", response.getTestCasesResults());
-            model.addAttribute("type", type);
             return "judgement/result_exercise";
         }
         catch (Exception e){
