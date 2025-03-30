@@ -1,7 +1,7 @@
 package com.example.assessment.model;
 
 import com.example.course.Course;
-import com.example.student_exercise_attemp.model.Exercise;
+import com.example.exercise.model.Exercise;
 import com.example.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
@@ -73,7 +73,7 @@ public class Assessment {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    @Column(nullable = false, name = "updatedAt")
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt = LocalDateTime.now();
 
     @PreUpdate
@@ -96,7 +96,13 @@ public class Assessment {
     @JoinColumn(name = "updated_by", nullable = true)
     private User updatedBy;
 
+    public int getExerciseCount() {
+        return exercises.size();
+    }
 
+    public int getQuestionCount() {
+        return assessmentQuestions.size();
+    }
 
 //    @PostPersist
 //    public void createProgressNotificationOnAssessmentAttempt() {

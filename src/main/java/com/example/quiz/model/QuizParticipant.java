@@ -40,8 +40,16 @@ public class QuizParticipant {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "attempt_date")
+    private LocalDateTime attemptDate;
+
     @PrePersist
     protected void onCreate(){
         createdAt = LocalDateTime.now();
+        attemptDate = LocalDateTime.now();
     }
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "test_session_id")
+    private TestSession testSession;
 }

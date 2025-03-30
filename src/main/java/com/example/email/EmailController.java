@@ -1,7 +1,9 @@
 package com.example.email;
 
 import com.example.assessment.service.AssessmentService;
+import com.example.config.AppConfig;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,9 +20,11 @@ public class EmailController {
     @Autowired
     private final AssessmentService assessmentService;
 
+
 //    Changing this to the deploy server url later or change this according to the port of ur docker-compose
 //    private final String inviteUrlHeader = "https://group-02.cookie-candy.id.vn/assessment/invite/";
-  private final String inviteUrlHeader = "http://localhost:9091/assessments/invite/";
+        @Value("${invite.url.header}")
+        private String inviteUrlHeader;
   //  private final String inviteUrlHeader = "https://java02.fsa.io.vn/assessments/invite/";
 
     @Autowired
@@ -47,10 +51,10 @@ public class EmailController {
 
 
         // Send invitations
-        String assessmentLink = inviteUrlHeader + assessmentService.encodeId(assessmentId) + "/take";
-        emailService.sendAssessmentInvite(emailList, assessmentId);
+          emailService.sendAssessmentInvite(emailList, assessmentId, expirationDate);
         // Store invited emails with full date-time values
         assessmentService.storeInvitedEmail(assessmentId, emailList, invitationDate, expirationDate);
+        System.out.println("Invited email sent: "+ emailList);
 
         model.addAttribute("message", "Invitations sent successfully!");
         return "redirect:/assessments";

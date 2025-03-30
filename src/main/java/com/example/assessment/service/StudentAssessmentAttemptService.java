@@ -4,6 +4,9 @@ import com.example.assessment.model.Assessment;
 import com.example.assessment.model.StudentAssessmentAttempt;
 import com.example.assessment.repository.AssessmentRepository;
 import com.example.assessment.repository.StudentAssessmentAttemptRepository;
+import com.example.exercise.model.StudentExerciseAttempt;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.example.user.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,6 +24,13 @@ public class StudentAssessmentAttemptService {
     @Autowired
     private AssessmentRepository assessmentRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    public List<StudentAssessmentAttempt> getListAttempt() {
+        return repository.findAll();
+    }
+
     public StudentAssessmentAttempt save(StudentAssessmentAttempt attempt) {
         return repository.save(attempt);
     }
@@ -28,6 +38,11 @@ public class StudentAssessmentAttemptService {
     public Optional<StudentAssessmentAttempt> findById(Long id) {
         return repository.findById(id);
     }
+
+    public StudentAssessmentAttempt findStudentAssessmentAttemptById(Long id) {
+        return repository.findById(id).orElse(null);
+    }
+
 
     public List<StudentAssessmentAttempt> findByAssessment_Id(Long assessmentId) {
         return repository.findByAssessment_Id(assessmentId);
@@ -49,7 +64,7 @@ public class StudentAssessmentAttemptService {
         return repository.findAll();
     }
 
-    public StudentAssessmentAttempt createTestAttempt(Long assessmentId, String mail) {
+    public StudentAssessmentAttempt createAssessmentAttempt(Long assessmentId, String mail) {
         StudentAssessmentAttempt testAttempt = new StudentAssessmentAttempt();
         Assessment assessment = assessmentRepository.findById(assessmentId).orElseThrow(()
                 -> new RuntimeException("Assessment not found!"));
@@ -58,6 +73,7 @@ public class StudentAssessmentAttemptService {
         testAttempt.setEmail(mail);
         testAttempt.setDuration(0);
         testAttempt.setScoreQuiz(0);
+        testAttempt.setScoreEx(0);
         testAttempt.setScoreAss(0);
         testAttempt.setNote("");
         testAttempt.setSubmitted(false);
@@ -66,20 +82,26 @@ public class StudentAssessmentAttemptService {
         testAttempt.setAttemptDate(LocalDateTime.now());
         //Update number of attend in the assessment
         StudentAssessmentAttempt savedAttempt = repository.save(testAttempt);
-        assessment.setAssessedCount(assessment.getAssessedCount() + 1);
+        userRepository.findByEmail(mail).ifPresent(testAttempt::setUser);
         assessmentRepository.save(assessment);
         return savedAttempt;
     }
 
-    public StudentAssessmentAttempt saveTestAttempt(Long attemptId, int timeTaken) {
+    public StudentAssessmentAttempt saveTestAttempt(Long attemptId, int timeTaken, int quizScore, int scoreEx, JsonNode proctoringData) {
         StudentAssessmentAttempt testAttempt = repository.findById(attemptId).orElseThrow(()
                 -> new RuntimeException("Attempt not found!"));
-        // sample; check if the assessment has reached the qualify or not here later
+        Assessment assessment = assessmentRepository.findById(testAttempt.getAssessment().getId())
+                .orElseThrow(() -> new RuntimeException("Assessment not found!"));
+        double quizRatio = assessment.getQuizScoreRatio();
+        double exerciseRatio = assessment.getExerciseScoreRatio();
+        double scoreAss = 0;
+        scoreAss = (quizScore * quizRatio / 100.0) + (scoreEx * exerciseRatio / 100.0);
         testAttempt.setDuration(timeTaken);
-        testAttempt.setScoreQuiz(0);
-        testAttempt.setScoreAss(0);
+        testAttempt.setScoreQuiz(quizScore);
+        testAttempt.setScoreEx(scoreEx);
+        testAttempt.setScoreAss((int) Math.round(scoreAss));
         testAttempt.setSubmitted(true);
-        testAttempt.setProctoringData(null);
+        testAttempt.setProctoringData(proctoringData);
         return repository.save(testAttempt);
     }
 }

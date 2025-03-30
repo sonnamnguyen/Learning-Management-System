@@ -46,9 +46,16 @@
                             <!-- Nút Import từ Excel -->
                             <div class="form-group mt-3 d-flex align-items-center">
                                 <label for="fileUpload" class="me-2">Import from Excel:</label>
-                                <input type="file" id="fileUpload" class="form-control-file d-none" accept=".xls,.xlsx">
+                                <input
+                                        type="file"
+                                        id="fileUpload"
+                                        class="form-control-file d-none"
+                                        accept=".xls,.xlsx"
+                                        onchange="displayFileName(event)"
+                                >
                                 <label for="fileUpload" class="btn btn-outline-secondary me-2">Choose File</label>
-                                <button id="downloadExcelButton" class="btn btn-primary">Download Form Excel</button>
+                                <button id="downloadExcelButton" class="btn btn-primary me-2">Download Form Excel</button>
+                                <span id="selectedFileName" class="text-muted ms-2"></span>
                             </div>
 
                             <div class="text-end mt-3">
@@ -199,8 +206,20 @@
 
 
 <script>
+    function displayFileName(event) {
+        const fileInput = event.target;
+        const fileNameSpan = document.getElementById('selectedFileName');
+
+        if (fileInput.files.length > 0) {
+            fileNameSpan.textContent = fileInput.files[0].name;
+        } else {
+            fileNameSpan.textContent = '';
+        }
+    }
+
     function importEmails() {
         const fileInput = document.getElementById('fileUpload');
+        const fileNameSpan = document.getElementById('selectedFileName');
         const emailTextArea = document.getElementById('id_emails');
 
         if (fileInput.files.length === 0) {
@@ -228,8 +247,10 @@
 
             if (emails.size > 0) {
                 emailTextArea.value = Array.from(emails).join(", ");
+                fileNameSpan.textContent = fileInput.files[0].name; // Ensure filename is displayed
             } else {
                 alert("No valid emails found in the file.");
+                fileNameSpan.textContent = ''; // Clear filename if no emails found
             }
         };
 
@@ -271,6 +292,70 @@
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
     });
+    document.addEventListener("DOMContentLoaded", function () {
+        const expirationInput = document.getElementById("expirationDate");
+
+        expirationInput.addEventListener("change", validateDateTime);
+
+        function validateDateTime() {
+            if (!validateTimeFormat()) return false;
+
+            let inputDate = new Date(expirationInput.value);
+            let now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset()); // Convert to local time
+
+            if (!expirationInput.value) {
+                showError("Expiration date & time is required!");
+                return false;
+            }
+
+            if (inputDate <= now) {
+                showError("The expiration date at least must be in the next day!");
+                expirationInput.value = ""; // Clear invalid input
+                return false;
+            }
+
+            clearError();
+            return true;
+        }
+
+        function validateTimeFormat() {
+            let inputDate = expirationInput.value;
+            let timePart = inputDate.split("T")[1]; // Extract HH:MM part
+
+            if (timePart) {
+                let [hours, minutes] = timePart.split(":").map(Number);
+
+                // Ensure valid hours (0-23) and minutes (0-59)
+                if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+                    showError("Invalid time format! Please enter a valid time.");
+                    expirationInput.value = ""; // Clear invalid input
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        function showError(message) {
+            let errorDiv = document.getElementById("expirationError");
+
+            if (!errorDiv) {
+                errorDiv = document.createElement("div");
+                errorDiv.id = "expirationError";
+                errorDiv.style.color = "red";
+                expirationInput.parentNode.appendChild(errorDiv);
+            }
+
+            errorDiv.textContent = message;
+        }
+
+        function clearError() {
+            let errorDiv = document.getElementById("expirationError");
+            if (errorDiv) errorDiv.textContent = "";
+        }
+    });
+
 </script>
 
 </body>

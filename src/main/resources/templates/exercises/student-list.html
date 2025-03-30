@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Exercises List</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <!-- Bootstrap Icons CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet"/>
+    <style>
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        #tagContainer {
+            max-width: 200px;
+            white-space: normal;
+            word-wrap: break-word;
+            overflow-x: hidden;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .badge {
+            font-size: 14px;
+            padding: 8px 12px;
+            border-radius: 12px;
+            margin: 4px;
+            display: inline-block;
+        }
+
+        .bg-dark {
+            background-color: #b5e7a0 !important;
+            color: #155724 !important;
+        }
+
+        .bg-secondary {
+            background-color: #d4edda !important;
+            color: #155724 !important;
+        }
+
+        #toggleTags {
+            cursor: pointer;
+            font-weight: bold;
+            padding: 8px 14px;
+            border-radius: 12px;
+            background-color: #a3cfbb !important;
+            color: #155724 !important;
+            border: none;
+        }
+
+        #toggleTags:hover {
+            background-color: #8bc5a3 !important;
+        }
+
+        /* Sử dụng table-bordered để có đường viền giữa các cột */
+        table.table-bordered th,
+        table.table-bordered td {
+            border: 1px solid #dee2e6;
+        }
+
+        /* Dòng tiêu đề với màu xanh nhạt */
+        table.table-bordered thead tr {
+            background-color: #e3f2fd; /* Màu xanh nhạt */
+            color: #000;
+        }
+
+        .btn-outline-search {
+            border: 2px solid #0d6efd; /* Viền màu xanh Bootstrap */
+            background-color: transparent; /* Không có màu nền */
+            color: #0d6efd; /* Màu chữ mặc định */
+            transition: all 0.3s ease; /* Hiệu ứng mượt */
+        }
+
+        .btn-outline-search:hover {
+            background-color: #0d6efd; /* Màu nền xanh khi hover */
+            color: white; /* Chữ trắng khi hover */
+        }
+
+        .clear-btn {
+            background-color: transparent; /* Nền trong suốt */
+            border: 1px solid #ccc; /* Viền xám nhẹ */
+            color: #000; /* Màu chữ đen */
+            transition: background-color 0.3s, color 0.3s; /* Hiệu ứng mượt */
+        }
+
+        .clear-btn:hover {
+            background-color: #6c757d; /* Màu nền xám khi hover */
+            color: #fff; /* Màu chữ trắng khi hover */
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+            }
+        }
+
+        .col-md-6.d-flex .btn {
+            height: 38px;
+            position: relative;
+            top: -10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .col-md-6.d-flex a.btn {
+            text-decoration: none;
+        }
+
+        .page-item.active .page-link {
+            background-color: red;
+            border-color: red;
+            color: white;
+        }
+
+        .page-link {
+            color: #007bff; /* Màu mặc định cho các liên kết */
+        }
+
+        a.d-flex justify-content-end mt-3 {
+            position: absolute;
+        }
+
+        .card {
+            padding-bottom: 10px !important; /* Khoảng cách dưới */
+            padding-right: 10px !important; /* Khoảng cách phải */
+            border-radius: 12px !important; /* Bo góc rõ hơn */
+            overflow: hidden !important; /* Đảm bảo nội dung không tràn ra ngoài */
+            box-shadow: 0px 12px 24px rgba(0, 0, 0, 0.2) !important; /* Đổ bóng nhẹ hơn */
+        }
+
+        .card:hover {
+            box-shadow: 0px 12px 24px rgba(0, 0, 0, 0.5) !important; /* Đổ bóng nhẹ hơn */
+        }
+
+        .card .d-flex {
+            margin-top: auto; /* Đưa nút xuống đáy card */
+            padding-bottom: 10px; /* Cách viền dưới */
+            padding-right: 10px; /* Cách viền phải */
+        }
+
+        .card-title {
+            display: -webkit-box;
+            -webkit-line-clamp: 2; /* Hiển thị tối đa 1 dòng */
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: normal;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            line-height: 1.4em; /* Cố định chiều cao dòng */
+            max-height: calc(1.4em * 2); /* Đảm bảo chỉ hiển thị 2 dòng */
+        }
+
+        .description {
+            display: -webkit-box;
+            -webkit-line-clamp: 1; /* Hiển thị tối đa 1 dòng */
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: normal;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            line-height: 1.4em; /* Cố định chiều cao dòng */
+            max-height: calc(1.4em * 2); /* Đảm bảo chỉ hiển thị 2 dòng */
+        }
+
+        table {
+            table-layout: auto !important; /* Giúp các cột có kích thước đồng đều */
+            width: 100%;
+            border-collapse: collapse; /* Giảm khoảng cách giữa các dòng */
+            margin: 20px auto;
+            max-width: 95%;
+        }
+
+        td, th {
+            vertical-align: middle; /* Căn giữa nội dung */
+            height: auto;
+            padding: 8px; /* Giữ khoảng cách giữa nội dung và ô */
+            word-break: normal !important; /* Đảm bảo nội dung không tràn */
+            white-space: nowrap !important;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            word-wrap: break-word;
+            max-width: 300px; /* Điều chỉnh max-width theo nhu cầu */
+        }
+
+        tr {
+            height: auto !important;
+        }
+
+
+        <!--
+        .table-title {
+        --> <!-- position: relative;
+        --> <!-- white-space: nowrap;
+        --> <!-- overflow: hidden;
+        --> <!-- text-overflow: ellipsis;
+        --> <!-- max-width: 200 px;
+        --> <!-- display: inline-block;
+        --> <!-- vertical-align: middle;
+        --> <!--
+        }
+
+        -->
+
+        .table-title:hover::after {
+            content: attr(data-fulltext); /* Hiển thị nội dung đầy đủ */
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 8px;
+            border-radius: 5px;
+            white-space: normal;
+            max-width: 400px;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            text-align: center;
+        }
+
+        /* Title */
+        th:nth-child(1), td:nth-child(1) {
+            width: 25%; /* Cột tiêu đề có độ rộng lớn hơn */
+        }
+
+        /* Language */
+        th:nth-child(2), td:nth-child(2) {
+            width: 8%; /* Giảm bớt độ rộng */
+            text-align: center;
+        }
+
+        /* Difficulty */
+        th:nth-child(3), td:nth-child(3) {
+            width: 12%;
+            text-align: center;
+        }
+
+        /* Description */
+        th:nth-child(4), td:nth-child(4) {
+            width: 45%; /* Dành phần lớn không gian cho mô tả */
+        }
+
+        /* Action */
+        th:nth-child(5), td:nth-child(5) {
+            width: 5%;
+            text-align: center;
+        }
+
+        .toggle-details i {
+            margin-left: 5px;
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-details[aria-expanded="true"] i {
+            transform: rotate(180deg);
+        }
+
+        .warning-list li {
+            background-color: #fff9e6;
+            border-left: 4px solid #ffd700;
+            color: #8b6914;
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 6px;
+            font-size: 14px;
+            box-shadow: 0 2px 6px rgba(255, 215, 0, 0.15);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .warning-list li:hover {
+            transform: translateX(5px);
+            background-color: #fff5d4;
+            box-shadow: 0 3px 8px rgba(255, 215, 0, 0.2);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -48%);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
+        }
+
+        .warning-details h3 {
+            color: #8b6914;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+
+        .warning-details p {
+            color: #5c4a1d;
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        .warning-details .font-weight-bold {
+            color: #8b6914;
+        }
+
+
+        .card.card-body {
+            border: none;
+            padding: 0;
+            background: transparent;
+        }
+
+
+        /*Delete Notification*/
+        #deleteSuccessToast {
+            min-width: 250px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: none;
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: #e8f5e9; /* Màu xanh nhạt giống hình */
+            color: #333;
+            animation: slideIn 0.3s ease-in-out;
+            border-left: 4px solid #2e7d32; /* Viền màu xanh đậm bên trái */
+        }
+
+        .toast-body {
+            padding: 0.75rem 1rem;
+            font-weight: 500;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+<!-- Wrapper for the whole page -->
+<div class="d-flex flex-column min-vh-100">
+    <!-- Header -->
+    <div th:replace="~{fragments :: header}" class="sticky-top"></div>
+    <!-- Main Content -->
+    <div class="flex-grow-1 container-fluid mt-5">
+        <div class="px-5">
+            <!-- Title -->
+            <h1 class="text-center mb-4">Exercises for students</h1>
+
+            <!-- Combined Filter and Toolbar Section -->
+            <div class="container-fluid mt-4">
+                <div class="row gx-2 align-items-center mb-3">
+                    <!-- Search Bar and Filters -->
+                    <div class="col-md-6">
+                        <div class="row gx-2 align-items-center">
+                            <!-- Search Input -->
+                            <div class="col-9">
+                                <form id="filterForm" method="get" action="/exercises" class="row g-3">
+                                    <!-- Search Input -->
+                                    <div class="col-12">
+                                        <label for="searchInput" class="form-label fw-semibold text-muted mb-1">Search
+                                            by Title</label>
+                                        <div class="input-group">
+                                            <input type="text" id="searchInput" name="title"
+                                                   class="form-control shadow-sm border-1"
+                                                   placeholder="Search by title..." th:value="${paramTitle}">
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="bi bi-search me-1"></i> Search
+                                            </button>
+                                            <button type="button" class="btn btn-outline-secondary ms-2"
+                                                    onclick="clearFilters()">
+                                                <i class="bi bi-x-circle me-1"></i> Clear
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Filters Row -->
+                                    <div class="col-12 mt-2">
+                                        <div class="row g-3">
+                                            <!-- Language Filter -->
+                                            <div class="col-md-4">
+                                                <label for="languageFilter"
+                                                       class="form-label fw-semibold text-muted mb-1">Language</label>
+                                                <select id="languageFilter" name="language"
+                                                        class="form-select shadow-sm border-0"
+                                                        onchange="this.form.submit()">
+                                                    <option value="" th:selected="${currentLanguage == null}">All
+                                                        Languages
+                                                    </option>
+                                                    <option th:each="lang : ${languages}"
+                                                            th:value="${lang.id}"
+                                                            th:text="${lang.language}"
+                                                            th:selected="${lang.id == currentLanguage}">
+                                                    </option>
+                                                </select>
+                                            </div>
+
+                                            <!-- Difficulty Filter -->
+                                            <div class="col-md-4">
+                                                <label for="levelFilter" class="form-label fw-semibold text-muted mb-1">Difficulty</label>
+                                                <select id="levelFilter" name="level"
+                                                        class="form-select shadow-sm border-0"
+                                                        onchange="this.form.submit()">
+                                                    <option value=""
+                                                            th:selected="${currentLevel == null or currentLevel == ''}">
+                                                        All Levels
+                                                    </option>
+                                                    <option value="EASY" th:selected="${currentLevel == 'EASY'}">Easy
+                                                    </option>
+                                                    <option value="MEDIUM" th:selected="${currentLevel == 'MEDIUM'}">
+                                                        Medium
+                                                    </option>
+                                                    <option value="HARD" th:selected="${currentLevel == 'HARD'}">Hard
+                                                    </option>
+                                                </select>
+                                            </div>
+
+                                            <!-- Tag Filter -->
+                                            <div class="col-md-4">
+                                                <label class="form-label fw-semibold text-muted mb-1">Tags</label>
+                                                <div class="dropdown">
+                                                    <button class="btn btn-secondary dropdown-toggle w-100"
+                                                            type="button"
+                                                            id="tagDropdown" data-bs-toggle="dropdown"
+                                                            aria-expanded="false">
+                                                        Select Tags
+                                                    </button>
+                                                    <div class="dropdown-menu p-2"
+                                                         style="max-height: 350px; overflow-y: auto; width: 100%;">
+
+                                                        <!-- 🔍 Thanh tìm kiếm với nút Submit -->
+                                                        <div class="input-group mb-2">
+                                                            <input type="text" class="form-control" id="tagSearch"
+                                                                   placeholder="Search tags...">
+                                                        </div>
+
+                                                        <!-- ✅ Danh sách tag -->
+                                                        <div class="d-flex flex-column gap-2" id="tagList">
+                                                            <div th:each="tag : ${tags}" class="form-check">
+                                                                <input class="form-check-input tag-checkbox"
+                                                                       type="checkbox"
+                                                                       th:id="'tag-' + ${tag.id}"
+                                                                       name="tags" th:value="${tag.id}"
+                                                                       th:checked="${selectedTags != null and selectedTags.contains(tag.id)}">
+                                                                <label class="form-check-label"
+                                                                       th:for="'tag-' + ${tag.id}"
+                                                                       th:text="${tag.tag}"></label>
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- 🔘 Nút Search nằm trong dropdown -->
+                                                        <button type="submit" class="btn btn-success w-100 mt-2">Apply Filter</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Switch to Table View Button -->
+                    <div class="col-md-6 d-flex flex-column align-items-end">
+                        <div class="d-flex justify-content-end align-items-center mt-5">
+                            <!-- Button Dashboard -->
+                            <a href="/exercises/student-dashboard" class="btn btn-outline-primary btn-sm border">
+                                <i class="bi bi-speedometer2 me-2"></i> Dashboard
+                            </a>
+                            <!-- Button Switch view card -->
+                            <button id="toggleView" class="btn btn-primary btn-sm ms-2">
+                                <i class="bi bi-table"></i> Switch to Table View
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Table View-->
+        <div id="tableView" class="table-responsive">
+            <table class="table table-hover table-bordered">
+                <thead>
+                <tr>
+                    <th style="width: 20%;">Title</th>
+                    <th class="text-center" style="width: 10%;">Language</th>
+                    <th class="text-center" style="width: 10%;">Difficulty</th>
+                    <th style="width: 40%;">Description</th>
+                    <th style="width: 10%;">Tag</th>
+                    <th class="text-center" style="width: 15%;">Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="exercise : ${exercises}" th:attr="data-id=${exercise.id}">
+                    <td class="table-title" th:text="${exercise.name}"
+                        th:attr="data-fulltext=${exercise.name}"></td>
+                    <td class="text-center" th:text="${exercise.language.language}">Language</td>
+                    <td class="text-center">
+                            <span th:class="${'badge ' + (exercise.level.name() == 'HARD' ? 'bg-danger' :
+                                     (exercise.level.name() == 'MEDIUM' ? 'bg-warning' : 'bg-success'))}"
+                                  th:text="${exercise.level}">
+                            </span>
+                    </td>
+                    <td>
+                        <div class="description" th:utext="${exercise.description}"></div>
+                    </td>
+                    <td>
+                        <div id="tagContainer">
+                        <span th:each="tag, iterStat : ${exercise.exerciseCategories}"
+                              th:text="${tag.category.tag}"
+                              th:classappend="${iterStat.index >= 2} ? 'd-none extra-tag'"
+                              class="badge bg-dark text-light me-2">
+                        </span>
+                            <span th:if="${#lists.size(exercise.exerciseCategories) > 2}"
+                                  id="toggleTags" class="badge bg-secondary text-light"
+                                  role="button" onclick="toggleTags()">...</span>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <a th:href="@{'/judgement/practice/code_space/' + ${exercise.id}}"
+                           class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-info-circle"></i>
+                        </a>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(exercises)}">
+                    <td colspan="6" class="text-center">No exercises found.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Card View -->
+        <div id="cardView" class="row row-cols-1 row-cols-md-3 g-3 mt-3" style="display: block;">
+            <div class="col" th:each="exercise : ${exercises}">
+                <div class="card h-100 border-secondary shadow-sm d-flex flex-column">
+                    <div class="card-body flex-grow-1">
+                        <h5 class="card-title fw-bold text-primary" th:text="${exercise.name}">Exercise Title</h5>
+                        <p class="mb-1"><strong>Language:</strong>
+                            <span class="text-muted" th:text="${exercise.language.language}">Java</span>
+                        </p>
+                        <p class="mb-1">
+                            <strong>Difficulty:</strong>
+                            <span th:class="${'badge ' + (exercise.level.name() == 'HARD' ? 'bg-danger' :
+                         (exercise.level.name() == 'MEDIUM' ? 'bg-warning' : 'bg-success'))}"
+                                  th:text="${exercise.level}">
+                                </span>
+                        </p>
+                        <p class="mb-2"><strong>Description:</strong>
+                            <span class="description" th:utext="${exercise.description}"></span>
+                        </p>
+                        <p class="mb-2"><strong>Tags:</strong>
+                            <span th:each="tag : ${exercise.exerciseCategories}"
+                                  class="badge bg-dark text-light me-2"
+                                  th:text="${tag.category.tag}">
+                                </span>
+
+                        </p>
+                    </div>
+
+                    <!-- Các nút được căn dưới cùng với khoảng cách 10px -->
+                    <div class="d-flex justify-content-end mt-auto" style="padding-bottom: 10px;">
+                        <a th:href="@{'/judgement/practice/code_space/' + ${exercise.id}}"
+                           class="btn btn-outline-primary btn-sm me-2">
+                            <i class="bi bi-info-circle"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div th:if="${#lists.isEmpty(exercises)}"
+                 class="d-flex justify-content-center align-items-center"
+                 style="height: 50px; width: 100%;">
+                <p>No exercises found.</p>
+            </div>
+
+        </div>
+
+
+        <!-- Pagination -->
+        <div class="d-flex justify-content-center mt-4" th:if="${totalPages >= 1}">
+            <nav>
+                <ul class="pagination">
+                    <!-- Trường hợp chỉ có 1 trang -->
+                    <th:block th:if="${totalPages == 1}">
+                        <li class="page-item active">
+                            <a class="page-link" href="#">1</a>
+                        </li>
+                    </th:block>
+                    <!-- Trường hợp có nhiều hơn 1 trang -->
+                    <th:block th:if="${totalPages > 1}">
+                        <!-- Nút First (<<) -->
+                        <li class="page-item" th:if="${currentPage > 0}">
+                            <a class="page-link"
+                               th:href="@{/exercises(page=0, language=${currentLanguage}, level=${currentLevel}, description=${paramDescription}, title=${paramTitle})}">«</a>
+                        </li>
+                        <!-- Nút Previous (<) -->
+                        <li class="page-item" th:if="${currentPage > 0}">
+                            <a class="page-link"
+                               th:href="@{/exercises(page=${currentPage - 1}, language=${currentLanguage}, level=${currentLevel}, description=${paramDescription}, title=${paramTitle})}"><</a>
+                        </li>
+                        <!-- Danh sách số trang -->
+                        <th:block th:with="isNearStart=${currentPage == 0},
+                                  isNearEnd=${currentPage >= totalPages - 3},
+                                  startPage=${isNearStart ? 0 : (isNearEnd ? totalPages - 3 : currentPage)},
+                                  startPage=${T(java.lang.Math).max(0, startPage)},
+                                  endPage=${T(java.lang.Math).min(startPage + 2, totalPages - 1)}">
+                            <!-- Trang đầu tiên (chỉ hiển thị nếu ở gần cuối) -->
+                            <li class="page-item" th:if="${isNearEnd}"
+                                th:classappend="${currentPage == 0} ? 'active'">
+                                <a class="page-link"
+                                   th:href="@{/exercises(page=0, language=${currentLanguage}, level=${currentLevel}, title=${paramTitle}, description=${paramDescription})}">1</a>
+                            </li>
+                            <!-- Dấu ba chấm nếu cần (trước các trang chính, chỉ hiển thị khi ở gần cuối) -->
+                            <li class="page-item disabled" th:if="${isNearEnd and startPage > 1}">
+                                <span class="page-link">...</span>
+                            </li>
+                            <!-- Hiển thị tối đa 3 trang từ startPage -->
+                            <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
+                                th:classappend="${i == currentPage} ? 'active'">
+                                <a class="page-link"
+                                   th:href="@{/exercises(page=${i}, language=${currentLanguage}, level=${currentLevel}, title=${paramTitle}, description=${paramDescription})}"
+                                   th:text="${i + 1}">Page</a>
+                            </li>
+                            <!-- Dấu ba chấm nếu cần (sau các trang chính) -->
+                            <li class="page-item disabled" th:if="${endPage < totalPages - 1 and !isNearEnd}">
+                                <span class="page-link">...</span>
+                            </li>
+                            <!-- Trang cuối cùng (hiển thị nếu không ở gần cuối) -->
+                            <li class="page-item" th:if="${endPage < totalPages - 1 and !isNearEnd}"
+                                th:classappend="${currentPage == totalPages - 1} ? 'active'">
+                                <a class="page-link"
+                                   th:href="@{/exercises(page=${totalPages - 1}, language=${currentLanguage}, level=${currentLevel}, title=${paramTitle}, description=${paramDescription})}"
+                                   th:text="${totalPages}">Last</a>
+                            </li>
+                        </th:block>
+                        <!-- Nút Next (>) -->
+                        <li class="page-item" th:if="${currentPage < totalPages - 1}">
+                            <a class="page-link"
+                               th:href="@{/exercises(page=${currentPage + 1}, language=${currentLanguage}, level=${currentLevel}, description=${paramDescription}, title=${paramTitle})}">></a>
+                        </li>
+                        <!-- Nút Last (>>) -->
+                        <li class="page-item" th:if="${currentPage < totalPages - 1}">
+                            <a class="page-link"
+                               th:href="@{/exercises(page=${totalPages - 1}, language=${currentLanguage}, level=${currentLevel}, description=${paramDescription}, title=${paramTitle})}">»</a>
+                        </li>
+                    </th:block>
+                    <!-- Ô nhập số trang -->
+                    <div class="input-group input-group-sm ms-2 page-item" style="width: 130px;">
+                        <input type="number" class="form-control" id="pageInput"
+                               th:attr="max=${totalPages}, min=1"
+                               placeholder="Go to"
+                               style="text-align: center;">
+                        <button class="btn btn-outline-primary" type="button" onclick="goToPage()">⩥</button>
+                    </div>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<div id="deleteSuccessToast" class="toast position-fixed" role="alert"
+     aria-live="assertive" aria-atomic="true" style="z-index: 1050; display: none; top: 70px; right: 20px;">
+    <div class="toast-body text-center">
+        Deleted Successfully!
+    </div>
+</div>
+
+<!-- Footer -->
+<div th:replace="~{fragments :: footer}" class="mt-auto"></div>
+<!-- Limit description in 20 words -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll('.description').forEach(desc => {
+            let text = desc.innerText;
+            if (text.length > 70) {
+                desc.innerText = text.substring(0, 70) + "...";
+            }
+        });
+    });
+
+</script>
+<!-- Switch card and table -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        let viewMode = localStorage.getItem("viewMode") || "card"; // Mặc định Card View
+        updateView(viewMode);
+
+        document.getElementById("toggleView").addEventListener("click", function () {
+            viewMode = (viewMode === "card") ? "table" : "card";
+            localStorage.setItem("viewMode", viewMode);
+            updateView(viewMode);
+        });
+    });
+
+    function updateView(mode) {
+        let toggleButton = document.getElementById("toggleView");
+
+        if (mode === "card") {
+            document.getElementById("cardView").style.display = "flex";
+            document.getElementById("tableView").style.display = "none";
+            toggleButton.innerHTML = '<i class="bi bi-table me-2"></i> Switch to Table View';
+            toggleButton.classList.replace("btn-secondary", "btn-primary");
+        } else {
+            document.getElementById("cardView").style.display = "none";
+            document.getElementById("tableView").style.display = "block";
+            toggleButton.innerHTML = '<i class="bi bi-grid me-2"></i> Switch to Card View';
+            toggleButton.classList.replace("btn-primary", "btn-secondary");
+        }
+    }
+</script>
+<!-- Bootstrap 5 JS Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const selectAllCheckbox = document.getElementById("selectAll");
+        const itemCheckboxes = document.querySelectorAll(".selectItem");
+        const deleteButton = document.getElementById("deleteSelected");
+        const toastElement = document.getElementById("deleteSuccessToast");
+        const importResultModal = new bootstrap.Modal(document.getElementById("importResultModal"));
+
+        // Kiểm tra nếu có thông báo thành công hoặc cảnh báo thì hiển thị modal
+        // if (document.querySelector(".alert-success") || document.querySelector(".alert-warning")) {
+        //     importResultModal.show();
+        // }
+
+        if (document.querySelector("#importResultModal .alert")) {
+            importResultModal.show();
+        }
+
+        function setupAlertAutoDismiss(alertId) {
+            const alert = document.getElementById(alertId);
+            if (alert) {
+                setTimeout(() => {
+                    closeAlert(alertId);
+                }, 3000);
+            }
+        }
+
+        function closeAlert(alertId) {
+            const alert = document.getElementById(alertId);
+            if (alert) {
+                alert.style.animation = 'fadeOut 0.5s ease-out forwards';
+                setTimeout(() => {
+                    alert.remove();
+                }, 2000);
+            }
+        }
+
+        // Setup auto-dismiss for both alerts
+        setupAlertAutoDismiss('successAlert');
+        setupAlertAutoDismiss('errorAlert');
+
+
+        // Chọn tất cả checkbox
+        selectAllCheckbox.addEventListener("change", function () {
+            itemCheckboxes.forEach(checkbox => {
+                checkbox.checked = selectAllCheckbox.checked;
+            });
+        });
+
+        // Nếu bỏ chọn một checkbox, bỏ chọn "Select All"
+        itemCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener("change", function () {
+                selectAllCheckbox.checked = [...itemCheckboxes].every(cb => cb.checked);
+            });
+        });
+
+        // Xử lý khi nhấn nút "Delete Selected"
+        deleteButton.addEventListener("click", function () {
+            const selectedIds = [...document.querySelectorAll(".selectItem:checked")]
+                .map(cb => cb.closest("tr").getAttribute("data-id"));
+
+            if (selectedIds.length === 0) {
+                alert("No exercises selected.");
+                return;
+            }
+
+            if (confirm("Are you sure you want to delete selected exercises?")) {
+                fetch('/exercises/delete-batch', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ids: selectedIds})
+                }).then(response => {
+                    if (response.ok) {
+                        showToast();
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        alert("Failed to delete exercises.");
+                    }
+                });
+            }
+        });
+
+        // Hiển thị thông báo
+        function showToast() {
+            toastElement.style.display = "block";
+            const toast = new bootstrap.Toast(toastElement);
+            toast.show();
+        }
+    });
+    document.addEventListener("DOMContentLoaded", function () {
+        const languageFilter = document.getElementById("languageFilter");
+        const levelFilter = document.getElementById("levelFilter");
+        const filterForm = document.getElementById("filterForm");
+
+        // Submit form khi thay đổi dropdown
+        languageFilter.addEventListener("change", function () {
+            filterForm.submit();
+        });
+
+        levelFilter.addEventListener("change", function () {
+            filterForm.submit();
+        });
+
+    });
+
+    function clearFilters() {
+        // Clear the dropdowns and input
+        document.getElementById('languageFilter').value = '';
+        document.getElementById('levelFilter').value = '';
+        document.getElementById('searchInput').value = '';
+
+        // Submit the form without filters
+        document.getElementById('filterForm').submit();
+    }
+
+    // Close popup when clicking outside
+    document.getElementById('overlay').addEventListener('click', function () {
+        document.querySelectorAll('.warning-details.active').forEach(detail => {
+            detail.classList.remove('active');
+        });
+        this.classList.remove('active');
+    });
+
+    // function toggleTags() {
+    //     document.querySelectorAll('.extra-tag').forEach(tag => {
+    //         tag.classList.toggle('d-none');
+    //     });
+    // }
+    function toggleTags() {
+        let extraTags = document.querySelectorAll('.extra-tag');
+        extraTags.forEach(tag => tag.classList.toggle('d-none'));
+
+        let toggleBtn = document.getElementById('toggleTags');
+        toggleBtn.textContent = toggleBtn.textContent === "..." ? "Show less" : "...";
+    }
+
+    // tag
+    function updateSelectedTags() {
+        selectedTagsContainer.innerHTML = '';
+        let selectedCount = 0;
+        let selectedTags = [];
+
+        tagCheckboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                selectedCount++;
+                selectedTags.push(checkbox.value);
+                const tag = document.createElement('span');
+                tag.className = 'selected-tag';
+                const label = checkbox.nextElementSibling.textContent;
+                tag.innerHTML = `${label} <span class="remove-tag" data-id="${checkbox.value}">&times;</span>`;
+                selectedTagsContainer.appendChild(tag);
+            }
+        });
+
+        dropdownButton.textContent = selectedCount > 0 ? `${selectedCount} tag(s) selected` : 'Select Tags';
+
+        // Update form's hidden input for tags
+        let form = document.getElementById('filterForm');
+        // Remove existing tag inputs
+        form.querySelectorAll('input[name="tags"]').forEach(input => {
+            if (!input.checked) {
+                input.remove();
+            }
+        });
+
+        // Add selected tags as hidden inputs
+        selectedTags.forEach(tagId => {
+            if (!form.querySelector(`input[name="tags"][value="${tagId}"]`)) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'tags';
+                input.value = tagId;
+                form.appendChild(input);
+            }
+        });
+    }
+
+    tagCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+            updateSelectedTags();
+            document.getElementById('filterForm').submit();
+        });
+    });
+
+    selectedTagsContainer.addEventListener('click', (e) => {
+        if (e.target.classList.contains('remove-tag')) {
+            const tagId = e.target.dataset.id;
+            const checkbox = document.querySelector(`input[value="${tagId}"]`);
+            if (checkbox) {
+                checkbox.checked = false;
+                updateSelectedTags();
+                document.getElementById('filterForm').submit();
+            }
+        }
+    });
+
+    // Initialize selected tags
+    updateSelectedTags();
+
+    function toggleTags() {
+        let extraTags = document.querySelectorAll('.extra-tag');
+        extraTags.forEach(tag => tag.classList.toggle('d-none'));
+
+        let toggleBtn = document.getElementById('toggleTags');
+        toggleBtn.textContent = toggleBtn.textContent === "..." ? "Show less" : "...";
+    }
+</script>
+<script>
+    document.getElementById("filterForm").addEventListener("submit", function () {
+        let checkedTags = [];
+        document.querySelectorAll("input[name='tags']:checked").forEach(tag => {
+            checkedTags.push(tag.value);
+        });
+        console.log("Selected Tags:", checkedTags);
+    });
+
+    document.getElementById("tagSearch").addEventListener("input", function () {
+        let filter = this.value.toLowerCase();
+        let tags = document.querySelectorAll("#tagList .form-check");
+
+        tags.forEach(tag => {
+            let label = tag.querySelector("label").innerText.toLowerCase();
+            tag.style.display = label.includes(filter) ? "block" : "none";
+        });
+    });
+
+    // 🔍 Khi nhấn nút "🔍", lọc tag theo input
+    document.getElementById("submitTagSearch").addEventListener("click", function () {
+        let searchInput = document.getElementById("tagSearch");
+        let event = new Event("input");
+        searchInput.dispatchEvent(event);
+    });
+</script>
+<script th:inline="javascript">
+    function goToPage() {
+        var pageInput = document.getElementById('pageInput').value;
+        var totalPages = /*[[${totalPages}]]*/ 0;
+        var currentLanguage = /*[[${currentLanguage}]]*/ null;
+        var currentLevel = /*[[${currentLevel}]]*/ '' || '';
+        var paramDescription = /*[[${paramDescription}]]*/ '' || '';
+        var paramTitle = /*[[${paramTitle}]]*/ '' || '';
+
+        if (pageInput && !isNaN(pageInput)) {
+            var page = parseInt(pageInput) - 1; // Trừ 1 vì page bắt đầu từ 0
+            if (page >= 0 && page < totalPages) {
+                var url = '/exercises?page=' + page;
+                if (currentLanguage !== null && currentLanguage !== undefined && currentLanguage !== '') {
+                    url += '&language=' + encodeURIComponent(currentLanguage);
+                }
+                if (currentLevel) url += '&level=' + encodeURIComponent(currentLevel);
+                if (paramDescription) url += '&description=' + encodeURIComponent(paramDescription);
+                if (paramTitle) url += '&title=' + encodeURIComponent(paramTitle);
+                window.location.href = url;
+            } else {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Invalid Page!',
+                    text: 'Please enter a page number between 1 and ' + totalPages,
+                    confirmButtonText: 'OK'
+                });
+            }
+        } else {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Invalid Input!',
+                text: 'Please enter a valid number',
+                confirmButtonText: 'OK'
+            });
+        }
+    }
+
+    document.getElementById('pageInput').addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            goToPage();
+        }
+    });
+</script>
+
+</body>
+</html>

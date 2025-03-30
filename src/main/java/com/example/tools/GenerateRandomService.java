@@ -9,10 +9,7 @@ import com.example.user.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -43,11 +40,18 @@ public class GenerateRandomService {
     private QuestionService questionService;*/
 
     // Hàm lấy ngẫu nhiên danh sách nhỏ các câu hỏi cho 1 bài quiz từ 1 list lớn các câu hỏi
-    public List<Question> collectRandomQuestions(List<Question> questionList, int questionsEachQuiz) {
+    public List<Question> collectRandomQuestions(List<Question> questionList, int questionsEachQuiz) throws CloneNotSupportedException {
         if (questionsEachQuiz >= questionList.size()) {
             throw new InputException("The number of questions per quiz must not exceed the total number of questions!");
         }
 
+        List<Question> clonedQuestions = new ArrayList<>();
+        Collections.shuffle(questionList);
+        List<Question> choseQuestions = questionList.subList(0, questionsEachQuiz);
+
+        for (Question question : choseQuestions){
+            clonedQuestions.add((Question) question.clone());
+        }
         /*for (int i = 0; i < questionList.size(); i++) {
             for (int j = i + 1; j < questionList.size(); j++) {
                 if (questionList.get(i).getQuestionText().equals()) {
@@ -55,8 +59,12 @@ public class GenerateRandomService {
                 }
             }
         }*/
-        Collections.shuffle(questionList);
-        return questionList.subList(0, questionsEachQuiz);
+
+        for (int i = 0; i < clonedQuestions.size(); i++) {
+            clonedQuestions.get(i).setQuestionNo(i + 1);
+        }
+
+        return clonedQuestions;
     }
 
     // Hàm add danh sách câu hỏi mới tạo cho 1 quiz trống
@@ -70,7 +78,7 @@ public class GenerateRandomService {
     }*/
 
     //Tạo tên ngẫu nhiên
-    public String generateRandomName(Set<Quiz> quizList) {
+    public String generateRandomName(List<Quiz> quizList) {
         if(quizList == null || quizList.isEmpty()){
             return "Quiz" + getRandomString(6);
         }
@@ -81,7 +89,7 @@ public class GenerateRandomService {
         String name;
         do {
             name = getRandomString(6);
-        } while (existingNames.contains(name));
+        } while (existingNames.contains(name) || existingNames.contains("Quiz" + name));
         return "Quiz" + name;
     }
 

@@ -4,126 +4,308 @@
     <meta charset="UTF-8"/>
     <title>Assessment Detail</title>
     <link rel="stylesheet" href="/style.css"/>
+    <!-- Bootstrap & Font Awesome -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"/>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* Breadcrumb styling */
+        .breadcrumb {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            list-style: none;
+            background-color: transparent;
+            border-radius: 0.25rem;
+        }
+
+        .breadcrumb-item + .breadcrumb-item::before {
+            content: ">";
+            padding: 0 0.5rem;
+            color: #6c757d;
+        }
+
+        /* Scrollable container if needed */
+        .scrollable-table {
+            overflow: auto;
+            max-height: 650px;
+        }
+
+        /* Scroll-to-top button */
+        #scrollToTopButton {
+            position: fixed;
+            bottom: 3vh;
+            right: 20px;
+            display: none; /* Initially hidden */
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(45deg, #6a11cb, #2575fc);
+            color: white;
+            border: none;
+            outline: none;
+            border-radius: 50%;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+            justify-content: center;
+            align-items: center;
+            opacity: 0.8;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            z-index: 80;
+        }
+
+        #scrollToTopButton:hover {
+            transform: scale(1.2);
+            opacity: 1;
+            background: linear-gradient(45deg, #2575fc, #6a11cb);
+        }
+
+        /* Adjust max-height for medium screens */
+        @media (max-width: 1200px) {
+            .scrollable-table {
+                max-height: 500px;
+            }
+        }
+
+        /* Adjust max-height for small screens */
+        @media (max-width: 768px) {
+            .scrollable-table {
+                max-height: 400px;
+            }
+        }
+
+        /* Adjust max-height for extra-small screens */
+        @media (max-width: 576px) {
+            .scrollable-table {
+                max-height: 300px;
+            }
+        }
+
+        /* Make the chart fill 90% of the card body */
+        .chart-container {
+            width: 90%;
+            height: 90%;
+            margin: 0 auto; /* center it */
+        }
+    </style>
 </head>
 <body>
-
-<style>
-
-    /* Breadcrumb styling */
-    .breadcrumb {
-        display: flex;
-        flex-wrap: wrap;
-        padding: 0.75rem 1rem;
-        margin-bottom: 1rem;
-        list-style: none;
-        background-color: transparent;
-        border-radius: 0.25rem;
-    }
-
-    .breadcrumb-item + .breadcrumb-item::before {
-        content: ">";
-        padding: 0 0.5rem;
-        color: #6c757d; /* Light gray color for ">" */
-    }
-
-    /* Scrollable container if needed */
-    .scrollable-table {
-        overflow: auto;
-        max-height: 650px; /* Default for large screens */
-    }
-
-    /* Scroll-to-top button */
-    #scrollToTopButton {
-        position: fixed;
-        bottom: 3vh;
-        right: 20px;
-        display: none; /* Initially hidden */
-        width: 50px;
-        height: 50px;
-        background: linear-gradient(45deg, #6a11cb, #2575fc);
-        color: white;
-        border: none;
-        outline: none;
-        border-radius: 50%;
-        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
-        justify-content: center;
-        align-items: center;
-        opacity: 0.8;
-        transition: transform 0.3s ease, opacity 0.3s ease;
-        z-index: 80;
-    }
-
-    #scrollToTopButton:hover {
-        transform: scale(1.2); /* Slight zoom on hover */
-        opacity: 1; /* Increase clarity */
-        background: linear-gradient(45deg, #2575fc, #6a11cb); /* Reverse gradient on hover */
-    }
-
-    /* Adjust max-height for medium screens */
-    @media (max-width: 1200px) {
-        .scrollable-table {
-            max-height: 500px;
-        }
-    }
-
-    /* Adjust max-height for small screens */
-    @media (max-width: 768px) {
-        .scrollable-table {
-            max-height: 400px;
-        }
-    }
-
-    /* Adjust max-height for extra-small screens */
-    @media (max-width: 576px) {
-        .scrollable-table {
-            max-height: 300px;
-        }
-    }
-</style>
-
-
 <div class="container mt-4">
-    <div class="d-flex justify-content-center">
-        <h1>Assessment</h1>
-    </div>
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a th:href="@{/}">Home</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/assessments}">Assessment List</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Assessment Detail</li>
+        </ol>
+    </nav>
 
-    <!-- Display error message if exists -->
-    <div th:if="${errorMessage != null}" class="alert alert-danger" role="alert">
-        <p th:text="${errorMessage}"></p>
-    </div>
-
-    <!-- Assessment Details Section -->
-    <div class="card mb-4">
+    <div class="card mb-4" id="assessmentCard">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <h2 class="mb-0" th:text="${assessment.title}"></h2>
+            <h2 class="mb-0" th:text="${assessment.title}">Assessment Title</h2>
+
+            <!-- Right-side controls -->
             <div>
-                <a th:href="@{/assessments/edit/{id}(id=${assessment.id})}" class="btn btn-outline-secondary">Edit</a>
-                <a th:href="@{/assessments}" class="btn btn-secondary ml-2">Back to Assessments</a>
+                <!-- Toggle button with an up arrow by default -->
+                <button type="button" class="btn btn-outline-secondary" id="toggleBtn">
+
+                    <i class="fas fa-chevron-up"></i>
+                </button>
+
+                <a th:href="@{/assessments/edit/{id}(id=${assessment.id})}"
+                   class="btn btn-outline-secondary">
+                    Edit
+                </a>
+                <a th:href="@{/assessments}" class="btn btn-secondary ml-2">
+                    Back to Assessments
+                </a>
             </div>
         </div>
 
-        <div class="card-body">
+        <div class="card-body" id="assessmentCardBody">
             <div class="row">
-                <!-- Left Column -->
-                <div class="col-md-6">
+                <!-- 1. Course -->
+                <div class="col-md-3">
                     <p>
-                        <strong>Course:</strong>
-                        <span th:text="${assessment.course.name}"></span><br/>
-                        <strong>Assessment Type:</strong>
-                        <span th:text="${assessment.assessmentType.name}"></span>
+                        <span class="text-muted">Course</span><br/>
+                        <span class="fw-bold text-dark" th:text="${assessment.course.name}">
+                    </span>
+                    </p>
+                </div>
+                <!-- 2. Assessment Type -->
+                <div class="col-md-3">
+                    <p>
+                        <span class="text-muted">Assessment Type</span><br/>
+                        <span class="fw-bold text-dark" th:text="${assessment.assessmentType.name}">
+                    </span>
+                    </p>
+                </div>
+                <!-- 3. Created At -->
+                <div class="col-md-3">
+                    <p>
+                        <span class="text-muted">Created At</span><br/>
+                        <span class="fw-bold text-dark"
+                              th:text="${#temporals.format(assessment.createdAt, 'yyyy-MM-dd HH:mm')}">
+                    </span>
+                    </p>
+                </div>
+                <!-- 4. Exam Duration -->
+                <div class="col-md-3">
+                    <p>
+                        <span class="text-muted">Exam Duration</span><br/>
+                        <span class="fw-bold text-dark"
+                              th:text="${assessment.timeLimit} + ' minutes'">
+                    </span>
                     </p>
                 </div>
 
-                <!-- Right Column -->
-                <div class="col-md-6">
-                    <p>
-                        <strong>Duration:</strong>
-                        <span th:text="${assessment.timeLimit}"></span> Minutes<br/>
-                        <strong>Minimum Passing Score:</strong>
-                        <span th:text="${assessment.qualifyScore}">0</span>%
-                    </p>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const toggleBtn   = document.getElementById('toggleBtn');
+            // Sửa ID này cho trùng với ID trong HTML
+            const cardBody    = document.getElementById('assessmentCardBody');
+
+            let isHidden = false;
+
+            toggleBtn.addEventListener('click', function handleClick() {
+                if (isHidden) {
+                    // Nếu đang ẩn -> cho hiển thị
+                    cardBody.style.display = 'block';
+                    this.innerHTML = '<i class="fas fa-chevron-up"></i>';
+                    isHidden = false;
+                } else {
+                    // Nếu đang hiển thị -> ẩn đi
+                    cardBody.style.display = 'none';
+                    this.innerHTML = '<i class="fas fa-chevron-down"></i>';
+                    isHidden = true;
+                }
+            });
+        });
+    </script>
+
+
+
+
+    <div class="row mb-4">
+
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-user-check fa-2x text-primary"></i>
+                    <p class="text-muted mt-2">Assessed</p>
+                    <h4 class="fw-bold text-dark" th:text="${assessment.assessedCount}">20</h4>
                 </div>
             </div>
+        </div>
+
+
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-envelope fa-2x text-warning"></i>
+                    <p class="text-muted mt-2">Invitations Sent</p>
+                    <h4 class="fw-bold text-dark" th:text="${assessment.invitedCount}">16</h4>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-check-circle fa-2x text-success"></i>
+                    <p class="text-muted mt-2">Passed</p>
+                    <h4 class="fw-bold text-dark" th:text="${assessment.qualifiedCount}">3</h4>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-percentage fa-2x text-danger"></i>
+                    <p class="text-muted mt-2">Minimum Passing Score</p>
+                    <h4 class="fw-bold text-dark" th:text="${assessment.qualifyScore}">
+                        75
+                    </h4>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- CHARTS SECTION -->
+    <div class="row mb-4" th:switch="${#strings.toUpperCase(assessment.assessmentType.name)}">
+
+        <!-- CASE 1: QUIZ ONLY -->
+        <div th:case="QUIZ" th:if="${assessment.assessmentType}">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Quiz Score Chart</h3>
+                    </div>
+                    <div class="chart-container" style="height: 400px; width: 90%; margin: 0 auto;">
+                        <canvas id="quizScoreChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CASE 2: ASSIGNMENT ONLY -->
+        <!-- CASE 2: ASSIGNMENT ONLY -->
+        <div th:case="'ASSIGNMENT'" th:if="${assessment.assessmentType}">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Exercise Score Chart</h3>
+                    </div>
+                    <div class="chart-container" style="height: 400px; width: 90%; margin: 0 auto;">
+                        <canvas id="exerciseScoreChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- CASE 3: QUIZ & ASSIGNMENT -->
+        <div th:case="'QUIZ & ASSIGNMENT'">
+            <!-- Two half-width columns: one for Quiz, one for Exercise -->
+            <div class="row mb-4">
+                <div class="col-12 col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Quiz Score Chart</h3>
+                        </div>
+                        <div class="chart-container" style="height: 400px; width: 100%; margin: 0 auto;">
+                            <canvas id="quizScoreChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6 mt-3 mt-md-0">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Exercise Score Chart</h3>
+                        </div>
+                        <div class="chart-container" style="height: 400px; width: 100%; margin: 0 auto;">
+                            <canvas id="exerciseScoreChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- OPTIONAL: default case if type is unknown -->
+        <div th:case="*">
+
         </div>
     </div>
 
@@ -138,9 +320,8 @@
                 <div class="card-body" style="max-height: 300px; overflow-y: auto;">
                     <ul class="list-group">
                         <li class="list-group-item" th:each="exercise : ${assessment.exercises}">
-                            <a th:href="@{/exercises/detail/{exerciseId}(exerciseId=${exercise.id})}"
-                               target="_blank"
-                               th:text="${exercise.name}">
+                            <a th:href="@{/judgement/{type}/code_space/{id}(type='preview', id=${exercise.id})}"
+                               th:text="${exercise.name}" target="_blank">
                                 Exercise Name
                             </a>
                         </li>
@@ -155,14 +336,18 @@
         <!-- Questions Section -->
         <div class="col-md-6">
             <div class="card">
-                <div class="card-header">
+                <div class="card-header d-flex justify-content-between align-items-center">
                     <h3>Multiple Choice</h3>
+                    <!-- View All Button opens modal -->
+                    <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal"
+                            data-bs-target="#viewAllModal">
+                        View All
+                    </button>
                 </div>
                 <div class="card-body" style="max-height: 300px; overflow-y: auto;">
                     <ul class="list-group">
                         <li class="list-group-item" th:each="question, iterStat : ${questions}">
-                            <span th:text="${iterStat.count}"></span>.
-                            <span th:utext="${question.questionText}"></span>
+                            <span th:text="${iterStat.count}"></span>. <span th:utext="${question.questionText}">Question text</span>
                         </li>
                         <li class="list-group-item text-muted" th:if="${#lists.isEmpty(questions)}">
                             No questions assigned.
@@ -173,82 +358,113 @@
         </div>
     </div>
 
-    <!-- Registered Attempts Section -->
-    <div class="card">
-        <div class="card-header">
+    <!-- Registered Attempts Section (non-AJAX pagination) -->
+    <div class="card" id="registeredAttemptsContainer">
+        <div class="card-header d-flex justify-content-between align-items-center">
             <h3>Registered Attempts</h3>
+            <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal"
+                    data-bs-target="#viewAllAttemptsModal">
+                View All
+            </button>
         </div>
         <div class="card-body">
             <table class="table table-sm table-bordered">
                 <thead class="thead-light">
                 <tr>
                     <th>#</th>
-                    <th>Candidate</th>
+                    <!-- Đã xóa cột Candidate -->
                     <th>Email</th>
-                    <th>Invitation Date</th>
+                    <th>Assessment Start Time</th>
+                    <th>Assessment Score</th>
                     <th>Quiz Score</th>
-                    <th>Assignment Score</th>
+                    <th>Exercise Score</th>
                     <th>Action</th>
                 </tr>
                 </thead>
                 <tbody>
-                <!-- Note: 'attempt' is now a Map containing candidateUsername -->
                 <tr th:each="attempt, iterStat : ${registeredAttempts}">
                     <td th:text="${iterStat.count}"></td>
-                    <td th:text="${attempt.candidateUsername}"></td>
+                    <!-- Đã xóa cột Candidate -->
                     <td th:text="${attempt.email}"></td>
                     <td th:text="${#temporals.format(attempt.attemptDate, 'yyyy-MM-dd HH:mm')}"></td>
-                    <td th:text="${attempt.scoreQuiz}"></td>
                     <td th:text="${attempt.scoreAss}"></td>
+                    <td th:text="${attempt.scoreQuiz}"></td>
+                    <td th:text="${attempt.scoreEx}"></td>
                     <td>
                         <a th:href="@{/assessments/viewReport/{assessmentId}(assessmentId=${assessment.id}, attempt-id=${attempt.id})}"
-                           class="btn btn-sm btn-outline-primary">View</a>
+                           class="btn btn-sm btn-outline-primary">
+                            View
+                        </a>
                     </td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(registeredAttempts)}">
-                    <td colspan="8" class="text-center text-muted">
-                        No attempts yet.
-                    </td>
+                    <!-- Số cột bây giờ là 1 (STT) + 1 (Email) + 1 (Start Time) + 1 (Score) + 1 (Quiz) + 1 (Ex) + 1 (Action) = 7 -->
+                    <td colspan="7" class="text-center text-muted">No attempts yet.</td>
                 </tr>
                 </tbody>
             </table>
 
-            <!-- Centered Pagination for Registered Attempts -->
+            <!-- Pagination logic -->
             <nav aria-label="Registered Attempts Pagination" th:if="${registeredAttemptsPage.totalPages > 0}">
                 <ul class="pagination justify-content-center">
-                    <!-- First Page -->
                     <li class="page-item" th:classappend="${registeredAttemptsPage.number == 0} ? 'disabled'">
                         <a class="page-link"
-                           th:href="@{/assessments/detail/{id}(id=${assessment.id}, pageReg=0, pageInv=${invitedCandidatesPage.number}, searchEmail=${searchEmail})}">
+                           th:href="@{/assessments/detail/{id}(
+                           id=${assessment.id},
+                           pageReg=0,
+                           pageInv=${invitedCandidatesPage.number},
+                           searchEmail=${searchEmail}
+                       )}">
                             First
                         </a>
                     </li>
-                    <!-- Previous Page -->
                     <li class="page-item" th:classappend="${registeredAttemptsPage.number == 0} ? 'disabled'">
                         <a class="page-link"
-                           th:href="@{/assessments/detail/{id}(id=${assessment.id}, pageReg=${registeredAttemptsPage.number - 1}, pageInv=${invitedCandidatesPage.number}, searchEmail=${searchEmail})}">
+                           th:href="@{/assessments/detail/{id}(
+                           id=${assessment.id},
+                           pageReg=${registeredAttemptsPage.number - 1},
+                           pageInv=${invitedCandidatesPage.number},
+                           searchEmail=${searchEmail}
+                       )}">
                             Previous
                         </a>
                     </li>
-                    <!-- Page Numbers -->
-                    <li class="page-item" th:each="i : ${#numbers.sequence(0, registeredAttemptsPage.totalPages - 1)}"
+
+                    <li class="page-item"
+                        th:each="i : ${#numbers.sequence(0, registeredAttemptsPage.totalPages - 1)}"
                         th:classappend="${registeredAttemptsPage.number == i} ? 'active'">
                         <a class="page-link"
-                           th:href="@{/assessments/detail/{id}(id=${assessment.id}, pageReg=${i}, pageInv=${invitedCandidatesPage.number}, searchEmail=${searchEmail})}"
+                           th:href="@{/assessments/detail/{id}(
+                           id=${assessment.id},
+                           pageReg=${i},
+                           pageInv=${invitedCandidatesPage.number},
+                           searchEmail=${searchEmail}
+                       )}"
                            th:text="${i + 1}">
                         </a>
                     </li>
-                    <!-- Next Page -->
-                    <li class="page-item" th:classappend="${registeredAttemptsPage.number == registeredAttemptsPage.totalPages - 1} ? 'disabled'">
+
+                    <li class="page-item"
+                        th:classappend="${registeredAttemptsPage.number == registeredAttemptsPage.totalPages - 1} ? 'disabled'">
                         <a class="page-link"
-                           th:href="@{/assessments/detail/{id}(id=${assessment.id}, pageReg=${registeredAttemptsPage.number + 1}, pageInv=${invitedCandidatesPage.number}, searchEmail=${searchEmail})}">
+                           th:href="@{/assessments/detail/{id}(
+                           id=${assessment.id},
+                           pageReg=${registeredAttemptsPage.number + 1},
+                           pageInv=${invitedCandidatesPage.number},
+                           searchEmail=${searchEmail}
+                       )}">
                             Next
                         </a>
                     </li>
-                    <!-- Last Page -->
-                    <li class="page-item" th:classappend="${registeredAttemptsPage.number == (registeredAttemptsPage.totalPages - 1)} ? 'disabled'">
+                    <li class="page-item"
+                        th:classappend="${registeredAttemptsPage.number == (registeredAttemptsPage.totalPages - 1)} ? 'disabled'">
                         <a class="page-link"
-                           th:href="@{/assessments/detail/{id}(id=${assessment.id}, pageReg=${registeredAttemptsPage.totalPages - 1}, pageInv=${invitedCandidatesPage.number}, searchEmail=${searchEmail})}"
+                           th:href="@{/assessments/detail/{id}(
+                           id=${assessment.id},
+                           pageReg=${registeredAttemptsPage.totalPages - 1},
+                           pageInv=${invitedCandidatesPage.number},
+                           searchEmail=${searchEmail}
+                       )}"
                            th:text="'Last'">
                         </a>
                     </li>
@@ -258,28 +474,29 @@
     </div>
 
 
-    <!-- All Invited Candidates Section - only visible for currentUser with role id=1 or role name "SUPERADMIN" -->
-    <div class="card mt-4"
-         th:if="${currentUser != null and (currentUser.roles.?[id == 1].size() > 0 or currentUser.roles.?[name=='SUPERADMIN'].size() > 0)}">
+    <!-- All Invited Candidates Section (non-AJAX pagination) -->
+    <div class="card mt-4">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h3>All Invited Candidates</h3>
-            <!-- Search Bar on the right with a magnifying glass icon -->
-            <form id="searchCandidatesForm" th:action="@{/assessments/detail/{id}(id=${assessment.id})}" method="get" class="d-flex">
+            <!-- Search Bar -->
+            <form id="searchCandidatesForm"
+                  th:action="@{/assessments/detail/{id}(id=${assessment.id})}"
+                  method="get"
+                  class="d-flex">
                 <input type="hidden" name="pageReg" th:value="${registeredAttemptsPage.number}"/>
-                <input type="hidden" name="pageInv" id="pageInvInput" value="0"/>
-                <input type="text" name="searchEmail" id="searchEmailInput" th:value="${searchEmail}"
-                       placeholder="Search email..."
-                       class="form-control"
-                       style="max-width: 200px; margin-right: 10px;"/>
+                <input type="hidden" name="pageInv" value="0"/>
+                <input type="text" name="searchEmail" placeholder="Search email..." class="form-control"
+                       style="max-width: 200px; margin-right: 10px;" th:value="${searchEmail}"/>
                 <button class="btn btn-primary" type="submit">
                     <i class="fa fa-search"></i>
                 </button>
             </form>
+            <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal"
+                    data-bs-target="#viewAllInvitedModal">
+                View All
+            </button>
         </div>
-
         <div class="card-body">
-
-            <!-- Container for Invited Candidates list and pagination -->
             <div id="invitedCandidatesContainer">
                 <table class="table table-sm table-bordered">
                     <thead class="thead-light">
@@ -294,8 +511,8 @@
                     <tr th:each="candidate, stat : ${invitedCandidates}">
                         <td th:text="${stat.count}"></td>
                         <td th:text="${candidate.email}"></td>
-                        <td th:text="${candidate.invitationDate}"></td>
-                        <td th:text="${candidate.expirationDate}"></td>
+                        <td th:text="${#temporals.format(candidate.invitationDate, 'yyyy-MM-dd HH:mm')}"></td>
+                        <td th:text="${#temporals.format(candidate.expirationDate, 'yyyy-MM-dd HH:mm')}"></td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(invitedCandidates)}">
                         <td colspan="4" class="text-center text-muted">
@@ -305,105 +522,503 @@
                     </tbody>
                 </table>
 
-                <!-- Pagination for Invited Candidates -->
-                <nav aria-label="Invited Candidates Pagination">
+                <!-- Pagination logic -->
+                <nav aria-label="Invited Candidates Pagination" th:if="${invitedCandidatesPage.totalElements > 0}">
                     <ul class="pagination justify-content-center">
-                        <!-- First Page -->
-                        <li class="page-item" th:classappend="${invitedCandidatesPage.number == 0} ? 'disabled'">
-                            <a class="page-link candidate-page-link" href="#" data-page="0">First</a>
+                        <li class="page-item"
+                            th:classappend="${invitedCandidatesPage.first}? 'disabled'">
+                            <a class="page-link"
+                               th:href="@{/assessments/detail/{id}(
+                               id=${assessment.id},
+                               pageInv=0,
+                               pageReg=${registeredAttemptsPage.number},
+                               searchEmail=${searchEmail}
+                           )}">
+                                First
+                            </a>
                         </li>
-                        <!-- Previous Page -->
-                        <li class="page-item" th:classappend="${invitedCandidatesPage.number == 0} ? 'disabled'">
-                            <a class="page-link candidate-page-link" href="#"
-                               data-page="${invitedCandidatesPage.number - 1}">Previous</a>
+                        <li class="page-item"
+                            th:classappend="${invitedCandidatesPage.first}? 'disabled'">
+                            <a class="page-link"
+                               th:href="@{/assessments/detail/{id}(
+                               id=${assessment.id},
+                               pageInv=${invitedCandidatesPage.number - 1},
+                               pageReg=${registeredAttemptsPage.number},
+                               searchEmail=${searchEmail}
+                           )}">
+                                Previous
+                            </a>
                         </li>
-                        <!-- Page Numbers -->
                         <li class="page-item"
                             th:each="i : ${#numbers.sequence(0, invitedCandidatesPage.totalPages - 1)}"
-                            th:classappend="${invitedCandidatesPage.number == i} ? 'active'">
-                            <a class="page-link candidate-page-link" href="#" th:data-page="${i}"
-                               th:text="${i + 1}">1</a>
+                            th:classappend="${invitedCandidatesPage.number == i}? 'active'">
+                            <a class="page-link"
+                               th:href="@{/assessments/detail/{id}(
+                               id=${assessment.id},
+                               pageInv=${i},
+                               pageReg=${registeredAttemptsPage.number},
+                               searchEmail=${searchEmail}
+                           )}"
+                               th:text="${i + 1}">
+                            </a>
                         </li>
-                        <!-- Next Page -->
+
+                        <!-- Next -->
                         <li class="page-item"
-                            th:classappend="${invitedCandidatesPage.number == invitedCandidatesPage.totalPages - 1} ? 'disabled'">
-                            <a class="page-link candidate-page-link" href="#"
-                               data-page="${invitedCandidatesPage.number + 1}">Next</a>
+                            th:classappend="${invitedCandidatesPage.last}? 'disabled'">
+                            <a class="page-link"
+                               th:href="@{/assessments/detail/{id}(
+                               id=${assessment.id},
+                               pageInv=${invitedCandidatesPage.number + 1},
+                               pageReg=${registeredAttemptsPage.number},
+                               searchEmail=${searchEmail}
+                           )}">
+                                Next
+                            </a>
                         </li>
-                        <!-- Last Page -->
                         <li class="page-item"
-                            th:classappend="${invitedCandidatesPage.number == (invitedCandidatesPage.totalPages - 1)} ? 'disabled'">
-                            <a class="page-link candidate-page-link" href="#"
-                               th:data-page="${(invitedCandidatesPage.totalPages - 1)}" th:text="'Last'">Last</a>
+                            th:classappend="${invitedCandidatesPage.last}? 'disabled'">
+                            <a class="page-link"
+                               th:href="@{/assessments/detail/{id}(
+                               id=${assessment.id},
+                               pageInv=${invitedCandidatesPage.totalPages - 1},
+                               pageReg=${registeredAttemptsPage.number},
+                               searchEmail=${searchEmail}
+                           )}">
+                                Last
+                            </a>
                         </li>
                     </ul>
                 </nav>
+
             </div>
         </div>
     </div>
 
-    <!-- jQuery (if not already loaded) -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- Use Thymeleaf inline JavaScript to build URL -->
+
+    <!-- MODAL: View All Questions with Answers -->
+    <div class="modal fade" id="viewAllModal" tabindex="-1"
+         aria-labelledby="viewAllModalLabel" aria-hidden="true">
+        <!-- Center the modal -->
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 80%; width: 80%;">
+            <div class="modal-content">
+
+                <!-- Modal header with gray background and a search bar on the right -->
+                <div class="modal-header d-flex align-items-center" style="background-color: #f0f0f0;">
+                    <!-- Title on the left -->
+                    <h5 class="modal-title me-auto" id="viewAllModalLabel">
+                        All Multiple Choice Questions
+                    </h5>
+
+                    <!-- Search bar on the right -->
+                    <div class="ms-auto d-flex align-items-center">
+                        <div class="input-group me-2 border border-secondary rounded bg-white"
+                             style="max-width: 360px;">
+                        <span class="input-group-text border-0 bg-transparent" id="search-icon-questions">
+                            <i class="fas fa-search text-secondary"></i>
+                        </span>
+                            <input type="text"
+                                   class="form-control border-0 shadow-none"
+                                   placeholder="Search..."
+                                   aria-label="Search"
+                                   aria-describedby="search-icon-questions"
+                                   id="modalSearchQuestionsInput">
+                        </div>
+
+                        <!-- Close button -->
+                        <button type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"
+                                aria-label="Close">
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Modal body with scrollable content -->
+                <div class="modal-body">
+                    <div class="scrollable-table" style="max-height: 600px; overflow-y: auto;">
+                        <!--
+                            We'll wrap all question blocks in a container
+                            so we can filter them easily via JavaScript.
+                         -->
+                        <div id="questionsContainer">
+                            <!-- Each question block -->
+                            <div th:each="question, iterStat : ${questions}"
+                                 class="question-block mb-4 border-bottom pb-3">
+                                <p class="fw-bold">
+                                    <strong th:text="${iterStat.count}"></strong>.
+                                    <span th:text="${question.questionText}">
+                                    Question text
+                                </span>
+                                </p>
+                                <ul class="list-group">
+                                    <li class="list-group-item"
+                                        th:each="ans : ${questionAnswerOptionsMap[question.id] != null
+                                                  ? questionAnswerOptionsMap[question.id]
+                                                  : T(java.util.Collections).emptyList()}">
+                                    <span th:text="${ans.optionText}">
+                                        Answer Option Text
+                                    </span>
+                                        <span th:if="${ans.isCorrect}"
+                                              class="badge bg-success ms-2">
+                                        Correct
+                                    </span>
+                                    </li>
+                                    <li class="list-group-item text-muted"
+                                        th:if="${#lists.isEmpty(questionAnswerOptionsMap[question.id])}">
+                                        No answers assigned.
+                                    </li>
+                                </ul>
+                            </div>
+                            <!-- Fallback if no questions at all -->
+                            <div th:if="${#lists.isEmpty(questions)}">
+                                <p class="text-muted">
+                                    No questions assigned.
+                                </p>
+                            </div>
+                        </div> <!-- #questionsContainer -->
+                    </div>
+                </div>
+
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script to filter questions in real-time -->
     <script th:inline="javascript">
         /*<![CDATA[*/
-        $(document).ready(function () {
-            // Intercept the search form submission to load invited candidates via AJAX
-            $('#searchCandidatesForm').submit(function (e) {
-                e.preventDefault(); // Prevent full page reload
-                loadInvitedCandidates(0); // Reset to first page on new search
-            });
+        document.addEventListener("DOMContentLoaded", function() {
+            const searchInput = document.getElementById("modalSearchQuestionsInput");
+            const container   = document.getElementById("questionsContainer");
 
-            // Intercept pagination link clicks for invited candidates
-            $(document).on('click', '.candidate-page-link', function (e) {
-                e.preventDefault();
-                var page = $(this).data('page');
-                loadInvitedCandidates(page);
-            });
+            if (searchInput && container) {
+                searchInput.addEventListener("keyup", function() {
+                    const filter = this.value.toLowerCase();
+                    // Each question block has class "question-block"
+                    const blocks = container.querySelectorAll(".question-block");
 
-            function loadInvitedCandidates(page) {
-                // Update the hidden input for current invited candidates page
-                $('#pageInvInput').val(page);
-                // Gather current search and pagination parameters
-                var searchEmail = $('#searchEmailInput').val();
-                var pageReg = $('[name=pageReg]').val();
-                // Build the URL using Thymeleaf's inline URL expression
-                var baseUrl = /*[[@{/assessments/detail/{id}(id=${assessment.id})}]]*/ "";
-                var url = baseUrl + '?pageInv=' + page + '&pageReg=' + pageReg + '&searchEmail=' + encodeURIComponent(searchEmail);
-
-                // Use AJAX to load the updated invited candidates fragment
-                $.get(url, function (data) {
-                    // Update only the invitedCandidatesContainer content
-                    var newContent = $(data).find('#invitedCandidatesContainer').html();
-                    $('#invitedCandidatesContainer').html(newContent);
+                    blocks.forEach(block => {
+                        // Convert block's text to lowercase for searching
+                        const text = block.innerText.toLowerCase();
+                        block.style.display = text.includes(filter) ? "" : "none";
+                    });
                 });
             }
         });
         /*]]>*/
     </script>
 
-    <!-- Scroll to top button (initially hidden) -->
+
+    <!-- MODAL: View All Registered Attempts -->
+    <div class="modal fade" id="viewAllAttemptsModal" tabindex="-1"
+         aria-labelledby="viewAllAttemptsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 80%; width: 80%;">
+            <div class="modal-content">
+
+                <!-- Modal header with gray background and a search bar on the right -->
+                <div class="modal-header d-flex align-items-center" style="background-color: #f0f0f0;">
+                    <!-- Title on the left -->
+                    <h5 class="modal-title me-auto" id="viewAllAttemptsModalLabel">
+                        All Registered Attempts
+                    </h5>
+
+                    <!-- Search bar on the right -->
+                    <div class="ms-auto d-flex align-items-center">
+                        <div class="input-group me-2 border border-secondary rounded bg-white"
+                             style="max-width: 360px;">
+                        <span class="input-group-text border-0 bg-transparent" id="search-icon-attempts">
+                            <i class="fas fa-search text-secondary"></i>
+                        </span>
+                            <input type="text"
+                                   class="form-control border-0 shadow-none"
+                                   placeholder="Search..."
+                                   aria-label="Search"
+                                   aria-describedby="search-icon-attempts"
+                                   id="modalSearchAttemptsInput">
+                        </div>
+
+                        <!-- Close button -->
+                        <button type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"
+                                aria-label="Close">
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Modal body with scrollable content -->
+                <div class="modal-body">
+                    <div class="scrollable-table" style="max-height: 600px; overflow-y: auto;">
+                        <table class="table table-sm table-bordered">
+                            <thead class="thead-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Email</th>
+                                <th>Invitation Date</th>
+                                <th>Quiz Score</th>
+                                <th>Exercise Score</th>
+                                <th>Action</th>
+                            </tr>
+                            </thead>
+                            <tbody id="attemptsAllTableBody">
+                            <tr th:each="attempt, iterStat : ${registeredAttemptsAll}">
+                                <td th:text="${iterStat.count}"></td>
+                                <td th:text="${attempt.email}"></td>
+                                <td th:text="${#temporals.format(attempt.attemptDate, 'yyyy-MM-dd HH:mm')}"></td>
+                                <td th:text="${attempt.scoreQuiz}"></td>
+                                <td th:text="${attempt.scoreEx}"></td>
+                                <td>
+                                    <a th:href="@{/assessments/viewReport/{assessmentId}(
+                                                 assessmentId=${assessment.id},
+                                                 attempt-id=${attempt.id}
+                                               )}"
+                                       class="btn btn-sm btn-outline-primary">
+                                        View
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(registeredAttemptsAll)}">
+                                <td colspan="6" class="text-center text-muted">
+                                    No attempts yet.
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script to filter attempts in real-time -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        document.addEventListener("DOMContentLoaded", function() {
+            const searchInput = document.getElementById("modalSearchAttemptsInput");
+            const tableBody   = document.getElementById("attemptsAllTableBody");
+
+            if (searchInput && tableBody) {
+                searchInput.addEventListener("keyup", function() {
+                    const filter = this.value.toLowerCase();
+                    const rows = tableBody.querySelectorAll("tr");
+                    rows.forEach(row => {
+                        const text = row.innerText.toLowerCase();
+                        // Show row if it matches the filter; otherwise hide it
+                        row.style.display = text.includes(filter) ? "" : "none";
+                    });
+                });
+            }
+        });
+        /*]]>*/
+    </script>
+
+
+    <!-- MODAL: View All Invited Candidates -->
+    <div class="modal fade" id="viewAllInvitedModal" tabindex="-1"
+         aria-labelledby="viewAllInvitedModalLabel" aria-hidden="true">
+        <!-- Center modal: modal-dialog-centered -->
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 80%; width: 80%;">
+            <div class="modal-content">
+
+                <!-- Modal Header with a different background color -->
+                <div class="modal-header d-flex align-items-center" style="background-color: #f0f0f0;">
+                    <!-- Title stays on the left -->
+                    <h5 class="modal-title" id="viewAllInvitedModalLabel">
+                        All Invited Candidates
+                    </h5>
+
+                    <!-- A container to push the search bar + close button to the right -->
+                    <div class="ms-auto d-flex align-items-center">
+                        <div class="input-group me-2 border border-secondary rounded bg-white"
+                             style="max-width: 360px;"> <!-- Increased to 360px -->
+                            <span class="input-group-text border-0 bg-transparent" id="search-icon">
+                            <i class="fas fa-search text-secondary"></i>
+                        </span>
+                            <input type="text"
+                                   class="form-control border-0 shadow-none"
+                                   placeholder="Search..."
+                                   aria-label="Search"
+                                   aria-describedby="search-icon"
+                                   id="modalSearchInput">
+                        </div>
+
+                        <!-- Close button on the far right -->
+                        <button type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"
+                                aria-label="Close">
+                        </button>
+                    </div>
+                </div>
+
+                <div class="modal-body">
+                    <div class="scrollable-table" style="max-height: 600px; overflow-y: auto;">
+                        <table class="table table-sm table-bordered">
+                            <thead class="thead-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Email</th>
+                                <th>Invitation Date</th>
+                                <th>Expiration Date</th>
+                            </tr>
+                            </thead>
+                            <tbody id="invitedCandidatesAllTableBody">
+                            <tr th:each="candidate, stat : ${invitedCandidatesAll}">
+                                <td th:text="${stat.count}"></td>
+                                <td th:text="${candidate.email}"></td>
+                                <!-- Format date/time like the attempts table -->
+                                <td th:text="${#temporals.format(candidate.invitationDate, 'yyyy-MM-dd HH:mm')}"></td>
+                                <td th:text="${#temporals.format(candidate.expirationDate, 'yyyy-MM-dd HH:mm')}"></td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(invitedCandidatesAll)}">
+                                <td colspan="4" class="text-center text-muted">
+                                    No invited candidates yet.
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div> <!-- scrollable-table -->
+                </div> <!-- modal-body -->
+
+                <div class="modal-footer">
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+                        Close
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Script for filtering table rows in the modal -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        document.addEventListener("DOMContentLoaded", function() {
+            const searchInput = document.getElementById("modalSearchInput");
+            const tableBody   = document.getElementById("invitedCandidatesAllTableBody");
+
+            searchInput.addEventListener("keyup", function() {
+                const filter = this.value.toLowerCase();
+                const rows = tableBody.querySelectorAll("tr");
+                rows.forEach(row => {
+                    const text = row.innerText.toLowerCase();
+                    // Show row if it matches the filter; otherwise hide it
+                    row.style.display = (text.indexOf(filter) > -1) ? "" : "none";
+                });
+            });
+        });
+        /*]]>*/
+    </script>
+
+
+    <!-- Scroll to top button -->
     <button onclick="scrollToTop()" id="scrollToTopButton" title="Go to top">
         <i class="fas fa-arrow-up"></i>
     </button>
-
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
-    <script>
-        // Show/hide scrollToTopButton when scrolling
-        window.onscroll = function () {
-            const scrollToTopButton = document.getElementById("scrollToTopButton");
-            if (document.body.scrollTop > 50 || document.documentElement.scrollTop > 50) {
-                scrollToTopButton.style.display = "flex";
-            } else {
-                scrollToTopButton.style.display = "none";
-            }
-        };
-
-        function scrollToTop() {
-            window.scrollTo({top: 0, behavior: 'smooth'});
-        }
-    </script>
 </div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+
+<script>
+    // Show/hide scrollToTopButton on scroll
+    window.onscroll = function () {
+        const scrollToTopButton = document.getElementById("scrollToTopButton");
+        if (document.body.scrollTop > 50 || document.documentElement.scrollTop > 50) {
+            scrollToTopButton.style.display = "flex";
+        } else {
+            scrollToTopButton.style.display = "none";
+        }
+    };
+
+    function scrollToTop() {
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+</script>
+
+<!-- Initialize Charts using Chart.js -->
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    document.addEventListener("DOMContentLoaded", function() {
+        // Read arrays from model
+        const quizScoreData = /*[[${quizScores}]]*/ [];
+        const exerciseScoreData = /*[[${exerciseScores}]]*/ [];
+        const dateLabels = /*[[${dateLabels}]]*/ []; // the attempt dates as strings
+
+        // Initialize Quiz Score Chart if canvas exists
+        const quizCanvas = document.getElementById('quizScoreChart');
+        if (quizCanvas) {
+            const ctxQuiz = quizCanvas.getContext('2d');
+            const quizScoreChart = new Chart(ctxQuiz, {
+                type: 'bar',
+                data: {
+                    labels: dateLabels,
+                    datasets: [{
+                        label: 'Quiz Score',
+                        data: quizScoreData,
+                        backgroundColor: 'rgba(54, 162, 235, 1)',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { display: false }, grid: { display: false } },
+                        y: { beginAtZero: true, max: 100 }
+                    }
+                }
+            });
+        }
+
+        // Initialize Exercise Score Chart if canvas exists
+        const exerciseCanvas = document.getElementById('exerciseScoreChart');
+        if (exerciseCanvas) {
+            const ctxEx = exerciseCanvas.getContext('2d');
+            const exerciseScoreChart = new Chart(ctxEx, {
+                type: 'bar',
+                data: {
+                    labels: dateLabels,
+                    datasets: [{
+                        label: 'Exercise Score',
+                        data: exerciseScoreData,
+                        backgroundColor: 'rgba(255, 99, 132, 1)',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { display: false }, grid: { display: false } },
+                        y: { beginAtZero: true, max: 100 }
+                    }
+                }
+            });
+        } else {
+            console.error("Exercise Score Chart canvas not found.");
+        }
+    });
+    /*]]>*/
+</script>
+
+
 </body>
 </html>

@@ -2,8 +2,11 @@ package com.example.quiz.service;
 
 import com.example.quiz.model.Quiz;
 import com.example.quiz.model.QuizParticipant;
+import com.example.quiz.model.Result;
+import com.example.quiz.model.TestSession;
 import com.example.quiz.repository.QuizParticipantRepository;
 import com.example.quiz.repository.QuizRepository;
+import com.example.quiz.repository.TestSessionRepository;
 import com.example.user.User;
 import com.example.user.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +18,8 @@ import java.util.List;
 @Service
 public class QuizParticipantService {
 
+    @Autowired
+    private TestSessionRepository testSessionRepository;
     @Autowired
     private QuizParticipantRepository quizParticipantRepository;
 
@@ -50,6 +55,15 @@ public class QuizParticipantService {
 
     public List<QuizParticipant> getParticipantsByQuiz(Long quizId) {
         return quizParticipantRepository.findAllByQuizId(quizId);
+    }
+
+    public List<Result>  getResultByTestSessionId(Long testSessionId){
+        return testSessionRepository.findResultByTestSessionId(testSessionId);
+    }
+
+    public List<QuizParticipant> searchParticipants(Long quizId, String searchTerm) {
+        String searchPattern = "%" + searchTerm.toLowerCase() + "%";
+        return quizParticipantRepository.findByQuizIdAndUserName(quizId, searchPattern);
     }
 
 //    public List<QuizParticipant> searchByName(String firstName, String lastName) {

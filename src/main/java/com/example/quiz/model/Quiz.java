@@ -76,6 +76,14 @@ public class Quiz {
     @OneToMany(mappedBy = "quizzes", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Question> questions = new HashSet<>();
 
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "tag_of_quiz",
+            joinColumns = @JoinColumn(name = "quiz_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id")
+    )
+    private Set<QuizTag> tags = new HashSet<>();
+
     public void addQuestion(Question question) {
         this.questions.add(question);
         question.setQuizzes(this);

@@ -13,7 +13,6 @@
 <style>
     html {
         font-size: 85%;
-
         .breadcrumb {
             display: flex;
             flex-wrap: wrap;
@@ -23,23 +22,22 @@
             background-color: transparent;
             border-radius: 0.25rem;
         }
-
         .breadcrumb-item + .breadcrumb-item::before {
             content: ">";
             padding: 0 0.5rem;
-            color: #6c757d; /* Màu xám nhẹ cho dấu ">" */
+            color: #6c757d;
         }
 
         .scrollable-table {
             overflow: auto;
-            max-height: 650px; /* Default for larger screens */
+            max-height: 650px;
         }
 
         #scrollToTopButton {
             position: fixed;
             bottom: 3vh;
             right: 10px;
-            display: none; /* Bắt đầu ẩn */
+            display: none;
             width: 50px;
             height: 50px;
             background: linear-gradient(45deg, #6a11cb, #2575fc);
@@ -55,7 +53,7 @@
         }
 
         #scrollToTopButton:hover {
-            transform: scale(1.2); /* Phóng to nhẹ khi hover */
+            transform: scale(1.2);
             opacity: 1; /* Tăng độ rõ */
             background: linear-gradient(45deg, #2575fc, #6a11cb); /* Đảo gradient khi hover */
         }
@@ -64,7 +62,6 @@
             display: inline-block;
             width: 100%;
         }
-
         .select-wrapper select {
             width: 100%;
             -webkit-appearance: none;
@@ -72,7 +69,6 @@
             appearance: none;
             padding-right: 30px; /* Adjust as needed */
         }
-
         .select-wrapper .select-arrow {
             position: absolute;
             top: 50%;
@@ -81,80 +77,137 @@
             pointer-events: none;
         }
 
-
         .no-wrap-label {
             white-space: nowrap;
         }
-
+        .quiz-dropdown .quiz-arrow {
+            position: absolute; /* Giữ nguyên định vị tuyệt đối */
+            bottom: 0;          /* Đặt biểu tượng ở dưới cùng của quiz-header */
+            left: 50%;         /* Giữ nguyên canh giữa theo chiều ngang */
+            transform: translateX(-50%); /* Giữ nguyên dịch chuyển ngang để canh giữa */
+            align-self: auto;   /* Giữ nguyên hoặc bỏ align-self: auto; */
+            /* Các style khác của biểu tượng (như transition, color, v.v.) có thể được giữ lại */
+        }
+        .quiz-header {
+            position: relative; /* Đảm bảo quiz-header là phần tử tham chiếu (nếu chưa có) */
+            font-size: 0.8rem; /* Giữ nguyên font-size hiện tại */
+            padding-bottom: 15px; /* Tăng padding-bottom cho quiz-header để tạo không gian cho mũi tên (điều chỉnh giá trị này nếu cần) */
+            /* Các style khác của quiz-header có thể được giữ lại */
+        }
+        .answer_options_hidden { /* Changed to underscore */
+            display: none;
+        }
+        .question-input .answer-dropdown-icon { /* Style for the icon container */
+            transition: transform 0.2s ease-in-out; /* Smooth rotation transition */
+            /* margin-left: 10px;  No longer needed for bottom-centered arrow */
+            color: #6c757d; /* Example: Change icon color to gray */
+            font-size: 0.9rem; /* Example: Adjust icon size */
+        }
+        .question-input .answer-dropdown-icon.rotated { /* Class for rotated icon */
+            transform: rotate(180deg); /* Rotate icon 180 degrees */
+        }
         .btn.saved { /* Class 'saved' áp dụng cho bất kỳ nút nào có class 'btn' */
             background-color: #5cb85c; /* Màu nền xanh lá cây cho trạng thái đã lưu */
             border-color: #4cae4c;
             color: white;
         }
-
         .btn-primary:hover:not(.saved) { /* Hover cho nút btn-primary khi KHÔNG ở trạng thái 'saved' */
             background-color: #0b5ed7; /* Màu hover xanh dương đậm hơn một chút, ví dụ */
             border-color: #0a58ca;
             color: white;
         }
-
         .btn.saved:hover { /* Hover cho nút khi ở trạng thái 'saved' (màu xanh lá cây) */
             background-color: #4cae4c; /* Màu hover xanh lá cây đậm hơn nữa */
             border-color: #3d8b3d;
             color: white;
         }
+        /* check similar questions modal*/
+        .modal-header {
+            background-color: #ffc107; /* Màu vàng nhạt cho header */
+            color: white;
+            border-bottom: 1px solid #f8bb00;
+        }
+        .modal-title {
+            color: black; /* Màu chữ đen cho title */
+        }
+        .modal-footer button.btn-primary {
+            background-color: #0d6efd; /* Màu xanh dương cho nút OK */
+            border-color: #0d6efd;
+        }
+        .modal-footer button.btn-secondary {
+            background-color: #6c757d; /* Màu xám cho nút Cancel */
+            border-color: #6c757d;
+        }
+
         /* Adjust max-height for medium-sized screens */
         @media (max-width: 1200px) {
             .scrollable-table {
                 max-height: 500px;
             }
         }
-
         /* Adjust max-height for small screens */
         @media (max-width: 768px) {
             .scrollable-table {
                 max-height: 400px;
             }
         }
-
         /* Adjust max-height for extra small screens */
         @media (max-width: 576px) {
             .scrollable-table {
                 max-height: 300px;
             }
         }
-
+        /* --- ADDED STYLES FROM edit.html for selected questions --- */
+        .compact-question-item {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 5px;
+            width: 100%;
+        }
+        .question-answers {
+            width: 100%;
+            display: none;
+            margin-top: 10px;
+        }
+        .question-answers.show {
+            display: block;
+        }
+        .custom-switch {
+            width: 2.5rem;
+            height: 1.4rem;
+            transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out;
+        }
+        .custom-switch:checked {
+            background-color: #0d6efd !important;
+            border-color: #0d6efd !important;
+        }
+        .d-flex.align-items-center {
+            display: flex;
+            align-items: center;
+        }
+        .form-check-input {
+            transition: all 0.3s ease-in-out;
+        }
     }
 </style>
-
 <body>
-<div th:replace="~{fragments :: header}" class="sticky-top"></div> <!-- Header always on top -->
-
-
-
 <div class="mt-3" id="mainContentArea">
-
-
     <a href="/assessments" class=" btn-outline-secondary btn-sm rounded mx-2" style="padding: 0.5rem 1rem; border-width: 1px; font-size: 0.9rem; color: #777; border-color: #ccc; transition: all 0.3s ease; /* Thêm transition cho hiệu ứng mượt */"
        onmouseover="this.style.backgroundColor='#f8f9fa'; this.style.borderColor='#bbb'; this.style.color='#555';"
        onmouseout="this.style.backgroundColor='transparent'; this.style.borderColor='#ccc'; this.style.color='#777';">
         <i class="fas fa-arrow-left" style="margin-right: 0.5rem;"></i> Back to List
     </a>
-
-
     <head>
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/5.1.3/css/bootstrap.min.css">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     </head>
-
     <div class="container mt-1">
         <form method="POST" th:action="@{/assessments/create}" th:object="${assessment}" id="assessment-form" >
-
             <input type="hidden" name="csrfmiddlewaretoken" value="GIF6HSeEVpwBn48uJuRZ00xfC9yYxY6L3rEFxKHZoLVncpHCyfwfsOKrOyYPlSzx">
             <input type="hidden" th:field="*{createdBy}" th:value="${currentUser.username}" />
             <!-- Title -->
-
             <div class="col-md-4 mt-4 m-0">
                 <div class="d-flex align-items-center">  <!-- Flex container cho label và input -->
                     <label for="title-input" class=" me-2">Title:</label>
@@ -163,9 +216,7 @@
                 <input type="hidden" id="assessmentId" th:value="${assessment.id}">
                 <div id="duplicateTitleError" class="alert alert-danger mt-2 d-none"></div>
             </div>
-
             <div class="d-flex justify-content-end mb-2">  <!-- Thay đổi class thành 'd-flex justify-content-between' và thêm 'mb-3' -->
-
                 <button type="submit" class="btn btn-outline-success btn-sm rounded mx-2" style="padding: 0.5rem 1rem; border-width: 1px; font-size: 0.9rem; color: #5cb85c; border-color: #5cb85c; transition: all 0.3s ease; /* Thêm transition cho hiệu ứng mượt */"
                         onmouseover="this.style.backgroundColor='#e2f0e2'; this.style.borderColor='#4cae4c'; this.style.color='#3d8b3d';"
                         onmouseout="this.style.backgroundColor='transparent'; this.style.borderColor='#5cb85c'; this.style.color='#5cb85c';">
@@ -177,7 +228,6 @@
                  text-black">
                     <h4>Create Assessment</h4>
                 </div>
-
                 <div class="card-body">
                     <div class="row justify-content-around">
                         <div class="col-md-4  d-flex align-items-center m-0">
@@ -192,8 +242,6 @@
                                 <i class="bi bi-chevron-down select-arrow"></i> <!-- Bootstrap Icon -->
                             </div>
                         </div>
-
-
                         <div class="col-md-4  d-flex align-items-center m-0">
                             <label for="id_course" class="form-label me-2">Course: </label>
                             <div class="select-wrapper">  <!-- Add this wrapper -->
@@ -225,12 +273,7 @@
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab" aria-controls="settings" aria-selected="false">Settings</button>
                         </li>
-
-
                     </ul>
-
-
-
                     <div class="tab-content mt-3" id="myTabContent">
                         <!-- Exercises Tab -->
                         <div class="tab-pane fade show active p-3" id="exercises" role="tabpanel" aria-labelledby="exercises-tab">
@@ -278,7 +321,6 @@
 
                             </div>
                         </div>
-
                         <!-- Questions Tab -->
                         <div class="tab-pane fade" id="questions" role="tabpanel" aria-labelledby="questions-tab">
                             <div class="row">
@@ -291,7 +333,6 @@
                                         </div>
                                     </div>
                                 </div>
-
                                 <!-- Multiple Choice Library -->
                                 <div class="col-md-5">
                                     <div class="card shadow-sm hover-shadow">
@@ -319,13 +360,13 @@
                                                                 <button type="button" class="btn btn-primary d-flex align-items-center justify-content-center position-relative btn-add-question add-questions"
                                                                         th:data-quiz-id="${quiz.id}"
                                                                         data-question-id=""
-                                                                        style="width: 35px; height: 35px; border-radius: 50%; transition: width 0.3s ease; overflow: hidden;"
-                                                                        onmouseover="this.style.width='70px'; this.style.borderRadius='5px'; this.querySelector('.add-all-text').style.opacity='1'; this.querySelector('.add-all-text').style.transform='translateY(0)'; this.querySelector('.plus-sign').style.opacity='0';"
-                                                                        onmouseout="this.style.width='35px'; this.style.borderRadius='50%'; this.querySelector('.add-all-text').style.opacity='0'; this.querySelector('.add-all-text').style.transform='translateY(-10px)'; this.querySelector('.plus-sign').style.opacity='1';">
+                                                                        style="width: 35px; height: 35px; border-radius: 50%; transition: width 0.3s ease; overflow: hidden;">
                                                                     <span class="plus-sign" style="font-size: 1.3rem; transition: opacity 0.3s ease;">+</span>
                                                                     <span class="add-all-text position-absolute" style="opacity: 0; left: 20%; transform: translateX(-50%) translateY(-10px); font-size: 0.8rem; transition: opacity 0.3s ease, transform 0.3s ease;">Add All</span>
                                                                 </button>
+                                                                <i class="quiz-arrow bi bi-chevron-down ms-2"></i>  <!-- Biểu tượng mũi tên NẰM TRONG quiz-header -->
                                                             </div>
+
                                                         </div>
                                                     </h2>
                                                     <!-- Dynamic collapse ID based on quiz ID -->
@@ -362,15 +403,10 @@
                                         </div>
                                     </div>
                                 </div>
-
                                 <div class="col-md-7">
                                     <div class="card shadow-sm hover-shadow">
                                         <div class="card-header d-flex justify-content-between align-items-center"> <!-- ADDED d-flex justify-content-between align-items-center -->
                                             <h5 class="mb-0">Selected Questions</h5>
-                                            <div class="form-check form-switch d-flex align-items-center" style="margin-bottom: 0;">
-                                                <input class="form-check-input" type="checkbox" id="bootstrapSwitch" th:field="*{shuffled}" style="margin-right: 0.5rem;">
-                                                <label class="form-check-label" for="bootstrapSwitch" style="margin-bottom: 0;">Shuffle Questions</label>
-                                            </div>
                                         </div>
                                         <div class="card-body" style="max-height: 800px; overflow-y: auto;">
                                             <ul class="list-group" id="selected-questions">
@@ -381,56 +417,122 @@
                                 </div>
                             </div>
                         </div>
-
                         <!-- Settings Tab -->
-                        <div class="tab-pane fade p-3" id="settings" role="tabpanel" aria-labelledby="settings-tab">
+                        <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="settings-tab">
                             <div class="row g-3">
+                                <div class="col-12">
+                                    <h6 class="text-muted">General Settings</h6>
+                                </div>
                                 <div class="col-md-4">
                                     <label for="id_qualify_score" class="form-label">Minimum Score:</label>
-                                    <input th:value="60" th:field="*{qualifyScore}" type="number"  class="form-control" placeholder="Enter minimum score to qualify" required id="id_qualify_score">
-                                </div>
-                                <div class="col-md-4">
-                                    <label for="id_time_limit" class="form-label">Time Limit (minutes):</label>
-                                    <input  th:field="*{timeLimit}"   type="number"  class="form-control" placeholder="Enter time limit for assessment" required id="id_time_limit">
+                                    <input type="number"
+                                           th:field="*{qualifyScore}"
+                                           class="form-control"
+                                           placeholder="Enter minimum score to qualify"
+                                           required
+                                           id="id_qualify_score"
+                                           min = "0"
+                                           max="100">
+
                                 </div>
 
                                 <div class="col-md-4">
-                                    <label  class="form-label">Exercise Score Ratio:</label>
-                                    <input  th:field="*{exerciseScoreRatio}"   type="number"  class="form-control" placeholder="Enter time limit for assessment" required >
+                                    <label for="id_time_limit" class="form-label">Time Limit (minutes):</label>
+                                    <input type="number"
+                                           th:field="*{timeLimit}"
+                                           class="form-control"
+                                           placeholder="Enter time limit for assessment"
+                                           required
+                                           id="id_time_limit"
+                                    min="10">
                                 </div>
-                                <div class="col-md-4">
-                                    <label  class="form-label">Quiz Score Ratio:</label>
-                                    <input  th:field="*{quizScoreRatio}"   type="number"  class="form-control" placeholder="Enter time limit for assessment" required >
+                            </div>
+                            <hr>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <h6 class="text-muted">Score Distribution</h6>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="id_quiz_score_ratio" class="form-label">Quiz Score Ratio (%):</label>
+                                    <input type="number"
+                                           th:field="*{quizScoreRatio}"
+                                           class="form-control"
+                                           placeholder="Enter quiz score ratio"
+                                           min="0"
+                                           max="100"
+                                           required
+                                           id="id_quiz_score_ratio">
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="id_exercise_score_ratio" class="form-label">Exercise Score Ratio (%):</label>
+                                    <input type="number"
+                                           th:field="*{exerciseScoreRatio}"
+                                           class="form-control"
+                                           placeholder="Enter exercise score ratio"
+                                           min="0"
+                                           max="100"
+                                           required
+                                           id="id_exercise_score_ratio">
+                                </div>
+                            </div>
+                            <hr/>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <h6 class="text-muted">Additional Settings</h6>
+                                </div>
+                                <div class="col-md-4 d-flex align-items-center">
+                                    <label class="form-label me-3 mb-0">Shuffle Question Order:</label>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input custom-switch" type="checkbox"
+                                               th:field="*{shuffled}"
+                                               id="id_shuffled">
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-
                 </div>
             </div>
-
-
-
+            <div id="customWarningModal" class="modal" style="display: none; position: fixed; z-index: 1060; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4);">
+                <div class="modal-dialog modal-dialog-centered" style="max-width: 500px; margin: 10% auto; ">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Warning!</h5>
+                            <button type="button" class="btn-close" id="customWarningModalCloseButton"></button>
+                        </div>
+                        <div class="modal-body" id="customWarningModalBody">
+                            <!-- Warning message will be inserted here -->
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" id="customWarningModalCancelButton">Cancel</button>
+                            <button type="button" class="btn btn-primary" id="customWarningModalOkButton">OK, Save Anyway</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </form>
     </div>
-
     <div id="fullscreen-preview" class="d-none position-fixed top-0 start-0 w-100 h-100 bg-white" style="z-index: 1050;">
         <!-- Nội dung sẽ được chèn vào đây -->
     </div>
-
     <script>
-
-
         document.addEventListener('DOMContentLoaded', function () {
+            function toggleAnswerVisibility(questionInput) {
+                console.log('toggleAnswerVisibility function called!');
+                const questionContent = questionInput.parentElement; // Get the parent .question-content
+                const answerOptionsContainer = questionContent.querySelector('#answerOptionsContainer');
 
-
+                if (answerOptionsContainer.classList.contains('answer_options_hidden')) {
+                    // If hidden, show the answer options
+                    answerOptionsContainer.classList.remove('answer_options_hidden');
+                } else {
+                    // If visible, hide the answer options
+                    answerOptionsContainer.classList.add('answer_options_hidden');
+                }
+            }
             const addQuestionButtons = document.querySelectorAll('.add-question');
             const selectedQuestionsList = document.getElementById('selected-questions');
-            // const randomizeOrderButton = document.getElementById('btn-randomize-order'); // Get the randomize button
-
             const buttonContainer = document.createElement('div');
-            // buttonContainer.className = 'd-flex justify-content-end mt-3';
-
             const saveButton = document.createElement('button');
             // saveButton.className = 'btn btn-success btn-sm';
             // saveButton.innerText = 'Save Selections';
@@ -445,11 +547,10 @@
 
             console.log("Exercise Checkboxes Selected (querySelectorAll result):", exerciseCheckboxes); // Log the NodeList
             exerciseCheckboxes.forEach(checkbox => {
-                console.log("Exercise Checkbox Element:", checkbox); // Log each checkbox element
-                console.log("Exercise Checkbox Value:", checkbox.value); // Log the value of each checkbox
+                console.log("Exercise Checkbox Element:", checkbox);
+                console.log("Exercise Checkbox Value:", checkbox.value);
                 window.selectedExerciseIds.push(checkbox.value);
             });
-            // Add event listener to each remove button (delegated event listener on selectedQuestionsList)
             selectedQuestionsList.addEventListener('click', function (event) {
                 if (event.target.classList.contains('remove-question')) {
                     const button = event.target;
@@ -460,42 +561,108 @@
                         questionMap.delete(questionId); // Remove from map as well
                         updateQuestionNumbers();
                         if (selectedQuestionsList.children.length === 0) {
-                            saveButton.style.display = 'none'; // Hide save button if no questions left
+                            saveButton.style.display = 'none';
                         }
-                        // updateSaveButtonState(); //NO NEED
                     }
                 }
             });
-
-
-
             const questionMap = new Map();
+            const assessmentTypeDropdown = document.getElementById('id_assessment_type');
+            const exercisesTabButton = document.getElementById('exercises-tab');
+            const questionsTabButton = document.getElementById('questions-tab');
+            const exercisesTabPane = document.getElementById('exercises');
+            const questionsTabPane = document.getElementById('questions');
+            const settingsTabButton = document.getElementById('settings-tab');
+            const settingsTabPane = document.getElementById('settings');
+            function handleAssessmentTypeChange() {
+                const selectedAssessmentType = assessmentTypeDropdown.options[assessmentTypeDropdown.selectedIndex].text.toLowerCase();
+                const quizRatioInput = document.getElementById('id_quiz_score_ratio');
+                const exerciseRatioInput = document.getElementById('id_exercise_score_ratio');
+                deactivateTab(settingsTabButton, settingsTabPane);
+                if (selectedAssessmentType === "quiz") { // Replace "1" with actual Quiz ID/value
+                    // Activate Questions tab, deactivate Exercises tab
+                    activateTab(questionsTabButton, questionsTabPane);
+                    deactivateTab(exercisesTabButton, exercisesTabPane);
+                    // Disable Exercises tab button to prevent clicks
+                    exercisesTabButton.setAttribute('disabled', 'true');
+                    exercisesTabButton.classList.add('disabled');
+                    // Enable Questions tab button
+                    questionsTabButton.removeAttribute('disabled');
+                    questionsTabButton.classList.remove('disabled');
+                    // Set default ratio for Quiz and disable Exercise Ratio input
+                    quizRatioInput.value = 100;
+                    exerciseRatioInput.value = 0;
+                    exerciseRatioInput.disabled = false; // **Disable Exercise Ratio input for Quiz**
+                    quizRatioInput.disabled = false; // **Ensure Quiz Ratio input is enabled**
+                } else if (selectedAssessmentType ===  "assignment") { // Replace "2" with actual Assignment ID/value
+                    // Activate Exercises tab, deactivate Questions tab
+                    activateTab(exercisesTabButton, exercisesTabPane);
+                    deactivateTab(questionsTabButton, questionsTabPane);
+                    // Disable Questions tab button to prevent clicks
+                    questionsTabButton.setAttribute('disabled', 'true');
+                    questionsTabButton.classList.add('disabled');
+                    // Enable Exercises tab button
+                    exercisesTabButton.removeAttribute('disabled');
+                    exercisesTabButton.classList.remove('disabled');
+                    // Set default ratio for Assignment and disable Quiz Ratio input
+                    quizRatioInput.value = 0;
+                    exerciseRatioInput.value = 100;
+                    quizRatioInput.disabled = false;
+                    exerciseRatioInput.disabled = false;
+                } if (selectedAssessmentType ===  "quiz & assignment") {
+                    // For other assessment types or default, enable both and enable both ratio inputs
 
-            //
-            // function randomizeQuestionOrder() {
-            //     const list = selectedQuestionsList;
-            //     const items = Array.from(list.children); // Get list items and convert to array
-            //
-            //     if (items.length <= 1) {
-            //         return; // No need to randomize if 0 or 1 item
-            //     }
-            //
-            //     // Fisher-Yates (Knuth) Shuffle Algorithm
-            //     for (let i = items.length - 1; i > 0; i--) {
-            //         const j = Math.floor(Math.random() * (i + 1));
-            //         [items[i], items[j]] = [items[j], items[i]]; // Swap elements
-            //     }
-            //
-            //     // Re-append shuffled items to the list
-            //     list.innerHTML = ''; // Clear the list
-            //     items.forEach(item => list.appendChild(item)); // Append in new order
-            //
-            //     updateQuestionNumbers(); // Re-number the questions
-            // }
+                    enableTab(exercisesTabButton);
+                    enableTab(questionsTabButton);
+                    quizRatioInput.disabled = false;
+                    quizRatioInput.value = 50;
+                    exerciseRatioInput.value = 50;
+                    exerciseRatioInput.disabled = false;
+                    quizRatioInput.addEventListener("input", function () { // Keep the input event listeners for other types
+                        let quizValue = parseInt(quizRatioInput.value) || 0;
+                        if (quizValue > 100) quizValue = 100;
+                        exerciseRatioInput.value = 100 - quizValue;
+                    });
 
-            // randomizeOrderButton.addEventListener('click', randomizeQuestionOrder); // Event listener for randomize button
+                    exerciseRatioInput.addEventListener("input", function () {
+                        let exerciseValue = parseInt(exerciseRatioInput.value) || 0;
+                        if (exerciseValue > 100) exerciseValue = 100;
+                        quizRatioInput.value = 100 - exerciseValue;
+                    });
+                }
+            }
+            function activateTab(tabButton, tabPane) {
+                tabButton.classList.add('active');
+                tabButton.setAttribute('aria-selected', 'true');
+                tabPane.classList.add('show', 'active');
+            }
+            function deactivateTab(tabButton, tabPane) {
+                tabButton.classList.remove('active');
+                tabButton.setAttribute('aria-selected', 'false');
+                tabPane.classList.remove('show', 'active');
+            }
+            function enableTab(tabButton) {
+                tabButton.removeAttribute('disabled');
+                tabButton.classList.remove('disabled');
+            }
+            assessmentTypeDropdown.addEventListener('change', handleAssessmentTypeChange);
+            // Handle click events for disabled tabs to prevent switching
+            exercisesTabButton.addEventListener('click', function(event) {
+                if (this.hasAttribute('disabled')) {
+                    event.preventDefault(); // Prevent default tab switching behavior
+                    event.stopPropagation(); // Stop event propagation to be safe
+                    return false; // Stop further execution
+                }
+            });
 
-
+            questionsTabButton.addEventListener('click', function(event) {
+                if (this.hasAttribute('disabled')) {
+                    event.preventDefault(); // Prevent default tab switching behavior
+                    event.stopPropagation(); // Stop event propagation to be safe
+                    return false; // Stop further execution
+                }
+            });
+            handleAssessmentTypeChange();
             const quizDropdowns = document.querySelectorAll('.quiz-dropdown');
             quizDropdowns.forEach(dropdown => {
                 dropdown.addEventListener('click', function (event) {
@@ -503,7 +670,6 @@
                     if (!event.target.classList.contains('btn-add-question') && !event.target.classList.contains('add-all-text')) {
                         const quizId = dropdown.getAttribute('id').replace('quizDropdown', 'collapse');
                         const targetCollapse = document.getElementById(quizId);
-
                         // Toggle the collapse state
                         const isCollapsed = targetCollapse.classList.contains('show');
                         if (isCollapsed) {
@@ -515,68 +681,31 @@
                 });
 
 
-                // Optional: Add functionality to the Add All button
                 const addAllButton = dropdown.querySelector('.btn-add-question');
             });
-
 
             addQuestionButtons.forEach(button => {
                 button.addEventListener('click', function (event) {
                     try {
                         event.preventDefault();
                         event.stopPropagation();
-                        // updateSaveButtonState();//NO NEED
-
                         const questionId = this.dataset.questionId;
                         const questionTextElement = this.parentElement.querySelector('.question-text');
                         questionTextElement.classList.add('fw-normal');
                         const questionText = questionTextElement.innerHTML;
-
-                        // **Correctly select answer options by finding the hidden container first**
                         const hiddenAnswerOptionsContainer = this.parentElement.querySelector('.answer-options');
                         const answerOptions = Array.from(hiddenAnswerOptionsContainer.querySelectorAll('.answer-option'));
 
-                        // Kiểm tra nếu câu hỏi đã có trong danh sách
                         if (questionMap.has(questionId)) {
                             return;
                         } else {
-                            // Tạo mục mới cho câu hỏi đã chọn
                             const listItem = document.createElement('li');
+                            listItem.className = "list-group-item compact-question-item p-2"; // ADDED CLASS HERE
+                            listItem.dataset.questionId = questionId; // ADDED DATA ATTRIBUTE
                             listItem.dataset.order = selectedQuestionsList.children.length + 1;
-                            listItem.className = 'list-group-item d-flex align-items-center justify-content-between';
-                            // Thêm style trực tiếp vào listItem.style
-                            listItem.style.border = '2px solid #ced4da'; // Thêm viền solid, màu xám nhạt
-                            listItem.style.borderRadius = '0.25rem'; // Thêm bo tròn góc nhẹ (tùy chọn)
-                            listItem.innerHTML = `
-                    <div class="question-content flex-grow-1">
-                        <div class="question-input" style="padding: 8px; font-size: 1.1rem; border: 1px solid #ced4da; border-radius: 0.25rem; font-weight: 800;">
-                            ${questionText}
-                        </div>
-                        <div id="answerOptionsContainer" class="mt-2"></div>
-                    </div>
-                    <div class="actions d-flex flex-column align-items-center" style="margin-left: 10px; gap: 5px;">
-                        <i class="fas fa-trash-alt remove-question text-danger" data-question-id="${questionId}" title="Remove question" style="cursor: pointer; font-size: 1.1rem;"></i>
-                        <button type="button"  class="move-up btn btn-light btn-sm d-flex justify-content-center align-items-center rounded-circle" style="width: 30px; height: 30px; font-size: 0.9rem;">
-                            <i class="fas fa-arrow-up" style="font-size: 0.8rem;"></i>
-                        </button>
-                        <span class="question-number d-flex justify-content-center align-items-center" style="font-size: 0.9rem; width: 30px; height: 30px; border-radius: 50%; background-color: #f8f9fa; color: #6c757d; font-weight: bold;">
-                            ${listItem.dataset.order}
-                        </span>
-                        <button type="button" class="move-down btn btn-light btn-sm d-flex justify-content-center align-items-center rounded-circle" style="width: 30px; height: 30px; font-size: 0.9rem;">
-                            <i class="fas fa-arrow-down" style="font-size: 0.8rem;"></i>
-                        </button>
-                    </div>
-                `;
-
-                            selectedQuestionsList.appendChild(listItem);
-                            questionMap.set(questionId, listItem);
-
-                            // **ADD ANSWER OPTIONS TO SELECTED QUESTION**
-                            const answerOptionsContainer = listItem.querySelector('#answerOptionsContainer');
+                            let answersHtml = "";
                             answerOptions.forEach(optionElement => {
                                 const optionText = optionElement.querySelector('span:first-child').textContent;
-
-                                // **CORRECTED LINE: Select the FIRST span and check its classList directly**
                                 const correctnessSpan = optionElement.querySelector('span:first-child'); // Select the first (and only) span
                                 let correctnessClass = '';
 
@@ -591,35 +720,47 @@
                                 } else {
                                     correctnessClass = 'text-dark'; // Default if no span found (shouldn't happen based on HTML)
                                 }
+                                answersHtml += `
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span>${optionText}</span>
+                                        ${correctnessClass === 'text-success' ? '<span class="badge rounded-pill bg-success"><i class="bi bi-check-lg"></i></span>' : ''}
+                                    </li>
+                                `;
 
-                                const optionDiv = document.createElement('div');
-                                optionDiv.className = 'answer-option p-2 mb-1 rounded shadow-sm'; // KEEP THESE CLASSES
-
-                                // **ADD CLASS FOR CORRECT ANSWER OPTION DIV**
-                                if (correctnessClass === 'text-success') {
-                                    optionDiv.classList.add('correct-answer-option'); // Add the new class
-                                }
-
-                                optionDiv.innerHTML = `
-                        <span class="${correctnessClass}">${optionText}</span>
-                        ${correctnessClass === 'text-success' ? '<span class="text-success">     (is correct)</span>' : ''}
-                    `;
-                                answerOptionsContainer.appendChild(optionDiv);
                             });
 
+                            listItem.innerHTML = `
+                            <div class="d-flex justify-content-between align-items-center w-100">
+                                <span class="question-text text-truncate" title="${questionText}"
+                                      style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    ${listItem.dataset.order}. ${questionText}
+                                </span>
+                                <div class="d-flex align-items-center">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary move-up me-1">⬆</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary move-down me-2">⬇</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary toggle-answers me-2">
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-danger remove-question-selected">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <ul class="list-group mt-2 question-answers" style="display: none;">${answersHtml}</ul>
+                        `;
 
 
-
-
-
-                            // NOW add the event listeners:
+                            selectedQuestionsList.appendChild(listItem);
+                            questionMap.set(questionId, listItem);
                             const moveUpButton = listItem.querySelector('.move-up');
                             const moveDownButton = listItem.querySelector('.move-down');
+                            const removeButtonSelected = listItem.querySelector('.remove-question-selected'); // Correct selector
+                            const toggleAnswersButton = listItem.querySelector('.toggle-answers'); // Correct selector
                             moveUpButton.addEventListener('click', () => moveQuestion(listItem, 'up'));
                             moveDownButton.addEventListener('click', () => moveQuestion(listItem, 'down'));
-
+                            removeButtonSelected.addEventListener('click', () => removeQuestionFromSelectedList(questionId, listItem)); // Pass listItem
+                            toggleAnswersButton.addEventListener('click', () => toggleAnswers(listItem));
                             saveButton.style.display = 'block'; // Show save button when question is added
-
                             updateQuestionNumbers();
                         }
                         updateQuestionNumbers();
@@ -629,25 +770,42 @@
                 });
             });
 
+            function toggleAnswers(listItem) {
+                const answersList = listItem.querySelector(".question-answers");
+                const icon = listItem.querySelector(".toggle-answers i");
 
-
-
-
-
-
+                if (answersList.style.display === "none") {
+                    answersList.style.display = "block";
+                    icon.classList.replace("fa-chevron-down", "fa-chevron-up");
+                } else {
+                    answersList.style.display = "none";
+                    icon.classList.replace("fa-chevron-up", "fa-chevron-down");
+                }
+            }
+            function removeQuestionFromSelectedList(questionId, listItem) { // Added listItem parameter
+                listItem.remove(); // Use the listItem parameter
+                questionMap.delete(questionId); // Remove from map as well
+                updateQuestionNumbers();
+                if (selectedQuestionsList.children.length === 0) {
+                    saveButton.style.display = 'none'; // Hide save button if no questions left
+                }
+            }
             function updateQuestionNumbers() {
                 const listItems = selectedQuestionsList.children;
                 for (let i = 0; i < listItems.length; i++) {
                     const listItem = listItems[i];
                     listItem.dataset.order = i + 1;
-                    const numberSpan = listItem.querySelector('.question-number');
-                    if (numberSpan) {
-                        numberSpan.textContent = i + 1;
+                    const questionTextSpan = listItem.querySelector('.question-text'); // Select question text span
+                    if (questionTextSpan) {
+                        const textParts = questionTextSpan.textContent.split('. '); // Split by ". "
+                        if (textParts.length > 1) {
+                            questionTextSpan.textContent = `${i + 1}. ${textParts.slice(1).join('. ')}`; // Reconstruct text
+                        } else {
+                            questionTextSpan.textContent = `${i + 1}. ${textParts[0]}`; // If no split, just prepend number
+                        }
                     }
                 }
             }
-
-
             function moveQuestion(listItem, direction) {
                 const currentOrder = parseInt(listItem.dataset.order);
                 const newIndex = direction === 'up' ? currentOrder - 2 : currentOrder; // Adjust index for 'up'
@@ -695,87 +853,162 @@
                 setTimeout(() => duplicateTitleErrorDiv.classList.add("d-none"), 500);
             }
 
+            function showSimilarQuestionError(positionsGroups) {
+                let errorMessage = "Similar questions found at positions: ";
+                const positionsStrings = [];
+                for (const group of positionsGroups) {
+                    positionsStrings.push(group.join(", ")); // Join positions in each group with comma and space
+                }
+                errorMessage += positionsStrings.join("; "); // Join groups with semicolon and space
+                errorMessage += ". Please review and remove duplicates.";
+                showError(errorMessage); // Reuse existing showError function to display the message
+            }
 
+
+            function showSimilarQuestionWarning(positionsGroups) {
+                return new Promise((resolve, reject) => {
+                    const modal = document.getElementById('customWarningModal');
+                    const modalBody = document.getElementById('customWarningModalBody');
+                    const okButton = document.getElementById('customWarningModalOkButton');
+                    const cancelButton = document.getElementById('customWarningModalCancelButton');
+                    const closeButton = document.getElementById('customWarningModalCloseButton'); // Nút close (x)
+
+                    let warningMessage = "Warning: Similar questions found at positions: ";
+                    const positionsStrings = [];
+                    for (const group of positionsGroups) {
+                        positionsStrings.push(group.join(", "));
+                    }
+                    warningMessage += positionsStrings.join("; ");
+                    warningMessage += ". Please review these questions. Do you want to save the assessment anyway?";
+                    modalBody.textContent = warningMessage;
+                    modal.style.display = 'flex';
+                    okButton.onclick = function() {
+                        modal.style.display = 'none'; // Ẩn modal
+                        resolve(true);
+                    };
+                    cancelButton.onclick = function() {
+                        modal.style.display = 'none'; // Ẩn modal
+                        resolve(false);
+                    };
+                    closeButton.onclick = function() {
+                        modal.style.display = 'none';
+                        resolve(false);
+                    };
+                    window.onclick = function(event) {
+                        if (event.target == modal) {
+                            modal.style.display = 'none';
+                            resolve(false);
+                        }
+                    };
+                });
+            }
+
+            function checkSimilarQuestions(questionIds) {
+                return new Promise((resolve, reject) => {
+                    $.get('/assessments/check-similarQuestions', { 'questions-ids': questionIds })
+                        .done(function(response) {
+                            if (typeof response === 'string' && response.includes("No duplicate questions found.")) {
+                                resolve(false); // Resolve với false: No duplicates
+                            }
+                            else if (Array.isArray(response)) {
+                                if (response.length > 0) {
+                                    resolve(response);
+                                } else {
+                                    resolve(false);
+                                }
+                            }
+                            else {
+                                console.error("Unexpected response format:", response);
+                                reject("Unexpected response format");
+                            }
+
+                        })
+                        .fail(function(jqXHR, textStatus, errorThrown) {
+                            console.error("Error checking for similar questions:", textStatus, errorThrown);
+                            reject(errorThrown);
+                        });
+                });
+            }
             assessmentForm.addEventListener('submit', function (event) {
                 event.preventDefault();
 
                 const newTitle = titleInput.value.trim();
                 const assessmentTypeId = assessmentTypeSelect.value;
-                let id = document.getElementById("assessmentId").value;
-                console.log("Giá trị assessmentId:", id); // Kiểm tra giá trị trong console
-
+                const assessmentId = document.getElementById("assessmentId").value; // Get the assessment ID
+                console.log("Assessment ID:", assessmentId);
 
                 if (newTitle === "") {
                     showError("The title cannot be empty!");
                     return;
                 }
 
-
-                // **1. Collect Selected Exercise IDs**
-                window.selectedExerciseIds = []; // Clear previous selections
-                const exerciseCheckboxes = document.querySelectorAll('input[name="exercises"]:checked');
-                exerciseCheckboxes.forEach(checkbox => {
-                    window.selectedExerciseIds.push(checkbox.value); // Store exercise IDs in the global variable
+                // **1. Collect Selected Exercise IDs** (Corrected and before AJAX)
+                window.selectedExerciseIds = [];
+                document.querySelectorAll('input[name="exercises"]:checked').forEach(checkbox => {
+                    window.selectedExerciseIds.push(checkbox.value);
                 });
 
-                // **2. Collect Selected Question IDs**
-                window.selectedQuestionIds = []; // Clear previous selections
-                const selectedQuestionItems = selectedQuestionsList.children; // Get list items in current order
-                for (let i = 0; i < selectedQuestionItems.length; i++) {
-                    const listItem = selectedQuestionItems[i];
-                    const questionId = listItem.querySelector('.remove-question').getAttribute('data-question-id'); // Get questionId from the remove button
-                    window.selectedQuestionIds.push(questionId); // Store question IDs in the global variable in the current order
-                }
-
-                console.log("Exercises IDs saved in JavaScript variable:", window.selectedExerciseIds);
-                console.log("Question IDs saved in JavaScript variable:", window.selectedQuestionIds);
-
-
-                // Remove existing hidden inputs for exercises and questions (to avoid duplicates)
+                // **2. Collect Selected Question IDs** (Corrected and before AJAX)
+                window.selectedQuestionIds = [];
+                document.querySelectorAll('#selected-questions li[data-question-id]').forEach(listItem => {
+                    window.selectedQuestionIds.push(listItem.dataset.questionId);
+                });
+                // Remove existing hidden inputs
                 document.querySelectorAll('input[name="exercises-ids"], input[name="questions-ids"]').forEach(input => input.remove());
 
-
-                // **2. Add hidden input fields for selected exercise IDs**
+                // **3. Add Hidden Inputs for Exercises**
                 window.selectedExerciseIds.forEach(exerciseId => {
                     const hiddenInput = document.createElement('input');
                     hiddenInput.type = 'hidden';
-                    hiddenInput.name = 'exercises-ids'; // **Correct name: exercises-ids**
+                    hiddenInput.name = 'exercises-ids';
                     hiddenInput.value = exerciseId;
-                    assessmentForm.appendChild(hiddenInput); // Append to the form
+                    assessmentForm.appendChild(hiddenInput);
                 });
 
-                // **3. Add hidden input fields for selected question IDs**
+                // **4. Add Hidden Inputs for Questions**
                 window.selectedQuestionIds.forEach(questionId => {
                     const hiddenInput = document.createElement('input');
                     hiddenInput.type = 'hidden';
-                    hiddenInput.name = 'questions-ids'; // **Correct name: questions-ids**
+                    hiddenInput.name = 'questions-ids';
                     hiddenInput.value = questionId;
-                    assessmentForm.appendChild(hiddenInput); // Append to the form
+                    assessmentForm.appendChild(hiddenInput);
                 });
 
 
-
-                $.get(`/assessments/create/check-duplicate`, { title: newTitle, assessmentTypeId: assessmentTypeId, id: id }) // Correct URL, **removed id parameter**
-                    .done(function (response) {
-                        if (response.isDuplicate) {
-                            showError("Assessment title of this assessment type already exists!");
-                            // Do NOT submit the form here if it's a duplicate
+                // First, check for similar questions
+                checkSimilarQuestions(window.selectedQuestionIds)
+                    .then(similarQuestionPositionsGroups => {
+                        if (similarQuestionPositionsGroups !== false) {
+                            return showSimilarQuestionWarning(similarQuestionPositionsGroups);
                         } else {
-
-                            hideError(); // Hide any previous error
-                            assessmentForm.submit(); // **Submit the form ONLY if no duplicate**
+                            return Promise.resolve(true);
                         }
                     })
-                    .fail(function () {
-                        showError("Error when checking for duplicate title!");
-                        // Optionally handle failure to check duplicate (e.g., still submit or prevent submission)
+                    .then(shouldSaveAssessment => {
+                        if (shouldSaveAssessment) {
+                            return $.get(`/assessments/create/check-duplicate`, { title: newTitle, assessmentTypeId: assessmentTypeId, id: assessmentId });
+                        } else {
+                            return Promise.reject("User cancelled saving due to similar questions.");
+                        }
+                    })
+                    .then(response => {
+                        if (response.isDuplicate) {
+                            showError("Assessment title of this assessment type already exists!");
+                            return Promise.reject("Duplicate title found");
+                        } else {
+                            hideError();
+                            assessmentForm.submit();
+                        }
+                    })
+                    .catch(error => {
+                        if (error === "User cancelled saving due to similar questions.") {
+                            console.log("Saving cancelled by user due to similar questions.");
+                        } else if (error !== "Duplicate title found" && error !== "Unexpected response format") {
+                            console.error("An error occurred during checks: ", error);
+                            showError("An unexpected error occurred during validation.");
+                        }
                     });
-
-
-
-
-
-            });
+            })
 
 
             const addQuizButtons = document.querySelectorAll('.add-questions');
@@ -954,8 +1187,6 @@
                     delete exerciseContent.dataset.exerciseId; // Clear in case of error
                 });
         }
-
-
         // Hàm để chuyển đổi trạng thái nút và gọi viewExercise
         function toggleViewButton(button, exerciseId) {
             const icon = button.querySelector('i');
@@ -987,26 +1218,18 @@
                 }
             });
         });
-
-
-
     </script>
-
-
 </div>
 </div>
 </div>
-
 <button onclick="scrollToTop()" id="scrollToTopButton" title="Go to top">
     <i class="fas fa-arrow-up"></i>
 </button>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
-
 <script>
     window.onscroll = function () {
         const scrollToTopButton = document.getElementById("scrollToTopButton");
@@ -1032,6 +1255,5 @@
         });
     });
 </script>
-
 </body>
 </html>

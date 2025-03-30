@@ -1,14 +1,20 @@
 package com.example.code_judgement;
 
-import com.example.student_exercise_attemp.model.Exercise;
-import com.example.student_exercise_attemp.service.ExerciseService;
+import com.example.exercise.model.Exercise;
+import com.example.exercise.model.ExerciseSession;
+import com.example.exercise.model.StudentExerciseAttempt;
+import com.example.exercise.service.ExerciseService;
 import com.example.testcase.TestCase;
+import com.example.user.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import com.example.user.UserService;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
+import java.util.Objects;
 
 @Controller
 @RequestMapping("/judgement")
@@ -16,18 +22,33 @@ import java.util.List;
 public class CodeJudgementController {
     private final ExerciseService exerciseService;
 
+    private final UserService userService;
+
     // Hiển thị giao diện code space cho một bài tập
-    @GetMapping("/code_space/{id}")
+    @GetMapping("/{type}/code_space/{id}")
     public String showExercisePlayground(@PathVariable Long id,
-                                         Model model) {
+                                         @PathVariable String type,
+                                         Model model,
+                                         @SessionAttribute(name = "exerciseSession", required = false) ExerciseSession exerciseSession) {
         Exercise exercise = exerciseService.getExerciseById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));
         model.addAttribute("exercise", exercise);
-        model.addAttribute("code", exercise.getSetup() );
+        if(type.equals("assessment")) {
+            String codeSession = "";
+            for(StudentExerciseAttempt attempt: exerciseSession.getStudentExerciseAttempts()){
+                if(Objects.equals(attempt.getSubmitted_exercise().getId(), id)){
+                    codeSession = attempt.getSubmitted_code();
+                    model.addAttribute("code", codeSession);
+                    break;
+                }
+            }
+        } else {
+            model.addAttribute("code", exercise.getSetup());
+        }
         model.addAttribute("output", "");
+        model.addAttribute("type", type);
         return "judgement/code_space";
     }
-
     // Chạy code khi user nhập custom input và trả lại output
     @PostMapping("/run-custom-code")
     public String runCustomCode(@RequestParam("exerciseId") Long exerciseId,
@@ -82,15 +103,18 @@ public class CodeJudgementController {
     @PostMapping("/run_test_case")
     public String runTestCase(@RequestParam("exerciseId") Long exerciseId,
                               @RequestParam("code") String code,
+                              @RequestParam("type") String type,
                               Model model) {
         model.addAttribute("exerciseId", exerciseId);
         model.addAttribute("code", code);
+        model.addAttribute("type", type);
         return "judgement/run_test_case";
     }
 
     @PostMapping("/submit_exercise")
     public String submitExercise(@RequestParam("exerciseId") Long exerciseId,
                                  @RequestParam("code") String code,
+                                 @RequestParam("type") String type,
                                  Model model){
         Exercise exercise = exerciseService.getExerciseById(exerciseId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));
@@ -105,5 +129,22 @@ public class CodeJudgementController {
         String targetPath = "/judgement/" +  (exercise.getLanguage().getLanguage().equalsIgnoreCase("c#")?"csharp":exercise.getLanguage().getLanguage().toLowerCase()) + "/submit_exercise";
         System.out.println(targetPath);
         return "forward:" + targetPath;
+    }
+
+    @GetMapping("/get_exercise")
+    @PreAuthorize("hasAuthority('STUDENT')")
+    public String getExercise(@RequestParam("exerciseId") Long exerciseId,
+                                 @RequestParam("code") String code,
+                              @RequestParam("score") Double score,
+                              Model model){
+        User user = userService.getCurrentUser();
+        Exercise exercise = exerciseService.getExerciseById(exerciseId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid exercise ID"));
+
+            model.addAttribute("exercise", exercise);
+            model.addAttribute("code", code);
+            model.addAttribute("score", score);
+            model.addAttribute("user", user);
+        return "judgement/view_result";
     }
 }

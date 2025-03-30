@@ -16,7 +16,7 @@ import java.util.Optional;
 @Repository
 public interface AssessmentRepository extends PagingAndSortingRepository<Assessment, Long> {
 
-    @Query("SELECT a FROM Assessment a WHERE a.title LIKE %:searchQuery%")
+    @Query("SELECT a FROM Assessment a WHERE a.title LIKE %:searchQuery% ORDER BY a.updatedAt DESC")
     Page<Assessment> search(@Param("searchQuery") String searchQuery, Pageable pageable);
 
     @Query("SELECT COUNT(a) > 0 FROM Assessment a WHERE LOWER(a.title) = LOWER(:name)")
@@ -25,6 +25,7 @@ public interface AssessmentRepository extends PagingAndSortingRepository<Assessm
     @Query("SELECT a FROM Assessment a LEFT JOIN FETCH a.assessmentQuestions WHERE a.id = :id")
     Assessment findByAssessmentIdWithQuestions(@Param("id") Long id);
 
+    @Query("SELECT a FROM Assessment a ORDER BY a.updatedAt DESC")
     Page<Assessment> findAll(Pageable pageable);
 
     List<Assessment> findAll();
@@ -37,6 +38,7 @@ public interface AssessmentRepository extends PagingAndSortingRepository<Assessm
 
     void deleteById(Long id);
 
+    // ✅ New method: Update invited_count using JPQL
     @Modifying
     @Transactional
     @Query("UPDATE Assessment a SET a.invitedCount = a.invitedCount + 1 WHERE a.id = :id")
@@ -46,7 +48,12 @@ public interface AssessmentRepository extends PagingAndSortingRepository<Assessm
     @Query("SELECT a FROM Assessment a WHERE a.id = :id")
     Optional<Assessment> refresh(@Param("id") Long id);
 
+    boolean existsByTitleAndAssessmentTypeIdAndIdNot(String title, Long assessmentTypeId, Long id);
+
+
     boolean existsByTitleAndAssessmentTypeId(String title, Long assessmentTypeId);
+
+    List<Assessment> findByTitleContaining(String title); // Removed Course parameter
 
 }
 

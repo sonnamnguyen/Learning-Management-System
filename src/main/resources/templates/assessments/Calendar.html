@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Assessment Calendar</title>
+
+    <!-- FullCalendar CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.js"></script>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <style>
+        #calendar-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        #calendar {
+            flex: 2;
+            max-width: 70%;
+        }
+
+        #assessment-panel {
+            flex: 1;
+            max-width: 30%;
+            border-left: 2px solid #ddd;
+            padding: 10px;
+        }
+
+        .assessment-item {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+            cursor: pointer;
+        }
+
+        .assessment-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .fc-event {
+            font-size: 14px;
+        }
+
+        .fc-event:hover {
+            transform: scale(1.05);
+            transition: transform 0.2s ease-in-out;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid px-4 py-3">
+    <h1 class="text-center">Assessment Calendar</h1>
+
+    <!-- Calendar + Side List Container -->
+    <div id="calendar-container">
+        <div id="calendar"></div>
+
+        <!-- Right Side Panel -->
+        <div id="assessment-panel">
+            <h4>Upcoming Assessments</h4>
+
+            <!-- Search Bar -->
+            <input type="text" id="searchBar" class="form-control mb-2" placeholder="Search assessments...">
+
+            <!-- Assessment List -->
+            <div id="assessment-items">
+                <p class="text-muted">Loading...</p>
+            </div>
+
+            <!-- Pagination -->
+            <nav>
+                <ul class="pagination justify-content-center" id="pagination"></ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const itemsPerPage = 5;
+        let assessments = []; // Stores all assessments
+        let currentPage = 1;
+
+        var calendarEl = document.getElementById('calendar');
+        var eventListEl = document.getElementById('assessment-items');
+
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            },
+            events: function(fetchInfo, successCallback, failureCallback) {
+                fetch('calendar/events')
+                    .then(response => response.json())
+                    .then(data => {
+                        assessments = data.map(event => {
+                            let now = new Date();
+                            let endDate = new Date(event.end);
+                            let isExpired = endDate < now;
+
+                            let bgColor = isExpired ? "#B0B0B0" : getRandomPastelColor();
+                            let textColor = isDarkColor(bgColor) ? "#FFFFFF" : "#000000";
+
+                            return {
+                                title: isExpired ? `${event.title} (Expired)` : event.title,
+                                start: endDate,
+                                backgroundColor: bgColor,
+                                borderColor: bgColor,
+                                textColor: textColor,
+                                inviteLink: event.inviteLink,
+                                isExpired: isExpired
+                            };
+                        });
+
+                        successCallback(assessments);
+                        renderAssessmentList();
+                    })
+                    .catch(error => {
+                        console.error("❌ Failed to load events", error);
+                        failureCallback(error);
+                    });
+            },
+            eventDidMount: function (info) {
+                info.el.style.backgroundColor = info.event.extendedProps.backgroundColor; // Ensure full event background
+                info.el.style.color = info.event.extendedProps.textColor;
+                info.el.style.borderRadius = "5px"; // Optional styling for better visibility
+                info.el.style.padding = "3px";
+
+                // Tooltip to show full event name on hover
+                info.el.setAttribute("title", info.event.title);
+            },
+            eventClick: function(info) {
+                if (info.event.extendedProps.inviteLink) {
+                    window.location.href = info.event.extendedProps.inviteLink;
+                }
+            }
+        });
+
+        function getRandomPastelColor() {
+            let r = Math.floor((Math.random() * 127) + 127);
+            let g = Math.floor((Math.random() * 127) + 127);
+            let b = Math.floor((Math.random() * 127) + 127);
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+
+        function isDarkColor(color) {
+            let rgb = color.match(/\d+/g);
+            let brightness = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;
+            return brightness < 128;
+        }
+
+        function renderAssessmentList() {
+            let filteredAssessments = assessments.filter(event => {
+                let searchValue = document.getElementById("searchBar").value.toLowerCase();
+                return event.title.toLowerCase().includes(searchValue);
+            });
+
+            let startIndex = (currentPage - 1) * itemsPerPage;
+            let endIndex = startIndex + itemsPerPage;
+            let paginatedItems = filteredAssessments.slice(startIndex, endIndex);
+
+            eventListEl.innerHTML = "";
+            paginatedItems.forEach(event => {
+                let item = document.createElement("div");
+                item.className = "assessment-item";
+                item.style.cursor = "pointer";
+
+                let timeLeftText = event.isExpired
+                    ? `<br> <span style="color:red; font-weight: bold;">(Expired) 🔴</span>`
+                    : `<br> ⏳ <span style="color:${new Date(event.start) - new Date() < 24 * 60 * 60 * 1000 ? 'red' : 'black'}">${Math.round((new Date(event.start) - new Date()) / (1000 * 60 * 60))} hours left</span>`;
+
+                item.innerHTML = `
+                    <strong>${event.title}</strong>
+                    <br> (Due: ${new Date(event.start).toLocaleString()})
+                    ${timeLeftText}
+                `;
+
+                item.onclick = () => {
+                    if (event.inviteLink) {
+                        window.location.href = event.inviteLink;
+                    }
+                };
+
+                eventListEl.appendChild(item);
+            });
+
+            updatePagination(filteredAssessments.length);
+        }
+
+        function updatePagination(totalItems) {
+            let totalPages = Math.ceil(totalItems / itemsPerPage);
+            let paginationEl = document.getElementById("pagination");
+
+            paginationEl.innerHTML = "";
+            for (let i = 1; i <= totalPages; i++) {
+                let pageItem = document.createElement("li");
+                pageItem.className = `page-item ${i === currentPage ? "active" : ""}`;
+                pageItem.innerHTML = `<a class="page-link">${i}</a>`;
+                pageItem.onclick = () => {
+                    currentPage = i;
+                    renderAssessmentList();
+                };
+                paginationEl.appendChild(pageItem);
+            }
+        }
+
+        document.getElementById("searchBar").addEventListener("input", () => {
+            currentPage = 1;
+            renderAssessmentList();
+        });
+
+        calendar.render();
+    });
+</script>
+</body>
+</html>

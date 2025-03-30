@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -24,6 +25,7 @@ import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final CustomUserDetailsService customUserDetailsService;
@@ -34,17 +36,28 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/js/**", "/models/**").permitAll()
                         .requestMatchers(
                                 "/login",
                                 "/register",
                                 "/otp",
                                 "/verify-otp",
+                                "/assessments/submit/**",
                                 "/materials/**",
-                                "assessments/expired-link", // Allow expired link page
-                                "assessments/invite/**"     // Allow all invite-related links (Take Assessment)
+                                "/judgement/assessment/code_space/**",
+                                "/exercises/submit/120/0/0/**",
+                                "/judgement/**",
+                                "/assessments/expired-link",
+                                "/assessments/invite/**",
+                                "/assessments/invalid-link",
+                                "/assessments/already-assessed"
                         ).permitAll()
+                        .requestMatchers("/exercises/profile/**").authenticated()
                         .anyRequest().authenticated()
                 )
+                .exceptionHandling(exception
+                        -> exception.accessDeniedPage("/exercises/access-denied")
+                ) // config auth
                 .formLogin(form -> form.loginPage("/login").permitAll())
                 .logout(logout -> logout
                         .logoutUrl("/logout")

@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Check Duplicate Exercises</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <!-- Bootstrap Icons CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    #backToTop, #scrollDown {
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+      transition: opacity 0.3s, transform 0.3s;
+    }
+
+    #backToTop:hover, #scrollDown:hover {
+      transform: scale(1.1);
+    }
+
+    table.table-bordered th,
+    table.table-bordered td {
+      border: 1px solid #dee2e6;
+    }
+
+    table.table-bordered thead tr {
+      background-color: #e3f2fd;
+      color: #000;
+    }
+
+    .btn-danger {
+      background-color: transparent !important;
+      color: red !important;
+      border-color: red !important;
+      transition: all 0.3s ease-in-out;
+    }
+
+    .btn-danger:hover {
+      background-color: red !important;
+      color: white !important;
+    }
+
+    .alert-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1050;
+      min-width: 300px;
+      max-width: 400px;
+    }
+
+    .custom-alert {
+      border: none;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      margin-bottom: 1rem;
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      animation: slideIn 0.5s ease-out;
+    }
+
+    .alert-success {
+      background-color: #d4edda;
+      border-left: 4px solid #28a745;
+      color: #155724;
+    }
+
+    .alert-danger {
+      background-color: #f8d7da;
+      border-left: 4px solid #dc3545;
+      color: #721c24;
+    }
+
+    .alert-icon {
+      margin-right: 12px;
+      font-size: 1.2rem;
+    }
+
+    .alert-message {
+      flex-grow: 1;
+      margin-right: 12px;
+    }
+
+    .alert-close {
+      background: transparent;
+      border: none;
+      color: inherit;
+      padding: 0;
+      font-size: 1.1rem;
+      opacity: 0.7;
+      transition: opacity 0.3s ease;
+    }
+
+    .alert-close:hover {
+      opacity: 1;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+
+    table {
+      table-layout: auto !important;
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    td, th {
+      vertical-align: middle;
+      padding: 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 300px;
+    }
+
+    th:nth-child(1), td:nth-child(1) { width: 5%; } /* Checkbox */
+    th:nth-child(2), td:nth-child(2) { width: 20%; } /* Title */
+    th:nth-child(3), td:nth-child(3) { width: 15%; white-space: normal; word-break: break-word; } /* Language */
+    th:nth-child(4), td:nth-child(4) { width: 15%; } /* Difficulty */
+    th:nth-child(5), td:nth-child(5) { width: 45%; white-space: normal; word-break: break-word; } /* Description */
+
+    .duplicate-group {
+      margin-bottom: 2rem;
+      padding: 1rem;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .duplicate-group h3 {
+      color: #dc3545;
+      margin-bottom: 1rem;
+    }
+
+    #deleteSuccessToast {
+      min-width: 250px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      border: none;
+      border-radius: 8px;
+      background-color: #e8f5e9;
+      color: #333;
+      animation: slideIn 0.3s ease-in-out;
+      border-left: 4px solid #2e7d32;
+    }
+
+    .toast-body {
+      padding: 0.75rem 1rem;
+      font-weight: 500;
+      font-size: 1rem;
+    }
+
+    .sticky-bar {
+      position: relative;
+      width: 100%;
+      background: white;
+      z-index: 1050;
+      transition: position 0.3s ease-in-out;
+    }
+
+    .sticky-bar.fixed {
+      position: fixed;
+      top: 0;
+      left: 0;
+    }
+
+    .toc-container {
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .dropdown-menu {
+      max-height: 300px; /* Giới hạn chiều cao dropdown nếu có nhiều mục */
+      overflow-y: auto; /* Cho phép cuộn nếu vượt quá chiều cao */
+      width: 100%;
+    }
+
+    .dropdown-item {
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .dropdown-item:hover {
+      background-color: #f1faff;
+    }
+
+    .dropdown-item.active {
+      background-color: #e3f2fd;
+      font-weight: bold;
+      color: #000;
+    }
+  </style>
+</head>
+<body>
+<button id="backToTop" class="btn btn-primary position-fixed" style="bottom: 70px; right: 20px; display: none; z-index: 1000;">
+  <i class="bi bi-arrow-up"></i>
+</button>
+
+<button id="scrollDown" class="btn btn-success position-fixed" style="bottom: 20px; right: 20px; display: none; z-index: 1000;">
+  <i class="bi bi-arrow-down"></i>
+</button>
+
+<div class="d-flex flex-column min-vh-100">
+
+  <div class="alert-container">
+    <div th:if="${successMessage}" class="custom-alert alert-success" role="alert" id="successAlert">
+      <i class="bi bi-check-circle-fill alert-icon"></i>
+      <span class="alert-message" th:text="${successMessage}">Success message</span>
+      <button type="button" class="alert-close" onclick="closeAlert('successAlert')">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+    <div th:if="${error}" class="custom-alert alert-danger" role="alert" id="errorAlert">
+      <i class="bi bi-exclamation-circle-fill alert-icon"></i>
+      <span class="alert-message" th:text="${error}">Error message</span>
+      <button type="button" class="alert-close" onclick="closeAlert('errorAlert')">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="flex-grow-1 container-fluid mt-5">
+    <div class="px-5">
+      <h1 class="text-center mb-4">Check Duplicate Exercises</h1>
+
+      <div id="stickyBar" class="container-fluid sticky-bar">
+        <div class="row gx-2 align-items-center mt-3 mb-1 d-flex justify-content-between">
+          <div class="col-md-6 d-flex align-items-center">
+            <div class="toc-container w-100">
+              <div class="dropdown w-100">
+                <button class="btn btn-outline-primary dropdown-toggle w-100" type="button" id="tocDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                  Select Language
+                </button>
+                <ul class="dropdown-menu w-100" id="tocList" aria-labelledby="tocDropdown">
+                  <!-- Các mục sẽ được tạo động bằng JavaScript -->
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 d-flex justify-content-end align-items-center">
+            <a href="/exercises" class="btn btn-outline-primary me-2">
+              <i class="bi bi-arrow-left me-1"></i> Back to Exercises
+            </a>
+            <button id="deleteSelected" class="btn btn-danger">
+              <i class="bi bi-trash me-1"></i> Delete Selected
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div th:if="${not #maps.isEmpty(groupedByLanguageAndDescription)}">
+        <div th:each="languageEntry : ${groupedByLanguageAndDescription}">
+          <h2 class="mt-4 mb-3" th:text="'Language: ' + ${languageEntry.key}"></h2>
+          <div th:if="${not #maps.isEmpty(languageEntry.value)}">
+            <div class="duplicate-group" th:each="group : ${languageEntry.value}">
+              <h3>Duplicate (Count: <span th:text="${group.value.size()}"></span>)</h3>
+              <div class="table-responsive">
+                <table class="table table-hover table-bordered">
+                  <thead>
+                  <tr>
+                    <th class="text-center"><input type="checkbox" class="selectAll"/></th>
+                    <th>Title</th>
+                    <th class="text-center">Language</th>
+                    <th class="text-center">Difficulty</th>
+                    <th>Description</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  <tr th:each="exercise : ${group.value}" th:attr="data-id=${exercise.id}">
+                    <td class="text-center"><input type="checkbox" class="selectItem"/></td>
+                    <td th:text="${exercise.name}"></td>
+                    <td class="text-center" th:text="${exercise.language.language}"></td>
+                    <td class="text-center">
+                      <span th:class="${'badge ' + (exercise.level.name() == 'HARD' ? 'bg-danger' : (exercise.level.name() == 'MEDIUM' ? 'bg-warning' : 'bg-success'))}" th:text="${exercise.level}"></span>
+                    </td>
+                    <td th:utext="${exercise.description}"></td>
+                  </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div th:if="${#maps.isEmpty(languageEntry.value)}" class="text-center mt-4">
+            <p>No duplicate exercises found for <span th:text="${languageEntry.key}"></span>.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="deleteSuccessToast" class="toast position-fixed" role="alert" aria-live="assertive" aria-atomic="true" style="z-index: 1050; display: none; top: 70px; right: 20px;">
+    <div class="toast-body text-center">Deleted Successfully!</div>
+  </div>
+
+  <div th:replace="~{fragments :: footer}" class="mt-auto"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const deleteButton = document.getElementById("deleteSelected");
+    const toastElement = document.getElementById("deleteSuccessToast");
+    const selectAllCheckboxes = document.querySelectorAll(".selectAll");
+
+    // Xử lý checkbox "Select All" trong mỗi bảng
+    selectAllCheckboxes.forEach(selectAllCheckbox => {
+      const table = selectAllCheckbox.closest("table");
+      const itemCheckboxes = table ? table.querySelectorAll(".selectItem") : [];
+
+      selectAllCheckbox.addEventListener("change", function () {
+        itemCheckboxes.forEach(checkbox => checkbox.checked = selectAllCheckbox.checked);
+      });
+
+      itemCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener("change", function () {
+          selectAllCheckbox.checked = [...itemCheckboxes].every(cb => cb.checked);
+        });
+      });
+    });
+
+    if (deleteButton) {
+      deleteButton.addEventListener("click", function () {
+        const selectedIds = [...document.querySelectorAll(".selectItem:checked")]
+                .map(cb => cb.closest("tr").getAttribute("data-id"));
+
+        if (selectedIds.length === 0) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'No exercises selected!',
+            text: 'Please select at least one exercise to delete.',
+            confirmButtonText: 'OK'
+          });
+          return;
+        }
+
+        Swal.fire({
+          title: "Are you sure?",
+          text: "You will not be able to recover the deleted exercises!",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#d33",
+          cancelButtonColor: "#3085d6",
+          confirmButtonText: "Yes, delete them!",
+          cancelButtonText: "Cancel"
+        }).then((result) => {
+          if (result.isConfirmed) {
+            fetch('/exercises/delete-batch', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ ids: selectedIds })
+            }).then(response => {
+              if (response.ok) {
+                Swal.fire({
+                  icon: "success",
+                  title: "Deleted!",
+                  text: "The selected exercises have been deleted.",
+                  timerProgressBar: true,
+                  timer: 2000,
+                  showConfirmButton: false
+                });
+                setTimeout(() => location.reload(), 1000);
+              } else {
+                Swal.fire({
+                  icon: "error",
+                  title: "Failed!",
+                  text: "Failed to delete exercises. Please try again.",
+                  timerProgressBar: true,
+                  timer: 1000,
+                  showConfirmButton: false
+                });
+              }
+            }).catch(() => {
+              Swal.fire({
+                icon: "error",
+                title: "Error!",
+                text: "Something went wrong. Please try again later.",
+                confirmButtonText: "OK"
+              });
+            });
+          }
+        });
+      });
+    }
+
+    function showToast() {
+      if (toastElement) {
+        toastElement.style.display = "block";
+        const toast = new bootstrap.Toast(toastElement);
+        toast.show();
+      }
+    }
+
+    // Đóng alert
+    window.closeAlert = function(alertId) {
+      const alert = document.getElementById(alertId);
+      if (alert) {
+        alert.style.animation = 'fadeOut 0.5s ease-out forwards';
+        setTimeout(() => alert.remove(), 500);
+      }
+    };
+
+    // Tự động đóng alert sau 3 giây
+    ['successAlert', 'errorAlert'].forEach(alertId => {
+      const alert = document.getElementById(alertId);
+      if (alert) setTimeout(() => closeAlert(alertId), 3000);
+    });
+  });
+</script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    var backToTop = document.getElementById("backToTop");
+    var scrollDown = document.getElementById("scrollDown");
+
+    window.addEventListener("scroll", function () {
+      if (window.scrollY > 300) backToTop.style.display = "block";
+      else backToTop.style.display = "none";
+
+      if (window.scrollY < document.body.scrollHeight - window.innerHeight - 300) scrollDown.style.display = "block";
+      else scrollDown.style.display = "none";
+    });
+
+    backToTop.addEventListener("click", function () {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    scrollDown.addEventListener("click", function () {
+      window.scrollBy({ top: 500, behavior: "smooth" });
+    });
+  });
+</script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    var stickyBar = document.getElementById("stickyBar");
+    var offset = stickyBar.offsetTop;
+
+    window.addEventListener("scroll", function () {
+      if (window.scrollY > offset) stickyBar.classList.add("fixed");
+      else stickyBar.classList.remove("fixed");
+    });
+  });
+</script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Tạo mục lục trong dropdown
+    const tocList = document.getElementById("tocList");
+    const tocDropdown = document.getElementById("tocDropdown");
+    const languageHeaders = document.querySelectorAll('h2.mt-4.mb-3');
+
+    if (tocList && languageHeaders.length > 0) {
+      languageHeaders.forEach((header, index) => {
+        // Gán ID cho mỗi h2 để dễ cuộn đến
+        const id = `language-${index}`;
+        header.setAttribute("id", id);
+
+        // Tạo mục trong dropdown
+        const dropdownItem = document.createElement("li");
+        const link = document.createElement("a");
+        link.classList.add("dropdown-item");
+        link.textContent = header.textContent.replace("Language: ", "");
+        link.dataset.target = id;
+
+        // Thêm sự kiện nhấp
+        link.addEventListener("click", function () {
+          const targetId = this.dataset.target;
+          const targetElement = document.getElementById(targetId);
+          if (targetElement) {
+            window.scrollTo({
+              top: targetElement.offsetTop - 70, // Điều chỉnh để không bị che bởi sticky bar
+              behavior: "smooth"
+            });
+
+            // Cập nhật tiêu đề dropdown khi chọn
+            tocDropdown.textContent = this.textContent;
+
+            // Xóa lớp active từ tất cả các mục
+            tocList.querySelectorAll(".dropdown-item").forEach(item => {
+              item.classList.remove("active");
+            });
+            // Thêm lớp active cho mục được nhấp
+            this.classList.add("active");
+          }
+        });
+
+        dropdownItem.appendChild(link);
+        tocList.appendChild(dropdownItem);
+      });
+    }
+
+    // Xử lý highlighting khi cuộn
+    window.addEventListener("scroll", function () {
+      const scrollPosition = window.scrollY + 80; // Điều chỉnh offset
+      let activeSet = false;
+
+      languageHeaders.forEach((header, index) => {
+        const tocItem = tocList.children[index]?.querySelector(".dropdown-item");
+        if (tocItem) {
+          if (header.offsetTop <= scrollPosition &&
+                  (index === languageHeaders.length - 1 || languageHeaders[index + 1].offsetTop > scrollPosition)) {
+            tocList.querySelectorAll(".dropdown-item").forEach(item => item.classList.remove("active"));
+            tocItem.classList.add("active");
+            tocDropdown.textContent = tocItem.textContent; // Cập nhật tiêu đề dropdown
+            activeSet = true;
+          }
+        }
+      });
+
+      if (!activeSet && scrollPosition < languageHeaders[0].offsetTop) {
+        tocList.querySelectorAll(".dropdown-item").forEach(item => item.classList.remove("active"));
+        tocDropdown.textContent = "Select Language"; // Reset tiêu đề khi ở trên cùng
+      }
+    });
+  });
+</script>
+</body>
+</html>

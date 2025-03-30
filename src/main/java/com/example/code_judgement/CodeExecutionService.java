@@ -3,10 +3,11 @@ package com.example.code_judgement;
 
 import com.example.code_judgement.java_judge.JavaJudgementService;
 import com.example.code_judgement.languageFactory.ExecutionBasedLanguage;
-import com.example.student_exercise_attemp.model.Exercise;
-import com.example.student_exercise_attemp.repository.ExerciseRepository;
-import com.example.student_exercise_attemp.model.StudentExerciseAttempt;
-import com.example.student_exercise_attemp.service.StudentExerciseAttemptService;
+import com.example.exercise.model.Exercise;
+import com.example.exercise.model.ExerciseSession;
+import com.example.exercise.repository.ExerciseRepository;
+import com.example.exercise.model.StudentExerciseAttempt;
+import com.example.exercise.service.StudentExerciseAttemptService;
 import com.example.testcase.TestCase;
 import com.example.testcase.TestCaseResult;
 import com.example.testcase.TestCaseService;
@@ -21,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -102,15 +104,45 @@ public class CodeExecutionService {
         }
     }
 
-    public ExecutionResponse executeCodeOptimized(boolean submitExercise, String code, List<TestCase> testCases, ExecutionBasedLanguage executionBasedLanguage, Exercise exercise) {
+    public ExecutionResponse executeCodeOptimized(String type, String code, List<TestCase> testCases, ExecutionBasedLanguage executionBasedLanguage, Exercise exercise, ExerciseSession exerciseSession) {
         // Biên dịch mã nguồn một lần
 //        ExecutionBasedLanguage executionBasedLanguage = initialLanguage(language);
+        long startCompileTime = System.nanoTime();
         CompilationResult compilationResult = executionBasedLanguage.compileCode(code);
+        long endCompileTime = System.nanoTime();
+
+        long compileTime = (endCompileTime - startCompileTime)/1_000_000;
+
+        StudentExerciseAttempt studentExerciseAttempt = new StudentExerciseAttempt();
+        if(type.equalsIgnoreCase("practice")){
+            studentExerciseAttempt.setAttemptDate(LocalDateTime.now());
+            studentExerciseAttempt.setSubmitted_code(code);
+            studentExerciseAttempt.setSubmitted_exercise(exercise);
+            studentExerciseAttempt.setAttendant_user(userService.getCurrentUser());
+            studentExerciseAttempt.setSubmitted(true);
+            studentExerciseAttemptService.save(studentExerciseAttempt);
+        } else if(type.equalsIgnoreCase("assessment")){
+            Optional<StudentExerciseAttempt> optStudentExerciseAttempt = studentExerciseAttemptService.getStudentExerciseAttemptBySessionAndExercise(exerciseSession, exercise);
+            if(optStudentExerciseAttempt.isPresent()){
+                studentExerciseAttempt = optStudentExerciseAttempt.get();
+                studentExerciseAttempt.setSubmitted_code(code);
+                studentExerciseAttempt.setSubmitted(true);
+                studentExerciseAttemptService.save(studentExerciseAttempt);
+            } else {
+                String error = "Can not take Student Exercise Attempt!";
+                System.out.println(error);
+                throw new RuntimeException(error);
+            }
+        }
+
+
         if (!compilationResult.isSuccess()) {
-            return new ExecutionResponse(code, 0, testCases.size(), 0, null, compilationResult.getErrorMessage());
+            return new ExecutionResponse(code, 0, testCases.size(), 0, null, compilationResult.getErrorMessage(), compileTime, 0);
         }
 
         // Sử dụng ExecutorService để chạy các test case song song
+
+
         ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         List<Future<TestCaseResult>> futures = new ArrayList<>();
 
@@ -125,9 +157,13 @@ public class CodeExecutionService {
         // Thu thập kết quả
         List<TestCaseResult> testResults = new ArrayList<>();
         int passed = 0;
+        long runTime =0;
         for (Future<TestCaseResult> future : futures) {
+            long startRunTime = System.nanoTime();
             try {
                 TestCaseResult result = future.get();
+                long endRunTime = System.nanoTime();
+                runTime += endRunTime - startRunTime;
                 if (result.isCorrect()) {
                     passed++;
                 }
@@ -138,6 +174,7 @@ public class CodeExecutionService {
         }
 
         executor.shutdown();
+        long avgRunTime = (runTime/testCases.size())/1_000_000;
         if(!compilationResult.getExtensionFileName().equalsIgnoreCase(".cs")){
             try {
                 Path filePath = Path.of(compilationResult.getRandomFileName().getAbsolutePath());
@@ -170,21 +207,14 @@ public class CodeExecutionService {
         }
 
         double score = 0;
-        // Lưu kết quả exercise
-        if(submitExercise){
+        if(type.equalsIgnoreCase("practice") || type.equalsIgnoreCase("assessment")){
             score = exerciseScore(passed, testResults.size());
-            StudentExerciseAttempt studentExerciseAttempt = new StudentExerciseAttempt();
-            studentExerciseAttempt.setAttemptDate(LocalDateTime.now());
-            studentExerciseAttempt.setSubmitted_code(code);
-            studentExerciseAttempt.setSubmitted_exercise(exercise);
-            studentExerciseAttempt.setAttendant_user(userService.getCurrentUser());
-            studentExerciseAttempt.setSubmitted(true);
             studentExerciseAttempt.setScore_exercise(score);
             studentExerciseAttemptService.save(studentExerciseAttempt);
         }
 
         // Tính toán kết quả tổng quát
-        return new ExecutionResponse(code,passed,testCases.size(),score,testResults, null);
+        return new ExecutionResponse(code,passed,testCases.size(),score,testResults, null, compileTime, avgRunTime);
     }
 
     private void deleteDirectoryRecursively(Path path) throws IOException {

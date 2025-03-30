@@ -36,6 +36,11 @@ public class InvitedCandidate {
         this.expirationDate = this.invitationDate.plusDays(days);
     }
 
-    // Getters and Setters
-    // Omitted for brevity
+    @Column(nullable = false)
+    private boolean hasAssessed = false; // New attribute to track completion
+
+    public String getAssessmentTitle() {
+        return assessment != null ? assessment.getTitle() : "Unknown Assessment";
+    }
+
 }

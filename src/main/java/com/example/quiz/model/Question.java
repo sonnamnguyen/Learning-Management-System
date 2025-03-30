@@ -1,6 +1,10 @@
 package com.example.quiz.model;
 
+import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Entity;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,17 +13,16 @@ import lombok.Setter;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 @NoArgsConstructor
 @Getter
 @Setter
 @Entity
 @Table(name = "question")
-public class Question {
-
+public class Question implements Cloneable{
 
     public enum QuestionType {
         MCQ, SCQ, TEXT
@@ -56,6 +59,7 @@ public class Question {
     @Column(name = "question_text", nullable = false, columnDefinition = "TEXT")
     private String questionText;
 
+    @JsonProperty("questionType")
     @Enumerated(EnumType.STRING)
     @Column(name = "question_type", length = 50, nullable = false)
     private QuestionType questionType;
@@ -69,12 +73,36 @@ public class Question {
 //        quiz.getQuestions().add(this);
 //    }
 
+    @JsonIgnore
     @OneToMany(mappedBy = "question", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Answer> answers = new ArrayList<>();
 
+    @JsonManagedReference("questions-answerOption")
     @OneToMany(mappedBy = "question", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AnswerOption> answerOptions = new ArrayList<>();
 
     // Getters and Setters
     // Omitted for brevity
+
+    @Override
+    public Object clone() {
+        try {
+            Question cloned = (Question) super.clone();
+            cloned.id = null; // Xóa ID để tránh lỗi trùng khóa
+            cloned.quizzes = null;
+            cloned.answers = null;
+            cloned.questionNo = null;
+            cloned.answerOptions = new ArrayList<>();
+            for (AnswerOption answerOption : this.answerOptions) {
+                AnswerOption clonedAnswerOption = (AnswerOption) answerOption.clone();
+                clonedAnswerOption.setQuestion(cloned); // Liên kết D mới với C mới
+                cloned.answerOptions.add(clonedAnswerOption);
+            }
+            return cloned;
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException("Clone failed", e);
+        }
+    }
+
+
 }

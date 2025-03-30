@@ -77,7 +77,7 @@ public class ProgrammingLanguageController {
     // Update existing programmingLanguage
     @PostMapping("/edit/{id}")
     public String updateProgrammingLanguage(@PathVariable("id") Integer id, @ModelAttribute ProgrammingLanguage programmingLanguage, Model model) {
-        programmingLanguage.setId(Long.valueOf(id)); // Ensure the id is set correctly
+        programmingLanguage.setId((id)); // Ensure the id is set correctly
         programmingLanguageService.saveProgrammingLanguage(programmingLanguage); // Save the programmingLanguage
         return "redirect:/programming_languages";
     }
@@ -120,5 +120,11 @@ public class ProgrammingLanguageController {
         List<ProgrammingLanguage> programmingLanguages = programmingLanguageService.getAllProgrammingLanguages();
         model.addAttribute("programmingLanguages", programmingLanguages);
         return "programmingLanguage/print";
+    }
+
+    @GetMapping("/list")
+    @ResponseBody
+    public List<ProgrammingLanguage> getAllLanguages() {
+        return programmingLanguageService.getAllProgrammingLanguages();
     }
 }

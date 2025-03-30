@@ -22,9 +22,8 @@ public class Result {
     @JoinColumn(name = "test_session_id", nullable = false)
     @JsonIgnore
     private TestSession testSession;
-
     @Column(name = "score")
-    private Integer score;
+    private double score;
 
     @Column(name = "completion_time")
     private LocalDateTime completionTime;
@@ -34,4 +33,11 @@ public class Result {
         this.score = score;
         this.completionTime = LocalDateTime.now();
     }
+
+    public Result(TestSession session, Question question, boolean isCorrect, double points) {
+        this.testSession = session;
+        this.score = isCorrect ? points : 0;
+        this.completionTime = LocalDateTime.now();
+    }
+
 }

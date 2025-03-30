@@ -1,274 +1,171 @@
 <div class="main-container px-5 flex-grow-1">
-    <h1 class="text-center">Assessments</h1>
-
-    <div>
-        <!-- Header Section -->
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <!-- Reduced bottom margin -->
-            <div class="mb-3">
-                <h1 class="text-center mb-1">Assessment Report</h1>
-                <!--                Reduced font size-->
-                <span class="text-primary" style="font-size: 1rem;">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <!-- Reduced bottom margin -->
+        <div class="mb-3">
+            <h1 class="text-center mb-1">Assessment Report</h1>
+            <!--                Reduced font size-->
+            <span class="text-primary" style="font-size: 1rem;">
                     <i class="bi bi-box-arrow-up-right"></i>
                     ASM
                 </span>
-
-            </div>
+        </div>
+        <div class="d-flex">
+            <!-- Thêm nút Edit Score -->
             <a href="/assessments" class="btn btn-outline-secondary" style="font-size: 0.875rem;">
                 Back to List
             </a>
         </div>
-
-        <hr>
-
-        <div class="row">
-            <!--            Use Information on the left, using sticky positioning-->
-            <div class="col-md-3" style="padding-right: 0; position: sticky; top: 0; height: 100vh; overflow-y: auto;">
-                <h6 style="font-size: 0.875rem;" th:text="${attemptInfo.email}"></h6>
-                <!--                Reduced font size-->
-                <p style="font-size: 0.875rem; margin-bottom: 0;">
-                    Joined on: <span th:text="${#temporals.format(attemptInfo.attemptDate, 'dd-MM-yyyy, hh:mm a')}"></span>
-                </p>
-                <!--                No margin-bottom-->
-                <p style="font-size: 0.875rem; margin-top: 0;">
-                    Invite by: <span th:text="${attemptInfo.assessment.createdBy}"></span>
-                </p>
-
-                <!--                Links container-->
-                <nav class="nav flex-column">
-                    <a href="#score-point" class="fw-bold text-secondary text-decoration-none mb-2 link-hover"
-                       style="border-left: 4px solid gray; padding-left: 10px; font-size: 0.875rem; height: 100% !important;">
-                        Score
-                    </a>
-                    <a href="#score-card" class="fw-bold text-secondary text-decoration-none mb-2 link-hover"
-                       style="border-left: 4px solid gray; padding-left: 10px; font-size: 0.875rem; height: 100% !important;">
-                        Score Card
-                    </a>
-                    <a href="#quiz-result" class="fw-bold text-secondary text-decoration-none mb-2 link-hover"
-                       style="border-left: 4px solid gray; padding-left: 10px; font-size: 0.875rem; height: 100% !important;">
-                        Quiz Result
-                    </a>
-                </nav>
-            </div>
-
-            <!--            Report-->
-            <div class="col-md-9">
-                <!--                Score section-->
-                <h4 id="score-point" style="margin-left: -10px; font-size: 1.25rem; margin-bottom: 2rem;">
-                    Score
-                </h4>
-                <div class="row">
-                    <!--                    Score card-->
-                    <div class="col-md-12">
-                        <div class="card shadow-sm h-100">
-                            <!--                            Card header-->
-                            <div class="card-header d-flex justify-content-between align-items-center"
-                                 style="background-color: #20c997; color: white; font-weight: bold; text-align: center; padding: 10px;">
-                                <span>Scores</span>
-                                <span style="width: 20%">Average 2.0%</span>
-                                <span style="width: 20%">Qualifying 60%</span>
-                                <span style="width: 20%; font-weight: bold;">Final Score 68%</span>
+    </div>
+    <hr>
+    <div class="row">
+        <!--            Use Information on the left, using sticky positioning-->
+        <div class="col-md-3" style="padding-right: 0; position: sticky; top: 0;">
+            <h6 style="font-size: 0.875rem;" th:text="${attemptInfo.email}"></h6>
+            <!--                Reduced font size-->
+            <p style="font-size: 0.875rem; margin-bottom: 0;">
+                Joined on: <span
+                    th:text="${#temporals.format(attemptInfo.attemptDate, 'dd-MM-yyyy, hh:mm a')}"></span>
+            </p>
+            <!--                No margin-bottom-->
+            <p style="font-size: 0.875rem; margin-top: 0;">
+                Invite by: <span th:text="${attemptInfo.assessment.createdBy}"></span>
+            </p>
+        </div>
+        <!--            Report-->
+        <div class="col-md-9">
+            <div class="row">
+                <!--                    Score card-->
+                <div class="col-md-6">
+                    <div class="card shadow-sm h-100">
+                        <!--                            Card header-->
+                        <div class="card-header d-flex"
+                             style="background-color: #20c997; color: white; font-weight: bold; text-align: center; padding: 10px;">
+                            <span>Result</span>
+                        </div>
+                        <!--                            Card body-->
+                        <div class="card-body"
+                             style="background-color: #e8f5f4; display: flex; flex-direction: column; justify-content: space-evenly; align-items: center; height: 100%;">
+                            <!--                                Score Quiz percent-->
+                            <div class="d-flex justify-content-between align-items-center w-100"
+                                 style="text-align: center;">
+                                <span>Score Quiz</span>
+                                <span style="color: #6c757d; font-size: 0.9rem;"
+                                      th:text="${attemptInfo.scoreQuiz}"></span>
                             </div>
-
-                            <!--                            Card body-->
-                            <div class="card-body" style="background-color: #e8f5f4; display: flex; flex-direction: column; justify-content: space-evenly; align-items: center; height: 100%;">
-                                <!--                                Challenges percent-->
-                                <div class="d-flex justify-content-between align-items-center w-100" style="text-align: center">
-                                    <span>Challenges</span>
-                                    <span style="font-weight: bold;">68%</span>
-                                </div>
-
-                                <hr class="w-100 my-1">
-
-                                <!--                                Score Quiz percent-->
-                                <div class="d-flex justify-content-between align-items-center w-100" style="text-align: center;">
-                                    <span>Score Quiz</span>
-                                    <span style="color: #6c757d; font-size: 0.9rem;" th:text="${attemptInfo.scoreQuiz}"></span>
-                                </div>
-
-                                <hr class="w-100 my-1">
-
-                                <!--                                Score code percent-->
-                                <div class="d-flex justify-content-between align-items-center w-100" style="text-align: center;">
-                                    <span>Score Code</span>
-                                    <span style="color: #6c757d; font-size: 0.9rem;" th:text="${attemptInfo.scoreAss}"></span>
-                                </div>
-
-                                <hr class="w-100 my-1">
-
-                                <!--                                Personality test-->
-                                <div class="d-flex justify-content-between align-items-center w-100" style="text-align: center;">
+                            <hr class="w-100 my-1">
+                            <!--                                Score code percent-->
+                            <div class="d-flex justify-content-between align-items-center w-100"
+                                 style="text-align: center;">
+                                <span>Score Exercise</span>
+                                <span style="color: #6c757d; font-size: 0.9rem;"
+                                      th:text="${attemptInfo.scoreEx }"></span>
+                            </div>
+                            <hr class="w-100 my-1">
+                            <!--                                Personality test-->
+                            <div class="d-flex justify-content-between align-items-center w-100"
+                                 style="text-align: center;">
+                                <span>Score Assessment</span>
+                                <span style="color: #6c757d; font-size: 0.9rem;"
+                                      th:text="${attemptInfo.scoreAss}"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--                    Cheating card-->
+                <div class="col-md-6">
+                    <div class="card shadow-sm">
+                        <div class="card-header d-flex justify-content-between align-items-center"
+                             style="background-color: #6c757d; color: white; font-weight: bold; text-align: center; padding: 10px;">
+                            <span style="width: 20%;">Cheating</span>
+                        </div>
+                        <div class="card-body">
+                            <!--                                Leaving tab-->
+                            <div class="d-flex justify-content-between align-items-center mb-3">
                                     <span>
-                                        Personality
-                                        <i class="fas fa-into-circle" style="color: #6c757d;"></i>
+                                        <i class="fas fa-external-link-alt me-2"></i>
+                                        Leaving tab
                                     </span>
-                                    <span style="color: #6c757d; font-size: 0.9rem;">N/A</span>
+                                <span style="color: #6c757d; font-size: 0.9rem;">
+                                        <span th:text="${tabLeaveCount}"></span> times
+                                    </span>
+                            </div>
+                            <hr class="my-1">
+                            <!--                                Pasted check-->
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span>
+                                        <i class="fas fa-cut me-2"></i>
+                                        Pasted
+                                        <span style="font-style: italic; color: #6c757d;">from external sources</span>
+                                    </span>
+                                    <span style="color: #6c757d; font-size: 0.9rem;">
+                                        <span th:text="${pasteCount}"></span> times
+                                    </span>
                                 </div>
-
+                                <hr class="my-1">
+                                <!--                                Copied check-->
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span>
+                                        <i class="bi bi-clipboard-check-fill"></i>
+                                        Copied
+                                        <span style="font-style: italic; color: #6c757d;">from internal sources</span>
+                                    </span>
+                                    <span style="color: #6c757d; font-size: 0.9rem;">
+                                        <span th:text="${copyCount}"></span> times
+                                    </span>
+                                </div>
+                                <hr class="my-1">
+                                <!--                                AI usage-->
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span>
+                                        <i class="fas fa-robot me-2"></i>
+                                        AI usage
+                                    </span>
+                                <span style="color: #6c757d; font-size: 0.9rem;">Not detected</span>
+                            </div>
+                            <hr class="my-1">
+                            <!--                                Violation Face Count-->
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span>
+                                        <i class="fas fa-user-secret me-2"></i>
+                                        Violation Face Count
+                                        <i class="fas fa-info-circle" style="color: #6c757d;"></i>
+                                    </span>
+                                <span style="color: #6c757d; font-size: 0.9rem;">
+                                        <span th:text="${violationFaceCount}"></span> times
+                                    </span>
                             </div>
                         </div>
                     </div>
                 </div>
-                <hr style="margin-top: 2rem; margin-bottom: 3rem;">
-                <!--                Score card section-->
-                <div class="score-card-section mt-3">
-                    <div>
-                        <h4 style="font-size: 1.25rem; margin-bottom: 2rem;" id="score-card">
-                            Score card
-                        </h4>
-                    </div>
+            </div>
+            <!--                Quiz Result Card-->
+            <div class="col-md-12 mb-4" style="margin-top: 20px">
+                <div class="card card-body d-flex align-items-left mb-4">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <!--                            Quiz Title and Details-->
+                        <div>
+                            <p class="mb-0 d-flex align-items-center">
+                                <b style="line-height: 1;">Attempt</b>
+                                <button type="button" class="btn btn-link p-0 ms-1 d-flex align-items-center"
+                                        style="font-size: 0.875rem; color: #6c757d; text-decoration: none; box-shadow: none; line-height: 1; position: relative; top: 1px;"
+                                        data-bs-toggle="modal" data-bs-target="#editScoreModal">
+                                    <i class="fas fa-edit"></i>
+                                </button>
 
-                    <div class="col-md-12">
-                        <div class="card" style="max-width: 100%; margin: 0 auto; padding: 0;">
-                            <div class="card-header d-flex justify-content-around" style="padding: 10px;">
-                                <!--                                Algorithm section-->
-                                <div class="text-center" id="algorithm-skill">
-                                    <h6 class="mb-1 bg-light fw-bold small-title">Algorithm skill</h6>
-                                    <div class="d-flex justify-content-center">
-                                        <!--                                        Stars for rating-->
-                                        <button type="button" class="btn btn-link star" data-value="1">
-                                            <i class="bi bi-star" style="font-size: 13px;"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-link star" data-value="2">
-                                            <i class="bi bi-star" style="font-size: 13px;"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-link star" data-value="3">
-                                            <i class="bi bi-star" style="font-size: 13px;"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-link star" data-value="4">
-                                            <i class="bi bi-star" style="font-size: 13px;"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-link star" data-value="5">
-                                            <i class="bi bi-star" style="font-size: 13px;"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <!--                                Vertical Separator-->
-                                <div class="vr" style="height: 50px; width: 2px;"></div>
-                                <!--                                Code Quality section-->
-                                <div class="text-center" id="code-quality">
-                                    <h6 class="mb-1 bg-light fw-bold small-title">Code Quality</h6>
-                                    <div class="d-flex justify-content-center">
-                                        <!--                                        Stars for rating-->
-                                        <button type="button" class="btn btn-link star" data-value="1">
-                                            <i class="bi bi-star" style="font-size: 13px;"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-link star" data-value="2">
-                                            <i class="bi bi-star" style="font-size: 13px;"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-link star" data-value="3">
-                                            <i class="bi bi-star" style="font-size: 13px;"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-link star" data-value="4">
-                                            <i class="bi bi-star" style="font-size: 13px;"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-link star" data-value="5">
-                                            <i class="bi bi-star" style="font-size: 13px;"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <!--                                Vertical Separator-->
-                                <div class="vr" style="height: 50px; width: 2px;"></div>
-                                <!--                                TypeScript Skill section-->
-                                <div class="text-center" id="typescript-skill">
-                                    <h6 class="mb-1 bg-light fw-bold small-title">TypeScript skills</h6>
-                                    <div class="d-flex justify-content-center">
-                                        <!--                                        Stars for rating-->
-                                        <button type="button" class="btn btn-link star" data-value="1">
-                                            <i class="bi bi-star" style="font-size: 13px;"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-link star" data-value="2">
-                                            <i class="bi bi-star" style="font-size: 13px;"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-link star" data-value="3">
-                                            <i class="bi bi-star" style="font-size: 13px;"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-link star" data-value="4">
-                                            <i class="bi bi-star" style="font-size: 13px;"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-link star" data-value="5">
-                                            <i class="bi bi-star" style="font-size: 13px;"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            <!--                            Private Note section-->
-                            <div class="card-body p-2">
-                                <div class="card">
-                                    <div class="card-header d-flex align-items-center p-2">
-                                        <h5 class="mb-0 small-title">Private Notes</h5>
-                                        <div class="vr mx-3" style="height: 30px; width: 2px;"></div>
-                                        <!--                                        Text Formatting Buttons-->
-                                        <div class="ml-auto" style="font-size: 12px;">
-                                            <button class="btn btn-secondary btn-sm" onclick="document.execCommand('bold')">
-                                                <b>B</b>
-                                            </button>
-                                            <button class="btn btn-secondary btn-sm" onclick="document.execCommand('italic')">
-                                                <i>I</i>
-                                            </button>
-                                            <button class="btn btn-secondary btn-sm" onclick="document.execCommand('underline')">
-                                                <u>U</u>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div class="card-body p-2">
-                                        <div id="editor" class="form-control" contenteditable="true" style="min-height: 100px; border: 1px solid #ccc; padding: 1px;"
-                                             aria-placeholder="Private notes to share with your team...">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <!--                            Save button-->
-                            <div class="card-footer text-center">
-                                <button id="saveRatings" class="btn btn-primary">Save Ratings</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <hr style="margin-top: 3rem; margin-bottom: 3rem;">
-                <!--                Quiz Result section-->
-                <h4 style="font-size: 1.25rem; margin-bottom: 2rem;" id="quiz-result">
-                    Quiz Results
-                </h4>
-                <!--                Quiz Result Card-->
-                <div class="col-md-12 mb-4">
-                    <div class="card card-body d-flex align-items-left mb-4">
-                        <div class="d-flex align-items-center justify-content-between">
-                            <!--                            Quiz Title and Details-->
-                            <div>
-                                <p class="mb-0">
-                                    <b>QUIZ</b>
-                                    <i class="bi bi-box-arrow-up-right"></i>
-                                </p>
-                                <div class="d-flex align-items-center">
-                                    <a href="#" class="btn btn-link p-0">
-                                        View Details
-                                    </a>
-                                    <span class="mx-2">|</span>
-                                    <span>12 seconds</span>
-                                    <span class="mx-2">|</span>
-                                </div>
-                            </div>
-                            <!--                            Score Box-->
-                            <div class="d-flex align-items-center ms-auto">
-                                <div class="bg-success text-white rounded d-flex justify-content-center align-items-center"
-                                     style="width: 60px; height: 50px;">
-                                    <span th:text="${attemptInfo.scoreQuiz}"></span>
-                                </div>
-                                <div class="vr mx-3" style="height: 60px;"></div>
-                                <div>
-                                    <div>
-                                        <span>
-                                            <b></b>
-                                        </span>
-                                    </div>
-                                    <div>
-                                        <span>
-                                            <i class="bi bi-ui-checks"></i>
-                                            <b>Multiple choice</b>
-                                        </span>
-                                    </div>
-                                </div>
+                            </p>
+                            <div class="d-flex align-items-center">
+                                <a href="#" class="btn btn-link p-0">
+                                    Attempt detail
+                                </a>
+                                <span class="mx-2">|</span>
+                                <a href="#" class="btn btn-link p-0">
+                                    Quiz Details
+                                </a>
+                                <span class="mx-2">|</span>
+                                <a href="#" class="btn btn-link p-0">
+                                    Exercise Details
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -276,6 +173,100 @@
             </div>
         </div>
     </div>
+
+    <!-- **MODAL STRUCTURE - Add this right before the closing `</div>` of `main-container` or at the end of `body`** -->
+    <div class="modal fade" id="editScoreModal" tabindex="-1" aria-labelledby="editScoreModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editScoreModalLabel">Edit Assessment Score</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- **EDIT SCORE FORM - Paste the content of the form from `editscore.html` here** -->
+                    <div class="alert alert-info" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>
+                        You are editing scores for assessment attempt
+                    </div>
+                    <!-- Thêm alert hiển thị điểm số hiện tại tại đây -->
+                    <div class="alert alert-secondary" role="alert">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>Current Exercise Score:</strong> <span id="currentScoreEx">Loading...</span>
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>Current Quiz Score:</strong> <span id="currentScoreQuiz">Loading...</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form id="editScoreForm" class="mt-4">
+                        <input type="hidden" id="attemptId" th:value="${attemptInfo.id}">
+
+                        <div class="mb-4">
+                            <label for="scoreEx" class="form-label">Exercise Score</label>
+                            <div class="input-group score-input">
+                                <input type="number" class="form-control" id="scoreEx"
+                                       placeholder="Enter assignment score"
+                                       min="0" max="100" step="0.1" aria-describedby="scoreExHelp">
+
+                            </div>
+                            <div id="scoreExHelp" class="form-text">Enter a score between 0 and 100</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="scoreQuiz" class="form-label">Quiz Score</label>
+                            <div class="input-group score-input">
+                                <input type="number" class="form-control" id="scoreQuiz" placeholder="Enter quiz score"
+                                       min="0" max="100" step="0.1" aria-describedby="scoreQuizHelp">
+
+                            </div>
+                            <div id="scoreQuizHelp" class="form-text">Enter a score between 0 and 100</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="comment" class="form-label">Reason for Score Adjustment <span
+                                    class="text-danger">*</span></label>
+                            <textarea class="form-control" id="comment" rows="4"
+                                      placeholder="Please provide a detailed explanation for this score adjustment..."
+                                      required></textarea>
+                            <div class="form-text">This will be recorded in the edit history</div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-4">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                Cancel
+                            </button>
+                            <div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-1"></i> Save Changes
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <div class="history-section d-none" id="historySection">
+                        <h4><i class="fas fa-history me-2"></i>Score Edit History</h4>
+                        <div id="historyContent" class="mt-3">
+                            <!-- History items will be inserted here -->
+                        </div>
+                    </div>
+
+                    <!-- Results and notifications -->
+                    <div id="resultContainer" class="mt-4 d-none">
+                        <div class="alert" id="resultAlert" role="alert"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <!-- You can add footer buttons here if needed -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- **END MODAL STRUCTURE** -->
+
 </div>
 
 <button onclick="scrollToTop()" id="scrollToTopButton" title="Go to top">
@@ -283,8 +274,9 @@
 </button>
 
 <script>
-    // Show/hide scrollToTopButton
-    window.onscroll = function() {
+    // ... (rest of your existing scripts from viewreport.html) ...
+    // Show/hide scrollToTopButton on scroll
+    window.onscroll = function () {
         const scrollToTopButton = document.getElementById("scrollToTopButton");
         if (document.body.scrollTop > 50 || document.documentElement.scrollTop > 50) {
             scrollToTopButton.style.display = "flex";
@@ -297,88 +289,316 @@
         window.scrollTo({top: 0, behavior: 'smooth'});
     }
 
-    // Rating star Algorithm skill
-    document.addEventListener("DOMContentLoaded", function() {
-        const algorithmStars = document.querySelectorAll("#algorithm-skill .star");
-        algorithmStars.forEach(star => {
-            star.addEventListener("click", function () {
-                const rating = this.getAttribute("data-value");
-                algorithmStars.forEach(s => s.querySelector("i").classList.remove("text-warning")); // Delete the yellow
-                for (let i = 0; i < rating; i++) {
-                    algorithmStars[i].querySelector("i").classList.add("text-warning"); // Add yellow
+    // **INCLUDE EDIT SCORE SCRIPTS HERE -  Copy from `editscore.html` and paste below**
+    document.addEventListener('DOMContentLoaded', function () {
+        // ... (JavaScript code from editscore.html inside this block) ...
+        // **IMPORTANT:  Adjust any selectors if necessary to work within the modal context**
+        const editScoreForm = document.getElementById('editScoreForm'); // Should be fine as IDs are unique
+        const fetchHistoryBtn = document.getElementById('fetchHistoryBtn');
+        const historySection = document.getElementById('historySection');
+        const historyContent = document.getElementById('historyContent');
+        const resultContainer = document.getElementById('resultContainer');
+        const resultAlert = document.getElementById('resultAlert');
+        document.getElementById('editScoreModal').addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            // Nếu button có data attribute chứa attemptId, lấy và cập nhật vào input hidden
+            if (button && button.getAttribute('data-attempt-id')) {
+                document.getElementById('attemptId').value = button.getAttribute('data-attempt-id');
+            }
+
+            // Gọi fetch dữ liệu khi modal mở
+            fetchCurrentScores();
+        });
+
+        // Function to show result message
+        function showResult(message, isSuccess) {
+            resultContainer.classList.remove('d-none');
+            resultAlert.classList.remove('alert-success', 'alert-danger');
+            resultAlert.classList.add(isSuccess ? 'alert-success' : 'alert-danger');
+            resultAlert.innerHTML = message;
+
+            // Scroll to the result - Scroll within modal if needed, or to the main view report
+            resultContainer.scrollIntoView({behavior: 'smooth'}); // Scrolls the whole page
+
+            // Hide the message after 5 seconds if it's a success
+            if (isSuccess) {
+                setTimeout(() => {
+                    resultContainer.classList.add('d-none');
+                }, 5000);
+            }
+        }
+
+        // Form submission handler
+        editScoreForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const attemptId = document.getElementById('attemptId').value;
+            const scoreEx = document.getElementById('scoreEx').value;
+            const scoreQuiz = document.getElementById('scoreQuiz').value;
+            const comment = document.getElementById('comment').value;
+            document.getElementById('editScoreModal').addEventListener('show.bs.modal', function (event) {
+                // Reset giá trị loading
+                document.getElementById('currentScoreEx').textContent = 'Loading...';
+                document.getElementById('currentScoreQuiz').textContent = 'Loading...';
+
+                // Lấy attempt ID từ button nếu có
+                const button = event.relatedTarget;
+                if (button && button.getAttribute('data-attempt-id')) {
+                    document.getElementById('attemptId').value = button.getAttribute('data-attempt-id');
+                }
+
+                // Gọi API để lấy điểm hiện tại
+                const attemptId = document.getElementById('attemptId').value;
+                if (attemptId) {
+                    fetchCurrentScores();
+                } else {
+                    document.getElementById('currentScoreEx').textContent = 'Error: Missing ID';
+                    document.getElementById('currentScoreQuiz').textContent = 'Error: Missing ID';
                 }
             });
-        });
-    });
+            if (!comment.trim()) {
+                showResult('<i class="fas fa-exclamation-triangle me-2"></i> Please provide a reason for editing the score.', false);
+                return;
+            }
 
-    // Rating star Code quality
-    document.addEventListener("DOMContentLoaded", function() {
-        const codeQualityStars = document.querySelectorAll("#code-quality .star");
-        codeQualityStars.forEach(star => {
-            star.addEventListener("click", function() {
-                const rating = this.getAttribute("data-value");
-                codeQualityStars.forEach(s => s.querySelector("i").classList.remove("text-warning")); // Delete the yellow
-                for (let i = 0; i < rating; i++) {
-                    codeQualityStars[i].querySelector("i").classList.add("text-warning"); // Add yellow
-                }
-            });
-        });
-    });
+            const data = {
+                newScoreEx: scoreEx ? parseFloat(scoreEx) : null,
+                newScoreQuiz: scoreQuiz ? parseFloat(scoreQuiz) : null,
+                comment: comment.trim()
+            };
 
-    // Rating star TypeScript skill
-    document.addEventListener("DOMContentLoaded", function() {
-        const typeScriptStars = document.querySelectorAll("#typescript-skill .star");
-        typeScriptStars.forEach(star => {
-            star.addEventListener("click", function() {
-                const rating = this.getAttribute("data-value");
-                typeScriptStars.forEach(s => s.querySelector("i").classList.remove("text-warning")); // Delete the yellow
-                for (let i = 0; i < rating; i++) {
-                    typeScriptStars[i].querySelector("i").classList.add("text-warning"); // Add yellow
-                }
-            });
-        });
-    });
+            // Validate at least one score is provided
+            if (data.scoreEx === null && data.scoreQuiz === null) {
+                showResult('<i class="fas fa-exclamation-triangle me-2"></i> Please provide at least one score value.', false);
+                return;
+            }
 
-    document.querySelectorAll('.link-hover').forEach(link => {
-        link.addEventListener("click", function(event) {
-            event.preventDefault();
-
-            // Reset color, font-weight, border color, and padding for all links
-            document.querySelectorAll(".link-hover").forEach(item => {
-                item.style.color = '';
-                item.style.fontWeight = '';
-                item.style.setProperty('border-left', '4px solid gray');
-                item.style.setProperty('padding-left', '10px');
-            });
-
-            // Set the clicked link's color to blue, font-weight to bold, and border color to blue
-            this.style.setProperty('color', 'blue', 'important');
-            this.style.setProperty('font-weight', 'bold', 'important');
-            this.style.setProperty('border-left', '4px solid blue', 'important');
-            this.style.setProperty('padding-left', '15px', 'important');
-            this.style.setProperty('height', '100%', 'important');
-
-            const targetId = this.getAttribute('href').substring(1);
-            const targetElement = document.getElementById(targetId);
-
-            if (targetElement) {
-                // Get the target position and screen height
-                const targetPosition = targetElement.getBoundingClientRect().top + window.scrollY;
-                const offsetPosition = targetPosition - (window.innerHeight / 2) + (targetElement.offsetHeight / 2);
-
-                // Smooth scroll to the target element
-                window.scrollTo({
-                    top: offsetPosition,
-                    behavior: "smooth"
+            try {
+                const response = await fetch(`/api/score/edit/${attemptId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
                 });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showResult('<i class="fas fa-check-circle me-2"></i> Score updated successfully!', true);
+
+                    // Clear form
+                    document.getElementById('comment').value = '';
+
+                    // Fetch updated history after successful edit
+                    fetchScoreHistory();
+
+                    // **Optionally update the displayed scores in the main viewreport page here if needed**
+                    fetchCurrentScoresInViewReport(); // Function to update scores in viewreport
+
+                } else {
+                    showResult(`<i class="fas fa-exclamation-circle me-2"></i> Error: ${result.error || 'Failed to update score'}`, false);
+                }
+            } catch (error) {
+                showResult(`<i class="fas fa-exclamation-circle me-2"></i> Error: ${error.message || 'An unexpected error occurred'}`, false);
             }
         });
+
+        // Fetch history button handler
+        fetchHistoryBtn.addEventListener('click', function () {
+            fetchScoreHistory();
+        });
+
+        // Function to fetch score history
+        async function fetchScoreHistory() {
+            const attemptId = document.getElementById('attemptId').value;
+
+            try {
+                const response = await fetch(`/api/score/history/${attemptId}`);
+
+                if (response.ok) {
+                    const historyData = await response.json();
+
+                    // Show history section
+                    historySection.classList.remove('d-none');
+
+                    // Display history data
+                    if (historyData && historyData.length > 0) {
+                        let historyHtml = '';
+
+                        historyData.forEach((item, index) => {
+                            historyHtml += `
+                                    <div class="history-item">
+                                        <div class="d-flex justify-content-between">
+                                            <strong>Edit #${historyData.length - index}</strong>
+                                            <span class="text-muted">${new Date(item.editDate).toLocaleString()}</span>
+                                        </div>
+                                        <div class="row mt-2">
+                                            <div class="col-md-6">
+                                                <div class="mb-1"><strong>Assignment Score:</strong> ${item.scoreEx !== null ? item.scoreEx + '%' : 'No change'}</div>
+                                                <div><strong>Quiz Score:</strong> ${item.scoreQuiz !== null ? item.scoreQuiz + '%' : 'No change'}</div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div><strong>Changed by:</strong> ${item.editedBy || 'System'}</div>
+                                            </div>
+                                        </div>
+                                        <div class="mt-2">
+                                            <strong>Reason:</strong>
+                                            <p class="mb-0">${item.comment || 'No reason provided'}</p>
+                                        </div>
+                                    </div>
+                                `;
+                        });
+
+                        historyContent.innerHTML = historyHtml;
+                    } else {
+                        historyContent.innerHTML = '<div class="alert alert-info">No edit history found for this assessment.</div>';
+                    }
+                } else {
+                    const errorData = await response.json();
+                    historyContent.innerHTML = `<div class="alert alert-danger">Error fetching history: ${errorData.error || 'Unknown error'}</div>`;
+                }
+            } catch (error) {
+                historyContent.innerHTML = `<div class="alert alert-danger">Error: ${error.message || 'Failed to fetch history'}</div>`;
+            }
+        }
+
+        // Initialize the form by fetching the current scores
+        // Thay thế toàn bộ hàm fetchCurrentScores hiện tại bằng hàm này
+        async function fetchCurrentScores() {
+            const attemptId = document.getElementById('attemptId').value;
+
+            try {
+                const response = await fetch(`/api/score/current/${attemptId}`);
+
+                if (response.ok) {
+                    const scoreData = await response.json();
+
+                    // Cập nhật hiển thị điểm Exercise
+                    if (scoreData.scoreEx !== null && scoreData.scoreEx !== undefined) {
+                        document.getElementById('currentScoreEx').textContent = scoreData.scoreEx;
+                        document.getElementById('scoreEx').value = scoreData.scoreEx;
+                    } else {
+                        document.getElementById('currentScoreEx').textContent = 'Not set';
+                        document.getElementById('scoreEx').value = '';
+                    }
+
+                    // Cập nhật hiển thị điểm Quiz
+                    if (scoreData.scoreQuiz !== null && scoreData.scoreQuiz !== undefined) {
+                        document.getElementById('currentScoreQuiz').textContent = scoreData.scoreQuiz;
+                        document.getElementById('scoreQuiz').value = scoreData.scoreQuiz;
+                    } else {
+                        document.getElementById('currentScoreQuiz').textContent = 'Not set';
+                        document.getElementById('scoreQuiz').value = '';
+                    }
+                } else {
+                    // Xử lý lỗi
+                    document.getElementById('currentScoreEx').textContent = 'Error loading';
+                    document.getElementById('currentScoreQuiz').textContent = 'Error loading';
+                    console.error('API error:', response.status);
+                }
+            } catch (error) {
+                // Xử lý lỗi kết nối
+                document.getElementById('currentScoreEx').textContent = 'Connection error';
+                document.getElementById('currentScoreQuiz').textContent = 'Connection error';
+                console.error('Fetch error:', error);
+            }
+        }
+
+        // **NEW FUNCTION - To update scores displayed in the main viewreport page**
+        async function fetchCurrentScoresInViewReport() {
+            const attemptId = document.getElementById('attemptId').value;
+            // Assuming you have spans in your main viewreport page to display scores, e.g.,
+            const viewReportScoreQuizSpan = document.querySelector('.card-body span[th\\:text="${attemptInfo.scoreQuiz}"]'); // Adjust selector if needed
+
+            try {
+                const response = await fetch(`/api/score/current/${attemptId}`);
+                if (response.ok) {
+                    const scoreData = await response.json();
+                    if (scoreData.scoreQuiz !== null && scoreData.scoreQuiz !== undefined && viewReportScoreQuizSpan) {
+                        viewReportScoreQuizSpan.textContent = scoreData.scoreQuiz; // Update the quiz score in viewreport
+                        // You can update other score elements in viewreport similarly if needed
+                    }
+                }
+            } catch (error) {
+                console.error("Error updating scores in viewreport:", error);
+            }
+        }
     });
+    // **END INCLUDE EDIT SCORE SCRIPTS**
 
 
 </script>
 
 <style>
+    /* ... (rest of your existing styles from viewreport.html) ... */
+
+    /* **INCLUDE EDIT SCORE STYLES HERE - Copy from `editscore.html` and paste below** */
+    .edit-score-container { /*  You might not need this container class in modal context */
+        /* max-width: 700px;  Adjust if needed for modal */
+        /* margin: 40px auto;  Remove or adjust margin for modal */
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        padding: 30px; /* Adjust padding for modal */
+    }
+
+    .header-section { /* You might not need this header section class in modal context */
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .form-label {
+        font-weight: 500;
+    }
+
+    .score-input {
+        position: relative;
+    }
+
+    .score-input .input-group-text {
+        background-color: #f8f9fa;
+    }
+
+    .history-section {
+        margin-top: 30px;
+        border-top: 1px solid #dee2e6;
+        padding-top: 20px;
+    }
+
+    .history-item {
+        background-color: #f8f9fa;
+        border-radius: 6px;
+        padding: 15px;
+        margin-bottom: 10px;
+    }
+
+    .btn-back { /* You might not need btn-back class in modal context */
+        color: #6c757d;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .btn-back:hover {
+        color: #495057;
+    }
+
+    .btn-back i {
+        margin-right: 5px;
+    }
+
+    .percentage-suffix {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+        pointer-events: none;
+    }
+
     /* Scroll-to-top button */
     #scrollToTopButton {
         position: fixed;
@@ -401,8 +621,11 @@
     }
 
     #scrollToTopButton:hover {
-        transform: scale(1.2); /* Slight zoom on hover */
-        opacity: 1; /* Increase clarity */
-        background: linear-gradient(45deg, #2575fc, #6a11cb); /* Reverse gradient on hover */
+        transform: scale(1.2);
+        opacity: 1;
+        background: linear-gradient(45deg, #2575fc, #6a11cb);
     }
+
+    /* **END INCLUDE EDIT SCORE STYLES** */
+
 </style>

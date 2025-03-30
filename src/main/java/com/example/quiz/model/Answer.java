@@ -31,7 +31,13 @@ public class Answer {
     @JoinColumn(name = "question_id", nullable = false)
     private Question question;
 
-    @Column(name = "is_correct", nullable = false)
+    @Column(name = "is_correct", nullable = true)
     private Boolean isCorrect;
 
+    @Column(name = "score")
+    private Double score;
+
+
 }
+
+// ANSWER LÀ ĐÁP ÁN CỦA NGƯỜI DÙNG

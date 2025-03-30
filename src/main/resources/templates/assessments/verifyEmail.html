@@ -17,7 +17,7 @@
                     <h4>Enter Your Email</h4>
                 </div>
                 <div class="card-body">
-                    <form th:action="@{'/assessments/invite/' + ${assessmentId} + '/take-exam'}" method="POST">
+                    <form th:action="@{'/assessments/invite/take-exam/' + ${assessmentId}}" method="POST">
 
                     <div class="form-group mb-3">
                             <label for="email" class="form-label">Email Address</label>

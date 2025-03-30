@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   lms_app:
-    image: lms2025:lastest
+    image: lms2025:latest
     container_name: lms_app
     build:
       context: ..
