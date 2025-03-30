@@ -614,6 +614,8 @@
 
                     enableTab(exercisesTabButton);
                     enableTab(questionsTabButton);
+                    activateTab(exercisesTabButton, exercisesTabPane);
+                    deactivateTab(questionsTabButton, questionsTabPane);
                     quizRatioInput.disabled = false;
                     quizRatioInput.value = 50;
                     exerciseRatioInput.value = 50;
@@ -933,52 +935,67 @@
                 event.preventDefault();
 
                 const newTitle = titleInput.value.trim();
-                const assessmentTypeId = assessmentTypeSelect.value;
-                const assessmentId = document.getElementById("assessmentId").value; // Get the assessment ID
-                console.log("Assessment ID:", assessmentId);
+                const finalAssessmentTypeId = assessmentTypeSelect.value;
+                const finalAssessmentTypeText = assessmentTypeSelect.options[assessmentTypeSelect.selectedIndex].text.toLowerCase();
+                const assessmentId = document.getElementById("assessmentId").value;
 
                 if (newTitle === "") {
                     showError("The title cannot be empty!");
                     return;
                 }
 
-                // **1. Collect Selected Exercise IDs** (Corrected and before AJAX)
                 window.selectedExerciseIds = [];
                 document.querySelectorAll('input[name="exercises"]:checked').forEach(checkbox => {
                     window.selectedExerciseIds.push(checkbox.value);
                 });
 
-                // **2. Collect Selected Question IDs** (Corrected and before AJAX)
                 window.selectedQuestionIds = [];
                 document.querySelectorAll('#selected-questions li[data-question-id]').forEach(listItem => {
                     window.selectedQuestionIds.push(listItem.dataset.questionId);
                 });
-                // Remove existing hidden inputs
+
                 document.querySelectorAll('input[name="exercises-ids"], input[name="questions-ids"]').forEach(input => input.remove());
 
-                // **3. Add Hidden Inputs for Exercises**
-                window.selectedExerciseIds.forEach(exerciseId => {
-                    const hiddenInput = document.createElement('input');
-                    hiddenInput.type = 'hidden';
-                    hiddenInput.name = 'exercises-ids';
-                    hiddenInput.value = exerciseId;
-                    assessmentForm.appendChild(hiddenInput);
-                });
+                if (finalAssessmentTypeText === "quiz") {
+                    window.selectedQuestionIds.forEach(questionId => {
+                        const hiddenInput = document.createElement('input');
+                        hiddenInput.type = 'hidden';
+                        hiddenInput.name = 'questions-ids';
+                        hiddenInput.value = questionId;
+                        assessmentForm.appendChild(hiddenInput);
+                    });
 
-                // **4. Add Hidden Inputs for Questions**
-                window.selectedQuestionIds.forEach(questionId => {
-                    const hiddenInput = document.createElement('input');
-                    hiddenInput.type = 'hidden';
-                    hiddenInput.name = 'questions-ids';
-                    hiddenInput.value = questionId;
-                    assessmentForm.appendChild(hiddenInput);
-                });
+                } else if (finalAssessmentTypeText === "assignment") {
+                    window.selectedExerciseIds.forEach(exerciseId => {
+                        const hiddenInput = document.createElement('input');
+                        hiddenInput.type = 'hidden';
+                        hiddenInput.name = 'exercises-ids';
+                        hiddenInput.value = exerciseId;
+                        assessmentForm.appendChild(hiddenInput);
+                    });
 
+                } else if (finalAssessmentTypeText === "quiz & assignment") {
+                    window.selectedExerciseIds.forEach(exerciseId => {
+                        const hiddenInput = document.createElement('input');
+                        hiddenInput.type = 'hidden';
+                        hiddenInput.name = 'exercises-ids';
+                        hiddenInput.value = exerciseId;
+                        assessmentForm.appendChild(hiddenInput);
+                    });
+                    window.selectedQuestionIds.forEach(questionId => {
+                        const hiddenInput = document.createElement('input');
+                        hiddenInput.type = 'hidden';
+                        hiddenInput.name = 'questions-ids';
+                        hiddenInput.value = questionId;
+                        assessmentForm.appendChild(hiddenInput);
+                    });
+                } else {
+                    console.warn("Unknown assessment type selected:", finalAssessmentTypeText);
+                }
 
-                // First, check for similar questions
                 checkSimilarQuestions(window.selectedQuestionIds)
                     .then(similarQuestionPositionsGroups => {
-                        if (similarQuestionPositionsGroups !== false) {
+                        if (similarQuestionPositionsGroups !== false && finalAssessmentTypeText !== 'assignment') {
                             return showSimilarQuestionWarning(similarQuestionPositionsGroups);
                         } else {
                             return Promise.resolve(true);
@@ -986,7 +1003,7 @@
                     })
                     .then(shouldSaveAssessment => {
                         if (shouldSaveAssessment) {
-                            return $.get(`/assessments/create/check-duplicate`, { title: newTitle, assessmentTypeId: assessmentTypeId, id: assessmentId });
+                            return $.get(`/assessments/create/check-duplicate`, { title: newTitle, assessmentTypeId: finalAssessmentTypeId, id: assessmentId });
                         } else {
                             return Promise.reject("User cancelled saving due to similar questions.");
                         }
@@ -1003,12 +1020,14 @@
                     .catch(error => {
                         if (error === "User cancelled saving due to similar questions.") {
                             console.log("Saving cancelled by user due to similar questions.");
+                            document.querySelectorAll('input[name="exercises-ids"], input[name="questions-ids"]').forEach(input => input.remove());
                         } else if (error !== "Duplicate title found" && error !== "Unexpected response format") {
                             console.error("An error occurred during checks: ", error);
                             showError("An unexpected error occurred during validation.");
+                            document.querySelectorAll('input[name="exercises-ids"], input[name="questions-ids"]').forEach(input => input.remove());
                         }
                     });
-            })
+            });
 
 
             const addQuizButtons = document.querySelectorAll('.add-questions');

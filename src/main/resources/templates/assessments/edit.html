@@ -87,6 +87,13 @@
             cursor: not-allowed;
             opacity: 0.7;
         }
+
+        .list-group-item {
+            display: none;
+        }
+        .accordion-item {
+            display: block;
+        }
     </style>
 
 
@@ -305,15 +312,6 @@
                     <!-- Questions Tab -->
                     <div class="tab-pane fade" id="questions" role="tabpanel" aria-labelledby="questions-tab">
                         <div class="row">
-                            <!-- Search Bar -->
-                            <div class="col-md-12">
-                                <div class="mb-3">
-                                    <div class="input-group">
-                                        <span class="input-group-text">🔍</span>
-                                        <input type="text" id="search-questions" class="form-control" placeholder="Search for questions..." onkeyup="filterQuestions()">
-                                    </div>
-                                </div>
-                            </div>
 
                             <!-- Multiple Choice Library -->
                             <div class="col-md-5">
@@ -415,7 +413,10 @@
                                        class="form-control"
                                        placeholder="Enter minimum score to qualify"
                                        required
-                                       id="id_qualify_score">
+                                       id="id_qualify_score"
+                                       min="0"
+                                       max="100"
+                                       oninput="limitScore(this)">
                             </div>
 
                             <div class="col-md-4">
@@ -425,7 +426,10 @@
                                        class="form-control"
                                        placeholder="Enter time limit for assessment"
                                        required
-                                       id="id_time_limit">
+                                       id="id_time_limit"
+                                       min="1"
+                                       max="300"
+                                       oninput="limitTime(this)">
                             </div>
                         </div>
 
@@ -509,6 +513,18 @@
 <script type="application/json" id="answersJson" th:text="${answersJson}"></script>
 
 <script th:inline="javascript">
+    function limitScore(input) {
+        let value = parseInt(input.value, 10);
+        if (isNaN(value)) return;
+        input.value = Math.max(0, Math.min(100, value));
+    }
+
+    function limitTime(input) {
+        let value = parseInt(input.value, 10);
+        if (isNaN(value)) return;
+        input.value = Math.max(1, Math.min(300, value));
+    }
+
     document.addEventListener("DOMContentLoaded", function () {
         const assessmentTypeSelect = document.getElementById("assessmentType");
         const exercisesTab = document.getElementById("exercises-tab");

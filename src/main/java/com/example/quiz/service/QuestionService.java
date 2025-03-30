@@ -8,15 +8,9 @@ import com.example.course.CourseRepository;
 import com.example.course.CourseService;
 import com.example.exception.InputException;
 import com.example.exception.NotFoundException;
-import com.example.quiz.model.AnswerOption;
-import com.example.quiz.model.Question;
+import com.example.quiz.model.*;
 import com.example.quiz.model.Question.QuestionType;
-import com.example.quiz.model.Quiz;
-import com.example.quiz.model.SchedulerUtil;
-import com.example.quiz.repository.AnswerOptionRepository;
-import com.example.quiz.repository.AnswerRepository;
-import com.example.quiz.repository.QuestionRepository;
-import com.example.quiz.repository.QuizRepository;
+import com.example.quiz.repository.*;
 import com.example.tools.CovertExcelToJsonService;
 import com.example.tools.GenerateRandomService;
 import com.example.user.User;
@@ -83,6 +77,12 @@ public class QuestionService {
     private AnswerOptionRepository answerOptionRepository;
     @Autowired
     private QuizService quizService;
+
+    private final TestSessionRepository testSessionRepository;
+
+    public QuestionService(TestSessionRepository testSessionRepository) {
+        this.testSessionRepository = testSessionRepository;
+    }
 
     @Autowired
     private CovertExcelToJsonService covertExcelToJsonService;
@@ -1508,5 +1508,18 @@ public class QuestionService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
+    public List<Question> findQuestionsByAttemptId(Long attemptId) {
+        Optional<TestSession> testSessionOpt = testSessionRepository.findByStudentAssessmentAttemptId(attemptId);
+        if (testSessionOpt.isPresent()) {
+            TestSession testSession = testSessionOpt.get();
+            // Lấy danh sách câu hỏi từ các đáp án của TestSession, loại bỏ các câu hỏi trùng lặp
+            return testSession.getAnswers().stream()
+                    .map(Answer::getQuestion)
+                    .distinct()
+                    .collect(Collectors.toList());
+        }
+        return new ArrayList<>();
+    }
 
 }

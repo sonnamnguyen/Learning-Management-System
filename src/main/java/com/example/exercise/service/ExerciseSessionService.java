@@ -10,7 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ExerciseSessionService {
@@ -57,5 +59,20 @@ public class ExerciseSessionService {
         exerciseSessionRepository.save(exerciseSession);
         return averageScore;
     }
+
+
+    public List<StudentExerciseAttempt> findStudentExerciseAttemptsByAttemptDate(LocalDateTime attemptDate) {
+        // Giả sử sai số cho phép là 1 giây
+        LocalDateTime start = attemptDate.minusSeconds(1);
+        LocalDateTime end = attemptDate.plusSeconds(1);
+        Optional<ExerciseSession> exerciseSessionOpt = exerciseSessionRepository.findByStartTimeBetween(start, end);
+        if (exerciseSessionOpt.isPresent()) {
+            return exerciseSessionOpt.get().getStudentExerciseAttempts();
+        }
+        return new ArrayList<>();
+    }
+
+
+
 
 }

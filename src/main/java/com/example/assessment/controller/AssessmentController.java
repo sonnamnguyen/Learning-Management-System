@@ -17,6 +17,8 @@ import com.example.exercise.model.ExerciseSession;
 import com.example.exercise.model.StudentExerciseAttempt;
 import com.example.exercise.service.ExerciseSessionService;
 import com.example.exercise.service.StudentExerciseAttemptService;
+import com.example.quiz.model.*;
+import com.example.quiz.repository.TestSessionRepository;
 import com.example.utils.CalendarEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -31,9 +33,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.hashids.Hashids;
 import com.example.exercise.service.ExerciseService;
-import com.example.quiz.model.AnswerOption;
-import com.example.quiz.model.Question;
-import com.example.quiz.model.Quiz;
 import com.example.quiz.service.AnswerOptionService;
 import com.example.quiz.service.QuestionService;
 import com.example.quiz.service.QuizService;
@@ -138,6 +137,10 @@ public class AssessmentController {
 
     @Autowired
     private ExerciseService exerciseService;
+
+    @Autowired
+    private TestSessionRepository testSessionRepository;
+
 
     @Autowired
     private QuestionService questionService;
@@ -1261,11 +1264,11 @@ public class AssessmentController {
     public String viewReport(@PathVariable Long assessmentId,
                              @RequestParam("attempt-id") Long attemptId,
                              Model model) {
+        Optional<StudentAssessmentAttempt> attemptOpt = studentAssessmentAttemptService.findById(attemptId);
 
-        Optional<StudentAssessmentAttempt> attempt = studentAssessmentAttemptService.findById(attemptId);
-
-        if (attempt != null && attempt.isPresent()) {
-            JsonNode proctoringData = attempt.get().getProctoringData();
+        if (attemptOpt.isPresent()) {
+            StudentAssessmentAttempt attempt = attemptOpt.get();
+            JsonNode proctoringData = attempt.getProctoringData();
             int tabLeaveCount = proctoringData.has("tabLeaveCount") ? proctoringData.get("tabLeaveCount").asInt() : 0;
             int violationFaceCount = proctoringData.has("violationFaceCount") ? proctoringData.get("violationFaceCount").asInt() : 0;
 
@@ -1274,17 +1277,13 @@ public class AssessmentController {
 
             if (proctoringData.has("exerciseCopyPasteData")) {
                 String copyPasteDataStr = proctoringData.get("exerciseCopyPasteData").asText();
-
                 try {
                     ObjectMapper objectMapper = new ObjectMapper();
                     JsonNode copyPasteData = objectMapper.readTree(copyPasteDataStr);
-
-                    // Iterate through each exercise ID
                     Iterator<Map.Entry<String, JsonNode>> fields = copyPasteData.fields();
                     while (fields.hasNext()) {
                         Map.Entry<String, JsonNode> entry = fields.next();
                         JsonNode exerciseData = entry.getValue();
-
                         copyCount += exerciseData.has("copy") ? exerciseData.get("copy").asInt() : 0;
                         pasteCount += exerciseData.has("paste") ? exerciseData.get("paste").asInt() : 0;
                     }
@@ -1297,18 +1296,19 @@ public class AssessmentController {
             model.addAttribute("violationFaceCount", violationFaceCount);
             model.addAttribute("copyCount", copyCount);
             model.addAttribute("pasteCount", pasteCount);
-            model.addAttribute("attemptInfo", attempt.get());
+            model.addAttribute("attemptInfo", attempt);
 
-            Assessment assessment = attempt.get().getAssessment();
+            Assessment assessment = attempt.getAssessment();
             if (assessment != null) {
                 model.addAttribute("assessment", assessment);
 
+                // Lấy danh sách câu hỏi dựa trên attemptId
                 List<Question> questions = new ArrayList<>();
                 try {
-                    questions = questionService.findQuestionsByAssessmentId(assessment.getId());
+                    questions = questionService.findQuestionsByAttemptId(attemptId);
                 } catch (Exception e) {
                     model.addAttribute("errorMessage",
-                            "Error retrieving questions for assessment " + assessmentId + ": " + e.getMessage());
+                            "Error retrieving questions for attempt " + attemptId + ": " + e.getMessage());
                 }
                 model.addAttribute("questions", questions);
 
@@ -1324,11 +1324,35 @@ public class AssessmentController {
                     }
                 }
                 model.addAttribute("questionAnswerOptionsMap", questionAnswerOptionsMap);
+
+                // Lấy đáp án của người dùng từ TestSession liên kết với attempt
+                Optional<TestSession> tsOpt = testSessionRepository.findByStudentAssessmentAttemptId(attemptId);
+                Map<Long, List<Long>> userAnswersMap = new HashMap<>();
+                if (tsOpt.isPresent() && tsOpt.get().getAnswers() != null) {
+                    for (Answer ans : tsOpt.get().getAnswers()) {
+                        if (ans.getQuestion() != null && ans.getSelectedOption() != null) {
+                            Long questionId = ans.getQuestion().getId();
+                            Long answerOptionId = ans.getSelectedOption().getId();
+                            userAnswersMap.computeIfAbsent(questionId, k -> new ArrayList<>()).add(answerOptionId);
+                        }
+                    }
+                }
+                model.addAttribute("userAnswersMap", userAnswersMap);
+
+                LocalDateTime attemptDate = attempt.getAttemptDate();
+                List<StudentExerciseAttempt> studentExerciseAttempts = exerciseSessionService.findStudentExerciseAttemptsByAttemptDate(attemptDate);
+                model.addAttribute("studentExerciseAttempts", studentExerciseAttempts);
+
             }
         }
         model.addAttribute("content", "assessments/view_report");
         return "layout";
     }
+
+
+
+
+
 
     @PostMapping("/capture-image")
     public ResponseEntity<Integer> captureImage(@RequestParam("file") MultipartFile file) throws IOException {

@@ -1,4 +1,5 @@
 <div class="main-container px-5 flex-grow-1">
+
     <!-- Header Section -->
     <div class="d-flex justify-content-between align-items-center mb-3">
         <!-- Reduced bottom margin -->
@@ -98,25 +99,25 @@
                                         Pasted
                                         <span style="font-style: italic; color: #6c757d;">from external sources</span>
                                     </span>
-                                    <span style="color: #6c757d; font-size: 0.9rem;">
+                                <span style="color: #6c757d; font-size: 0.9rem;">
                                         <span th:text="${pasteCount}"></span> times
                                     </span>
-                                </div>
-                                <hr class="my-1">
-                                <!--                                Copied check-->
-                                <div class="d-flex justify-content-between align-items-center mb-3">
+                            </div>
+                            <hr class="my-1">
+                            <!--                                Copied check-->
+                            <div class="d-flex justify-content-between align-items-center mb-3">
                                     <span>
                                         <i class="bi bi-clipboard-check-fill"></i>
                                         Copied
                                         <span style="font-style: italic; color: #6c757d;">from internal sources</span>
                                     </span>
-                                    <span style="color: #6c757d; font-size: 0.9rem;">
+                                <span style="color: #6c757d; font-size: 0.9rem;">
                                         <span th:text="${copyCount}"></span> times
                                     </span>
-                                </div>
-                                <hr class="my-1">
-                                <!--                                AI usage-->
-                                <div class="d-flex justify-content-between align-items-center mb-3">
+                            </div>
+                            <hr class="my-1">
+                            <!--                                AI usage-->
+                            <div class="d-flex justify-content-between align-items-center mb-3">
                                     <span>
                                         <i class="fas fa-robot me-2"></i>
                                         AI usage
@@ -154,25 +155,198 @@
                                 </button>
 
                             </p>
-                            <div class="d-flex align-items-center">
-                                <a href="#" class="btn btn-link p-0">
+                            <div class="d-flex align-items-center" th:switch="${#strings.toUpperCase(assessment.assessmentType.name)}">
+                                <a href="#" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#AttemptDetailModal">
                                     Attempt detail
                                 </a>
                                 <span class="mx-2">|</span>
-                                <a href="#" class="btn btn-link p-0">
-                                    Quiz Details
-                                </a>
-                                <span class="mx-2">|</span>
-                                <a href="#" class="btn btn-link p-0">
-                                    Exercise Details
-                                </a>
+
+                                <th:block th:case="'QUIZ'">
+                                    <a href="#" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#QuizDetailsModal">
+                                        Quiz Details
+                                    </a>
+                                </th:block>
+
+                                <th:block th:case="'ASSIGNMENT'">
+                                    <a href="#" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#ExerciseDetailsModal">
+                                        Exercise Details
+                                    </a>
+                                </th:block>
+
+                                <th:block th:case="'QUIZ & ASSIGNMENT'">
+                                    <a href="#" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#QuizDetailsModal">
+                                        Quiz Details
+                                    </a>
+                                    <span class="mx-2">|</span>
+                                    <a href="#" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#ExerciseDetailsModal">
+                                        Exercise Details
+                                    </a>
+                                </th:block>
+
+                                <th:block th:case="*">
+                                </th:block>
                             </div>
+
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="AttemptDetailModal" tabindex="-1" aria-labelledby="AttemptDetailsLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 80%; width: 80%;">
+            <div class="modal-content">
+                <div class="modal-header d-flex align-items-center" style="background-color: #f0f0f0;">
+                    <h5 class="modal-title me-auto" id="AttemptDetailsLabel">Attempt Details</h5>
+                </div>
+                <div class="modal-body">
+                    <div class="container">
+                        <h4 class="fw-bold text-secondary mb-3">
+                            <i class="fas fa-list me-2"></i>Quiz Details
+                        </h4>
+                        <div class="card shadow-lg border-0 mb-4">
+                            <div class="card-body">
+                                <div th:each="question, iterStat : ${questions}" class="mb-4 border-bottom pb-3">
+                                    <p class="fw-bold">
+                                        <span th:text="${iterStat.count}"></span>.
+                                        <span th:text="${question?.questionText ?: 'Question text not available'}">Question text</span>
+                                    </p>
+                                    <ul class="list-group">
+                                        <li class="list-group-item"
+                                            th:each="ans : ${questionAnswerOptionsMap[question.id] != null ? questionAnswerOptionsMap[question.id] : T(java.util.Collections).emptyList()}">
+                                            <span th:text="${ans.optionText}"></span>
+                                            <span th:if="${userAnswersMap != null
+                                                  and userAnswersMap[question.id] != null
+                                                  and #lists.contains(userAnswersMap[question.id], ans.id)}"
+                                                  class="badge ms-2" style="background-color: #85C8FF;">Your Answer</span>
+                                            <span th:if="${ans.isCorrect}" class="badge bg-success ms-2">Correct</span>
+                                        </li>
+                                        <li class="list-group-item text-muted" th:if="${#lists.isEmpty(questionAnswerOptionsMap[question.id])}">
+                                            No answers assigned.
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h4 class="fw-bold text-secondary mb-3">
+                            <i class="fas fa-list me-2"></i>Exercise Attempts
+                        </h4>
+                        <div class="list-group">
+                            <div th:if="${studentExerciseAttempts == null or #lists.isEmpty(studentExerciseAttempts)}">
+                                <p class="text-muted">No exercise attempts found.</p>
+                            </div>
+                            <div th:each="exAttempt : ${studentExerciseAttempts}" class="list-group-item">
+                                <p>
+                                    <strong>Score:</strong> <span th:text="${exAttempt.score_exercise}">0</span>
+                                    &nbsp;|&nbsp;
+                                    <strong>Date:</strong>
+                                    <span th:text="${#temporals.format(exAttempt.attemptDate, 'dd-MM-yyyy hh:mm a')}">Date</span>
+                                </p>
+                                <div class="submitted-code">
+                                    <h6>Submitted Code:</h6>
+                                    <pre class="language-java" tabindex="0">
+<code th:text="${exAttempt.submitted_code}">Submitted code here</code>
+                                </pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Modal Footer -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="modal fade" id="QuizDetailsModal" tabindex="-1" aria-labelledby="quizDetailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 80%; width: 80%;">
+            <div class="modal-content">
+                <div class="modal-header d-flex align-items-center" style="background-color: #f0f0f0;">
+                    <h5 class="modal-title me-auto" id="quizDetailsModalLabel">Quiz Details</h5>
+                </div>
+                <div class="modal-body">
+                    <div class="card shadow-lg border-0">
+                        <div class="card-body">
+                            <h4 class="fw-bold text-secondary mb-4">
+                                <i class="fas fa-list me-2"></i>Your Answers
+                            </h4>
+                            <div th:each="question, iterStat : ${questions}" class="mb-4 border-bottom pb-3">
+                                <p class="fw-bold">
+                                    <span th:text="${iterStat.count}"></span>.
+                                    <span th:text="${question?.questionText ?: 'Question text not available'}">Question text</span>
+                                </p>
+                                <ul class="list-group">
+                                    <li class="list-group-item"
+                                        th:each="ans : ${questionAnswerOptionsMap[question.id] != null ? questionAnswerOptionsMap[question.id] : T(java.util.Collections).emptyList()}">
+                                        <span th:text="${ans.optionText}"></span>
+                                        <span th:if="${userAnswersMap != null
+                                                  and userAnswersMap[question.id] != null
+                                                  and #lists.contains(userAnswersMap[question.id], ans.id)}"
+                                              class="badge ms-2" style="background-color: #85C8FF;">Your Answer</span>
+                                        <span th:if="${ans.isCorrect}" class="badge bg-success ms-2">Correct</span>
+                                    </li>
+                                    <li class="list-group-item text-muted" th:if="${#lists.isEmpty(questionAnswerOptionsMap[question.id])}">
+                                        No answers assigned.
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="ExerciseDetailsModal" tabindex="-1" aria-labelledby="ExerciseDetailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-custom" style="max-width: 80%; width: 80%;">
+            <div class="modal-content">
+                <div class="modal-header modal-header-custom d-flex align-items-center">
+                    <h5 class="modal-title me-auto" id="ExerciseDetailsModalLabel">Exercise Attempts</h5>
+                </div>
+                <div class="modal-body">
+                    <div class="container">
+                        <p class="description-text" style="font-size: 14px; color: #6c757d;">
+                            Viewing user's exercise attempts
+                        </p>
+                        <div class="list-group">
+                            <div th:if="${studentExerciseAttempts == null or #lists.isEmpty(studentExerciseAttempts)}">
+                                <p class="text-muted">No exercise attempts found.</p>
+                            </div>
+                            <div th:each="attempt : ${studentExerciseAttempts}" class="list-group-item">
+                                <p>
+                                    <strong>Score:</strong> <span th:text="${attempt.score_exercise}">0</span>
+                                    &nbsp;|&nbsp;
+                                    <strong>Date:</strong>
+                                    <span th:text="${#temporals.format(attempt.attemptDate, 'dd-MM-yyyy hh:mm a')}">Date</span>
+                                </p>
+                                <div class="submitted-code">
+                                    <h6>Submitted Code:</h6>
+                                    <pre class="language-java" tabindex="0">
+<code th:text="${attempt.submitted_code}">Submitted code here</code>
+                                </pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
 
     <!-- **MODAL STRUCTURE - Add this right before the closing `</div>` of `main-container` or at the end of `body`** -->
     <div class="modal fade" id="editScoreModal" tabindex="-1" aria-labelledby="editScoreModalLabel" aria-hidden="true">
@@ -625,6 +799,7 @@
         opacity: 1;
         background: linear-gradient(45deg, #2575fc, #6a11cb);
     }
+
 
     /* **END INCLUDE EDIT SCORE STYLES** */
 
