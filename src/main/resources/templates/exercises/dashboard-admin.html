@@ -975,7 +975,16 @@
                                     formatter: (value, ctx) => {
                                         const dataset = ctx.chart.data.datasets[0].data;
                                         const total = dataset.reduce((a, b) => a + b, 0);
-                                        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) + "%" : "";
+                                        const percentages = dataset.map(val => (total > 0 ? (val / total) * 100 : 0));
+                                        let sum = percentages.reduce((a, b) => a + b, 0);
+
+                                        // Adjust the largest percentage to make the sum exactly 100
+                                        if (sum !== 100 && total > 0) {
+                                            const largestIndex = percentages.indexOf(Math.max(...percentages));
+                                            percentages[largestIndex] -= (sum - 100);
+                                        }
+
+                                        const percentage = percentages[ctx.dataIndex].toFixed(1) + "%";
                                         return value > 0 ? percentage : "";
                                     },
                                     font: { weight: 'bold', size: 14 },

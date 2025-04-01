@@ -375,13 +375,14 @@
         <div class="card-header bg-primary text-white">
             <h3 class="card-title mb-0">Update Exercise</h3>
         </div>
-        <div class="card-body">
+        <div class="card-body" >
             <form
                     th:action="@{/exercises/edit/{id}(id=${exercise.id})}"
                     th:object="${exercise}"
                     method="post"
                     class="needs-validation"
                     novalidate
+                    id="editForm"
             >
                 <!-- Name -->
                 <div class="mb-3">
@@ -1089,7 +1090,6 @@
 
     function saveAndGoBack() {
         sessionStorage.setItem("shouldFilterOnce", "true"); // Đánh dấu để lọc
-        window.location.href = "/exercises"; // Điều hướng về danh sách
     }
 
     function goBackWithFilters() {

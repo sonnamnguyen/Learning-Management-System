@@ -843,7 +843,7 @@
                                 <!-- Template Import -->
                                 <div class="mb-3">
                                     <p>Download the Excel template before uploading your file:</p>
-                                    <a href="https://drive.usercontent.google.com/u/0/uc?id=1-DPx7kqhtXDqIsjVvr5EAGVSAlgV7mLJ&export=download"
+                                    <a href="https://drive.usercontent.google.com/u/0/uc?id=1ukHSnAmlcFE_vShkOAG9-jRoLs5_Rmlx&export=download"
                                        class="btn btn-link" download>Download Exercise Template</a>
                                 </div>
                                 <!-- Form Upload -->
@@ -1077,12 +1077,8 @@
                     </ul>
                 </nav>
             </div>
-
-
-
         </div>
     </div>
-
 </div>
 
 
@@ -1097,11 +1093,9 @@
     <span th:text="${successMessage}"></span>
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
-</div>
 
 <!-- Footer -->
 <div th:replace="~{fragments :: footer}" class="mt-auto"></div>
-</div>
 <!-- Limit description in 20 words -->
 <script>
     document.addEventListener("DOMContentLoaded", function () {
@@ -1129,17 +1123,26 @@
 
     function updateView(mode) {
         let toggleButton = document.getElementById("toggleView");
+        let deleteSelectedButton = document.getElementById("deleteSelected");
 
         if (mode === "card") {
+            // Card View
             document.getElementById("cardView").style.display = "flex";
             document.getElementById("tableView").style.display = "none";
             toggleButton.innerHTML = '<i class="bi bi-table me-2"></i> Switch to Table View';
             toggleButton.classList.replace("btn-secondary", "btn-primary");
+
+            // Ẩn nút Delete Selected ở toolbar
+            deleteSelectedButton.style.display = "none";
         } else {
+            // Table View
             document.getElementById("cardView").style.display = "none";
             document.getElementById("tableView").style.display = "block";
             toggleButton.innerHTML = '<i class="bi bi-grid me-2"></i> Switch to Card View';
             toggleButton.classList.replace("btn-primary", "btn-secondary");
+
+            // Hiển thị lại nút Delete Selected ở toolbar
+            deleteSelectedButton.style.display = "inline-flex";
         }
     }
 </script>
@@ -1287,20 +1290,20 @@
 
     });
 
-    function clearFilters() {
-        document.getElementById("searchInput").value = "";
-        document.getElementById("languageFilter").value = "";
-        document.getElementById("levelFilter").value = "";
-        document.getElementById("tagList").value = "";
-        document.getElementById("filterForm").submit();
-
-
-        document.querySelectorAll('#tagFilter input[type="checkbox"]').forEach(checkbox => {
-            checkbox.checked = false;
-        })
-        // Submit the form without filters
-        document.getElementById('filterForm').submit();
-    }
+    // function clearFilters() {
+    //     document.getElementById("searchInput").value = "";
+    //     document.getElementById("languageFilter").value = "";
+    //     document.getElementById("levelFilter").value = "";
+    //     document.getElementById("tagList").value = "";
+    //     document.getElementById("filterForm").submit();
+    //
+    //
+    //     document.querySelectorAll('#tagFilter input[type="checkbox"]').forEach(checkbox => {
+    //         checkbox.checked = false;
+    //     })
+    //     // Submit the form without filters
+    //     document.getElementById('filterForm').submit();
+    // }
 
     // Close popup when clicking outside
     document.getElementById('overlay').addEventListener('click', function () {
@@ -1542,9 +1545,7 @@
         // Sự kiện thay đổi bộ lọc -> Lưu & Submit
         languageFilter.addEventListener("change", submitFormWithSave);
         levelFilter.addEventListener("change", submitFormWithSave);
-        document.querySelectorAll('input[name="tags"]').forEach(checkbox => {
-            checkbox.addEventListener("change", submitFormWithSave);
-        });
+        document.querySelectorAll('input[name="tags"]').forEach(checkbox => {checkbox.addEventListener("change", submitFormWithSave);});
         function restoreFilters() {
             const selectedLanguage = sessionStorage.getItem("selectedLanguage");
             const selectedLevel = sessionStorage.getItem("selectedLevel");

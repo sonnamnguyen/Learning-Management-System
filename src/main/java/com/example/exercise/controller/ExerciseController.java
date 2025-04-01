@@ -77,61 +77,53 @@ public class ExerciseController {
             @RequestParam(value = "title", required = false) String title,
             @RequestParam(value = "language", required = false) Long languageId,
             @RequestParam(value = "level", required = false) String level,
-            @RequestParam(value = "description", required = false) String descriptionKeyword,
             @RequestParam(value = "tags", required = false) List<Long> tagIds,
             @RequestParam(value = "page", defaultValue = "0") int page,
             Model model, Authentication authentication) {
 
-        Pageable pageable = PageRequest.of(page, 12); // 12 items per page
-        Page<Exercise> exercisesPage;
-        List<Exercise> exercises;
-        int totalPages;
+        Pageable pageable = PageRequest.of(page, 12);
+        Page<Exercise> exercisesPage = filterExercises(title, languageId, level, tagIds, pageable);
 
-        // Logic filtering
-        if (title != null && !title.isEmpty()) {
-            exercisesPage = exerciseService.searchExercises(title, pageable);
-        } else {
-            if (tagIds != null && !tagIds.isEmpty()) {
-                exercisesPage = exerciseService.getExercisesByFilters(languageId, level, tagIds, pageable);
-            } else {
-                exercisesPage = exerciseService.getExercisesByLanguageAndLevel(languageId, level, pageable);
-            }
-            exercises = exercisesPage.getContent();
-            totalPages = exercisesPage.getTotalPages();
-        }
+        populateModel(model, exercisesPage, title, languageId, level, tagIds, page);
+        addCommonWordsIfApplicable(model, languageId, level);
 
-        exercises = exercisesPage.getContent();
-        totalPages = exercisesPage.getTotalPages();
+        return isAdmin(authentication) ? "exercises/list" : "exercises/student-list";
+    }
 
-        // Add attributes to model
-//        model.addAttribute("mostAttemptedExercises", studentExerciseAttemptService.getListAttempt());
-//        System.out.println(studentExerciseAttemptService.getListAttempt());
-        model.addAttribute("exercises", exercises);
+    private Page<Exercise> filterExercises(String title, Long languageId, String level, List<Long> tagIds, Pageable pageable) {
+        // Gọi phương thức tổng hợp áp dụng tất cả các bộ lọc
+        return exerciseService.getExercisesByAllFilters(title, languageId, level, tagIds, pageable);
+    }
+
+    private void populateModel(Model model, Page<Exercise> exercisesPage, String title, Long languageId,
+                               String level, List<Long> tagIds, int page) {
+        model.addAttribute("exercises", exercisesPage.getContent());
         model.addAttribute("currentPage", page);
-        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("totalPages", exercisesPage.getTotalPages());
         model.addAttribute("languages", programmingLanguageService.findAll());
         model.addAttribute("currentLanguage", languageId);
         model.addAttribute("currentLevel", level);
         model.addAttribute("paramTitle", title);
         model.addAttribute("tags", categoryService.getAllCategory());
-        model.addAttribute("paramDescription", descriptionKeyword);
+        model.addAttribute("currentTags", tagIds);
+    }
 
-        // Calculate common words if languageId is provided
+    private void addCommonWordsIfApplicable(Model model, Long languageId, String level) {
         if (languageId != null) {
-            Page<Exercise> allExercises;
-            if (level != null && !level.isEmpty()) {
-                allExercises = exerciseService.getExercisesByLanguageAndLevel(languageId, level, Pageable.unpaged());
-            } else {
-                allExercises = exerciseService.getExercisesByLanguage(languageId, Pageable.unpaged());
-            }
+            Page<Exercise> allExercises = isNotEmpty(level)
+                    ? exerciseService.getExercisesByLanguageAndLevel(languageId, level, Pageable.unpaged())
+                    : exerciseService.getExercisesByLanguage(languageId, Pageable.unpaged());
             model.addAttribute("commonWords", getTfIdfScores(allExercises.getContent()));
         }
+    }
 
-        System.out.println("Language ID: " + languageId + ", Level: " + level +
-                ", Title: " + title + ", Description: " + descriptionKeyword);
-        boolean isAdmin = authentication.getAuthorities().stream()
+    private boolean isAdmin(Authentication authentication) {
+        return authentication.getAuthorities().stream()
                 .anyMatch(auth -> auth.getAuthority().equals("ADMIN") || auth.getAuthority().equals("SUPERADMIN"));
-        return isAdmin ? "exercises/list" : "exercises/student-list";
+    }
+
+    private boolean isNotEmpty(String value) {
+        return value != null && !value.isEmpty();
     }
 
 

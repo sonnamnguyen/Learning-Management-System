@@ -212,7 +212,7 @@ public class ExerciseService {
             }
 
             // Kiểm tra xem các header quan trọng có tồn tại không
-            String[] requiredHeaders = {"Title", "Language", "Level", "Description", "Set Up Code", "Test Case", "SQL Tag", "Tag"};
+            String[] requiredHeaders = {"Title", "Language", "Level", "Description", "Set Up Code", "Test Case", "Hidden Test Case", "SQL Tag", "Tag"};
             for (String header : requiredHeaders) {
                 if (!columnIndexMap.containsKey(header)) {
                     throw new RuntimeException("Missing required column: " + header);
@@ -318,12 +318,12 @@ public class ExerciseService {
                     exercise.setSetup((cell != null) ? cell.getStringCellValue().trim() : "");
                 }
 
+                List<TestCase> testCases = new ArrayList<>();
 
 //              ************  Xử lý Test Case ***************
                 if (columnIndexMap.containsKey("Test Case")) {
                     Cell cell = row.getCell(columnIndexMap.get("Test Case"));
                     String testCaseText = (cell != null) ? cell.getStringCellValue().trim() : "";
-                    List<TestCase> testCases = new ArrayList<>();
                     boolean hasInvalidTestCase = false; // Biến để kiểm tra nếu có test case sai
 
                     if (!testCaseText.isEmpty()) {
@@ -359,23 +359,77 @@ public class ExerciseService {
 
                                 String input = parts[0].replace("Input:", "").trim();
                                 String expected = parts[1].replace("Expected:", "").trim();
-                                boolean isHidden = false;
 
-                                if (parts.length == 3) {
-                                    if (!parts[2].trim().matches("^Hidden:\\s*(true|false)")) {
-                                        warnings.add("Row " + rowIndex + " has an invalid 'Hidden:' value (must be 'true' or 'false') in test case: '" + testCaseStr + "'.");
-                                        hasInvalidTestCase = true;
-                                        continue;
-                                    }
-                                    isHidden = Boolean.parseBoolean(parts[2].replace("Hidden:", "").trim());
-                                }
 
                                 // Nếu test case hợp lệ, thêm vào danh sách tạm thời
                                 TestCase testCase = new TestCase();
                                 testCase.setInput(input);
                                 testCase.setExpectedOutput(expected);
-                                testCase.setHidden(isHidden);
+                                testCase.setHidden(false);
                                 testCases.add(testCase);
+                            } else {
+                                warnings.add("Row " + rowIndex + " is empty and was skipped.");
+                                hasInvalidTestCase = true;
+                            }
+                        }
+                    }
+
+
+                    if (hasInvalidTestCase) {
+                        warnings.add("Row " + rowIndex + " has invalid test cases and was not saved.");
+                        isValidRow = false;
+                    } else {
+                        exercise.setTestCases(testCases);
+                    }
+                }
+
+
+//                ******* Xử lý Hidden Test Case *********
+                if (columnIndexMap.containsKey("Hidden Test Case")) {
+                    Cell cell = row.getCell(columnIndexMap.get("Hidden Test Case"));
+                    String testCaseText = (cell != null) ? cell.getStringCellValue().trim() : "";
+                    boolean hasInvalidTestCase = false; // Biến để kiểm tra nếu có test case sai
+
+                    if (!testCaseText.isEmpty()) {
+                        String[] testCaseArray = testCaseText.split(";"); // Mỗi test case phải kết thúc bằng dấu ";"
+                        for (String testCaseStr : testCaseArray) {
+                            testCaseStr = testCaseStr.trim();
+                            if (!testCaseStr.isEmpty()) {
+                                // Kiểm tra dấu phẩy (,)
+                                if (!testCaseStr.contains(",")) {
+                                    warnings.add("Row " + rowIndex + " is missing a comma (',') in test case: '" + testCaseStr + "'.");
+                                    hasInvalidTestCase = true;
+                                    continue;
+                                }
+
+                                String[] parts = testCaseStr.split(",");
+                                if (parts.length < 2 || parts.length > 3) {
+                                    warnings.add("Row " + rowIndex + " has an invalid test case format: '" + testCaseStr + "'. Expected format: 'Input:<value>, Expected:<value>[, Hidden:true/false]'.");
+                                    hasInvalidTestCase = true;
+                                    continue;
+                                }
+
+                                // Kiểm tra từng phần tử có đúng tiền tố không
+                                if (!parts[0].trim().matches("^Input:\\s*.+")) {
+                                    warnings.add("Row " + rowIndex + " is missing or has incorrect 'Input:' format in test case: '" + testCaseStr + "'.");
+                                    hasInvalidTestCase = true;
+                                    continue;
+                                }
+                                if (!parts[1].trim().matches("^Expected:\\s*.+")) {
+                                    warnings.add("Row " + rowIndex + " is missing or has incorrect 'Expected:' format in test case: '" + testCaseStr + "'.");
+                                    hasInvalidTestCase = true;
+                                    continue;
+                                }
+
+                                String input = parts[0].replace("Input:", "").trim();
+                                String expected = parts[1].replace("Expected:", "").trim();
+
+                                // Nếu test case hợp lệ, thêm vào danh sách tạm thời
+                                TestCase hiddenTestCase = new TestCase();
+                                hiddenTestCase.setInput(input);
+                                hiddenTestCase.setExpectedOutput(expected);
+                                hiddenTestCase.setHidden(true);
+                                testCases.add(hiddenTestCase);
                             } else {
                                 warnings.add("Row " + rowIndex + " is empty and was skipped.");
                                 hasInvalidTestCase = true;
@@ -851,4 +905,23 @@ public class ExerciseService {
 
         return exerciseRepository.findByFiltersAndTags(languageId, exerciseLevel, tagIds, pageable);
     }
+
+    public Page<Exercise> getExercisesByAllFilters(String title, Long languageId, String level, List<Long> tagIds, Pageable pageable) {
+        Exercise.Level exerciseLevel = (level == null || level.trim().isEmpty())
+                ? null
+                : Exercise.Level.valueOf(level.toUpperCase());
+
+        if (tagIds != null && tagIds.isEmpty()) {
+            tagIds = null;
+        }
+
+        // Nếu không có title, dùng phương thức findByFiltersAndTags hiện có
+        if (title == null || title.trim().isEmpty()) {
+            return exerciseRepository.findByFiltersAndTags(languageId, exerciseLevel, tagIds, pageable);
+        }
+
+        // Nếu có title, gọi một truy vấn mới kết hợp tất cả các bộ lọc
+        return exerciseRepository.findByTitleAndFiltersAndTags(title, languageId, exerciseLevel, tagIds, pageable);
+    }
+
 }
