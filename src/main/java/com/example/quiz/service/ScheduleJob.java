@@ -23,7 +23,7 @@ public class ScheduleJob {
 
         Trigger trigger = TriggerBuilder.newTrigger()
                 .withIdentity("quizOpenTrigger-" + quizId.toString(), "quizTriggers")
-                .startAt(Date.from(startTime.atZone(java.time.ZoneId.systemDefault()).toInstant()))
+                .startAt(Date.from(startTime.atZone(ZoneId.systemDefault()).toInstant()))
                 .build();
 
         scheduler.scheduleJob(jobDetail, trigger);
@@ -69,7 +69,7 @@ public class ScheduleJob {
 
         Trigger trigger = TriggerBuilder.newTrigger()
                 .withIdentity("quizCacheClearTrigger-" + quizId, "quizTriggers")
-                .startAt(Date.from(clearTime.atZone(java.time.ZoneId.systemDefault()).toInstant()))
+                .startAt(Date.from(clearTime.atZone(ZoneId.systemDefault()).toInstant()))
                 .build();
 
         scheduler.scheduleJob(jobDetail, trigger);

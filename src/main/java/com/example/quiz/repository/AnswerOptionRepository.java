@@ -29,4 +29,6 @@ public interface AnswerOptionRepository extends JpaRepository<AnswerOption, Long
 
     List<AnswerOption> findByQuestionId(long id);
 
+    List<AnswerOption> findByQuestionIdOrderByOptionLabel(Long questionId);
+
 }

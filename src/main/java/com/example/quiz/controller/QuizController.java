@@ -1,6 +1,5 @@
 package com.example.quiz.controller;
 
-import com.example.assessment.model.StudentAssessmentAttempt;
 import com.example.course.Course;
 import com.example.course.CourseService;
 import com.example.exception.NotFoundException;
@@ -20,8 +19,8 @@ import com.example.user.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.http.HttpSession;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.quartz.ObjectAlreadyExistsException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +31,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
@@ -39,23 +40,15 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.ByteArrayInputStream;
 import java.security.Principal;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 
 @Controller
@@ -124,6 +117,7 @@ public class QuizController {
         boolean isStudent = currentUser.getRoles().stream()
                 .anyMatch(role -> "STUDENT".equals(role.getName()));
 
+        model.addAttribute("currentUserId", currentUser.getId());
         Page<Quiz> quizes;
         Pageable pageable = PageRequest.of(page, pageSize);
 
@@ -383,31 +377,48 @@ public class QuizController {
 
 
     @GetMapping("/participants/{quizId}")
-    public String getQuizParticipants(@PathVariable Long quizId, Model model) {
+    public String getQuizParticipants(@PathVariable Long quizId, Model model, Principal principal) {
         try {
+            // Lấy thông tin người dùng hiện tại và kiểm tra role
+            User currentUser = userService.findByUsername(principal.getName());
+            boolean isStudent = currentUser.getRoles().stream()
+                    .anyMatch(role -> "STUDENT".equals(role.getName()));
+
             // Lấy thông tin quiz
             Quiz quiz = quizService.getQuizById(quizId);
             if (quiz == null) {
                 throw new NotFoundException("Quiz not found");
             }
 
-            List<QuizParticipant> participants = quizParticipantService.getParticipantsByQuiz(quizId);
+            List<QuizParticipant> participants;
 
+            if (isStudent) {
+                // Nếu là student, chỉ hiển thị thông tin của chính họ
+                participants = quizParticipantRepository.findByQuizIdAndUserId(quizId, currentUser.getId())
+                        .map(Collections::singletonList)
+                        .orElse(Collections.emptyList());
+            } else {
+                // Nếu không phải student (là admin hoặc giảng viên), hiển thị tất cả
+                participants = quizParticipantService.getParticipantsByQuiz(quizId);
+            }
+
+            // Tính toán thống kê
             long totalParticipants = participants.size();
             long completedCount = participants.stream()
-                .filter(p -> p.getTestSession() != null && p.getTestSession().getEndTime() != null)
-                .count();
+                    .filter(p -> p.getTestSession() != null && p.getTestSession().getEndTime() != null)
+                    .count();
             long inProgressCount = participants.stream()
-                .filter(p -> p.getTestSession() != null && p.getTestSession().getEndTime() == null)
-                .count();
+                    .filter(p -> p.getTestSession() != null && p.getTestSession().getEndTime() == null)
+                    .count();
             long notStartedCount = participants.stream()
-                .filter(p -> p.getTestSession() == null)
-                .count();
+                    .filter(p -> p.getTestSession() == null)
+                    .count();
 
             // Add attributes to model
             model.addAttribute("participants", participants);
             model.addAttribute("quiz", quiz);
             model.addAttribute("quizId", quizId);
+            model.addAttribute("isStudent", isStudent);  // Thêm thuộc tính isStudent vào model
 
             // Add statistics
             model.addAttribute("totalParticipants", totalParticipants);
@@ -535,7 +546,6 @@ public class QuizController {
         return "layout";
     }
 
-
     @PostMapping("/apply/{quizId}/submit")
     public String submitQuiz(
             @PathVariable("quizId") Long quizId,
@@ -543,14 +553,7 @@ public class QuizController {
             @RequestParam MultiValueMap<String, String> responses,
             @RequestParam("elapsedTime") int elapsedTime,
             @RequestParam("questionIds") List<String> questionIds,
-            @RequestParam(required = false) StudentAssessmentAttempt studentAssessmentAttemptId,
             Model model) {
-
-        System.out.println("Dữ liệu nhận được từ form: " + questionIds);
-
-        responses.forEach((key, values) -> {
-            System.out.println("Key: " + key + " | Values: " + values);
-        });
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
@@ -563,36 +566,56 @@ public class QuizController {
             throw new IllegalArgumentException("Assessment ID is required for EXAM quiz type");
         }
 
+        // Create new TestSession if not exists
+        TestSession testSession = testSessionRepository.findTopByUserOrderByStartTimeDesc(user);
+        if (testSession == null || testSession.getEndTime() != null) {
+            // Tạo TestSession mới nếu chưa có hoặc session cũ đã kết thúc
+            testSession = new TestSession();
+            testSession.setUser(user);
+            testSession.setStartTime(LocalDateTime.now());
+            testSession.setCheckPractice(quiz.getQuizCategory() == Quiz.QuizCategory.PRACTICE);
+            testSession.setAssessmentId(assessmentId);
+            testSession = testSessionRepository.save(testSession);
+        }
+
         int totalTime = quiz.getDuration();
         int remainingTime = (totalTime * 60) - elapsedTime;
 
-        double score = quizService.calculateScore(questionIds, assessmentId, responses, user,studentAssessmentAttemptId);
-
-        List<Question> questions = questionRepository.findAllById(
+        // ✅ Lấy danh sách câu hỏi và tính điểm cho mỗi câu không phải TEXT
+        List<Question> allQuestions = questionRepository.findAllById(
                 questionIds.stream().map(Long::parseLong).collect(Collectors.toList())
         );
+        long nonTextQuestionCount = allQuestions.stream()
+                .filter(q -> q.getQuestionType() != Question.QuestionType.TEXT)
+                .count();
+        double scorePerQuestion = nonTextQuestionCount > 0 ? 100.0 / nonTextQuestionCount : 0.0;
 
         int correctCount = 0;
         Map<Long, List<Long>> selectedAnswers = new HashMap<>();
         Map<Long, String> textAnswers = new HashMap<>();
-        Map<Long, Map<Long, Double>> selectedAnswerScores = new HashMap<>(); // ✅ QuizID -> (OptionID -> Score)
+        Map<Long, Map<Long, Double>> selectedAnswerScores = new HashMap<>();
         int totalCorrectAnswers = 0;
         int userCorrectAnswers = 0;
 
-
-        System.out.println(" Dữ liệu nhận được từ form: " + responses);
-
-        for (Question question : questions) {
+        for (Question question : allQuestions) {
             List<String> selectedOptionIds = responses.get("answers[" + question.getId() + "]");
 
             if (selectedOptionIds != null && !selectedOptionIds.isEmpty()) {
                 if (question.getQuestionType().toString().equals("TEXT")) {
-                    // ✅ Lưu câu trả lời dạng TEXT
+                    // ✅ Xử lý câu hỏi TEXT
                     String textAnswer = selectedOptionIds.get(0);
                     textAnswers.put(question.getId(), textAnswer);
+
+                    Answer textResponse = new Answer();
+                    textResponse.setQuestion(question);
+                    textResponse.setAnswerText(textAnswer);
+                    textResponse.setIsCorrect(null);
+                    textResponse.setTestSession(testSession);
+                    answerRepository.save(textResponse);
                 } else {
+                    // ✅ Xử lý câu hỏi MCQ & SCQ
                     List<Long> selectedOptionLongs = selectedOptionIds.stream()
-                            .filter(id -> id.matches("\\d+")) // Chỉ giữ lại số hợp lệ
+                            .filter(id -> id.matches("\\d+"))
                             .map(Long::parseLong)
                             .collect(Collectors.toList());
 
@@ -607,25 +630,22 @@ public class QuizController {
                         if (correctOptionIds.contains(selectedOptionId)) {
                             userCorrectAnswers++;
                         }
-                    }
 
-                    for (Long selectedOptionId : selectedOptionLongs) {
                         AnswerOption selectedOption = answerOptionRepository.findById(selectedOptionId).orElse(null);
                         if (selectedOption != null) {
-                            List<Answer> answers = answerRepository.findAllByQuestionIdAndSelectedOptionId(question.getId(), selectedOptionId);
+                            Answer answer = new Answer();
+                            answer.setSelectedOption(selectedOption);
+                            answer.setQuestion(question);
+                            answer.setAnswerText(selectedOption.getOptionText());
+                            answer.setIsCorrect(correctOptions.stream().anyMatch(opt -> opt.getId().equals(selectedOptionId)));
+                            answer.setTestSession(testSession);
+                            answerRepository.save(answer);
 
-                            if (question.getQuestionType() == Question.QuestionType.TEXT) {
-                                continue;
-                            }
-
+                            // ✅ Lưu điểm cho từng đáp án
                             Map<Long, Double> optionScores = selectedAnswerScores.getOrDefault(question.getId(), new HashMap<>());
-
-                            for (Answer answer : answers) {
-                                if (answer.getIsCorrect() != null && answer.getIsCorrect()) {
-                                    optionScores.put(answer.getSelectedOption().getId(), answer.getScore());
-                                }
+                            if (answer.getIsCorrect()) {
+                                optionScores.put(selectedOptionId, scorePerQuestion);
                             }
-
                             selectedAnswerScores.put(question.getId(), optionScores);
                         }
                     }
@@ -633,50 +653,71 @@ public class QuizController {
             }
         }
 
-
-        TestSession testSession = testSessionRepository.findTopByUserOrderByStartTimeDesc(user);
-        if (testSession == null) {
-            throw new NotFoundException("TestSession not found");
+        // Calculate score similar to submitQuiz method
+        double calculatedScore = 0.0;
+        if (totalCorrectAnswers > 0) {
+            calculatedScore = ((double) userCorrectAnswers / totalCorrectAnswers) * 100;
         }
 
-        System.out.println(" selectedAnswers lưu lại:");
-        selectedAnswers.forEach((key, value) -> System.out.println("Câu " + key + ": " + value));
+        // Also get score from practice results if available
+        double practiceResultScore = 0.0;
+        if (testSession.getPracticeResults() != null && !testSession.getPracticeResults().isEmpty()) {
+            practiceResultScore = testSession.getPracticeResults().stream()
+                    .mapToDouble(PracticeResult::getScore)
+                    .sum();
+        }
 
+        // Use calculated score if practice result score is 0
+        double finalScore = practiceResultScore > 0 ? practiceResultScore : calculatedScore;
+        double roundedScore = Math.round(finalScore * 100.0) / 100.0;
+
+        // Calculate duration in minutes
+        long durationMinutes = 0;
+        if (testSession.getEndTime() != null) {
+            durationMinutes = Duration.between(testSession.getStartTime(), testSession.getEndTime()).toMinutes();
+        }
+
+        // Store all information for this session
         testSession.setEndTime(LocalDateTime.now());
         testSessionRepository.save(testSession);
 
-        QuizParticipant participant = quizParticipantRepository.findByQuizIdAndUserId(quizId, user.getId());
-        if (participant == null) {
+        // Update or create QuizParticipant
+        Optional<QuizParticipant> participantOptional = quizParticipantRepository.findByQuizIdAndUserId(quizId, user.getId());
+        QuizParticipant participant;
+        
+        if (participantOptional.isPresent()) {
+            participant = participantOptional.get();
+            participant.setAttemptUsed(participant.getAttemptUsed() + 1);
+        } else {
             participant = new QuizParticipant();
             participant.setQuiz(quiz);
             participant.setUser(user);
+            participant.setAttemptUsed(1);
         }
         participant.setTestSession(testSession);
         participant.setTimeStart(testSession.getStartTime());
         participant.setTimeEnd(testSession.getEndTime());
         quizParticipantRepository.save(participant);
 
-        System.out.println(" Selected Answers: " + selectedAnswers);
-
-        model.addAttribute("correctAnswers", correctCount);
+        model.addAttribute("textAnswers", textAnswers);
+        model.addAttribute("questions", allQuestions);
         model.addAttribute("selectedAnswers", selectedAnswers);
         model.addAttribute("textAnswers", textAnswers);
+
+
         model.addAttribute("selectedAnswerScores", selectedAnswerScores);
         model.addAttribute("correctAnswers", userCorrectAnswers);
         model.addAttribute("totalCorrectAnswers", totalCorrectAnswers);
-        model.addAttribute("questions", questions);
-        model.addAttribute("quizId", quizId);
-        model.addAttribute("score", score);
+        model.addAttribute("scorePerQuestion", scorePerQuestion);
+        model.addAttribute("score", roundedScore);
         model.addAttribute("user", user);
-        model.addAttribute("totalQuestions", questions.size());
+        model.addAttribute("totalQuestions", allQuestions.size());
         model.addAttribute("remainingTime", remainingTime);
         model.addAttribute("content", "quizes/result");
 
+        model.addAttribute("content", "quizes/result");
         return "layout";
     }
-
-
-
 
 
     @GetMapping("/do-quiz/{quizId}")
@@ -1114,5 +1155,144 @@ public class QuizController {
         }
     }
 
+    @GetMapping("/participants/{quizId}/testsession")
+    public String getParticipantTestSession(
+            @PathVariable Long quizId,
+            @RequestParam Long participantId,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+        try {
+            // Get quiz participant
+            QuizParticipant participant = quizParticipantRepository.findById(participantId)
+                    .orElseThrow(() -> new NotFoundException("Participant not found"));
+            
+            // Get quiz information
+            Quiz quiz = quizService.findById(quizId)
+                    .orElseThrow(() -> new NotFoundException("Quiz not found"));
+
+            // Get all test sessions for this participant and quiz
+            List<TestSession> quizTestSessions = testSessionRepository.findByUserAndQuizOrderByStartTimeDesc(participant.getUser(), quizId);
+            
+            // Create a map to store data for each test session
+            Map<TestSession, Map<String, Object>> testSessionData = new LinkedHashMap<>();
+            
+            for (TestSession testSession : quizTestSessions) {
+                Map<String, Object> sessionInfo = new HashMap<>();
+                List<Question> questions = new ArrayList<>(quiz.getQuestions());
+                questions.sort(Comparator.comparingInt(Question::getQuestionNo));
+                
+                Map<Long, List<AnswerOption>> questionOptions = new HashMap<>();
+                Map<Long, List<Answer>> participantAnswers = new HashMap<>();
+                
+                // Get all answer options for each question
+                for (Question question : questions) {
+                    List<AnswerOption> options = answerOptionRepository.findByQuestionIdOrderByOptionLabel(question.getId());
+                    questionOptions.put(question.getId(), options);
+                }
+                
+                // Get answers for this specific test session
+                List<Answer> answers = answerRepository.findByTestSessionId(testSession.getId());
+                
+                // Organize answers by question
+                for (Answer answer : answers) {
+                    participantAnswers.computeIfAbsent(answer.getQuestion().getId(), k -> new ArrayList<>())
+                        .add(answer);
+                }
+                
+                // Create selected options map for this session
+                Map<Long, Set<Long>> selectedOptionsMap = new HashMap<>();
+                for (Map.Entry<Long, List<Answer>> entry : participantAnswers.entrySet()) {
+                    Set<Long> selectedOptionIds = entry.getValue().stream()
+                        .filter(a -> a.getSelectedOption() != null)
+                        .map(a -> a.getSelectedOption().getId())
+                        .collect(Collectors.toSet());
+                    selectedOptionsMap.put(entry.getKey(), selectedOptionIds);
+                }
+                
+                // Create correctness map for this session
+                Map<Long, Boolean> questionCorrectnessMap = new HashMap<>();
+                int correctCount = 0;
+                int totalAnswerableQuestions = 0;
+                
+                for (Question question : questions) {
+                    // Only count questions that have answers and are not TEXT type
+                    if (question.getQuestionType() != Question.QuestionType.TEXT) {
+                        totalAnswerableQuestions++;
+                        
+                        List<Answer> questionAnswers = participantAnswers.get(question.getId());
+                        boolean isCorrect = false;
+                        
+                        if (questionAnswers != null && !questionAnswers.isEmpty()) {
+                            isCorrect = questionAnswers.stream()
+                                          .allMatch(a -> a.getIsCorrect() != null && a.getIsCorrect());
+                            
+                            if (isCorrect) {
+                                correctCount++;
+                            }
+                        }
+                        
+                        questionCorrectnessMap.put(question.getId(), isCorrect);
+                    } else {
+                        // For TEXT questions, we can't automatically determine correctness
+                        questionCorrectnessMap.put(question.getId(), false);
+                    }
+                }
+                
+                // Calculate score similar to submitQuiz method
+                double calculatedScore = 0.0;
+                if (totalAnswerableQuestions > 0) {
+                    calculatedScore = ((double) correctCount / totalAnswerableQuestions) * 100;
+                }
+                
+                // Also get score from practice results if available
+                double practiceResultScore = 0.0;
+                if (testSession.getPracticeResults() != null && !testSession.getPracticeResults().isEmpty()) {
+                    practiceResultScore = testSession.getPracticeResults().stream()
+                            .mapToDouble(PracticeResult::getScore)
+                            .sum();
+                }
+                
+                // Use calculated score if practice result score is 0
+                double finalScore = practiceResultScore > 0 ? practiceResultScore : calculatedScore;
+                double roundedScore = Math.round(finalScore * 100.0) / 100.0;
+                
+                // Calculate duration in minutes
+                long durationMinutes = 0;
+                if (testSession.getEndTime() != null) {
+                    durationMinutes = Duration.between(testSession.getStartTime(), testSession.getEndTime()).toMinutes();
+                }
+                
+                // Store all information for this session
+                sessionInfo.put("questions", questions);
+                sessionInfo.put("questionOptions", questionOptions);
+                sessionInfo.put("participantAnswers", participantAnswers);
+                sessionInfo.put("selectedOptionsMap", selectedOptionsMap);
+                sessionInfo.put("questionCorrectnessMap", questionCorrectnessMap);
+                sessionInfo.put("totalScore", roundedScore);
+                sessionInfo.put("correctCount", correctCount);
+                sessionInfo.put("totalQuestions", totalAnswerableQuestions);
+                sessionInfo.put("durationMinutes", durationMinutes);
+                
+                testSessionData.put(testSession, sessionInfo);
+            }
+            
+            // Add all data to model
+            model.addAttribute("participant", participant);
+            model.addAttribute("quiz", quiz);
+            model.addAttribute("testSessionData", testSessionData);
+            model.addAttribute("content", "quizes/quiz-participant-do");
+            
+            // Update the participant.attemptUsed if it doesn't match the actual count
+            if (participant.getAttemptUsed() != quizTestSessions.size()) {
+                participant.setAttemptUsed(quizTestSessions.size());
+                quizParticipantRepository.save(participant);
+            }
+            
+            return "layout";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/quizes/participants/" + quizId;
+        }
+    }
 
 }

@@ -263,6 +263,11 @@ public class QuizService {
         }
     }
 
+    public long count() {
+        return quizRepository.count();
+    }
+
+
 
     @Transactional
     public void addTagsToQuiz(Long quizId, List<Long> tagIds, List<String> newTagNames) {
@@ -546,23 +551,15 @@ public class QuizService {
             return 0.0;
         }
 
-        boolean isPractice = studentAssessmentAttemptId == null;
-
-        if (isPractice) {
-            assessmentId = null;
-        }
+        boolean isPractice = (assessmentId == null);
 
         TestSession session = new TestSession();
         session.setUser(user);
         session.setStartTime(LocalDateTime.now());
+        session.setAssessmentId(assessmentId);
         session.setCheckPractice(isPractice);
-
-        if (!isPractice) {
-            session.setAssessmentId(assessmentId);
-            session.setStudentAssessmentAttempt(studentAssessmentAttemptId);
-        }
+        session.setStudentAssessmentAttempt(studentAssessmentAttemptId);
         testSessionRepository.save(session);
-
 
         long totalScoredQuestions = questions.stream()
                 .filter(q -> !q.getQuestionType().toString().equals("TEXT"))
@@ -583,9 +580,7 @@ public class QuizService {
             List<String> userAnswerIdsStr = responses.get("answers[" + question.getId() + "]");
             List<Long> correctAnswerIds = correctAnswersMap.getOrDefault(question.getId(), Collections.emptyList());
 
-            System.out.println(" Câu hỏi ID: " + question.getId() + " | Dạng: " + question.getQuestionType());
-
-            if (question.getQuestionType().toString().equals("TEXT")) {
+            if ("TEXT".equalsIgnoreCase(question.getQuestionType().toString())) {
                 if (userAnswerIdsStr != null && !userAnswerIdsStr.isEmpty()) {
                     String textAnswer = userAnswerIdsStr.get(0);
                     Answer textResponse = new Answer();
@@ -606,19 +601,17 @@ public class QuizService {
 
                 int totalCorrect = correctAnswerIds.size();
                 int userCorrectCount = (int) userAnswerIds.stream().filter(correctAnswerIds::contains).count();
-                int excessSelections = userAnswerIds.size() - totalCorrect; // ✅ Tính số câu chọn dư
+                int totalIncorrect = (int) userAnswerIds.stream().filter(id -> !correctAnswerIds.contains(id)).count();
+                int excessSelections = userAnswerIds.size() - totalCorrect;
 
                 double questionScore = 0;
                 if (totalCorrect > 0) {
                     questionScore = (pointsPerQuestion / totalCorrect) * userCorrectCount;
-                    if (excessSelections > 0) {
-                        double penalty = excessSelections * (pointsPerQuestion / totalCorrect);
-                        questionScore -= penalty;
+                    double penalty = (totalIncorrect * (pointsPerQuestion / totalCorrect)) + (excessSelections * (pointsPerQuestion / totalCorrect));
+                    questionScore -= penalty;
 
-                        if (questionScore < 0) {
-                            score += questionScore;
-                            questionScore = 0;
-                        }
+                    if (questionScore < 0) {
+                        questionScore = 0;
                     }
                 }
 
@@ -632,24 +625,11 @@ public class QuizService {
                         answer.setQuestion(question);
                         answer.setAnswerText(selectedOption.getOptionText());
                         answer.setIsCorrect(correctAnswerIds.contains(selectedOptionId));
-                        answer.setTestSession(session);
-
-                        double calculatedScore = 0.0;
-                        if (correctAnswerIds.contains(selectedOptionId)) {
-                            calculatedScore = (pointsPerQuestion / correctAnswerIds.size());
-                        }
-
-                        answer.setScore(calculatedScore);
-
-                        System.out.println(" Lưu Answer - Question ID: " + question.getId());
-                        System.out.println(" Selected Option ID: " + selectedOptionId);
-                        System.out.println(" Answer Text: " + selectedOption.getOptionText());
-                        System.out.println(" Is Correct: " + answer.getIsCorrect());
-                        System.out.println(" Score: " + calculatedScore);
-
+                        answer.setScore(correctAnswerIds.contains(selectedOptionId) ? (pointsPerQuestion / correctAnswerIds.size()) : 0.0);
                         answerRepository.save(answer);
                     }
                 }
+
                 if (isPractice) {
                     practiceResultRepository.save(new PracticeResult(session, question, userCorrectCount == totalCorrect, questionScore));
                 } else {

@@ -223,4 +223,7 @@ public class UserService {
         userRepository.saveAll(users);  // Save all users at once
     }
 
+    public long count() {
+        return userRepository.countUsers();
+    }
 }

@@ -3,7 +3,6 @@ package com.example.quiz.service;
 import com.example.quiz.model.Quiz;
 import com.example.quiz.model.QuizParticipant;
 import com.example.quiz.model.Result;
-import com.example.quiz.model.TestSession;
 import com.example.quiz.repository.QuizParticipantRepository;
 import com.example.quiz.repository.QuizRepository;
 import com.example.quiz.repository.TestSessionRepository;

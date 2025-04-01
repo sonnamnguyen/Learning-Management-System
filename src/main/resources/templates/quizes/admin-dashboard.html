@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Super Admin Dashboard - Quiz System</title>
+
+  <!-- Bootstrap & FontAwesome -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+        /* Thay đổi nền để tương phản tốt hơn */
+        body {
+            background: linear-gradient(to right, #ffffff, #f4f4f4);
+            color: black; /* Đổi toàn bộ chữ thành màu đen */
+            font-weight: bold;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: rgba(0, 0, 0, 0.8);
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Card - giữ độ trong suốt nhẹ nhưng làm chữ rõ hơn */
+        .card-custom {
+            border: none;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.9); /* Đổi nền sáng hơn để chữ đen rõ */
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease-in-out;
+            color: black; /* Chữ đen rõ hơn */
+        }
+
+        .card-custom:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 1);
+        }
+
+        /* Chart Container */
+        .chart-container {
+            background: rgba(255, 255, 255, 0.95); /* Làm sáng nền biểu đồ */
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+            color: black;
+        }
+
+        /* FontAwesome Icon */
+        .icon {
+            font-size: 30px;
+            margin-bottom: 10px;
+        }
+    </style>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark">
+  <div class="container">
+    <a class="navbar-brand fw-bold" href="#">
+      <i class="fa-solid fa-chart-line"></i> Super Admin Dashboard
+    </a>
+  </div>
+</nav>
+<div class="container mt-3">
+  <a href="/quizes" class="btn btn-primary">
+    <i class="fa-solid fa-arrow-left"></i> Back to Quizzes
+  </a>
+</div>
+
+
+<div class="container mt-4">
+  <!-- Overview Section -->
+  <div class="row text-center">
+    <div class="col-md-3">
+      <div class="card card-custom shadow-lg mb-3 p-3" data-bs-toggle="modal" data-bs-target="#quizListModal">
+        <div class="card-body">
+          <i class="fa-solid fa-file-circle-check icon"></i>
+          <h5 class="card-title">Total Quizzes</h5>
+          <h3 th:text="${totalQuizzes}">0</h3>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card card-custom shadow-lg mb-3 p-3">
+        <div class="card-body">
+          <i class="fa-solid fa-circle-question icon"></i>
+          <h5 class="card-title">Total Questions</h5>
+          <h3 th:text="${totalQuestions}">0</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card card-custom shadow-lg mb-3 p-3">
+        <div class="card-body">
+          <i class="fa-solid fa-users icon"></i>
+          <h5 class="card-title">Total Users</h5>
+          <h3 th:text="${totalUsers}">0</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card card-custom shadow-lg mb-3 p-3">
+        <div class="card-body">
+          <i class="fa-solid fa-clipboard-check icon"></i>
+          <h5 class="card-title">Total Attempts</h5>
+          <h3 th:text="${totalAttempts}">0</h3>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Section -->
+  <div class="row">
+    <!-- Biểu đồ cột (Quiz Participants) -->
+    <div class="col-md-8">
+      <div class="chart-container">
+        <h5 class="text-center"><i class="fa-solid fa-chart-column"></i> Quiz Participants</h5>
+        <canvas id="quizChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Biểu đồ tròn (Correct vs Incorrect Answers) -->
+    <div class="col-md-4">
+      <div class="chart-container text-center">
+        <h5><i class="fa-solid fa-chart-pie"></i> Correct vs Incorrect Answers</h5>
+
+        <!-- Dropdown chọn quiz -->
+        <select id="quizDropdown" class="form-select mb-3">
+          <option value="all">All Quizzes</option>
+          <option th:each="entry : ${quizTitles}"
+                  th:value="${entry.key}"
+                  th:text="${entry.value}">
+          </option>
+        </select>
+
+        <canvas id="quizAnswerChart"></canvas>
+
+        <!-- Phần hiển thị nhận xét -->
+        <div id="quizFeedback" class="alert alert-info mt-3">
+          <strong>Feedback:</strong> Hệ thống sẽ đưa ra nhận xét về kết quả bài kiểm tra tại đây.
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <!-- Modal Hiển Thị Danh Sách Quiz -->
+  <div class="modal fade" id="quizListModal" tabindex="-1" aria-labelledby="quizListModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="quizListModalLabel">Quizzes List</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <table class="table table-bordered">
+            <thead class="table-dark">
+            <tr>
+              <th>#</th>
+              <th>Quiz Name</th>
+              <th>Status</th>
+            </tr>
+            </thead>
+            <tbody>
+            <!-- Giả sử model attribute "quizzes" chứa danh sách Quiz -->
+            <tr th:each="quiz, iterStat : ${quizzes}">
+              <td th:text="${iterStat.index + 1}"></td>
+              <td th:text="${quiz.name}"></td>
+              <td>
+                                <span th:if="${quiz.quizType == T(com.example.quiz.model.Quiz.QuizType).OPEN}" class="badge bg-success">
+                                    OPEN
+                                </span>
+                <span th:if="${quiz.quizType == T(com.example.quiz.model.Quiz.QuizType).CLOSE}" class="badge bg-danger">
+                                    CLOSE
+                                </span>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+
+</div>
+
+<!-- JavaScript for Charts -->
+<script th:inline="javascript">
+    document.addEventListener("DOMContentLoaded", function () {
+        var ctx = document.getElementById("quizChart").getContext("2d");
+
+        var quizNames = /*[[${quizNames}]]*/ [];
+        var quizAttempts = /*[[${quizAttempts}]]*/ [];
+
+        new Chart(ctx, {
+            type: "bar",
+            data: {
+                labels: quizNames,
+                datasets: [{
+                    label: "Participants",
+                    data: quizAttempts,
+                    backgroundColor: "rgba(54, 162, 235, 0.8)",
+                    borderColor: "rgba(54, 162, 235, 1)",
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                }
+            }
+        });
+
+        var correctAnswers = Number([[${correctAnswers}]] || 0);
+        var incorrectAnswers = Number([[${incorrectAnswers}]] || 0);
+
+        var ctx2 = document.getElementById("answerChart").getContext("2d");
+
+        new Chart(ctx2, {
+            type: "pie",
+            data: {
+                labels: ["Correct", "Incorrect"],
+                datasets: [{
+                    data: [correctAnswers, incorrectAnswers],
+                    backgroundColor: ["#28a745", "#dc3545"]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: "bottom" }
+                }
+            }
+        });
+    });
+</script>
+<script th:inline="javascript">
+    document.addEventListener("DOMContentLoaded", function () {
+      var quizDropdown = document.getElementById("quizDropdown");
+      var ctx = document.getElementById("quizAnswerChart").getContext("2d");
+      var feedbackDiv = document.getElementById("quizFeedback");
+
+      // Correct and incorrect answers data per quiz
+      var correctAnswersPerQuiz = /*[[${correctAnswersPerQuiz}]]*/ {};
+      var incorrectAnswersPerQuiz = /*[[${incorrectAnswersPerQuiz}]]*/ {};
+
+      // Default data
+      var currentCorrect = Number([[${correctAnswers}]] || 0);
+      var currentIncorrect = Number([[${incorrectAnswers}]] || 0);
+
+      // Function to update teacher-style feedback
+      function updateFeedback(correct, incorrect) {
+          let total = correct + incorrect;
+          let correctPercentage = total ? (correct / total) * 100 : 0;
+          let feedbackMessage = "";
+
+          if (correctPercentage >= 80) {
+              feedbackMessage = "🌟 Excellent work! Most students have mastered the material. Keep up the great effort!";
+              feedbackDiv.className = "alert alert-success mt-3";
+          } else if (correctPercentage >= 60) {
+              feedbackMessage = "👍 Good job! The majority did well, but there’s still room for improvement. Let's focus on tricky areas.";
+              feedbackDiv.className = "alert alert-warning mt-3";
+          } else if (correctPercentage >= 40) {
+              feedbackMessage = "⚠ Some students struggled with this quiz. Consider reviewing the difficult concepts again.";
+              feedbackDiv.className = "alert alert-warning mt-3";
+          } else {
+              feedbackMessage = "❌ Many students found this quiz challenging. Try simplifying explanations or providing more practice exercises.";
+              feedbackDiv.className = "alert alert-danger mt-3";
+          }
+
+          feedbackDiv.innerHTML = `<strong>Teacher’s Feedback:</strong> ${feedbackMessage}`;
+      }
+
+      // Initialize Pie Chart
+      var quizAnswerChart = new Chart(ctx, {
+          type: "pie",
+          data: {
+              labels: ["Correct", "Incorrect"],
+              datasets: [{
+                  data: [currentCorrect, currentIncorrect],
+                  backgroundColor: ["#28a745", "#dc3545"]
+              }]
+          },
+          options: {
+              responsive: true,
+              plugins: {
+                  legend: { position: "bottom" },
+                  datalabels: {
+                      color: "#fff",
+                      font: { weight: "bold" },
+                      formatter: (value, ctx) => {
+                          let total = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                          let percentage = total ? ((value / total) * 100).toFixed(1) + "%" : "0%";
+                          return percentage;
+                      }
+                  }
+              }
+          },
+          plugins: [ChartDataLabels]
+      });
+
+      // Initial feedback update
+      updateFeedback(currentCorrect, currentIncorrect);
+
+      // Update chart & feedback when a different quiz is selected
+      quizDropdown.addEventListener("change", function () {
+          var selectedQuizId = this.value;
+
+          if (selectedQuizId === "all") {
+              quizAnswerChart.data.datasets[0].data = [currentCorrect, currentIncorrect];
+              updateFeedback(currentCorrect, currentIncorrect);
+          } else {
+              var correct = correctAnswersPerQuiz[selectedQuizId] || 0;
+              var incorrect = incorrectAnswersPerQuiz[selectedQuizId] || 0;
+              quizAnswerChart.data.datasets[0].data = [correct, incorrect];
+              updateFeedback(correct, incorrect);
+          }
+
+          quizAnswerChart.update();
+      });
+  });
+
+</script>
+<!-- Bootstrap Bundle với Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+
+</body>
+</html>

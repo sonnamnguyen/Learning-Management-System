@@ -912,7 +912,7 @@
                         <td class="text-center">
                             <a th:href="@{'/judgement/practice/code_space/' + ${exercise.id}}"
                                class="btn btn-outline-primary btn-sm" title="Information">
-                                <i class="bi bi-info-circle"></i>
+                                <i class="bi bi-file-text"></i>
                             </a>
                             <a th:href="@{'/exercises/edit/' + ${exercise.id}}" class="btn btn-outline-primary btn-sm"
                                title="Edit">
@@ -964,7 +964,7 @@
                         <div class="d-flex justify-content-end mt-auto" style="padding-bottom: 10px;">
                             <a th:href="@{'/judgement/practice/code_space/' + ${exercise.id}}"
                                class="btn btn-outline-primary btn-sm me-2">
-                                <i class="bi bi-info-circle"></i>
+                                <i class="bi bi-file-text"></i>
                             </a>
                             <a th:href="@{'/exercises/edit/' + ${exercise.id}}"
                                class="btn btn-outline-primary btn-sm me-2">
@@ -1009,40 +1009,51 @@
                                 <a class="page-link"
                                    th:href="@{/exercises(page=${currentPage - 1}, language=${currentLanguage}, level=${currentLevel}, description=${paramDescription}, title=${paramTitle})}"><</a>
                             </li>
-                            <!-- Danh sách số trang -->
-                            <th:block th:with="isNearStart=${currentPage == 0},
-                                  isNearEnd=${currentPage >= totalPages - 3},
-                                  startPage=${isNearStart ? 0 : (isNearEnd ? totalPages - 3 : currentPage)},
-                                  startPage=${T(java.lang.Math).max(0, startPage)},
-                                  endPage=${T(java.lang.Math).min(startPage + 2, totalPages - 1)}">
-                                <!-- Trang đầu tiên (chỉ hiển thị nếu ở gần cuối) -->
-                                <li class="page-item" th:if="${isNearEnd}"
-                                    th:classappend="${currentPage == 0} ? 'active'">
-                                    <a class="page-link"
-                                       th:href="@{/exercises(page=0, language=${currentLanguage}, level=${currentLevel}, title=${paramTitle}, description=${paramDescription})}">1</a>
-                                </li>
-                                <!-- Dấu ba chấm nếu cần (trước các trang chính, chỉ hiển thị khi ở gần cuối) -->
-                                <li class="page-item disabled" th:if="${isNearEnd and startPage > 1}">
-                                    <span class="page-link">...</span>
-                                </li>
-                                <!-- Hiển thị tối đa 3 trang từ startPage -->
-                                <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
+                            <!-- Trường hợp có từ 2 đến 3 trang: hiển thị tất cả số trang -->
+                            <th:block th:if="${totalPages <= 3}">
+                                <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
                                     th:classappend="${i == currentPage} ? 'active'">
                                     <a class="page-link"
                                        th:href="@{/exercises(page=${i}, language=${currentLanguage}, level=${currentLevel}, title=${paramTitle}, description=${paramDescription})}"
                                        th:text="${i + 1}">Page</a>
                                 </li>
-                                <!-- Dấu ba chấm nếu cần (sau các trang chính) -->
-                                <li class="page-item disabled" th:if="${endPage < totalPages - 1 and !isNearEnd}">
-                                    <span class="page-link">...</span>
-                                </li>
-                                <!-- Trang cuối cùng (hiển thị nếu không ở gần cuối) -->
-                                <li class="page-item" th:if="${endPage < totalPages - 1 and !isNearEnd}"
-                                    th:classappend="${currentPage == totalPages - 1} ? 'active'">
-                                    <a class="page-link"
-                                       th:href="@{/exercises(page=${totalPages - 1}, language=${currentLanguage}, level=${currentLevel}, title=${paramTitle}, description=${paramDescription})}"
-                                       th:text="${totalPages}">Last</a>
-                                </li>
+                            </th:block>
+                            <!-- Trường hợp có nhiều hơn 3 trang: giữ logic hiện tại -->
+                            <th:block th:if="${totalPages > 3}">
+                                <th:block th:with="isNearStart=${currentPage == 0},
+                          isNearEnd=${currentPage >= totalPages - 3},
+                          startPage=${isNearStart ? 0 : (isNearEnd ? totalPages - 3 : currentPage)},
+                          startPage=${T(java.lang.Math).max(0, startPage)},
+                          endPage=${T(java.lang.Math).min(startPage + 2, totalPages - 1)}">
+                                    <!-- Trang đầu tiên (chỉ hiển thị nếu ở gần cuối) -->
+                                    <li class="page-item" th:if="${isNearEnd}"
+                                        th:classappend="${currentPage == 0} ? 'active'">
+                                        <a class="page-link"
+                                           th:href="@{/exercises(page=0, language=${currentLanguage}, level=${currentLevel}, title=${paramTitle}, description=${paramDescription})}">1</a>
+                                    </li>
+                                    <!-- Dấu ba chấm nếu cần (trước các trang chính) -->
+                                    <li class="page-item disabled" th:if="${isNearEnd and startPage > 1}">
+                                        <span class="page-link">...</span>
+                                    </li>
+                                    <!-- Hiển thị tối đa 3 trang từ startPage -->
+                                    <li class="page-item" th:each="i : ${#numbers.sequence(startPage, endPage)}"
+                                        th:classappend="${i == currentPage} ? 'active'">
+                                        <a class="page-link"
+                                           th:href="@{/exercises(page=${i}, language=${currentLanguage}, level=${currentLevel}, title=${paramTitle}, description=${paramDescription})}"
+                                           th:text="${i + 1}">Page</a>
+                                    </li>
+                                    <!-- Dấu ba chấm nếu cần (sau các trang chính) -->
+                                    <li class="page-item disabled" th:if="${endPage < totalPages - 1 and !isNearEnd}">
+                                        <span class="page-link">...</span>
+                                    </li>
+                                    <!-- Trang cuối cùng (hiển thị nếu không ở gần cuối) -->
+                                    <li class="page-item" th:if="${endPage < totalPages - 1 and !isNearEnd}"
+                                        th:classappend="${currentPage == totalPages - 1} ? 'active'">
+                                        <a class="page-link"
+                                           th:href="@{/exercises(page=${totalPages - 1}, language=${currentLanguage}, level=${currentLevel}, title=${paramTitle}, description=${paramDescription})}"
+                                           th:text="${totalPages}">Last</a>
+                                    </li>
+                                </th:block>
                             </th:block>
                             <!-- Nút Next (>) -->
                             <li class="page-item" th:if="${currentPage < totalPages - 1}">

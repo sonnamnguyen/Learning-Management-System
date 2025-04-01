@@ -15,7 +15,6 @@ import java.util.Optional;
 public interface TestSessionRepository extends JpaRepository<TestSession, Long> {
     TestSession findTopByUserOrderByStartTimeDesc(User user);
 
-    // Đếm số lần làm bài theo từng tháng
     @Query("SELECT MONTH(r.completionTime), COUNT(r) FROM Result r GROUP BY MONTH(r.completionTime)")
     List<Object[]> countAttemptsByMonth();
 
@@ -29,6 +28,16 @@ public interface TestSessionRepository extends JpaRepository<TestSession, Long> 
 
     @Query("SELECT r FROM Result r WHERE r.testSession.id = :testSessionId")
     List<Result> findResultByTestSessionId(@Param("testSessionId") Long testSessionId);
+
+    List<TestSession> findByUserOrderByStartTimeDesc(User user);
+
+    @Query("SELECT DISTINCT ts FROM TestSession ts " +
+            "JOIN ts.answers a " +
+            "JOIN a.question q " +
+            "JOIN q.quizzes qz " +
+            "WHERE ts.user = :user AND qz.id = :quizId " +
+            "ORDER BY ts.startTime DESC")
+    List<TestSession> findByUserAndQuizOrderByStartTimeDesc(@Param("user") User user, @Param("quizId") Long quizId);
 
     @Query("SELECT ts FROM TestSession ts WHERE ts.studentAssessmentAttempt.id = :attemptId")
     Optional<TestSession> findByStudentAssessmentAttemptId(@Param("attemptId") Long attemptId);

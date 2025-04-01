@@ -42,15 +42,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static com.example.tools.QuizDuplicateChecker.checkDuplicateQuestion;
-
 @Service
 public class QuestionService {
 
-
+    @Autowired
+    private TestSessionRepository testSessionRepository;
     @Autowired
     private AssessmentQuestionRepository assessmentQuestionRepository;
-
     @Autowired
     private QuizRepository quizRepository;
     @Autowired
@@ -77,12 +75,6 @@ public class QuestionService {
     private AnswerOptionRepository answerOptionRepository;
     @Autowired
     private QuizService quizService;
-
-    private final TestSessionRepository testSessionRepository;
-
-    public QuestionService(TestSessionRepository testSessionRepository) {
-        this.testSessionRepository = testSessionRepository;
-    }
 
     @Autowired
     private CovertExcelToJsonService covertExcelToJsonService;
@@ -321,12 +313,12 @@ public class QuestionService {
     // GENERATE EXAM
     @Transactional
     public List<Quiz> generateQuizzes(String courseName, int numOfQuizzes, int questionsEachQuiz) throws CloneNotSupportedException {
-        if (numOfQuizzes <= 0) {
-            throw new InputException("Number of quizs must not be <= 0");
+        if (numOfQuizzes <= 0 || numOfQuizzes > 5) {
+            throw new InputException("Number of quizzes must be from 1 to 5");
         }
 
-        if (questionsEachQuiz <= 0) {
-            throw new InputException("Number of questions must not be <= 0");
+        if (questionsEachQuiz <= 0 || questionsEachQuiz > 100) {
+            throw new InputException("Number of questions must be from 1 to 100");
         }
 
         // CHECK TRÙNG NAME
@@ -1486,17 +1478,6 @@ public class QuestionService {
         return questionRepository.count();
     }
 
-//    @Transactional
-//    public List<Question> findQuestionsByAssessmentId(Long assessmentId) {
-//        List<AssessmentQuestion> assessmentQuestions =
-//                assessmentQuestionRepository.findByAssessmentIdOrderByOrderIndex(assessmentId);
-//
-//        // Chuyển đổi danh sách AssessmentQuestion -> danh sách Question
-//        return assessmentQuestions.stream()
-//                .map(AssessmentQuestion::getQuestion)
-//                .collect(Collectors.toList());
-//    }
-
     @Transactional
     public List<Question> findQuestionsByAssessmentId(Long assessmentId) {
         List<AssessmentQuestion> assessmentQuestions =
@@ -1521,5 +1502,7 @@ public class QuestionService {
         }
         return new ArrayList<>();
     }
+
+
 
 }

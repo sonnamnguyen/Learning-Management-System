@@ -5,6 +5,9 @@ const videoContainer = document.getElementById("videoContainer");
 
 // Disable all answer inputs and exercise links initially
 function disableInteractions() {
+    document.querySelectorAll(".question-card, .exercise-card").forEach(element => {
+        element.style.display = "none";
+    });
     document.querySelectorAll(".form-check-input, .exercise-title a").forEach(element => {
         element.disabled = true;
         element.classList.add("disabled");
@@ -13,6 +16,9 @@ function disableInteractions() {
 
 // Function to enable interactions
 function enableInteractions() {
+    document.querySelectorAll(".question-card, .exercise-card").forEach(element => {
+        element.style.display = "block";
+    });
     document.querySelectorAll(".form-check-input, .exercise-title a").forEach(element => {
         element.disabled = false;
         element.classList.remove("disabled");

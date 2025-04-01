@@ -314,7 +314,7 @@
 <div layout:fragment="content">
     <div class="dashboard-container">
         <div class="dashboard-header" data-aos="fade-down">
-            <h1><i class="fas fa-chart-line"></i> Dashboard Sinh Viên</h1>
+            <h1><i class="fas fa-chart-line"></i> Student Dashboard</h1>
         </div>
 
         <!-- Thông báo lỗi nếu có -->
@@ -322,14 +322,14 @@
 
         <!-- Thông tin sinh viên -->
         <div class="student-info" data-aos="fade-up">
-            <h2><i class="fas fa-user-graduate"></i> Thông tin sinh viên</h2>
+            <h2><i class="fas fa-user-graduate"></i> Student Information</h2>
             <div class="info-grid">
                 <div class="info-item" data-aos="fade-up" data-aos-delay="100">
-                    <strong><i class="fas fa-id-card"></i> Họ và tên:</strong>
+                    <strong><i class="fas fa-id-card"></i> Full Name:</strong>
                     <span th:text="${student != null ? student.lastName + ' ' + student.firstName : 'N/A'}">Nguyễn Văn A</span>
                 </div>
                 <div class="info-item" data-aos="fade-up" data-aos-delay="200">
-                    <strong><i class="fas fa-fingerprint"></i> MSSV:</strong>
+                    <strong><i class="fas fa-fingerprint"></i> Student ID:</strong>
                     <span th:text="${student != null ? student.id : 'N/A'}">12345678</span>
                 </div>
                 <div class="info-item" data-aos="fade-up" data-aos-delay="300">
@@ -345,7 +345,7 @@
 
         <!-- Biểu đồ điểm số -->
         <div class="chart-container" data-aos="fade-up">
-            <h2><i class="fas fa-chart-bar"></i> Biểu đồ điểm số và chênh lệch</h2>
+            <h2><i class="fas fa-chart-bar"></i> Score and Score Trend Chart </h2>
             <div class="chart-wrapper">
                 <canvas id="quizChart"></canvas>
             </div>
@@ -353,14 +353,14 @@
 
         <!-- Bảng thống kê chi tiết -->
         <div class="chart-container" data-aos="fade-up">
-            <h2><i class="fas fa-clipboard-list"></i> Chi tiết kết quả Quiz</h2>
+            <h2><i class="fas fa-clipboard-list"></i> Quiz Results Detail</h2>
             <table class="stats-table">
                 <thead>
                 <tr>
                     <th><i class="fas fa-file-alt"></i> Quiz</th>
-                    <th><i class="fas fa-book"></i> Khóa học</th>
-                    <th><i class="fas fa-star"></i> Điểm số</th>
-                    <th><i class="fas fa-clock"></i> Thời gian làm bài (phút)</th>
+                    <th><i class="fas fa-book"></i> Course</th>
+                    <th><i class="fas fa-star"></i> Score</th>
+                    <th><i class="fas fa-clock"></i> Time Taken (minutes)</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -381,12 +381,12 @@
 
         <!-- Thống kê theo khóa học -->
         <div class="chart-container" data-aos="fade-up">
-            <h2><i class="fas fa-graduation-cap"></i> Thống kê Quiz theo khóa học</h2>
+            <h2><i class="fas fa-graduation-cap"></i> Quiz Statistics by Course</h2>
             <table class="stats-table">
                 <thead>
                 <tr>
-                    <th><i class="fas fa-book"></i> Khóa học</th>
-                    <th><i class="fas fa-tasks"></i> Số bài Quiz</th>
+                    <th><i class="fas fa-book"></i> Course</th>
+                    <th><i class="fas fa-tasks"></i> Number of Quizzes</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -427,7 +427,7 @@ document.addEventListener("DOMContentLoaded", function() {
     } else {
         const chartWrapper = document.querySelector('.chart-wrapper');
         if (chartWrapper) {
-            chartWrapper.innerHTML = '<div class="alert alert-warning">Không có dữ liệu biểu đồ</div>';
+            chartWrapper.innerHTML = '<div class="alert alert-warning">No chart data</div>';
         }
     }
 });
@@ -435,7 +435,7 @@ document.addEventListener("DOMContentLoaded", function() {
 function createChart(quizScores, scoreDifferences) {
     const ctx = document.getElementById("quizChart");
     if (!ctx) {
-        console.error("Không tìm thấy canvas element");
+        console.error("Canvas element not found");
         return;
     }
 
@@ -460,7 +460,7 @@ function createChart(quizScores, scoreDifferences) {
                 labels: labels,
                 datasets: [
                     {
-                        label: 'Điểm số',
+                        label: 'Score',
                         data: scores,
                         backgroundColor: barGradient,
                         borderColor: 'rgba(67, 97, 238, 1)',
@@ -482,13 +482,13 @@ function createChart(quizScores, scoreDifferences) {
                         }
                     },
                     {
-                        label: 'Chênh lệch điểm',
-                        data: differences,
+                        label: 'Score Trend',
+                        data: scores,  // Sử dụng chính điểm số để vẽ đường trend
                         type: 'line',
                         borderColor: 'rgba(247, 37, 133, 1)',
-                        backgroundColor: lineGradient,
+                        backgroundColor: 'transparent',  // Không tô màu phía dưới đường
                         borderWidth: 2,
-                        fill: true,
+                        fill: false,
                         tension: 0.4,
                         pointBackgroundColor: 'rgba(247, 37, 133, 1)',
                         pointBorderColor: '#fff',
@@ -497,16 +497,7 @@ function createChart(quizScores, scoreDifferences) {
                         pointHoverRadius: 6,
                         order: 1,
                         datalabels: {
-                            color: 'rgba(247, 37, 133, 1)',
-                            align: 'bottom',
-                            offset: 4,
-                            formatter: function(value) {
-                                return value !== 0 ? (value > 0 ? '+' + value.toFixed(1) : value.toFixed(1)) : '';
-                            },
-                            font: {
-                                weight: 'bold',
-                                size: 11
-                            }
+                            display: false  // Ẩn hiển thị datalabels nhưng vẫn giữ tooltip
                         }
                     }
                 ]
@@ -516,7 +507,10 @@ function createChart(quizScores, scoreDifferences) {
                 maintainAspectRatio: false,
                 layout: {
                     padding: {
-                        top: 20
+                        top: 30,
+                        right: 20,
+                        bottom: 0,
+                        left: 0
                     }
                 },
                 interaction: {
@@ -555,7 +549,7 @@ function createChart(quizScores, scoreDifferences) {
                 plugins: {
                     legend: {
                         position: 'top',
-                        align: 'center',
+                        align: 'end',
                         labels: {
                             usePointStyle: true,
                             padding: 20,
@@ -563,6 +557,9 @@ function createChart(quizScores, scoreDifferences) {
                                 size: 12,
                                 family: "'Segoe UI', sans-serif"
                             }
+                        },
+                        margin: {
+                            bottom: 30
                         }
                     },
                     tooltip: {
@@ -583,7 +580,16 @@ function createChart(quizScores, scoreDifferences) {
                                     label += ': ';
                                 }
                                 if (context.parsed.y !== null) {
-                                    label += context.parsed.y.toFixed(1);
+                                    if (context.dataset.label === 'Score Trend') {
+                                        const index = context.dataIndex;
+                                        const diff = differences[index];
+                                        label = 'Score: ' + context.parsed.y.toFixed(1);
+                                        if (diff !== 0) {
+                                            label += ', Change: ' + (diff > 0 ? '+' + diff.toFixed(1) : diff.toFixed(1));
+                                        }
+                                    } else {
+                                        label += context.parsed.y.toFixed(1);
+                                    }
                                 }
                                 return label;
                             }
@@ -593,14 +599,14 @@ function createChart(quizScores, scoreDifferences) {
             }
         });
     } catch (error) {
-        console.error("Lỗi khi tạo biểu đồ:", error);
+        console.error("Error creating chart:", error);
         const chartWrapper = document.querySelector('.chart-wrapper');
         if (chartWrapper) {
-            chartWrapper.innerHTML = '<div class="alert alert-danger">Lỗi khi tạo biểu đồ</div>';
+            chartWrapper.innerHTML = '<div class="alert alert-danger">Error creating chart</div>';
         }
     }
 }
-</script>
+    </script>
 </div>
 </body>
 </html>

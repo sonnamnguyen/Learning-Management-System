@@ -26,4 +26,18 @@ public interface AnswerRepository extends JpaRepository<Answer, Long> {
     @Query("SELECT a FROM Answer a WHERE a.question.id = :questionId AND a.selectedOption.id = :selectedOptionId")
     List<Answer> findAllByQuestionIdAndSelectedOptionId(Long questionId, Long selectedOptionId);
 
+
+    @Query("SELECT q.quizzes.id, q.quizzes.name, COUNT(a) FROM Answer a " +
+            "JOIN a.question q " +
+            "WHERE a.isCorrect = true " +
+            "GROUP BY q.quizzes.id, q.quizzes.name")
+    List<Object[]> countCorrectAnswersByQuiz();
+
+    @Query("SELECT q.quizzes.id, q.quizzes.name, COUNT(a) FROM Answer a " +
+            "JOIN a.question q " +
+            "WHERE a.isCorrect = false " +
+            "GROUP BY q.quizzes.id, q.quizzes.name")
+    List<Object[]> countIncorrectAnswersByQuiz();
+
+
 }

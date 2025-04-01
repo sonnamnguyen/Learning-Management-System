@@ -87,13 +87,6 @@
             cursor: not-allowed;
             opacity: 0.7;
         }
-
-        .list-group-item {
-            display: none;
-        }
-        .accordion-item {
-            display: block;
-        }
     </style>
 
 
@@ -312,6 +305,15 @@
                     <!-- Questions Tab -->
                     <div class="tab-pane fade" id="questions" role="tabpanel" aria-labelledby="questions-tab">
                         <div class="row">
+                            <!-- Search Bar -->
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <div class="input-group">
+                                        <span class="input-group-text">🔍</span>
+                                        <input type="text" id="search-questions" class="form-control" placeholder="Search for questions..." onkeyup="filterQuestions()">
+                                    </div>
+                                </div>
+                            </div>
 
                             <!-- Multiple Choice Library -->
                             <div class="col-md-5">
@@ -1210,6 +1212,9 @@
                     .then(data => {
                         if (data.duplicateLists && Object.keys(data.duplicateLists).length > 0) {
                             showSimilarQuestionsModal(data.duplicateLists);
+                        }
+                        else {
+                            document.getElementById("assessment-form").submit();
                         }
                     })
                     .catch(error => {

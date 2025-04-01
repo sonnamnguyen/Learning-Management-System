@@ -6,7 +6,8 @@
                 <!-- Search Form -->
                 <form action="/assessments" method="get" class="d-flex w-50">
                     <!-- Correctly bind the searchQuery model attribute using Thymeleaf -->
-                    <input type="text" class="form-control me-2" name="searchQuery" th:value="${searchQuery}" placeholder="Search by title" aria-label="Search">
+                    <input type="text" class="form-control me-2" name="searchQuery" th:value="${searchQuery}"
+                           placeholder="Search by title" aria-label="Search">
                     <button class="btn btn-outline-secondary me-2" type="submit">
                         <i class="bi bi-search"></i>
                     </button>
@@ -23,13 +24,6 @@
                    th:if="${#strings.contains(curr_role, 'SUPERADMIN') or #strings.contains(curr_role, 'ADMIN')}">
                     <i class="bi bi-file-earmark-excel"></i> Export
                 </a>
-
-                <!-- Import Button that triggers modal -->
-                <button class="btn btn-outline-secondary me-2"
-                        data-bs-toggle="modal" data-bs-target="#importModal"
-                        th:if="${#strings.contains(curr_role, 'SUPERADMIN') or #strings.contains(curr_role, 'ADMIN')}">
-                    <i class="bi bi-upload"></i> Import
-                </button>
 
                 <a href="/assessments/create"
                    class="btn btn-primary"
@@ -114,7 +108,8 @@
                         </div>
                     </div>
 
-                    <div class="card-footer bg-light d-flex justify-content-between align-items-center small text-muted" style="margin-top: -0.9rem;">
+                    <div class="card-footer bg-light d-flex justify-content-between align-items-center small text-muted"
+                         style="margin-top: -0.9rem;">
                         <div class="btn-group gap-2">
                             <a th:href="@{assessments/{id}/preview(id=${assessment.id})}"
                                class="btn btn-sm btn-outline-secondary" title="Preview"
@@ -126,14 +121,6 @@
                                th:classappend="${curr_role != 'SUPERADMIN' and curr_role != 'ADMIN'} ? 'disabled'">
                                 <i class="fas fa-envelope"></i>
                             </a>
-                            <a href="javascript:void(0);" class="btn btn-outline-secondary btn-sm"
-                               th:attr="data-assessment-id=${assessment.id}"
-                               onclick="copyInviteLink(event, this.getAttribute('data-assessment-id'))"
-                               title="Copy Link"
-                               th:classappend="${curr_role != 'SUPERADMIN' and curr_role != 'ADMIN'} ? 'disabled'">
-                                <i class="fas fa-copy"></i>
-                            </a>
-
                         </div>
                         <small>
                             <i class="fas fa-user me-1"></i>
@@ -176,32 +163,10 @@
 <button onclick="scrollToTop()" id="scrollToTopButton" title="Go to top">
     <i class="fas fa-arrow-up"></i>
 </button>
-
-<!-- Modal for Import -->
-<div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="importModalLabel">Import Assessments from Excel</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <!-- Import form -->
-                <form method="post" enctype="multipart/form-data" action="/assessments/import">
-                    <div class="mb-3">
-                        <label for="file" class="form-label">Choose Excel File</label>
-                        <input type="file" name="file" id="file" class="form-control" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Import</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
 <script>
 
     // Show/hide scrollToTopButton
-    window.onscroll = function() {
+    window.onscroll = function () {
         const scrollToTopButton = document.getElementById("scrollToTopButton");
         if (document.body.scrollTop > 100 || document.documentElement.scrollTop > 100) {
             scrollToTopButton.style.display = "flex";
@@ -258,7 +223,7 @@
     }
 
     // Prominent the newly updated assessment
-    document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("DOMContentLoaded", function () {
         const assessmentCards = document.querySelectorAll(".card[data-updated-at]");
 
         assessmentCards.forEach(card => {
@@ -306,6 +271,7 @@
         transform: scale(1.05);
         transition: transform 0.5s ease-in-out;
     }
+
     /* Entrance animation for recently updated cards */
     @keyframes entranceAnimation {
         0% {
@@ -416,6 +382,7 @@
         background: #f1f1f1;
         border-radius: 4px;
     }
+
     .scrollable-table::-webkit-scrollbar-thumb {
         background: #888;
         border-radius: 4px;

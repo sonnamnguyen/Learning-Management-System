@@ -1,0 +1,315 @@
+<div class="container-fluid py-4">
+    <div class="card shadow-lg">
+        <div class="card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center" style="margin-top: 10px;">
+            <div class="d-flex align-items-center">
+                <a th:href="@{/quizes/participants/{quizId}(quizId=${quiz.id})}" class="btn btn-light btn-sm me-3">
+                    <i class="bi bi-arrow-left"></i> Back
+                </a>
+                <h3 class="card-title mb-0 text-dark">Participant Quiz Details</h3>
+            </div>
+            <div class="quiz-info">
+                <span class="badge bg-light text-primary">
+                    <i class="bi bi-book"></i>
+                    <span th:text="${quiz.name}">Quiz Name</span>
+                </span>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <!-- Error Alert -->
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <span th:text="${error}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+
+            <!-- Participant Information -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="bi bi-person-fill me-2"></i>Participant Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="avatar-container me-3">
+                                    <i class="bi bi-person-circle" style="font-size: 3rem;"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-0" th:text="${participant.user.firstName + ' ' + participant.user.lastName}">John Doe</h5>
+                                    <p class="text-muted mb-0" th:text="${participant.user.email}">john@example.com</p>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-6">
+                                    <p class="mb-1 text-muted">Attempts Used:</p>
+                                    <p class="fw-bold" th:text="${participant.attemptUsed + ' / ' + quiz.attemptLimit}">1/3</p>
+                                </div>
+                                <div class="col-6" th:if="${testSession != null && testSession.endTime != null}">
+                                    <p class="mb-1 text-muted">Score:</p>
+                                    <p class="fw-bold">
+                                        <span th:if="${totalScore != null}"
+                                              th:text="${#numbers.formatDecimal(totalScore, 1, 2) + '/100.00'}">75.00/100.00</span>
+                                        <span th:unless="${totalScore != null}">N/A</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="bi bi-clock-fill me-2"></i>Session Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <div th:if="${testSession != null}">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <p class="mb-1 text-muted">Start Time:</p>
+                                        <p class="fw-bold" th:text="${#temporals.format(testSession.startTime, 'dd/MM/yyyy HH:mm')}">01/01/2023 10:00</p>
+                                    </div>
+                                    <div class="col-6">
+                                        <p class="mb-1 text-muted">End Time:</p>
+                                        <p class="fw-bold" th:if="${testSession.endTime != null}"
+                                           th:text="${#temporals.format(testSession.endTime, 'dd/MM/yyyy HH:mm')}">01/01/2023 11:00</p>
+                                        <p class="fw-bold text-warning" th:unless="${testSession.endTime != null}">In Progress</p>
+                                    </div>
+                                </div>
+                                <div class="row mt-2" th:if="${testSession.endTime != null}">
+                                    <div class="col-12">
+                                        <p class="mb-1 text-muted">Duration:</p>
+                                        <p class="fw-bold" th:text="${T(java.time.Duration).between(testSession.startTime, testSession.endTime).toMinutes() + ' minutes'}">60 minutes</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div th:unless="${testSession != null}" class="text-center py-3">
+                                <p class="text-muted mb-0">No session started yet</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Test Sessions List -->
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Test Session History</h5>
+                </div>
+                <div class="card-body">
+                    <!-- No test sessions message -->
+                    <div th:if="${testSessionData.isEmpty()}" class="alert alert-info">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        No test sessions found for this quiz.
+                    </div>
+
+                    <!-- Existing test sessions accordion -->
+                    <div class="accordion" id="testSessionsAccordion" th:if="${!testSessionData.isEmpty()}">
+                        <!-- Loop through each test session -->
+                        <div th:each="sessionEntry, sessionStat : ${testSessionData}" class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button"
+                                        th:data-bs-target="'#session-' + ${sessionStat.index}"
+                                        data-bs-toggle="collapse">
+                                    <div class="d-flex justify-content-between w-100 align-items-center">
+                                        <span>
+                                            <span class="fw-bold" th:text="${'Attempt ' + (testSessionData.size() - sessionStat.index)}"></span>
+                                            <span class="ms-3 text-muted"
+                                                  th:text="${#temporals.format(sessionEntry.key.startTime, 'dd/MM/yyyy HH:mm')}">
+                                            </span>
+                                        </span>
+                                        <span class="badge bg-light text-dark"
+                                              th:text="${#numbers.formatDecimal(sessionEntry.value.totalScore, 1, 2) + '/100.00'}">
+                                        </span>
+                                    </div>
+                                </button>
+                            </h2>
+
+                            <div th:id="'session-' + ${sessionStat.index}"
+                                 class="accordion-collapse collapse"
+                                 data-bs-parent="#testSessionsAccordion">
+                                <div class="accordion-body">
+                                    <!-- Session Details -->
+                                    <div class="session-info mb-4">
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                <p class="mb-1 text-muted">Start Time:</p>
+                                                <p class="fw-bold" th:text="${#temporals.format(sessionEntry.key.startTime, 'dd/MM/yyyy HH:mm')}"></p>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <p class="mb-1 text-muted">End Time:</p>
+                                                <p class="fw-bold" th:text="${#temporals.format(sessionEntry.key.endTime, 'dd/MM/yyyy HH:mm')}"></p>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <p class="mb-1 text-muted">Duration:</p>
+                                                <p class="fw-bold" th:text="${sessionEntry.value.durationMinutes + ' minutes'}"></p>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <p class="mb-1 text-muted">Score:</p>
+                                                <p class="fw-bold">
+                                                    <span th:text="${sessionEntry.value.correctCount + '/' + sessionEntry.value.totalQuestions + ' (' + #numbers.formatDecimal(sessionEntry.value.totalScore, 1, 2) + '%)'}"></span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Questions for this session -->
+                                    <div class="questions-section">
+                                        <div class="accordion mt-4" th:id="'questions-accordion-' + ${sessionStat.index}">
+                                            <!-- Loop through each question -->
+                                            <div th:each="question, questionStat : ${sessionEntry.value.questions}" class="accordion-item">
+                                                <h2 class="accordion-header">
+                                                    <button class="accordion-button collapsed"
+                                                            th:classappend="${sessionEntry.value.questionCorrectnessMap.containsKey(question.id) && !sessionEntry.value.questionCorrectnessMap.get(question.id) ? 'incorrect-question' : ''}"
+                                                            type="button"
+                                                            th:data-bs-target="'#question-' + ${sessionStat.index} + '-' + ${questionStat.index}"
+                                                            data-bs-toggle="collapse">
+                                                        <div class="d-flex justify-content-between w-100 align-items-center">
+                                                            <span>
+                                                                <span class="fw-bold" th:text="${'Question ' + question.questionNo}"></span>
+                                                                <span class="badge ms-2"
+                                                                      th:if="${sessionEntry.value.questionCorrectnessMap.containsKey(question.id)}"
+                                                                      th:classappend="${sessionEntry.value.questionCorrectnessMap.get(question.id) ? 'bg-success' : 'bg-danger'}"
+                                                                      th:text="${sessionEntry.value.questionCorrectnessMap.get(question.id) ? 'Correct' : 'Incorrect'}">
+                                                                </span>
+                                                                <span class="badge bg-secondary ms-2"
+                                                                      th:unless="${sessionEntry.value.questionCorrectnessMap.containsKey(question.id)}">
+                                                                    Not Answered
+                                                                </span>
+                                                            </span>
+                                                        </div>
+                                                    </button>
+                                                </h2>
+
+                                                <div th:id="'question-' + ${sessionStat.index} + '-' + ${questionStat.index}"
+                                                     class="accordion-collapse collapse"
+                                                     th:data-bs-parent="'#questions-accordion-' + ${sessionStat.index}">
+                                                    <div class="accordion-body">
+                                                        <!-- Question text -->
+                                                        <div class="question-text mb-4">
+                                                            <p th:utext="${question.questionText}"></p>
+                                                        </div>
+
+                                                        <!-- Answer options -->
+                                                        <div class="answer-options" th:if="${question.questionType.name() != 'TEXT'}">
+                                                            <p class="text-muted mb-2">Answer Options:</p>
+                                                            <div class="list-group">
+                                                                <div th:each="option : ${sessionEntry.value.questionOptions.get(question.id)}"
+                                                                     class="list-group-item list-group-item-action"
+                                                                     th:classappend="${
+                                                                        sessionEntry.value.selectedOptionsMap.containsKey(question.id) &&
+                                                                        sessionEntry.value.selectedOptionsMap.get(question.id).contains(option.id) ?
+                                                                        (option.isCorrect ? 'list-group-item-success' : 'list-group-item-danger') :
+                                                                        (option.isCorrect ? 'list-group-item-success' : '')
+                                                                     }">
+                                                                    <div class="d-flex align-items-center">
+                                                                        <div class="form-check">
+                                                                            <input class="form-check-input" type="checkbox" disabled
+                                                                                   th:checked="${
+                                                                                    sessionEntry.value.selectedOptionsMap.containsKey(question.id) &&
+                                                                                    sessionEntry.value.selectedOptionsMap.get(question.id).contains(option.id)
+                                                                                   }">
+                                                                            <label class="form-check-label"
+                                                                                   th:text="${option.optionLabel + '. ' + option.optionText}">
+                                                                            </label>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Text answers (if applicable) -->
+                                                        <div class="text-answer mt-4" th:if="${question.questionType.name() == 'TEXT' && sessionEntry.value.participantAnswers.containsKey(question.id)}">
+                                                            <p class="text-muted mb-2">Student's Answer:</p>
+                                                            <div class="card">
+                                                                <div class="card-body">
+                                                                    <p class="mb-0" th:text="${sessionEntry.value.participantAnswers.get(question.id)[0].answerText}"></p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- No answer message -->
+                                                        <div class="alert alert-warning mt-4"
+                                                             th:if="${!sessionEntry.value.participantAnswers.containsKey(question.id)}">
+                                                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                                            No answer provided for this question.
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- No questions message -->
+            <div class="alert alert-info mt-4" th:if="${testSession == null || questions.isEmpty()}">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                <span th:if="${testSession == null}">The participant has not started this quiz yet.</span>
+                <span th:if="${testSession != null && questions.isEmpty()}">No questions found for this quiz.</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .accordion-button:not(.collapsed) {
+        background-color: #f8f9fa;
+        color: #212529;
+    }
+
+    .accordion-button:focus {
+        box-shadow: none;
+        border-color: rgba(0,0,0,.125);
+    }
+
+    .form-check-input:checked {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+
+    .form-check-input:disabled {
+        opacity: 1;
+    }
+
+    /* Thêm styles mới cho câu hỏi sai */
+    .accordion-button.incorrect-question {
+        background-color: #fff2f2 !important;
+        border-left: 4px solid #dc3545;
+    }
+
+    .accordion-button.incorrect-question:not(.collapsed) {
+        background-color: #fff2f2 !important;
+        color: #dc3545;
+    }
+
+    .accordion-button.incorrect-question::after {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23dc3545'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e") !important;
+    }
+
+    /* Thêm các styles mới này */
+    .accordion-button::after {
+        flex-shrink: 0;
+        width: 1.25rem;
+        height: 1.25rem;
+        margin-left: auto;
+        content: "";
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23212529'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-size: 1.25rem;
+        transition: transform .2s ease-in-out;
+    }
+
+    .accordion-button.collapsed::after {
+        transform: rotate(-90deg);
+    }
+
+    .accordion-button:not(.collapsed)::after {
+        transform: rotate(0deg);
+    }
+</style>

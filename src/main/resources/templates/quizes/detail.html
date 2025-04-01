@@ -718,7 +718,6 @@
         .catch(error => {
             console.error('Error:', error);
             location.reload();
-<!--            alert('Failed to update question. Please try again.');-->
         });
     }
 
@@ -761,6 +760,26 @@
 
     // Thêm event listener cho nút đóng
     document.getElementById('closeEditModalBtn')?.addEventListener('click', closeEditModal);
+
+    document.addEventListener("DOMContentLoaded", function() {
+        var form = document.getElementById("quiz-form");
+        
+        if (form) {
+            // Đảm bảo elapsedTime có giá trị mặc định
+            document.getElementById("elapsedTime").value = "0";
+            
+            form.addEventListener("submit", function() {
+                var startTime = new Date().getTime();
+                var now = new Date().getTime();
+                var elapsedSeconds = Math.floor((now - startTime) / 1000);
+                
+                // Đảm bảo elapsedTime không bao giờ rỗng
+                document.getElementById("elapsedTime").value = elapsedSeconds || "0";
+            });
+        }
+        
+        updateTime();
+    });
 
 </script>
 <style>

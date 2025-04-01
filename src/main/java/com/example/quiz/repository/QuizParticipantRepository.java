@@ -32,7 +32,6 @@ public interface QuizParticipantRepository extends JpaRepository<QuizParticipant
     List<QuizParticipant> findAllByQuizAndUser(Quiz quiz, User user);
 
     List<QuizParticipant> findAllByQuizId(Long quizId);
-    QuizParticipant findByQuizIdAndUserId(Long quizId, Long userId);
 
 
 //    @Query("SELECT qp FROM quiz_participants qp WHERE " +
@@ -58,4 +57,13 @@ public interface QuizParticipantRepository extends JpaRepository<QuizParticipant
            "WHERE q.id = :quizId AND ts.id = :testSessionId")
     Optional<QuizParticipant> findByQuizIdAndTestSessionId(@Param("quizId") Long quizId, 
                                                           @Param("testSessionId") Long testSessionId);
+
+    Optional<QuizParticipant> findByQuizIdAndUserId(Long quizId, Long userId);
+    QuizParticipant findByQuizIdAndUser_Id(Long quizId, Long userId);
+
+    @Query("SELECT q.name, COUNT(p) FROM QuizParticipant p JOIN p.quiz q GROUP BY q.name")
+    List<Object[]> countAttemptsByQuiz();
+
+
+
 }

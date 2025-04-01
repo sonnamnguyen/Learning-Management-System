@@ -23,6 +23,26 @@
             background-color: #ffffff !important;
             color: #000000 !important;
         }
+
+        .back-button {
+            position: fixed;
+            top: 80px; /* Điều chỉnh khoảng cách từ top */
+            left: 20px;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .back-button.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
     </style>
 </head>
 <body>
@@ -32,7 +52,7 @@
 
   <!-- ✅ Nút Back để quay lại danh sách Quiz -->
   <div class="mb-3">
-    <a th:href="@{/quizes}" class="btn btn-primary">
+    <a th:href="@{/quizes}" class="btn btn-primary back-button">
       <i class="bi bi-arrow-left"></i> Back to Quizzes
     </a>
   </div>
@@ -47,14 +67,23 @@
         <span th:text="${correctAnswers}"></span> / <span th:text="${totalCorrectAnswers}"></span>
       </p>
 
-
       <div class="mt-4">
         <h3>Detailed Results</h3>
 
         <div th:each="question, iterStat : ${questions}" class="mb-3">
           <div class="card">
             <div class="card-body">
-              <h5 class="card-title" th:text="'Question ' + ${iterStat.index + 1}"></h5>
+              <h5 class="card-title">
+                Question <span th:text="${iterStat.index + 1}"></span>
+                <span th:if="${question.questionType != 'TEXT'}" class="text-success">
+                                    <span th:if="${not #strings.equalsIgnoreCase(question.questionType, 'TEXT') and scorePerQuestion != null}" class="text-success">
+    - Score: <span th:text="${#numbers.formatDecimal(scorePerQuestion, 1, 2)}"></span>
+</span>
+
+                  <!--                                    <p>Debug: <span th:text="${question.questionType}"></span></p>-->
+
+    </span>                            </h5>
+
               <pre class="p-3 border rounded" style="background-color: #F0F0F0" th:utext="${question.questionText}"></pre>
 
               <!-- ✅ Nếu có danh sách đáp án (Trắc nghiệm) -->
@@ -104,5 +133,26 @@
   </div>
 </div>
 
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const backButton = document.querySelector('.back-button');
+        let lastScrollTop = 0;
+        
+        // Hiển thị nút khi scroll xuống 100px
+        window.addEventListener('scroll', function() {
+            let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            
+            if (scrollTop > 100) {
+                backButton.classList.add('visible');
+            } else {
+                backButton.classList.remove('visible');
+            }
+            
+            lastScrollTop = scrollTop;
+        });
+    });
+</script>
+
 </body>
 </html>
+<!--aa-->

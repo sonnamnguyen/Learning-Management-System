@@ -7,9 +7,9 @@
             <h1 class="text-center mb-1">Assessment Report</h1>
             <!--                Reduced font size-->
             <span class="text-primary" style="font-size: 1rem;">
-                    <i class="bi bi-box-arrow-up-right"></i>
-                    ASM
-                </span>
+                <i class="bi bi-box-arrow-up-right"></i>
+                ASM
+            </span>
         </div>
         <div class="d-flex">
             <!-- Thêm nút Edit Score -->
@@ -25,8 +25,11 @@
             <h6 style="font-size: 0.875rem;" th:text="${attemptInfo.email}"></h6>
             <!--                Reduced font size-->
             <p style="font-size: 0.875rem; margin-bottom: 0;">
-                Joined on: <span
-                    th:text="${#temporals.format(attemptInfo.attemptDate, 'dd-MM-yyyy, hh:mm a')}"></span>
+                Joined on: <span th:text="${#temporals.format(attemptInfo.attemptDate, 'dd-MM-yyyy, hh:mm a')}"></span>
+            </p>
+            <p style="font-size: 0.875rem; margin-bottom: 0;">
+                Duration: <span
+                    th:text="${#numbers.formatInteger(attemptInfo.duration / 3600, 2)} + ':' + ${#numbers.formatInteger((attemptInfo.duration % 3600) / 60, 2)} + ':' + ${#numbers.formatInteger(attemptInfo.duration % 60, 2)}"></span>
             </p>
             <!--                No margin-bottom-->
             <p style="font-size: 0.875rem; margin-top: 0;">
@@ -83,58 +86,58 @@
                         <div class="card-body">
                             <!--                                Leaving tab-->
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <span>
-                                        <i class="fas fa-external-link-alt me-2"></i>
-                                        Leaving tab
-                                    </span>
+                                <span>
+                                    <i class="fas fa-external-link-alt me-2"></i>
+                                    Leaving tab
+                                </span>
                                 <span style="color: #6c757d; font-size: 0.9rem;">
-                                        <span th:text="${tabLeaveCount}"></span> times
-                                    </span>
+                                    <span th:text="${tabLeaveCount}"></span> times
+                                </span>
                             </div>
                             <hr class="my-1">
                             <!--                                Pasted check-->
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <span>
-                                        <i class="fas fa-cut me-2"></i>
-                                        Pasted
-                                        <span style="font-style: italic; color: #6c757d;">from external sources</span>
-                                    </span>
+                                <span>
+                                    <i class="fas fa-cut me-2"></i>
+                                    Pasted
+                                    <span style="font-style: italic; color: #6c757d;">from external sources</span>
+                                </span>
                                 <span style="color: #6c757d; font-size: 0.9rem;">
-                                        <span th:text="${pasteCount}"></span> times
-                                    </span>
+                                    <span th:text="${pasteCount}"></span> times
+                                </span>
                             </div>
                             <hr class="my-1">
                             <!--                                Copied check-->
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <span>
-                                        <i class="bi bi-clipboard-check-fill"></i>
-                                        Copied
-                                        <span style="font-style: italic; color: #6c757d;">from internal sources</span>
-                                    </span>
+                                <span>
+                                    <i class="bi bi-clipboard-check-fill"></i>
+                                    Copied
+                                    <span style="font-style: italic; color: #6c757d;">from internal sources</span>
+                                </span>
                                 <span style="color: #6c757d; font-size: 0.9rem;">
-                                        <span th:text="${copyCount}"></span> times
-                                    </span>
+                                    <span th:text="${copyCount}"></span> times
+                                </span>
                             </div>
                             <hr class="my-1">
                             <!--                                AI usage-->
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <span>
-                                        <i class="fas fa-robot me-2"></i>
-                                        AI usage
-                                    </span>
+                                <span>
+                                    <i class="fas fa-robot me-2"></i>
+                                    AI usage
+                                </span>
                                 <span style="color: #6c757d; font-size: 0.9rem;">Not detected</span>
                             </div>
                             <hr class="my-1">
                             <!--                                Violation Face Count-->
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <span>
-                                        <i class="fas fa-user-secret me-2"></i>
-                                        Violation Face Count
-                                        <i class="fas fa-info-circle" style="color: #6c757d;"></i>
-                                    </span>
+                                <span>
+                                    <i class="fas fa-user-secret me-2"></i>
+                                    Violation Face Count
+                                    <i class="fas fa-info-circle" style="color: #6c757d;"></i>
+                                </span>
                                 <span style="color: #6c757d; font-size: 0.9rem;">
-                                        <span th:text="${violationFaceCount}"></span> times
-                                    </span>
+                                    <span th:text="${violationFaceCount}"></span> times
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -155,30 +158,31 @@
                                 </button>
 
                             </p>
-                            <div class="d-flex align-items-center" th:switch="${#strings.toUpperCase(assessment.assessmentType.name)}">
-                                <a href="#" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#AttemptDetailModal">
-                                    Attempt detail
-                                </a>
-                                <span class="mx-2">|</span>
+                            <div class="d-flex align-items-center"
+                                 th:switch="${#strings.toUpperCase(assessment.assessmentType.name)}">
 
                                 <th:block th:case="'QUIZ'">
-                                    <a href="#" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#QuizDetailsModal">
+                                    <a href="#" class="btn btn-link p-0" data-bs-toggle="modal"
+                                       data-bs-target="#QuizDetailsModal">
                                         Quiz Details
                                     </a>
                                 </th:block>
 
                                 <th:block th:case="'ASSIGNMENT'">
-                                    <a href="#" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#ExerciseDetailsModal">
+                                    <a href="#" class="btn btn-link p-0" data-bs-toggle="modal"
+                                       data-bs-target="#ExerciseDetailsModal">
                                         Exercise Details
                                     </a>
                                 </th:block>
 
                                 <th:block th:case="'QUIZ & ASSIGNMENT'">
-                                    <a href="#" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#QuizDetailsModal">
+                                    <a href="#" class="btn btn-link p-0" data-bs-toggle="modal"
+                                       data-bs-target="#QuizDetailsModal">
                                         Quiz Details
                                     </a>
                                     <span class="mx-2">|</span>
-                                    <a href="#" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#ExerciseDetailsModal">
+                                    <a href="#" class="btn btn-link p-0" data-bs-toggle="modal"
+                                       data-bs-target="#ExerciseDetailsModal">
                                         Exercise Details
                                     </a>
                                 </th:block>
@@ -194,7 +198,8 @@
         </div>
     </div>
 
-    <div class="modal fade" id="AttemptDetailModal" tabindex="-1" aria-labelledby="AttemptDetailsLabel" aria-hidden="true">
+    <div class="modal fade" id="AttemptDetailModal" tabindex="-1" aria-labelledby="AttemptDetailsLabel"
+         aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" style="max-width: 80%; width: 80%;">
             <div class="modal-content">
                 <div class="modal-header d-flex align-items-center" style="background-color: #f0f0f0;">
@@ -210,7 +215,9 @@
                                 <div th:each="question, iterStat : ${questions}" class="mb-4 border-bottom pb-3">
                                     <p class="fw-bold">
                                         <span th:text="${iterStat.count}"></span>.
-                                        <span th:text="${question?.questionText ?: 'Question text not available'}">Question text</span>
+                                        <span
+                                                th:text="${question?.questionText ?: 'Question text not available'}">Question
+                                            text</span>
                                     </p>
                                     <ul class="list-group">
                                         <li class="list-group-item"
@@ -222,7 +229,8 @@
                                                   class="badge ms-2" style="background-color: #85C8FF;">Your Answer</span>
                                             <span th:if="${ans.isCorrect}" class="badge bg-success ms-2">Correct</span>
                                         </li>
-                                        <li class="list-group-item text-muted" th:if="${#lists.isEmpty(questionAnswerOptionsMap[question.id])}">
+                                        <li class="list-group-item text-muted"
+                                            th:if="${#lists.isEmpty(questionAnswerOptionsMap[question.id])}">
                                             No answers assigned.
                                         </li>
                                     </ul>
@@ -242,7 +250,8 @@
                                     <strong>Score:</strong> <span th:text="${exAttempt.score_exercise}">0</span>
                                     &nbsp;|&nbsp;
                                     <strong>Date:</strong>
-                                    <span th:text="${#temporals.format(exAttempt.attemptDate, 'dd-MM-yyyy hh:mm a')}">Date</span>
+                                    <span
+                                            th:text="${#temporals.format(exAttempt.attemptDate, 'dd-MM-yyyy hh:mm a')}">Date</span>
                                 </p>
                                 <div class="submitted-code">
                                     <h6>Submitted Code:</h6>
@@ -263,22 +272,23 @@
     </div>
 
 
-    <div class="modal fade" id="QuizDetailsModal" tabindex="-1" aria-labelledby="quizDetailsModalLabel" aria-hidden="true">
+    <div class="modal fade" id="QuizDetailsModal" tabindex="-1" aria-labelledby="quizDetailsModalLabel"
+         aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" style="max-width: 80%; width: 80%;">
             <div class="modal-content">
+                <!-- Modal Header -->
                 <div class="modal-header d-flex align-items-center" style="background-color: #f0f0f0;">
                     <h5 class="modal-title me-auto" id="quizDetailsModalLabel">Quiz Details</h5>
                 </div>
+                <!-- Modal Body -->
                 <div class="modal-body">
                     <div class="card shadow-lg border-0">
                         <div class="card-body">
-                            <h4 class="fw-bold text-secondary mb-4">
-                                <i class="fas fa-list me-2"></i>Your Answers
-                            </h4>
                             <div th:each="question, iterStat : ${questions}" class="mb-4 border-bottom pb-3">
                                 <p class="fw-bold">
                                     <span th:text="${iterStat.count}"></span>.
-                                    <span th:text="${question?.questionText ?: 'Question text not available'}">Question text</span>
+                                    <span th:text="${question?.questionText ?: 'Question text not available'}">Question
+                                        text</span>
                                 </p>
                                 <ul class="list-group">
                                     <li class="list-group-item"
@@ -287,17 +297,28 @@
                                         <span th:if="${userAnswersMap != null
                                                   and userAnswersMap[question.id] != null
                                                   and #lists.contains(userAnswersMap[question.id], ans.id)}"
-                                              class="badge ms-2" style="background-color: #85C8FF;">Your Answer</span>
-                                        <span th:if="${ans.isCorrect}" class="badge bg-success ms-2">Correct</span>
+                                              class="badge ms-2" style="background-color: #85C8FF;">
+                                            Your Answer
+                                        </span>
+                                        <span th:if="${ans.isCorrect}" class="badge bg-success ms-2">
+                                            Correct
+                                        </span>
                                     </li>
-                                    <li class="list-group-item text-muted" th:if="${#lists.isEmpty(questionAnswerOptionsMap[question.id])}">
-                                        No answers assigned.
+                                    <!-- Nếu không có answer options -->
+                                    <li class="list-group-item text-muted"
+                                        th:if="${#lists.isEmpty(questionAnswerOptionsMap[question.id])}">
+                                        This is an essay question.
+                                    </li>
+                                    <li class="list-group-item"
+                                        th:if="${userAnswerTexts != null and userAnswerTexts.containsKey(question.id)}">
+                                        <span th:text="${userAnswerTexts.get(question.id)}"></span>
                                     </li>
                                 </ul>
                             </div>
                         </div>
                     </div>
                 </div>
+                <!-- Modal Footer -->
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
@@ -305,7 +326,8 @@
         </div>
     </div>
 
-    <div class="modal fade" id="ExerciseDetailsModal" tabindex="-1" aria-labelledby="ExerciseDetailsModalLabel" aria-hidden="true">
+    <div class="modal fade" id="ExerciseDetailsModal" tabindex="-1" aria-labelledby="ExerciseDetailsModalLabel"
+         aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-dialog-custom" style="max-width: 80%; width: 80%;">
             <div class="modal-content">
                 <div class="modal-header modal-header-custom d-flex align-items-center">
@@ -325,7 +347,8 @@
                                     <strong>Score:</strong> <span th:text="${attempt.score_exercise}">0</span>
                                     &nbsp;|&nbsp;
                                     <strong>Date:</strong>
-                                    <span th:text="${#temporals.format(attempt.attemptDate, 'dd-MM-yyyy hh:mm a')}">Date</span>
+                                    <span
+                                            th:text="${#temporals.format(attempt.attemptDate, 'dd-MM-yyyy hh:mm a')}">Date</span>
                                 </p>
                                 <div class="submitted-code">
                                     <h6>Submitted Code:</h6>
@@ -343,9 +366,6 @@
             </div>
         </div>
     </div>
-
-
-
 
 
     <!-- **MODAL STRUCTURE - Add this right before the closing `</div>` of `main-container` or at the end of `body`** -->
@@ -366,11 +386,13 @@
                     <div class="alert alert-secondary" role="alert">
                         <div class="row">
                             <div class="col-md-6">
-                                <p class="mb-1"><strong>Current Exercise Score:</strong> <span id="currentScoreEx">Loading...</span>
+                                <p class="mb-1"><strong>Current Exercise Score:</strong> <span
+                                        id="currentScoreEx">Loading...</span>
                                 </p>
                             </div>
                             <div class="col-md-6">
-                                <p class="mb-1"><strong>Current Quiz Score:</strong> <span id="currentScoreQuiz">Loading...</span>
+                                <p class="mb-1"><strong>Current Quiz Score:</strong> <span
+                                        id="currentScoreQuiz">Loading...</span>
                                 </p>
                             </div>
                         </div>
@@ -383,8 +405,8 @@
                             <label for="scoreEx" class="form-label">Exercise Score</label>
                             <div class="input-group score-input">
                                 <input type="number" class="form-control" id="scoreEx"
-                                       placeholder="Enter assignment score"
-                                       min="0" max="100" step="0.1" aria-describedby="scoreExHelp">
+                                       placeholder="Enter assignment score" min="0" max="100" step="0.1"
+                                       aria-describedby="scoreExHelp">
 
                             </div>
                             <div id="scoreExHelp" class="form-text">Enter a score between 0 and 100</div>
@@ -460,7 +482,7 @@
     };
 
     function scrollToTop() {
-        window.scrollTo({top: 0, behavior: 'smooth'});
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     // **INCLUDE EDIT SCORE SCRIPTS HERE -  Copy from `editscore.html` and paste below**
@@ -492,7 +514,7 @@
             resultAlert.innerHTML = message;
 
             // Scroll to the result - Scroll within modal if needed, or to the main view report
-            resultContainer.scrollIntoView({behavior: 'smooth'}); // Scrolls the whole page
+            resultContainer.scrollIntoView({ behavior: 'smooth' }); // Scrolls the whole page
 
             // Hide the message after 5 seconds if it's a success
             if (isSuccess) {
@@ -708,16 +730,19 @@
     /* ... (rest of your existing styles from viewreport.html) ... */
 
     /* **INCLUDE EDIT SCORE STYLES HERE - Copy from `editscore.html` and paste below** */
-    .edit-score-container { /*  You might not need this container class in modal context */
+    .edit-score-container {
+        /*  You might not need this container class in modal context */
         /* max-width: 700px;  Adjust if needed for modal */
         /* margin: 40px auto;  Remove or adjust margin for modal */
         background-color: #fff;
         border-radius: 8px;
         box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-        padding: 30px; /* Adjust padding for modal */
+        padding: 30px;
+        /* Adjust padding for modal */
     }
 
-    .header-section { /* You might not need this header section class in modal context */
+    .header-section {
+        /* You might not need this header section class in modal context */
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -749,7 +774,8 @@
         margin-bottom: 10px;
     }
 
-    .btn-back { /* You might not need btn-back class in modal context */
+    .btn-back {
+        /* You might not need btn-back class in modal context */
         color: #6c757d;
         text-decoration: none;
         display: inline-flex;
@@ -778,7 +804,8 @@
         position: fixed;
         bottom: 3vh;
         right: 20px;
-        display: none; /* Initially hidden */
+        display: none;
+        /* Initially hidden */
         width: 50px;
         height: 50px;
         background: linear-gradient(45deg, #6a11cb, #2575fc);
@@ -802,5 +829,4 @@
 
 
     /* **END INCLUDE EDIT SCORE STYLES** */
-
 </style>

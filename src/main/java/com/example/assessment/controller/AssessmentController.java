@@ -468,7 +468,7 @@ public class AssessmentController {
         // 2. Retrieve REGISTERED ATTEMPTS with pagination (for the main table)
         Page<StudentAssessmentAttempt> registeredAttemptsPage;
         try {
-            Pageable pageableReg = PageRequest.of(pageReg, 10);
+            Pageable pageableReg = PageRequest.of(pageReg, 10, Sort.by(Sort.Direction.DESC, "lastModified"));
             registeredAttemptsPage = assessmentAttemptService.findByAssessment_Id(id, pageableReg);
         } catch (Exception e) {
             logger.error("Error retrieving paged attempts for assessment id: {}", id, e);
@@ -1328,16 +1328,22 @@ public class AssessmentController {
                 // Lấy đáp án của người dùng từ TestSession liên kết với attempt
                 Optional<TestSession> tsOpt = testSessionRepository.findByStudentAssessmentAttemptId(attemptId);
                 Map<Long, List<Long>> userAnswersMap = new HashMap<>();
+                Map<Long, String> userAnswerTexts = new HashMap<>();
                 if (tsOpt.isPresent() && tsOpt.get().getAnswers() != null) {
                     for (Answer ans : tsOpt.get().getAnswers()) {
-                        if (ans.getQuestion() != null && ans.getSelectedOption() != null) {
+                        if (ans.getQuestion() != null) {
                             Long questionId = ans.getQuestion().getId();
-                            Long answerOptionId = ans.getSelectedOption().getId();
-                            userAnswersMap.computeIfAbsent(questionId, k -> new ArrayList<>()).add(answerOptionId);
+                            if (ans.getSelectedOption() != null) {
+                                Long answerOptionId = ans.getSelectedOption().getId();
+                                userAnswersMap.computeIfAbsent(questionId, k -> new ArrayList<>()).add(answerOptionId);
+                            } else if (ans.getAnswerText() != null && !ans.getAnswerText().trim().isEmpty()) {
+                                userAnswerTexts.put(questionId, ans.getAnswerText());
+                            }
                         }
                     }
                 }
                 model.addAttribute("userAnswersMap", userAnswersMap);
+                model.addAttribute("userAnswerTexts", userAnswerTexts);
 
                 LocalDateTime attemptDate = attempt.getAttemptDate();
                 List<StudentExerciseAttempt> studentExerciseAttempts = exerciseSessionService.findStudentExerciseAttemptsByAttemptDate(attemptDate);
