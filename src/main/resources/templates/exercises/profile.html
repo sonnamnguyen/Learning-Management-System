@@ -1068,6 +1068,18 @@
         border-color: #4CAF50;
         transform: scale(1.1);
     }
+    .achievements-counter {
+        background: linear-gradient(90deg, #4FC1FF, #4CAF50);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 500;
+        padding: 2px 8px;
+        border-radius: 4px;
+    }
+
+    .achievements-counter span {
+        font-weight: 700;
+    }
 
 </style>
 
@@ -1127,11 +1139,13 @@
     <div class="achievements-card">
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgb(61, 61, 61); padding-bottom: 12px;">
             <h3 class="achievements-title">Achievements</h3>
-
+            <div class="achievements-counter" style="font-size: 14px; color: #fff;">
+                <span id="completed-achievements">0</span>/<span id="total-achievements">0</span> Completed
+            </div>
         </div>
         <div class="achievements-container">
             <div class="achievements-grid">
-
+                <!-- Achievements will be populated here -->
             </div>
         </div>
     </div>
@@ -1823,12 +1837,22 @@
             const achievementsContainer = document.querySelector('.achievements-grid');
             achievementsContainer.innerHTML = '';
 
-            // Thêm tất cả achievements vào container
+            let completedCount = 0;
+            const totalAchievements = Object.keys(achievementTypes).length;
+
+            // Thêm tất cả achievements vào container và đếm số lượng hoàn thành
             Object.values(achievementTypes).forEach(achievement => {
                 const progress = achievement.checkProgress(userData);
+                if (progress.isCompleted) {
+                    completedCount++;
+                }
                 const achievementHTML = createAchievementHTML(achievement, progress);
                 achievementsContainer.insertAdjacentHTML('beforeend', achievementHTML);
             });
+
+            // Cập nhật số đếm achievements
+            document.getElementById('completed-achievements').textContent = completedCount;
+            document.getElementById('total-achievements').textContent = totalAchievements;
 
             // Khởi tạo tooltips
             const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
@@ -1838,8 +1862,6 @@
                 delay: { show: 100, hide: 100 }
             }));
         }
-
-
 
         // Khởi tạo charts khi scroll đến gần vị trí hiển thị
         const observerOptions = {

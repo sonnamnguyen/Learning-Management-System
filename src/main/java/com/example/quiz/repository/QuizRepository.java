@@ -54,5 +54,12 @@ public interface QuizRepository extends JpaRepository<Quiz, Long> {
 
     Page<Quiz> findByNameContainingIgnoreCaseAndTagsIn(String name, List<Long> tagIds, Pageable pageable);
 
+    // 🔥 Lấy danh sách quiz mới nhất, sắp xếp theo ngày tạo giảm dần
+    @Query("SELECT q FROM Quiz q ORDER BY q.createdAt DESC")
+    List<Quiz> findAllOrderByCreatedAtDesc();
+
+    // Thêm phương thức để sắp xếp quiz theo ID giảm dần
+    @Query("SELECT q FROM Quiz q ORDER BY q.id DESC")
+    List<Quiz> findAllByOrderByIdDesc();
 
 }

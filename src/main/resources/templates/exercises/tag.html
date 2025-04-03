@@ -360,9 +360,9 @@
 
   <div class="header">
     <div class="header-left">
-      <button class="back-btn" onclick="goBack()">
+      <a href="#" id="backLink" class="back-btn">
         <i class="bi bi-arrow-left"></i> Back
-      </button>
+      </a>
       <h2>Tag Management</h2>
     </div>
     <div class="header-right">
@@ -613,15 +613,29 @@
   });
 </script>
 <script>
-  function goBack() {
-    if (window.location.pathname.includes("/exercises/create")) {
-      window.location.href = "/exercises/create";
-    } else if (window.location.pathname.includes("/exercises/edit")) {
-      window.location.href = "/exercises/edit";
-    } else {
-      window.history.back();
+  document.addEventListener("DOMContentLoaded", function () {
+    const backLink = document.getElementById("backLink");
+
+    // Lấy redirect từ URL trước
+    const urlParams = new URLSearchParams(window.location.search);
+    let redirectUrl = urlParams.get("redirect");
+
+    if (!redirectUrl) {
+      // Nếu không có trên URL, lấy từ localStorage
+      redirectUrl = localStorage.getItem("redirectBack");
     }
-  }
+
+    if (redirectUrl) {
+      try {
+        backLink.href = decodeURIComponent(redirectUrl); // Giải mã URL an toàn
+      } catch (error) {
+        console.error("Lỗi giải mã URL:", error);
+        backLink.href = "/exercises/create"; // Mặc định nếu lỗi
+      }
+    } else {
+      backLink.href = "/exercises/create"; // Mặc định nếu không có redirect
+    }
+  });
 </script>
 </body>
 </html>

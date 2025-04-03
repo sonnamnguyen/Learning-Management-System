@@ -386,7 +386,7 @@
             >
                 <!-- Name -->
                 <div class="mb-3">
-                    <label for="name" class="form-label">Name:</label>
+                    <label for="name" class="form-label">Title:</label>
                     <input
                             type="text"
                             id="name"
@@ -402,7 +402,7 @@
                 <div class="mb-3">
                     <div class="d-flex align-items-center gap-2 mb-2">
                         <label for="tagIds" class="form-label mb-0">Tags</label>
-                        <a href="/category?redirect=" id="tagRedirect" class="tag-button">+</a>
+                        <a href="/category" id="tagRedirect" class="tag-button">+</a>
                     </div>
                     <!-- Display selected tags -->
                     <div id="selected-tags" class="mt-2"></div>
@@ -536,7 +536,7 @@
                 <div id="jsonInputDiv">
                     <label for="testCases" class="form-label">Test Cases (JSON Format)</label>
                     <textarea th:text="${testCasesJson}" class="form-control" id="testCases" name="testCasesJson"
-                              placeholder='[{"input": "", "expectedOutput": ""}]'></textarea>
+                              placeholder='[{"input":" ","expectedOutput":" ","hidden":false},{"input":" ","expectedOutput":" ","hidden":true}]'></textarea>
                 </div>
 
                 <!-- Manual UI Input Method with Tabs -->
@@ -1089,9 +1089,9 @@
 <script>
 
     function saveAndGoBack() {
-        sessionStorage.setItem("shouldFilterOnce", "true"); // Đánh dấu để lọc
+        sessionStorage.setItem("shouldFilterOnce", "true");
+        goBackWithFilters();// Đánh dấu để lọc
     }
-
     function goBackWithFilters() {
         const language = sessionStorage.getItem("selectedLanguage") || "";
         const level = sessionStorage.getItem("selectedLevel") || "";
@@ -1110,6 +1110,20 @@
         window.location.href = "/exercises?" + queryParams.toString();
     }
 
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const tagRedirect = document.getElementById("tagRedirect");
+
+        if (tagRedirect) {
+            // Lấy URL hiện tại và lưu vào localStorage trước khi chuyển trang
+            const currentUrl = window.location.href;
+            localStorage.setItem("redirectBack", currentUrl);
+
+            // Chuyển hướng đến tag.html với tham số redirect
+            tagRedirect.href = `/category?redirect=${encodeURIComponent(currentUrl)}`;
+        }
+    });
 </script>
 </body>
 </html>

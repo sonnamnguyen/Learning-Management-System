@@ -602,7 +602,8 @@
             <div class="score-left-2">
                 AVG Run Time:
                 &ensp;
-                <span style="font-weight: normal; font-size: 20px; color: #3d75ea;" th:text="${runTime} + ' ms'"></span>
+                <span style="font-weight: normal; font-size: 20px; color: #3d75ea;" th:if="${runTime} != 0" th:text="${runTime} + ' ms'"></span>
+                <span style="font-weight: normal; font-size: 20px; color: #3d75ea;" th:if="${runTime} == 0" th:text="'N/A'"></span>
             </div>
         </div>
 

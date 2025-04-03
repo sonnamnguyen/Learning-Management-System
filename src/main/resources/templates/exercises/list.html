@@ -1090,7 +1090,7 @@
 </div>
 <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
     <i class="bi bi-check-circle-fill"></i>
-    <span th:text="${successMessage}"></span>
+    <span id="successMessage" th:text="${successMessage}"></span>
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
 
@@ -1329,19 +1329,6 @@
     }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script th:if="${successMessage}">
-    Swal.fire({
-        icon: 'success',
-        title: '[[${successMessage}]]!',
-        text: '  ',
-        timer: 2000,  // Tự động đóng sau 2 giây
-        timerProgressBar: true,  // Hiển thị thanh thời gian chạy
-        showConfirmButton: false, // Ẩn nút "OK"
-        willClose: () => {
-            window.location.href = '/exercises';  // Điều hướng về trang mong muốn
-        }
-    });
-</script>
 
 <script th:if="${error}">
     Swal.fire({
@@ -1582,7 +1569,7 @@
         // Sự kiện thay đổi bộ lọc -> Lưu & Submit
         languageFilter.addEventListener("change", submitFormWithSave);
         levelFilter.addEventListener("change", submitFormWithSave);
-        document.querySelectorAll('input[name="tags"]').forEach(checkbox => {checkbox.addEventListener("change", submitFormWithSave);});
+
         function restoreFilters() {
             const selectedLanguage = sessionStorage.getItem("selectedLanguage");
             const selectedLevel = sessionStorage.getItem("selectedLevel");
@@ -1603,7 +1590,6 @@
         }
 
         restoreFilters(); // Khôi phục bộ lọc khi tải trang
-        console.log(sessionStorage.getItem("shouldFilterOnce"));
         // 🟢 Khi quay lại từ trang Edit, tự động submit lại 1 lần với bộ lọc đã chọn
         if (sessionStorage.getItem("shouldFilterOnce") === "true") {
             const successMessage = document.getElementById("successMessage")?.textContent.trim();
@@ -1622,7 +1608,6 @@
 
                     // 🟢 Xóa shouldFilterOnce sau khi submit xong
                     sessionStorage.removeItem("shouldFilterOnce");
-                    sessionStorage.removeItem("successMessage");
                 });
             }
         }
@@ -1633,17 +1618,7 @@
         sessionStorage.removeItem("selectedLevel");
         sessionStorage.removeItem("selectedTags");
         sessionStorage.removeItem("shouldFilterOnce"); // Ngăn form tự động submit lại
-
-        document.getElementById("searchInput").value = "";
-        document.getElementById("languageFilter").value = "";
-        document.getElementById("levelFilter").value = "";
-
-        document.querySelectorAll('#tagFilter input[type="checkbox"]').forEach(checkbox => {
-            checkbox.checked = false;
-        });
-
-        // Submit lại form với bộ lọc trống
-        document.getElementById("filterForm").submit();
+        window.location.href = "/exercises";
     }
 </script>
 </body>

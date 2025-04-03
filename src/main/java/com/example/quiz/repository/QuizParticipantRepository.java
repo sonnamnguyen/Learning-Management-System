@@ -61,8 +61,14 @@ public interface QuizParticipantRepository extends JpaRepository<QuizParticipant
     Optional<QuizParticipant> findByQuizIdAndUserId(Long quizId, Long userId);
     QuizParticipant findByQuizIdAndUser_Id(Long quizId, Long userId);
 
-    @Query("SELECT q.name, COUNT(p) FROM QuizParticipant p JOIN p.quiz q GROUP BY q.name")
+    @Query("SELECT q.id, q.name, SUM(p.attemptUsed) " +
+            "FROM QuizParticipant p JOIN p.quiz q " +
+            "GROUP BY q.id, q.name " +
+            "ORDER BY q.id DESC")
     List<Object[]> countAttemptsByQuiz();
+
+    @Query("SELECT SUM(p.attemptUsed) FROM QuizParticipant p")
+    Long countTotalAttempts();
 
 
 
