@@ -16,7 +16,7 @@ import java.util.Set;
 @Repository
 public interface QuizRepository extends JpaRepository<Quiz, Long> {
     Optional<Quiz> findById(Long id);
-    @Query("SELECT m FROM Quiz m WHERE m.name LIKE %:searchQuery%")
+    @Query("SELECT m FROM Quiz m WHERE LOWER(m.name) LIKE LOWER(CONCAT('%', :searchQuery, '%'))")
     Page<Quiz> searchQuizs(@Param("searchQuery") String searchQuery, Pageable pageable);
     Page<Quiz> findAll(Pageable pageable);
     List<Quiz> findAll();
@@ -53,5 +53,6 @@ public interface QuizRepository extends JpaRepository<Quiz, Long> {
     Page<Quiz> findByCourseIdAndTagsIn(Long courseId, List<Long> tagIds, Pageable pageable);
 
     Page<Quiz> findByNameContainingIgnoreCaseAndTagsIn(String name, List<Long> tagIds, Pageable pageable);
+
 
 }

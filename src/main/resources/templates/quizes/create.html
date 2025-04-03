@@ -406,8 +406,6 @@
         pointer-events: none;
     }
 </style>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     // Định nghĩa validation rules
     const VALIDATION_RULES = {
@@ -1054,7 +1052,7 @@
                     } else {
                         notificationSound.play();
 
-                        alert(`No response from AI`)
+                        alert(`Connection error, please try again.`)
                     }
 
                     AIGenerate.html('New Generate');
@@ -1079,7 +1077,7 @@
     });
 
     function sendQuizdata(event) {
-        event.preventDefault(); // Ngăn hành vi submit mặc định
+        event.preventDefault();
 
         // Lấy dữ liệu từ quizForm
         const quizForm = new FormData(document.getElementById("quizForm"));
@@ -1150,23 +1148,38 @@
 
         console.log(JSON.stringify(quizData)); // Kiểm tra dữ liệu thu thập được
 
+        // Lấy dữ liệu từ form tạo thành đối tượng JSON gửi đi
+        let quizJson = JSON.stringify(quizData);
+
+        // Thêm tham số tagIds vào URL nếu có chọn tag
+        const selectedTagsInput = document.getElementById("selectedTagsInput");
+        let url = "/quizes/create";
+        let tagParams = "";
+
+        if (selectedTagsInput && selectedTagsInput.value) {
+            const tagIds = selectedTagsInput.value.split(',');
+            tagParams = tagIds.map(id => `tagIds=${id}`).join('&');
+            if (tagParams) {
+                url += "?" + tagParams;
+            }
+        }
+
         // Gửi dữ liệu bằng fetch
-        fetch("/quizes/create", {
+        fetch(url, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify(quizData),
+            body: quizJson,
         })
-            .then((response) => {
-                if (response.ok) {
-                    window.location.href = "/quizes";
-                } else {
-                    console.error(response);
-                    alert("Có lỗi xảy ra!");
-                }
-            })
-            .catch((error) => console.error("Error:", error));
+        .then((response) => {
+            if (response.ok) {
+                window.location.href = "/quizes";
+            } else {
+                console.error(response);
+                alert("Có lỗi xảy ra!");
+            }
+        });
     }
 
     // nút mở modal view all

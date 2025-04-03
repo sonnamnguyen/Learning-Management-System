@@ -247,7 +247,8 @@
                                             <h5 class="me-2 question-number">
                                                 <strong th:text="${iterStat.index + 1} +'.'"></strong>
                                             </h5>
-                                            <p class="question-text" th:utext="${question.questionText}"></p>
+                                            <pre style="white-space: normal;" class="question-text"
+                                                 th:utext="${question.questionText}"></pre>
                                             <input type="checkbox" class="form-check-input me-2"
                                                    th:attr="id='check_' + ${question.id}">
                                             <i class="bi bi-flag"></i>

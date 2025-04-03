@@ -239,7 +239,8 @@
                                             </button>
 
                                             <input id="questionNo" class="question-no text-center"
-                                                   th:value="${question.questionNo}" th:onchange="|changeSortOrder(this, ${quiz.id})|">
+                                                   th:value="${question.questionNo}" th:onchange="|changeSortOrder(this, ${quiz.id})|"
+                                            readonly>
 
                                             <button id="moveDown" class="question-no btn btn-edit btn-sm rounded-circle
                                                 d-flex justify-content-center align-items-center fs-6"

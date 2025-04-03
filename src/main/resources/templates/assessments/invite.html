@@ -19,9 +19,6 @@
                     <li class="breadcrumb-item active" aria-current="page">Invite candidates</li>
                 </ol>
             </nav>
-
-            <h1 class="text-center mt-2">Assessment</h1>
-
             <div class="container mt-4">
                 <h2 class="text-center mb-4">Invite Candidates for <span class="text-primary">ASM</span></h2>
                 <!-- Email Invitation Form -->
@@ -41,7 +38,8 @@
                             </div>
                             <div class="form-group mt-3">
                                 <label for="expirationDate">Expiration Date & Time:</label>
-                                <input type="datetime-local" name="expirationDate" id="expirationDate" class="form-control" required>
+                                <input type="datetime-local" name="expirationDate" id="expirationDate"
+                                       class="form-control" required>
                             </div>
                             <!-- Nút Import từ Excel -->
                             <div class="form-group mt-3 d-flex align-items-center">
@@ -54,13 +52,15 @@
                                         onchange="displayFileName(event)"
                                 >
                                 <label for="fileUpload" class="btn btn-outline-secondary me-2">Choose File</label>
-                                <button id="downloadExcelButton" class="btn btn-primary me-2">Download Form Excel</button>
+                                <button id="downloadExcelButton" class="btn btn-primary me-2">Download Form Excel
+                                </button>
                                 <span id="selectedFileName" class="text-muted ms-2"></span>
                             </div>
 
                             <div class="text-end mt-3">
                                 <button type="submit" class="btn btn-success">Send Invitations</button>
-                                <button type="button" class="btn btn-primary me-2" onclick="importEmails()">Import</button>
+                                <button type="button" class="btn btn-primary me-2" onclick="importEmails()">Import
+                                </button>
                                 <a href="/assessments" class="btn btn-secondary">Back to List</a>
                             </div>
 
@@ -76,7 +76,8 @@
                     <div class="card-body">
                         <div class="form-group">
                             <label for="candidateSearch">Search Candidates:</label>
-                            <input type="text" id="candidateSearch" class="form-control" placeholder="Search by name or email..." onkeyup="filterCandidates()">
+                            <input type="text" id="candidateSearch" class="form-control"
+                                   placeholder="Search by name or email..." onkeyup="filterCandidates()">
                         </div>
                         <table class="table table-bordered mt-3" id="candidateTable">
                             <thead>
@@ -232,10 +233,10 @@
 
         reader.onload = function (event) {
             const data = new Uint8Array(event.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
+            const workbook = XLSX.read(data, {type: 'array'});
 
             const sheet = workbook.Sheets[workbook.SheetNames[0]];
-            const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+            const rows = XLSX.utils.sheet_to_json(sheet, {header: 1});
 
             let emails = new Set(emailTextArea.value.split(",").map(e => e.trim()).filter(e => e !== ""));
 
@@ -258,15 +259,15 @@
     }
 </script>
 <script>
-    document.getElementById('downloadExcelButton').addEventListener('click', function() {
+    document.getElementById('downloadExcelButton').addEventListener('click', function () {
         // Tạo một workbook mới
         var workbook = XLSX.utils.book_new();
 
         // Dữ liệu mẫu
         var data = [
             ["Email", "Chỉ cần nhập vào cột A những email cần gửi là được"],
-            [ "nva@example.com"],
-            [ "ttb@example.com"]
+            ["nva@example.com"],
+            ["ttb@example.com"]
         ];
 
         // Tạo một worksheet từ dữ liệu
@@ -282,7 +283,7 @@
         });
 
         // Convert the buffer to a Blob and create a download link
-        var blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
+        var blob = new Blob([excelBuffer], {type: 'application/octet-stream'});
         var url = window.URL.createObjectURL(blob);
         var a = document.createElement('a');
         a.href = url;

@@ -78,42 +78,6 @@
                 </div>
             </div>
 
-            <!-- Thay đổi tiêu đề thống kê dựa vào role -->
-            <div class="row mb-4" th:if="${!isStudent}">
-                <div class="col-md-3">
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-body text-center">
-                            <h5 class="card-title">Total Participants</h5>
-                            <p class="h3 text-primary mb-0" th:text="${totalParticipants}">0</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-body text-center">
-                            <h5 class="card-title">Completed</h5>
-                            <p class="h3 text-success mb-0" th:text="${completedCount}">0</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-body text-center">
-                            <h5 class="card-title">In Progress</h5>
-                            <p class="h3 text-warning mb-0" th:text="${inProgressCount}">0</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-body text-center">
-                            <h5 class="card-title">Not Started</h5>
-                            <p class="h3 text-secondary mb-0" th:text="${notStartedCount}">0</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <!-- Student-specific information section (now in English) -->
             <div class="row mb-4" th:if="${isStudent && !#lists.isEmpty(participants)}">
                 <div class="col-md-12">
@@ -121,11 +85,11 @@
                         <div class="card-body">
                             <h5 class="card-title">Your Quiz Results Details</h5>
                             <div class="row mt-3">
-                                <div class="col-md-3">
+                                <div class="col-md-4">
                                     <p class="mb-1 text-muted">Attempts Used:</p>
                                     <p class="h4" th:text="${participants[0].attemptUsed + '/' + quiz.attemptLimit}">1/3</p>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-4">
                                     <p class="mb-1 text-muted">Last Completion Time:</p>
                                     <p class="h4" th:if="${participants[0].testSession != null && participants[0].testSession.endTime != null}"
                                        th:text="${#temporals.format(participants[0].testSession.endTime, 'dd/MM/yyyy HH:mm')}">
@@ -134,17 +98,7 @@
                                         Not completed
                                     </p>
                                 </div>
-                                <div class="col-md-3">
-                                    <p class="mb-1 text-muted">Your Score:</p>
-                                    <p class="h4 fw-bold" th:if="${participants[0].testSession != null && participants[0].testSession.results != null && !participants[0].testSession.results.isEmpty()}"
-                                       th:text="${participants[0].testSession.results.get(0).getScore() + '%'}"
-                                       th:classappend="${participants[0].testSession.results.get(0).getScore() >= 70 ? 'text-success' : 'text-danger'}">
-                                    </p>
-                                    <p class="h4 text-muted" th:unless="${participants[0].testSession != null && participants[0].testSession.results != null && !participants[0].testSession.results.isEmpty()}">
-                                        No score yet
-                                    </p>
-                                </div>
-                                <div class="col-md-3">
+                                <div class="col-md-4">
                                     <p class="mb-1 text-muted">Status:</p>
                                     <p class="h4" th:if="${participants[0].testSession != null}">
                                         <span th:if="${participants[0].testSession.endTime != null}" class="text-success">Completed</span>
@@ -166,7 +120,6 @@
                         <th class="text-center">#</th>
                         <th>Participant</th>
                         <th>Session Info</th>
-                        <th>Performance</th>
                         <th>Attempts</th>
                         <th>Actions</th>
                     </tr>
@@ -202,16 +155,6 @@
                                 </span>
                         </td>
                         <td>
-                            <div th:if="${participant.testSession != null && participant.testSession.results != null && !participant.testSession.results.isEmpty()}"
-                                 class="score-badge"
-                                 th:classappend="${participant.testSession.results.get(0).getScore() >= 70} ? 'high-score' : 'low-score'">
-                                <span th:text="${participant.testSession.results.get(0).getScore() + '%'}"></span>
-                            </div>
-                            <span class="badge bg-secondary" th:unless="${participant.testSession != null && participant.testSession.results != null && !participant.testSession.results.isEmpty()}">
-                                    No Score
-                                </span>
-                        </td>
-                        <td>
                             <div class="attempts-info">
                                     <span class="badge" th:classappend="${participant.attemptUsed != null} ? 'bg-info' : 'bg-secondary'">
                                         <span th:if="${participant.attemptUsed != null && quiz != null}"
@@ -229,15 +172,6 @@
                                    class="btn btn-sm btn-outline-primary" title="View Details">
                                     <i class="bi bi-eye"></i>
                                 </a>
-                                <a th:if="${participant.testSession != null && participant.testSession.endTime != null}"
-                                   th:href="@{/quizes/participants/{quizId}/result/{testSessionId}(quizId=${quizId},testSessionId=${participant.testSession.id})}"
-                                   class="btn btn-sm btn-outline-success" title="View Result">
-                                    <i class="bi bi-graph-up"></i>
-                                </a>
-                                <button th:unless="${participant.testSession != null && participant.testSession.endTime != null}"
-                                        class="btn btn-sm btn-outline-secondary" disabled title="No Result Available">
-                                    <i class="bi bi-graph-up"></i>
-                                </button>
                             </div>
                         </td>
                     </tr>
@@ -253,110 +187,6 @@
         </div>
     </div>
 </div>
-
-<style>
-                            .participants-table {
-                                max-height: 600px;
-                                overflow-y: auto;
-                            }
-
-                            .table thead th {
-                                position: sticky;
-                                top: 0;
-                                background: #f8f9fa;
-                                z-index: 1;
-                            }
-
-                            .score-badge {
-                                padding: 6px 12px;
-                                border-radius: 20px;
-                                font-weight: bold;
-                            }
-
-                            .high-score {
-                                background-color: #d4edda;
-                                color: #155724;
-                            }
-
-                            .low-score {
-                                background-color: #f8d7da;
-                                color: #721c24;
-                            }
-
-                            .completed {
-                                background-color: #f8f9fa;
-                            }
-
-                            .session-time {
-                                font-size: 0.875rem;
-                                color: #6c757d;
-                            }
-
-                            .attempts-info .badge {
-                                font-size: 0.875rem;
-                            }
-
-                            .search-form .input-group {
-                                position: relative;
-                                max-width: 400px;
-                            }
-
-                            .search-form .btn {
-                                display: flex;
-                                align-items: center;
-                                gap: 5px;
-                            }
-
-                            .search-form .btn i {
-                                font-size: 0.9rem;
-                            }
-
-                            /* Add loading indicator */
-                            .search-form.searching input {
-                                background-image: url('data:image/svg+xml;base64,PHN2ZyB...');
-                                background-repeat: no-repeat;
-                                background-position: right 50px center;
-                                background-size: 20px;
-                            }
-
-                            .participant-avatar {
-                                width: 40px;
-                                height: 40px;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                background-color: #e9ecef;
-                                border-radius: 50%;
-                            }
-
-                            /* Animation for table rows */
-                            .table tbody tr {
-                                transition: all 0.2s ease;
-                            }
-
-                            .table tbody tr:hover {
-                                transform: translateY(-2px);
-                                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-                            }
-
-                            /* Custom scrollbar */
-                            .participants-table::-webkit-scrollbar {
-                                width: 6px;
-                            }
-
-                            .participants-table::-webkit-scrollbar-track {
-                                background: #f1f1f1;
-                            }
-
-                            .participants-table::-webkit-scrollbar-thumb {
-                                background: #888;
-                                border-radius: 3px;
-                            }
-
-                            .participants-table::-webkit-scrollbar-thumb:hover {
-                                background: #555;
-                            }
-                        </style>
 
 <script>
                             // Chỉ giữ lại function clear search

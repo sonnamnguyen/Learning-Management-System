@@ -1,5 +1,6 @@
 package com.example.quiz.controller;
 
+import com.example.assessment.model.StudentAssessmentAttempt;
 import com.example.course.Course;
 import com.example.course.CourseService;
 import com.example.exception.NotFoundException;
@@ -559,7 +560,14 @@ public class QuizController {
             @RequestParam MultiValueMap<String, String> responses,
             @RequestParam("elapsedTime") int elapsedTime,
             @RequestParam("questionIds") List<String> questionIds,
+            @RequestParam(required = false) StudentAssessmentAttempt studentAssessmentAttemptId,
             Model model) {
+
+        System.out.println("Dữ liệu nhận được từ form: " + questionIds);
+
+        responses.forEach((key, values) -> {
+            System.out.println("Key: " + key + " | Values: " + values);
+        });
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
@@ -572,158 +580,147 @@ public class QuizController {
             throw new IllegalArgumentException("Assessment ID is required for EXAM quiz type");
         }
 
-        // Create new TestSession if not exists
-        TestSession testSession = testSessionRepository.findTopByUserOrderByStartTimeDesc(user);
-        if (testSession == null || testSession.getEndTime() != null) {
-            // Tạo TestSession mới nếu chưa có hoặc session cũ đã kết thúc
-            testSession = new TestSession();
-            testSession.setUser(user);
-            testSession.setStartTime(LocalDateTime.now());
-            testSession.setCheckPractice(quiz.getQuizCategory() == Quiz.QuizCategory.PRACTICE);
-            testSession.setAssessmentId(assessmentId);
-            testSession = testSessionRepository.save(testSession);
-        }
+
+        // ✅ Lấy danh sách câu hỏi trước khi dùng
+        List<Question> questions1 = questionRepository.findAllById(
+                questionIds.stream().map(Long::parseLong).collect(Collectors.toList())
+        );
+
+// ✅ Lọc số câu hỏi không phải dạng TEXT
+        long nonTextQuestionCount = questions1.stream()
+                .filter(q -> q.getQuestionType() != Question.QuestionType.TEXT)
+                .count();
+
+// ✅ Chia đều 100 điểm cho các câu hỏi không phải TEXT
+        double scorePerQuestion = nonTextQuestionCount > 0 ? 100.0 / nonTextQuestionCount : 0.0;
+
+
 
         int totalTime = quiz.getDuration();
         int remainingTime = (totalTime * 60) - elapsedTime;
 
-        // ✅ Lấy danh sách câu hỏi và tính điểm cho mỗi câu không phải TEXT
-        List<Question> allQuestions = questionRepository.findAllById(
+        // ✅ Tính điểm sử dụng MultiValueMap
+        double score = quizService.calculateScore(questionIds, assessmentId, responses, user,studentAssessmentAttemptId);
+
+        List<Question> questions = questionRepository.findAllById(
                 questionIds.stream().map(Long::parseLong).collect(Collectors.toList())
         );
-        long nonTextQuestionCount = allQuestions.stream()
-                .filter(q -> q.getQuestionType() != Question.QuestionType.TEXT)
-                .count();
-        double scorePerQuestion = nonTextQuestionCount > 0 ? 100.0 / nonTextQuestionCount : 0.0;
 
         int correctCount = 0;
         Map<Long, List<Long>> selectedAnswers = new HashMap<>();
         Map<Long, String> textAnswers = new HashMap<>();
-        Map<Long, Map<Long, Double>> selectedAnswerScores = new HashMap<>();
+        Map<Long, Map<Long, Double>> selectedAnswerScores = new HashMap<>(); // ✅ QuizID -> (OptionID -> Score)
+        Map<Long, Double> questionScores = new HashMap<>(); // ✅ Lưu điểm tổng của từng câu hỏi
+
         int totalCorrectAnswers = 0;
         int userCorrectAnswers = 0;
 
-        for (Question question : allQuestions) {
+
+
+        System.out.println("📌 Dữ liệu nhận được từ form: " + responses);
+
+        for (Question question : questions) {
+
+            double questionScore = 0.0; // ✅ Điểm của câu hỏi hiện tại
             List<String> selectedOptionIds = responses.get("answers[" + question.getId() + "]");
 
             if (selectedOptionIds != null && !selectedOptionIds.isEmpty()) {
                 if (question.getQuestionType().toString().equals("TEXT")) {
-                    // ✅ Xử lý câu hỏi TEXT
+                    // ✅ Lưu câu trả lời dạng TEXT
                     String textAnswer = selectedOptionIds.get(0);
                     textAnswers.put(question.getId(), textAnswer);
-
-                    Answer textResponse = new Answer();
-                    textResponse.setQuestion(question);
-                    textResponse.setAnswerText(textAnswer);
-                    textResponse.setIsCorrect(null);
-                    textResponse.setTestSession(testSession);
-                    answerRepository.save(textResponse);
                 } else {
-                    // ✅ Xử lý câu hỏi MCQ & SCQ
+                    // ✅ Xử lý câu hỏi trắc nghiệm (MCQ & SCQ)
                     List<Long> selectedOptionLongs = selectedOptionIds.stream()
-                            .filter(id -> id.matches("\\d+"))
+                            .filter(id -> id.matches("\\d+")) // Chỉ giữ lại số hợp lệ
                             .map(Long::parseLong)
                             .collect(Collectors.toList());
 
                     selectedAnswers.put(question.getId(), selectedOptionLongs);
 
+                    // ✅ Lấy danh sách đáp án đúng
                     List<AnswerOption> correctOptions = answerOptionRepository.findCorrectAnswersByQuestionId(question.getId());
                     List<Long> correctOptionIds = correctOptions.stream().map(AnswerOption::getId).toList();
 
+                    // ✅ Đếm tổng số đáp án đúng trong bài quiz
                     totalCorrectAnswers += correctOptionIds.size();
 
+                    // ✅ Kiểm tra số đáp án đúng mà user đã chọn
                     for (Long selectedOptionId : selectedOptionLongs) {
                         if (correctOptionIds.contains(selectedOptionId)) {
-                            userCorrectAnswers++;
+                            userCorrectAnswers++; // ✅ Nếu user chọn đáp án đúng, tăng biến đếm
                         }
+                    }
 
+                    // ✅ Lưu điểm từng đáp án
+                    for (Long selectedOptionId : selectedOptionLongs) {
                         AnswerOption selectedOption = answerOptionRepository.findById(selectedOptionId).orElse(null);
                         if (selectedOption != null) {
-                            Answer answer = new Answer();
-                            answer.setSelectedOption(selectedOption);
-                            answer.setQuestion(question);
-                            answer.setAnswerText(selectedOption.getOptionText());
-                            answer.setIsCorrect(correctOptions.stream().anyMatch(opt -> opt.getId().equals(selectedOptionId)));
-                            answer.setTestSession(testSession);
-                            answerRepository.save(answer);
+                            List<Answer> answers = answerRepository.findAllByQuestionIdAndSelectedOptionId(question.getId(), selectedOptionId);
 
-                            // ✅ Lưu điểm cho từng đáp án
-                            Map<Long, Double> optionScores = selectedAnswerScores.getOrDefault(question.getId(), new HashMap<>());
-                            if (answer.getIsCorrect()) {
-                                optionScores.put(selectedOptionId, scorePerQuestion);
+                            if (question.getQuestionType() == Question.QuestionType.TEXT) {
+                                continue;
                             }
+
+                            // ✅ Map lưu điểm của tất cả đáp án đúng trong câu hỏi này
+                            Map<Long, Double> optionScores = selectedAnswerScores.getOrDefault(question.getId(), new HashMap<>());
+
+                            for (Answer answer : answers) {
+                                if (answer.getIsCorrect() != null && answer.getIsCorrect()) {
+                                    optionScores.put(answer.getSelectedOption().getId(), answer.getScore());
+
+                                }
+                            }
+
                             selectedAnswerScores.put(question.getId(), optionScores);
                         }
                     }
                 }
             }
         }
-
-        // Calculate score similar to submitQuiz method
-        double calculatedScore = 0.0;
-        if (totalCorrectAnswers > 0) {
-            calculatedScore = ((double) userCorrectAnswers / totalCorrectAnswers) * 100;
+        TestSession testSession = testSessionRepository.findTopByUserOrderByStartTimeDesc(user);
+        if (testSession == null) {
+            throw new NotFoundException("TestSession not found");
         }
 
-        // Also get score from practice results if available
-        double practiceResultScore = 0.0;
-        if (testSession.getPracticeResults() != null && !testSession.getPracticeResults().isEmpty()) {
-            practiceResultScore = testSession.getPracticeResults().stream()
-                    .mapToDouble(PracticeResult::getScore)
-                    .sum();
-        }
+        System.out.println("📌 selectedAnswers lưu lại:");
+        selectedAnswers.forEach((key, value) -> System.out.println("Câu " + key + ": " + value));
 
-        // Use calculated score if practice result score is 0
-        double finalScore = practiceResultScore > 0 ? practiceResultScore : calculatedScore;
-        double roundedScore = Math.round(finalScore * 100.0) / 100.0;
-
-        // Calculate duration in minutes
-        long durationMinutes = 0;
-        if (testSession.getEndTime() != null) {
-            durationMinutes = Duration.between(testSession.getStartTime(), testSession.getEndTime()).toMinutes();
-        }
-
-        // Store all information for this session
         testSession.setEndTime(LocalDateTime.now());
         testSessionRepository.save(testSession);
 
-        // Update or create QuizParticipant
-        Optional<QuizParticipant> participantOptional = quizParticipantRepository.findByQuizIdAndUserId(quizId, user.getId());
-        QuizParticipant participant;
-
-        if (participantOptional.isPresent()) {
-            participant = participantOptional.get();
-            participant.setAttemptUsed(participant.getAttemptUsed() + 1);
-        } else {
+        QuizParticipant participant = quizParticipantRepository.findByQuizIdAndUser_Id(quizId, user.getId());
+        if (participant == null) {
             participant = new QuizParticipant();
             participant.setQuiz(quiz);
             participant.setUser(user);
-            participant.setAttemptUsed(1);
         }
         participant.setTestSession(testSession);
         participant.setTimeStart(testSession.getStartTime());
         participant.setTimeEnd(testSession.getEndTime());
         quizParticipantRepository.save(participant);
 
-        model.addAttribute("textAnswers", textAnswers);
-        model.addAttribute("questions", allQuestions);
+        System.out.println("📌 Selected Answers: " + selectedAnswers);
+
+        model.addAttribute("correctAnswers", correctCount);
         model.addAttribute("selectedAnswers", selectedAnswers);
         model.addAttribute("textAnswers", textAnswers);
+        model.addAttribute("selectedAnswerScores", selectedAnswerScores); // ✅ Thêm dữ liệu điểm số
+        model.addAttribute("correctAnswers", userCorrectAnswers); // ✅ Số đáp án đúng của user
+        model.addAttribute("totalCorrectAnswers", totalCorrectAnswers); // ✅ Tổng số đáp án đúng của quiz
+        model.addAttribute("scorePerQuestion", scorePerQuestion); // ✅ Truyền điểm mỗi câu hỏi vào model
 
-
-        model.addAttribute("selectedAnswerScores", selectedAnswerScores);
-        model.addAttribute("correctAnswers", userCorrectAnswers);
-        model.addAttribute("totalCorrectAnswers", totalCorrectAnswers);
-        model.addAttribute("scorePerQuestion", scorePerQuestion);
-        model.addAttribute("score", roundedScore);
+        model.addAttribute("questions", questions);
+        model.addAttribute("quizId", quizId);
+        model.addAttribute("score", score);
         model.addAttribute("user", user);
-        model.addAttribute("totalQuestions", allQuestions.size());
+        model.addAttribute("totalQuestions", questions.size());
         model.addAttribute("remainingTime", remainingTime);
         model.addAttribute("content", "quizes/result");
 
-        model.addAttribute("content", "quizes/result");
         return "layout";
     }
+
 
 
     @GetMapping("/do-quiz/{quizId}")

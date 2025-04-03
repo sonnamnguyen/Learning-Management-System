@@ -21,18 +21,18 @@
     <hr>
     <div class="row">
         <!--            Use Information on the left, using sticky positioning-->
-        <div class="col-md-3" style="padding-right: 0; position: sticky; top: 0;">
-            <h6 style="font-size: 0.875rem;" th:text="${attemptInfo.email}"></h6>
+        <div class="col-md-3" style="padding-right: 0; position: sticky; top: 0; font-size: 20px">
+            <h6 th:text="${attemptInfo.email}"></h6>
             <!--                Reduced font size-->
-            <p style="font-size: 0.875rem; margin-bottom: 0;">
+            <p style="margin-bottom: 0;">
                 Joined on: <span th:text="${#temporals.format(attemptInfo.attemptDate, 'dd-MM-yyyy, hh:mm a')}"></span>
             </p>
-            <p style="font-size: 0.875rem; margin-bottom: 0;">
+            <p style="margin-bottom: 0;">
                 Duration: <span
                     th:text="${#numbers.formatInteger(attemptInfo.duration / 3600, 2)} + ':' + ${#numbers.formatInteger((attemptInfo.duration % 3600) / 60, 2)} + ':' + ${#numbers.formatInteger(attemptInfo.duration % 60, 2)}"></span>
             </p>
             <!--                No margin-bottom-->
-            <p style="font-size: 0.875rem; margin-top: 0;">
+            <p style="margin-top: 0;">
                 Invite by: <span th:text="${attemptInfo.assessment.createdBy}"></span>
             </p>
         </div>
@@ -41,7 +41,7 @@
             <div class="row">
                 <!--                    Score card-->
                 <div class="col-md-6">
-                    <div class="card shadow-sm h-100">
+                    <div class="card shadow-sm h-100" style="font-size: 18px">
                         <!--                            Card header-->
                         <div class="card-header d-flex"
                              style="background-color: #20c997; color: white; font-weight: bold; text-align: center; padding: 10px;">
@@ -54,7 +54,7 @@
                             <div class="d-flex justify-content-between align-items-center w-100"
                                  style="text-align: center;">
                                 <span>Score Quiz</span>
-                                <span style="color: #6c757d; font-size: 0.9rem;"
+                                <span style="color: #6c757d;"
                                       th:text="${attemptInfo.scoreQuiz}"></span>
                             </div>
                             <hr class="w-100 my-1">
@@ -62,7 +62,7 @@
                             <div class="d-flex justify-content-between align-items-center w-100"
                                  style="text-align: center;">
                                 <span>Score Exercise</span>
-                                <span style="color: #6c757d; font-size: 0.9rem;"
+                                <span style="color: #6c757d;"
                                       th:text="${attemptInfo.scoreEx }"></span>
                             </div>
                             <hr class="w-100 my-1">
@@ -70,7 +70,7 @@
                             <div class="d-flex justify-content-between align-items-center w-100"
                                  style="text-align: center;">
                                 <span>Score Assessment</span>
-                                <span style="color: #6c757d; font-size: 0.9rem;"
+                                <span style="color: #6c757d;"
                                       th:text="${attemptInfo.scoreAss}"></span>
                             </div>
                         </div>
@@ -78,7 +78,7 @@
                 </div>
                 <!--                    Cheating card-->
                 <div class="col-md-6">
-                    <div class="card shadow-sm">
+                    <div class="card shadow-sm" style="font-size: 18px">
                         <div class="card-header d-flex justify-content-between align-items-center"
                              style="background-color: #6c757d; color: white; font-weight: bold; text-align: center; padding: 10px;">
                             <span style="width: 20%;">Cheating</span>
@@ -90,7 +90,7 @@
                                     <i class="fas fa-external-link-alt me-2"></i>
                                     Leaving tab
                                 </span>
-                                <span style="color: #6c757d; font-size: 0.9rem;">
+                                <span style="color: #6c757d;">
                                     <span th:text="${tabLeaveCount}"></span> times
                                 </span>
                             </div>
@@ -102,7 +102,7 @@
                                     Pasted
                                     <span style="font-style: italic; color: #6c757d;">from external sources</span>
                                 </span>
-                                <span style="color: #6c757d; font-size: 0.9rem;">
+                                <span style="color: #6c757d;">
                                     <span th:text="${pasteCount}"></span> times
                                 </span>
                             </div>
@@ -114,7 +114,7 @@
                                     Copied
                                     <span style="font-style: italic; color: #6c757d;">from internal sources</span>
                                 </span>
-                                <span style="color: #6c757d; font-size: 0.9rem;">
+                                <span style="color: #6c757d;">
                                     <span th:text="${copyCount}"></span> times
                                 </span>
                             </div>
@@ -125,7 +125,7 @@
                                     <i class="fas fa-robot me-2"></i>
                                     AI usage
                                 </span>
-                                <span style="color: #6c757d; font-size: 0.9rem;">Not detected</span>
+                                <span style="color: #6c757d;">Not detected</span>
                             </div>
                             <hr class="my-1">
                             <!--                                Violation Face Count-->
@@ -135,7 +135,7 @@
                                     Violation Face Count
                                     <i class="fas fa-info-circle" style="color: #6c757d;"></i>
                                 </span>
-                                <span style="color: #6c757d; font-size: 0.9rem;">
+                                <span style="color: #6c757d;">
                                     <span th:text="${violationFaceCount}"></span> times
                                 </span>
                             </div>
@@ -226,7 +226,8 @@
                                             <span th:if="${userAnswersMap != null
                                                   and userAnswersMap[question.id] != null
                                                   and #lists.contains(userAnswersMap[question.id], ans.id)}"
-                                                  class="badge ms-2" style="background-color: #85C8FF;">Your Answer</span>
+                                                  class="badge ms-2"
+                                                  style="background-color: #85C8FF;">Your Answer</span>
                                             <span th:if="${ans.isCorrect}" class="badge bg-success ms-2">Correct</span>
                                         </li>
                                         <li class="list-group-item text-muted"
@@ -482,7 +483,7 @@
     };
 
     function scrollToTop() {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({top: 0, behavior: 'smooth'});
     }
 
     // **INCLUDE EDIT SCORE SCRIPTS HERE -  Copy from `editscore.html` and paste below**
@@ -514,7 +515,7 @@
             resultAlert.innerHTML = message;
 
             // Scroll to the result - Scroll within modal if needed, or to the main view report
-            resultContainer.scrollIntoView({ behavior: 'smooth' }); // Scrolls the whole page
+            resultContainer.scrollIntoView({behavior: 'smooth'}); // Scrolls the whole page
 
             // Hide the message after 5 seconds if it's a success
             if (isSuccess) {

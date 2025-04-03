@@ -551,14 +551,22 @@ public class QuizService {
             return 0.0;
         }
 
-        boolean isPractice = (assessmentId == null);
+        boolean isPractice = studentAssessmentAttemptId==null;
+
+        if (isPractice){
+            assessmentId = null ;
+        }
+
 
         TestSession session = new TestSession();
         session.setUser(user);
         session.setStartTime(LocalDateTime.now());
-        session.setAssessmentId(assessmentId);
+        if(!isPractice) {
+            session.setAssessmentId(assessmentId);
+            session.setStudentAssessmentAttempt(studentAssessmentAttemptId);
+        }
+
         session.setCheckPractice(isPractice);
-        session.setStudentAssessmentAttempt(studentAssessmentAttemptId);
         testSessionRepository.save(session);
 
         long totalScoredQuestions = questions.stream()
@@ -593,6 +601,8 @@ public class QuizService {
                 continue;
             }
 
+            double questionScore = 0;
+
             if (userAnswerIdsStr != null && !userAnswerIdsStr.isEmpty()) {
                 List<Long> userAnswerIds = userAnswerIdsStr.stream()
                         .filter(id -> id.matches("\\d+"))
@@ -604,18 +614,14 @@ public class QuizService {
                 int totalIncorrect = (int) userAnswerIds.stream().filter(id -> !correctAnswerIds.contains(id)).count();
                 int excessSelections = userAnswerIds.size() - totalCorrect;
 
-                double questionScore = 0;
-                if (totalCorrect > 0) {
-                    questionScore = (pointsPerQuestion / totalCorrect) * userCorrectCount;
-                    double penalty = (totalIncorrect * (pointsPerQuestion / totalCorrect)) + (excessSelections * (pointsPerQuestion / totalCorrect));
-                    questionScore -= penalty;
-
-                    if (questionScore < 0) {
-                        questionScore = 0;
+                if (excessSelections > 0) {
+                    questionScore = 0; // Nếu chọn quá số đáp án đúng -> 0 điểm
+                } else {
+                    if (totalCorrect > 0) {
+                        double pointsPerCorrectAnswer = pointsPerQuestion / totalCorrect;
+                        questionScore = pointsPerCorrectAnswer * userCorrectCount;
                     }
                 }
-
-                score += questionScore;
 
                 for (Long selectedOptionId : userAnswerIds) {
                     AnswerOption selectedOption = answerOptionRepository.findById(selectedOptionId).orElse(null);
@@ -625,15 +631,30 @@ public class QuizService {
                         answer.setQuestion(question);
                         answer.setAnswerText(selectedOption.getOptionText());
                         answer.setIsCorrect(correctAnswerIds.contains(selectedOptionId));
-                        answer.setScore(correctAnswerIds.contains(selectedOptionId) ? (pointsPerQuestion / correctAnswerIds.size()) : 0.0);
+                        answer.setScore((excessSelections > 0) ? 0.0 : (correctAnswerIds.contains(selectedOptionId) ? (pointsPerQuestion / correctAnswerIds.size()) : 0.0));
                         answerRepository.save(answer);
                     }
                 }
+            }
 
-                if (isPractice) {
-                    practiceResultRepository.save(new PracticeResult(session, question, userCorrectCount == totalCorrect, questionScore));
-                } else {
-                    resultRepository.save(new Result(session, question, userCorrectCount == totalCorrect, questionScore));
+            score += questionScore;
+
+            if (isPractice) {
+                practiceResultRepository.save(new PracticeResult(session, question, questionScore > 0, questionScore));
+            } else {
+                resultRepository.save(new Result(session, question, questionScore > 0, questionScore));
+            }
+
+            List<AnswerOption> allOptions = answerOptionRepository.findByQuestionId(question.getId());
+            for (AnswerOption option : allOptions) {
+                if (!responses.containsKey("answers[" + question.getId() + "]") || !responses.get("answers[" + question.getId() + "]").contains(String.valueOf(option.getId()))) {
+                    Answer answer = new Answer();
+                    answer.setSelectedOption(option);
+                    answer.setQuestion(question);
+                    answer.setAnswerText(option.getOptionText());
+                    answer.setIsCorrect(null);
+                    answer.setScore(0.0);
+                    answerRepository.save(answer);
                 }
             }
         }

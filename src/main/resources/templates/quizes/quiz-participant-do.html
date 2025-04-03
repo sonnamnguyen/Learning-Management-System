@@ -58,38 +58,7 @@
                     </div>
                 </div>
 
-                <div class="col-md-6">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-light">
-                            <h5 class="mb-0"><i class="bi bi-clock-fill me-2"></i>Session Information</h5>
-                        </div>
-                        <div class="card-body">
-                            <div th:if="${testSession != null}">
-                                <div class="row">
-                                    <div class="col-6">
-                                        <p class="mb-1 text-muted">Start Time:</p>
-                                        <p class="fw-bold" th:text="${#temporals.format(testSession.startTime, 'dd/MM/yyyy HH:mm')}">01/01/2023 10:00</p>
-                                    </div>
-                                    <div class="col-6">
-                                        <p class="mb-1 text-muted">End Time:</p>
-                                        <p class="fw-bold" th:if="${testSession.endTime != null}"
-                                           th:text="${#temporals.format(testSession.endTime, 'dd/MM/yyyy HH:mm')}">01/01/2023 11:00</p>
-                                        <p class="fw-bold text-warning" th:unless="${testSession.endTime != null}">In Progress</p>
-                                    </div>
-                                </div>
-                                <div class="row mt-2" th:if="${testSession.endTime != null}">
-                                    <div class="col-12">
-                                        <p class="mb-1 text-muted">Duration:</p>
-                                        <p class="fw-bold" th:text="${T(java.time.Duration).between(testSession.startTime, testSession.endTime).toMinutes() + ' minutes'}">60 minutes</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div th:unless="${testSession != null}" class="text-center py-3">
-                                <p class="text-muted mb-0">No session started yet</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+
             </div>
 
             <!-- Test Sessions List -->
@@ -131,7 +100,7 @@
                                  data-bs-parent="#testSessionsAccordion">
                                 <div class="accordion-body">
                                     <!-- Session Details -->
-                                    <div class="session-info mb-4">
+                                    <div class="session-info mb-3">
                                         <div class="row">
                                             <div class="col-md-3">
                                                 <p class="mb-1 text-muted">Start Time:</p>
@@ -140,10 +109,6 @@
                                             <div class="col-md-3">
                                                 <p class="mb-1 text-muted">End Time:</p>
                                                 <p class="fw-bold" th:text="${#temporals.format(sessionEntry.key.endTime, 'dd/MM/yyyy HH:mm')}"></p>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <p class="mb-1 text-muted">Duration:</p>
-                                                <p class="fw-bold" th:text="${sessionEntry.value.durationMinutes + ' minutes'}"></p>
                                             </div>
                                             <div class="col-md-3">
                                                 <p class="mb-1 text-muted">Score:</p>
@@ -248,10 +213,9 @@
             </div>
 
             <!-- No questions message -->
-            <div class="alert alert-info mt-4" th:if="${testSession == null || questions.isEmpty()}">
+            <div class="alert alert-info mt-4" th:if="${testSessionData.isEmpty()}">
                 <i class="bi bi-info-circle-fill me-2"></i>
-                <span th:if="${testSession == null}">The participant has not started this quiz yet.</span>
-                <span th:if="${testSession != null && questions.isEmpty()}">No questions found for this quiz.</span>
+                No test sessions found for this quiz.
             </div>
         </div>
     </div>
