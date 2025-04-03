@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Print Participants</title>
+    <link rel="stylesheet" href="/css/print.css">
+</head>
+<body>
+<h1>Print Participants</h1>
+<table class="table table-bordered">
+    <thead>
+    <tr>
+        <th class="text-center">#</th>
+        <th>Participant</th>
+        <th>Session Info</th>
+        <th>Performance</th>
+        <th>Attempts</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="participant, iterStat : ${participants}"
+        th:class="${participant.testSession != null && participant.testSession.endTime != null} ? 'completed' : ''">
+        <td class="text-center" th:text="${iterStat.index + 1}"></td>
+        <td>
+            <div class="d-flex align-items-center">
+                <div class="participant-avatar me-2">
+                    <i class="bi bi-person-circle fs-4"></i>
+                </div>
+                <div class="participant-info">
+                    <div class="fw-bold" th:text="${participant.getUser.getFirstName() + ' ' + participant.getUser.getLastName()}"></div>
+                    <small class="text-muted" th:text="${participant.getUser.getEmail()}"></small>
+                </div>
+            </div>
+        </td>
+        <td>
+            <div th:if="${participant.testSession != null}">
+                <div class="session-time">
+                    <i class="bi bi-clock me-1"></i>
+                    Start: <span th:text="${#temporals.format(participant.testSession.startTime, 'dd/MM/yyyy HH:mm')}"></span>
+                </div>
+                <div class="session-time" th:if="${participant.testSession.endTime != null}">
+                    <i class="bi bi-clock-history me-1"></i>
+                    End: <span th:text="${#temporals.format(participant.testSession.endTime, 'dd/MM/yyyy HH:mm')}"></span>
+                </div>
+            </div>
+            <span class="badge bg-secondary" th:unless="${participant.testSession != null}">
+                                    Not Started
+                                </span>
+        </td>
+        <td>
+            <div th:if="${participant.testSession != null && participant.testSession.results != null && !participant.testSession.results.isEmpty()}"
+                 class="score-badge"
+                 th:classappend="${participant.testSession.results.get(0).getScore() >= 70} ? 'high-score' : 'low-score'">
+                <span th:text="${participant.testSession.results.get(0).getScore() + '%'}"></span>
+            </div>
+            <span class="badge bg-secondary" th:unless="${participant.testSession != null && participant.testSession.results != null && !participant.testSession.results.isEmpty()}">
+                                    No Score
+                                </span>
+        </td>
+        <td>
+            <div class="attempts-info">
+                                    <span class="badge" th:classappend="${participant.attemptUsed != null} ? 'bg-info' : 'bg-secondary'">
+                                        <span th:if="${participant.attemptUsed != null && quiz != null}"
+                                              th:text="${participant.attemptUsed + ' / ' + quiz.getAttemptLimit()}">
+                                        </span>
+                                        <span th:unless="${participant.attemptUsed != null && quiz != null}">
+                                            N/A
+                                        </span>
+                                    </span>
+            </div>
+        </td>
+    </tbody>
+</table>
+
+<script>
+    // Automatically trigger the browser's print dialog
+    window.onload = function() {
+        window.print();
+    };
+</script>
+</body>
+</html>

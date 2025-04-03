@@ -13,6 +13,11 @@
     <tr>
         <th class="text-center">#</th>
         <th>Name</th>
+        <th>Description</th>
+        <th>Attempt</th>
+        <th>Time Start</th>
+        <th>Time End</th>
+        <th>Status</th>
     </tr>
     </thead>
     <tbody>
@@ -20,6 +25,11 @@
     <tr th:each="quize, iterStat : ${quizes}">
         <td class="text-center" th:text="${iterStat.index + 1}"></td> <!-- Start numbering from 1 -->
         <td th:text="${quize.name}"></td>
+        <td th:text="${quize.getDescription()}"></td>
+        <td th:text="${quize.getAttemptLimit()}"></td>
+        <td th:text="${#temporals.format(quize.getStartTime(), 'dd-MM-yyyy HH:mm:ss')}"></td>
+        <td th:text="${#temporals.format(quize.getEndTime(), 'dd-MM-yyyy HH:mm:ss')}"></td>
+        <td th:text="${quize.getQuizType()}"></td>
     </tr>
     </tbody>
 </table>

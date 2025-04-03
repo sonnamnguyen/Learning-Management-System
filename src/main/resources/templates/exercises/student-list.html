@@ -8,6 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
     <!-- Bootstrap Icons CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet"/>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         input[type="number"]::-webkit-inner-spin-button,
         input[type="number"]::-webkit-outer-spin-button {
@@ -670,7 +671,7 @@
                     </th:block>
                     <!-- Ô nhập số trang -->
                     <div class="input-group input-group-sm ms-2 page-item" style="width: 130px;">
-                        <input type="number" class="form-control" id="pageInput"
+                        <input type="text" class="form-control" id="pageInput"
                                th:attr="max=${totalPages}, min=1"
                                placeholder="Go to"
                                style="text-align: center;">
@@ -968,42 +969,75 @@
 </script>
 <script th:inline="javascript">
     function goToPage() {
-        var pageInput = document.getElementById('pageInput').value;
+        var pageInput = document.getElementById('pageInput').value.trim(); // Lấy chuỗi gốc và loại bỏ khoảng trắng thừa
         var totalPages = /*[[${totalPages}]]*/ 0;
         var currentLanguage = /*[[${currentLanguage}]]*/ null;
         var currentLevel = /*[[${currentLevel}]]*/ '' || '';
-        var paramDescription = /*[[${paramDescription}]]*/ '' || '';
         var paramTitle = /*[[${paramTitle}]]*/ '' || '';
 
-        if (pageInput && !isNaN(pageInput)) {
-            var page = parseInt(pageInput) - 1; // Trừ 1 vì page bắt đầu từ 0
-            if (page >= 0 && page < totalPages) {
-                var url = '/exercises?page=' + page;
-                if (currentLanguage !== null && currentLanguage !== undefined && currentLanguage !== '') {
-                    url += '&language=' + encodeURIComponent(currentLanguage);
-                }
-                if (currentLevel) url += '&level=' + encodeURIComponent(currentLevel);
-                if (paramDescription) url += '&description=' + encodeURIComponent(paramDescription);
-                if (paramTitle) url += '&title=' + encodeURIComponent(paramTitle);
-                window.location.href = url;
-            } else {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Invalid Page!',
-                    text: 'Please enter a page number between 1 and ' + totalPages,
-                    confirmButtonText: 'OK'
-                });
+        // Kiểm tra nếu chuỗi rỗng
+        if (!pageInput) {
+            showError('Please enter a page number.');
+            return;
+        }
+
+        // Kiểm tra xem chuỗi có phải là số nguyên dương hợp lệ không
+        if (!/^\d+$/.test(pageInput)) {
+            // Kiểm tra nếu chuỗi chứa cả chữ và số
+            if (/[a-zA-Z]/.test(pageInput) && /[0-9]/.test(pageInput)) {
+                showError('Your input contains both letters and numbers. Please enter only numbers.');
+                return;
             }
+            // Kiểm tra nếu chuỗi chỉ chứa chữ cái
+            if (/^[a-zA-Z]+$/.test(pageInput)) {
+                showError('Your input contains letters. Please enter only numbers.');
+                return;
+            }
+            // Kiểm tra nếu chuỗi là số thập phân
+            if (/^\d*\.\d+$/.test(pageInput)) {
+                showError('Your input is a decimal number. Please enter an integer.');
+                return;
+            }
+            // Kiểm tra nếu chuỗi chứa ký tự đặc biệt
+            if (/[^0-9]/.test(pageInput)) {
+                showError('Your input contains special characters. Please enter only numbers.');
+                return;
+            }
+        }
+
+        // Đến đây, pageInput là số nguyên dương hợp lệ
+        var page = parseInt(pageInput) - 1; // Chuyển thành số và trừ 1 vì page bắt đầu từ 0
+
+        // Kiểm tra nếu page nằm trong phạm vi hợp lệ
+        if (page >= 0 && page < totalPages) {
+            var url = '/exercises?page=' + page;
+            if (currentLanguage !== null && currentLanguage !== undefined && currentLanguage !== '') {
+                url += '&language=' + encodeURIComponent(currentLanguage);
+            }
+            if (currentLevel) url += '&level=' + encodeURIComponent(currentLevel);
+            if (paramTitle) url += '&title=' + encodeURIComponent(paramTitle);
+            window.location.href = url;
         } else {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Invalid Input!',
-                text: 'Please enter a valid number',
-                confirmButtonText: 'OK'
-            });
+            showError('Please enter a page number between 1 and ' + totalPages);
         }
     }
 
+    // Hàm hiển thị thông báo lỗi
+    function showError(message) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Invalid Input!',
+            text: message,
+            timer: 10000,  // Tự động đóng sau 10 giây
+            timerProgressBar: true,  // Hiển thị thanh thời gian chạy
+            showConfirmButton: false, // Ẩn nút "OK"
+        }).then((result) => {
+            document.getElementById('pageInput').value = '';
+            document.getElementById('pageInput').focus();
+        });
+    }
+
+    // Gắn sự kiện Enter
     document.getElementById('pageInput').addEventListener('keypress', function(event) {
         if (event.key === 'Enter') {
             goToPage();

@@ -64,16 +64,13 @@
             height: 300px !important;
         }
 
+        /* Light mode (default) */
         .leaderboard {
             background: white;
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
             margin-top: 30px;
-        }
-
-        .leaderboard h2 {
-            font-size: 1.5rem;
         }
 
         .leaderboard table {
@@ -94,6 +91,19 @@
 
         .leaderboard tbody tr:nth-child(even) {
             background-color: #f8f9fa;
+        }
+
+        /* Add transition and hover effect for light mode */
+        .leaderboard tbody tr {
+            transition: background-color 0.2s ease, transform 0.2s ease; /* Smooth transition for both properties */
+        }
+        .leaderboard h2 {
+            font-size: 1.5rem;
+        }
+        .leaderboard tbody tr:hover {
+            background-color: #e9ecef;
+            transform: scale(1.02); /* Same scale effect as dark mode */
+            cursor: pointer; /* Indicate interactivity */
         }
 
         .leaderboard tbody tr:hover {
@@ -143,6 +153,37 @@
             color: #333;
         }
 
+        .modal-content {
+            background-color: #fff;
+            color: #333;
+        }
+
+        .modal-header {
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .modal-footer {
+            border-top: 1px solid #dee2e6;
+        }
+
+        .modal-header .modal-title {
+            color: #333;
+        }
+
+        .modal-body pre {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+        }
+
+        .modal-footer .btn-secondary {
+            background-color: #6c757d;
+            color: #fff;
+            border: 1px solid #6c757d;
+        }
+
+        .modal-footer .btn-secondary:hover {
+            background-color: #5a6268;
+        }
 
         .btn-primary {
             background-color: #007bff;
@@ -212,16 +253,16 @@
         }
 
         @media print {
-            /* Không ép buộc nền trắng, giữ giao diện dark mode nếu có */
+            /* General print adjustments for both modes */
             body {
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
-                margin: 10mm !important; /* Đảm bảo có lề khi in */
+                margin: 10mm !important;
                 padding: 0 !important;
             }
 
-            /* Ẩn các thành phần không cần thiết */
-            .btn, nav, footer, .hidden-box, select {
+            /* Ẩn các thành phần không cần thiết, bao gồm navbar */
+            .btn, nav, .navbar, footer, .hidden-box, select {
                 display: none !important;
             }
 
@@ -231,7 +272,35 @@
                 padding: 0;
             }
 
-            /* Đảm bảo giao diện dark mode được giữ */
+            /* Light mode (default) print styles */
+            .chart-container,
+            .leaderboard {
+                background-color: #ffffff !important;
+                color: #333 !important;
+                box-shadow: none !important;
+            }
+
+            .leaderboard th {
+                background-color: #007bff !important;
+                color: #ffffff !important;
+            }
+
+            .leaderboard tbody tr:nth-child(even) {
+                background-color: #f8f9fa !important;
+            }
+
+            .leaderboard tbody tr {
+                background-color: #ffffff !important;
+                transform: none !important;
+            }
+
+            /* Ensure charts render properly */
+            .chart-container canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+
+            /* Dark mode print styles */
             .dark-mode {
                 background-color: #32373d !important;
                 color: #f0f2f5 !important;
@@ -239,28 +308,26 @@
 
             .dark-mode .chart-container,
             .dark-mode .leaderboard {
-                background-color: #40474f !important;
+                background-color: #4a5159 !important;
                 color: #f0f2f5 !important;
             }
 
             .dark-mode .leaderboard th {
-                background-color: #0066cc !important;
+                background-color: #007bff !important;
                 color: #ffffff !important;
             }
 
             .dark-mode .leaderboard tbody tr:nth-child(even) {
-                background-color: #4a5159 !important;
+                background-color: #555c66 !important;
             }
 
             .dark-mode .leaderboard tbody tr {
-                background-color: #40474f !important;
+                background-color: #4a5159 !important; /* Match the new dark mode odd row color */
+                transform: none !important;
             }
 
             /* Ẩn cột "Submitted Code" (cột thứ 4) khi in */
-            .leaderboard th:nth-child(4) {
-                display: none !important;
-            }
-
+            .leaderboard th:nth-child(4),
             .leaderboard td:nth-child(4) {
                 display: none !important;
             }
@@ -285,6 +352,45 @@
         }
 
         /* Dark mode */
+        /* Navbar in dark mode */
+        .dark-mode .navbar {
+            background-color: #3e444b !important;
+            color: #ffffff !important;
+            border-bottom: 1px solid #555 !important;
+        }
+
+        .dark-mode .navbar *,
+        .dark-mode .navbar .navbar-brand,
+        .dark-mode .navbar .nav-link,
+        .dark-mode .navbar .dropdown-toggle,
+        .dark-mode .navbar .dropdown-item {
+            color: #ffffff !important;
+        }
+
+        .dark-mode .navbar .nav-link:hover,
+        .dark-mode .navbar .dropdown-toggle:hover,
+        .dark-mode .navbar .dropdown-item:hover {
+            color: #e0e0e0 !important;
+        }
+
+        .dark-mode .navbar .navbar-toggler-icon {
+            filter: invert(1);
+        }
+
+        .dark-mode .navbar .dropdown-menu {
+            background-color: #40474f !important;
+            border: 1px solid #555 !important;
+        }
+
+        .dark-mode .navbar .dropdown-item {
+            background-color: #40474f !important;
+            color: #ffffff !important;
+        }
+
+        .dark-mode .navbar .dropdown-item:hover {
+            background-color: #5c646d !important;
+            color: #e0e0e0 !important;
+        }
         .dark-mode {
             background-color: #32373d;
             color: #f0f2f5;
@@ -310,7 +416,7 @@
 
         .dark-mode .chart-container,
         .dark-mode .leaderboard {
-            background-color: #40474f;
+            background-color: #4a5159;
             color: #f0f2f5;
             border-radius: 10px;
             padding: 15px;
@@ -326,26 +432,29 @@
         }
 
         .dark-mode .leaderboard th {
-            background-color: #0066cc;
+            background-color: #007bff;
             color: #ffffff;
             padding: 10px;
             border-bottom: 2px solid #f0f2f5;
         }
 
         .dark-mode .leaderboard tbody tr {
+            background-color: #4a5159;
             transition: background-color 0.2s ease, transform 0.2s ease;
         }
 
         .dark-mode .leaderboard tbody tr:nth-child(even) {
-            background-color: #4a5159;
+            background-color: #555c66;
         }
 
         .dark-mode .leaderboard tbody tr:hover {
-            background-color: #5c646d;
+            background-color: ##666d77;
             transform: scale(1.02);
             cursor: pointer;
         }
-
+        .dark-mode .leaderboard #noExercisesRow td {
+            color: #ccc;
+        }
         .dark-mode #noExercisesRow td {
             color: #aaa;
         }
@@ -381,6 +490,42 @@
         .dark-mode .pagination .page-item .page-link:hover {
             background-color: #4a4a4a;
             color: #ffffff;
+        }
+
+        .dark-mode .modal-content {
+            background-color: #40474f;
+            color: #f0f2f5;
+        }
+
+        .dark-mode .modal-header {
+            border-bottom: 1px solid #555;
+        }
+
+        .dark-mode .modal-footer {
+            border-top: 1px solid #555;
+        }
+
+        .dark-mode .modal-header .modal-title {
+            color: #ffffff;
+        }
+
+        .dark-mode .modal-header .btn-close {
+            filter: invert(1);
+        }
+
+        .dark-mode .modal-body pre {
+            background-color: #2a2a2a;
+            border: 1px solid #555;
+        }
+
+        .dark-mode .modal-footer .btn-secondary {
+            background-color: #4a4a4a;
+            color: #f0f2f5;
+            border: 1px solid #555;
+        }
+
+        .dark-mode .modal-footer .btn-secondary:hover {
+            background-color: #5a5a5a;
         }
 
         .dark-mode .btn-primary {
@@ -809,8 +954,21 @@
     });
 
     function printDashboard() {
+        // Force Chart.js to redraw the charts before printing
+        if (window.topicChartInstance) {
+            window.topicChartInstance.update();
+        }
+        if (window.difficultyChartInstance) {
+            window.difficultyChartInstance.update();
+        }
+
+        // Hide elements for printing
         document.querySelectorAll('.hidden-box, nav, footer, .btn, select').forEach(el => el.style.display = 'none');
+
+        // Trigger print
         window.print();
+
+        // Restore visibility after printing
         document.querySelectorAll('.hidden-box, nav, footer, .btn, select').forEach(el => el.style.display = '');
     }
 
@@ -984,7 +1142,7 @@
                                             percentages[largestIndex] -= (sum - 100);
                                         }
 
-                                        const percentage = percentages[ctx.dataIndex].toFixed(1) + "%";
+                                        const percentage = percentages[ctx.dataIndex].toFixed(2) + "%";
                                         return value > 0 ? percentage : "";
                                     },
                                     font: { weight: 'bold', size: 14 },

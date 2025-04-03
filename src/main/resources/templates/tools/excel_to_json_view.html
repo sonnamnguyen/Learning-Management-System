@@ -27,8 +27,11 @@
     <!-- Header -->
     <div th:replace="~{fragments :: header}" class="sticky-top"></div>
 
-    <h1 class="text-center text-success">Success!</h1>
-    <p class="text-center">Your Excel files have been successfully converted to JSON. You can download them individually or as a ZIP file.</p>
+    <div th:if="${errorMap == null and #lists.isEmpty(errorMap)}">
+        <h1 class="text-center text-success">Success!</h1>
+        <p class="text-center">Your Excel files have been successfully converted to JSON. You can download them individually or as a ZIP file.</p>
+    </div>
+
 
     <!-- Log error -->
     <div th:if="${errorMap != null and !#lists.isEmpty(errorMap)}" class="mb-4">

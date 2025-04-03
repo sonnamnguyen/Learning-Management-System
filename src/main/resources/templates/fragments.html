@@ -102,7 +102,7 @@
                                 </a>
                                 <ul class="dropdown-menu" th:aria-labelledby="'dropdownMenu' + ${moduleGroup.id}">
                                     <li th:each="module : ${moduleGroup.modules}">
-<!--                                        <a class="dropdown-item" th:href="${module.url}" th:text="${module.name}"></a>-->
+                                        <!--                                        <a class="dropdown-item" th:href="${module.url}" th:text="${module.name}"></a>-->
                                         <a class="dropdown-item" th:href="@{/{url}(url=${module.url})}" th:text="${module.name}"></a>
                                     </li>
                                     <li sec:authorize="isAuthenticated()" th:if="${'System'.equals(moduleGroup.name)}"><a class="dropdown-item" th:href="@{/logout}">Logout</a></li>
