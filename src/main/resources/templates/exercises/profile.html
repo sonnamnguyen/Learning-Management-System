@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined">
     <link rel="stylesheet" type='text/css' href="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/devicon.min.css" />
 
@@ -1127,6 +1127,7 @@
     <div class="achievements-card">
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgb(61, 61, 61); padding-bottom: 12px;">
             <h3 class="achievements-title">Achievements</h3>
+
         </div>
         <div class="achievements-container">
             <div class="achievements-grid">
@@ -1195,7 +1196,6 @@
             <!-- Phân trang -->
             <div class="pagination-container">
                 <div class="pagination">
-                    <button class="page-btn" id="first-btn">« First</button>
                     <button class="page-btn" id="prev-btn">
                         <i class="fas fa-chevron-left"></i>
                     </button>
@@ -1205,7 +1205,6 @@
                     <button class="page-btn" id="next-btn">
                         <i class="fas fa-chevron-right"></i>
                     </button>
-                    <button class="page-btn" id="last-btn">Last »</button>
                 </div>
             </div>
 
@@ -1287,20 +1286,16 @@
         const pageNumbers = document.getElementById('page-numbers');
         const prevBtn = document.getElementById('prev-btn');
         const nextBtn = document.getElementById('next-btn');
-        const firstBtn = document.getElementById('first-btn');
-        const lastBtn = document.getElementById('last-btn');
+
 
         // Vô hiệu hóa các nút khi cần thiết
         prevBtn.disabled = currentPage === 1;
         nextBtn.disabled = currentPage === totalPages;
-        firstBtn.disabled = currentPage === 1;
-        lastBtn.disabled = currentPage === totalPages;
 
         // Xử lý sự kiện click
         prevBtn.onclick = () => goToPage(currentPage - 1);
         nextBtn.onclick = () => goToPage(currentPage + 1);
-        firstBtn.onclick = () => goToPage(1);
-        lastBtn.onclick = () => goToPage(totalPages);
+
 
         pageNumbers.innerHTML = '';
 
@@ -1309,7 +1304,7 @@
             // Hiển thị tất cả nếu có ít trang
             pagesToShow = Array.from({ length: totalPages }, (_, i) => i + 1);
         } else {
-            if (currentPage <= 3) {
+            if (currentPage < 3) {
                 pagesToShow = [1, 2, 3, '...', totalPages];
             } else if (currentPage >= totalPages - 2) {
                 pagesToShow = [1, '...', totalPages - 2, totalPages - 1, totalPages];
@@ -1551,16 +1546,64 @@
                     isCompleted: Number(userCurrentExercises) === Number(totalExercises)
                 })
             },
+            MASTER_CHEF_INTERMEDIATE: {
+                id: 'masterchef-intermediate',
+                title: 'Intermediate Chef',
+                description: 'Done 50% exercises',
+                icon: 'fa-solid fa-spoon',
+                requirement: Math.round(totalExercises / 2),
+                checkProgress: (userData) => ({
+                    current: userCurrentExercises,
+                    total: Math.round(totalExercises / 2),
+                    isCompleted: Number(userCurrentExercises) >= Math.round(Number(totalExercises) / 2)
+                })
+            },
+            MASTER_CHEF_BEGINNER: {
+                id: 'masterchef-beginner',
+                title: 'Beginner Chef',
+                description: 'Done 10% exercises',
+                icon: 'fa-solid fa-egg',
+                requirement: Math.round(totalExercises / 10),
+                checkProgress: (userData) => ({
+                    current: userCurrentExercises,
+                    total: Math.round(totalExercises / 10),
+                    isCompleted: Number(userCurrentExercises) >= Math.round(Number(totalExercises) / 10)
+                })
+            },
             JAVA_MASTER: {
                 id: 'Java-Master',
                 title: 'Java Master',
                 description: 'Done 100% Java exercises and pass with >= 70 score',
-                icon: 'fa-brands fa-java',
+                icon: 'devicon-java-plain',  // Switched to Devicon for consistency
                 requirement: userData.difficulty.totalJava,
                 checkProgress: (userData) => ({
                     current: userData.difficulty.userJava,
                     total: userData.difficulty.totalJava,
                     isCompleted: Number(userData.difficulty.userJava) === Number(userData.difficulty.totalJava)
+                })
+            },
+            JAVA_INTERMEDIATE: {
+                id: 'Java-Intermediate',
+                title: 'Java Intermediate',
+                description: 'Done 50% Java exercises and pass with >= 70 score',
+                icon: 'fa-solid fa-mug-hot',
+                requirement: Math.round(userData.difficulty.totalJava / 2),
+                checkProgress: (userData) => ({
+                    current: userData.difficulty.userJava,
+                    total: Math.round(userData.difficulty.totalJava / 2),
+                    isCompleted: Number(userData.difficulty.userJava) >= Math.round(Number(userData.difficulty.totalJava) / 2)
+                })
+            },
+            JAVA_BEGINNER: {
+                id: 'Java-Beginner',
+                title: 'Java Beginner',
+                description: 'Done 10% Java exercises and pass with >= 70 score',
+                icon: 'fa-solid fa-mug-saucer',
+                requirement: Math.round(userData.difficulty.totalJava / 10),
+                checkProgress: (userData) => ({
+                    current: userData.difficulty.userJava,
+                    total: Math.round(userData.difficulty.totalJava / 10),
+                    isCompleted: Number(userData.difficulty.userJava) >= Math.round(Number(userData.difficulty.totalJava) / 10)
                 })
             },
             SQL_MASTER: {
@@ -1575,6 +1618,30 @@
                     isCompleted: Number(userData.difficulty.userSql) === Number(userData.difficulty.totalSql)
                 })
             },
+            SQL_INTERMEDIATE: {
+                id: 'SQL-Intermediate',
+                title: 'SQL Intermediate',
+                description: 'Done 50% SQL exercises and pass with >= 70 score',
+                icon: 'fa-solid fa-table',
+                requirement: Math.round(userData.difficulty.totalSql / 2),
+                checkProgress: (userData) => ({
+                    current: userData.difficulty.userSql,
+                    total: Math.round(userData.difficulty.totalSql / 2),
+                    isCompleted: Number(userData.difficulty.userSql) >= Math.round(Number(userData.difficulty.totalSql) / 2)
+                })
+            },
+            SQL_BEGINNER: {
+                id: 'SQL-Beginner',
+                title: 'SQL Beginner',
+                description: 'Done 10% SQL exercises and pass with >= 70 score',
+                icon: 'fa-solid fa-table-cells',
+                requirement: Math.round(userData.difficulty.totalSql / 10),
+                checkProgress: (userData) => ({
+                    current: userData.difficulty.userSql,
+                    total: Math.round(userData.difficulty.totalSql / 10),
+                    isCompleted: Number(userData.difficulty.userSql) >= Math.round(Number(userData.difficulty.totalSql) / 10)
+                })
+            },
             C_MASTER: {
                 id: 'C-Master',
                 title: 'C Master',
@@ -1585,6 +1652,30 @@
                     current: userData.difficulty.userC,
                     total: userData.difficulty.totalC,
                     isCompleted: Number(userData.difficulty.userC) === Number(userData.difficulty.totalC)
+                })
+            },
+            C_INTERMEDIATE: {
+                id: 'C-Intermediate',
+                title: 'C Intermediate',
+                description: 'Done 50% C exercises and pass with >= 70 score',
+                icon: 'devicon-c-line',
+                requirement: Math.round(userData.difficulty.totalC / 2),
+                checkProgress: (userData) => ({
+                    current: userData.difficulty.userC,
+                    total: Math.round(userData.difficulty.totalC / 2),
+                    isCompleted: Number(userData.difficulty.userC) >= Math.round(Number(userData.difficulty.totalC) / 2)
+                })
+            },
+            C_BEGINNER: {
+                id: 'C-Beginner',
+                title: 'C Beginner',
+                description: 'Done 10% C exercises and pass with >= 70 score',
+                icon: 'fa-solid fa-code',
+                requirement: Math.round(userData.difficulty.totalC / 10),
+                checkProgress: (userData) => ({
+                    current: userData.difficulty.userC,
+                    total: Math.round(userData.difficulty.totalC / 10),
+                    isCompleted: Number(userData.difficulty.userC) >= Math.round(Number(userData.difficulty.totalC) / 10)
                 })
             },
             CPP_MASTER: {
@@ -1599,6 +1690,30 @@
                     isCompleted: Number(userData.difficulty.userCpp) === Number(userData.difficulty.totalCpp)
                 })
             },
+            CPP_INTERMEDIATE: {
+                id: 'Cpp-Intermediate',
+                title: 'C++ Intermediate',
+                description: 'Done 50% C++ exercises and pass with >= 70 score',
+                icon: 'devicon-cplusplus-line',
+                requirement: Math.round(userData.difficulty.totalCpp / 2),
+                checkProgress: (userData) => ({
+                    current: userData.difficulty.userCpp,
+                    total: Math.round(userData.difficulty.totalCpp / 2),
+                    isCompleted: Number(userData.difficulty.userCpp) >= Math.round(Number(userData.difficulty.totalCpp) / 2)
+                })
+            },
+            CPP_BEGINNER: {
+                id: 'Cpp-Beginner',
+                title: 'C++ Beginner',
+                description: 'Done 10% C++ exercises and pass with >= 70 score',
+                icon: 'fa-solid fa-plus',
+                requirement: Math.round(userData.difficulty.totalCpp / 10),
+                checkProgress: (userData) => ({
+                    current: userData.difficulty.userCpp,
+                    total: Math.round(userData.difficulty.totalCpp / 10),
+                    isCompleted: Number(userData.difficulty.userCpp) >= Math.round(Number(userData.difficulty.totalCpp) / 10)
+                })
+            },
             CSHARP_MASTER: {
                 id: 'CSharp-Master',
                 title: 'C# Master',
@@ -1610,8 +1725,75 @@
                     total: userData.difficulty.totalCsharp,
                     isCompleted: Number(userData.difficulty.userCsharp) === Number(userData.difficulty.totalCsharp)
                 })
-            }
-
+            },
+            CSHARP_INTERMEDIATE: {
+                id: 'CSharp-Intermediate',
+                title: 'C# Intermediate',
+                description: 'Done 50% C# exercises and pass with >= 70 score',
+                icon: 'devicon-csharp-line',
+                requirement: Math.round(userData.difficulty.totalCsharp / 2),
+                checkProgress: (userData) => ({
+                    current: userData.difficulty.userCsharp,
+                    total: Math.round(userData.difficulty.totalCsharp / 2),
+                    isCompleted: Number(userData.difficulty.userCsharp) >= Math.round(Number(userData.difficulty.totalCsharp) / 2)  // Fixed to >=
+                })
+            },
+            CSHARP_BEGINNER: {
+                id: 'CSharp-Beginner',
+                title: 'C# Beginner',
+                description: 'Done 10% C# exercises and pass with >= 70 score',
+                icon: 'fa-solid fa-hashtag',
+                requirement: Math.round(userData.difficulty.totalCsharp / 10),
+                checkProgress: (userData) => ({
+                    current: userData.difficulty.userCsharp,
+                    total: Math.round(userData.difficulty.totalCsharp / 10),
+                    isCompleted: Number(userData.difficulty.userCsharp) >= Math.round(Number(userData.difficulty.totalCsharp) / 10)  // Fixed to >=
+                })
+            },
+            PERFECTIONIST: {
+                id: 'perfectionist',
+                title: 'Perfectionist',
+                description: 'Achieved an acceptance rate above 95%.',
+                icon: 'fa-medal',
+                requirement: 90,
+                checkProgress: (userData) => ({
+                    current: Math.round((userData.submissions.accepted / userData.submissions.total) * 100) || 0,
+                    total: 95,
+                    isCompleted: Math.round((userData.submissions.accepted / userData.submissions.total) * 100) >= 90
+                })
+            },
+            MARATHON_CODER: {
+                id: 'marathon-coder',
+                title: 'Marathon Coder',
+                description: 'Submitted 50 problems in one month in this year.',
+                icon: 'fa-running',
+                requirement: 50,
+                checkProgress: (userData) => ({
+                    current:  Math.max(...Object.values(userData.submissions.months)),
+                    total: 50,
+                    isCompleted: Math.max(...Object.values(userData.submissions.months)) >= 50
+                })
+            },
+            BALANCED_CODER: {
+                id: 'balanced-coder',
+                title: 'The Balanced Coder',
+                description: 'Solved at least 5 problems at each difficulty level.',
+                icon: 'fa-balance-scale',
+                requirement: 5,
+                checkProgress: (userData) => ({
+                    current: Math.min(
+                        userData.difficultyNoLanguage.easyNoLanguage,
+                        userData.difficultyNoLanguage.mediumNoLanguage,
+                        userData.difficultyNoLanguage.hardNoLanguage
+                    ),
+                    total: 5,
+                    isCompleted: Math.min(
+                        userData.difficultyNoLanguage.easyNoLanguage,
+                        userData.difficultyNoLanguage.mediumNoLanguage,
+                        userData.difficultyNoLanguage.hardNoLanguage
+                    ) >= 5
+                })
+            },
         };
 
         // Hàm tạo HTML cho achievement
@@ -1738,7 +1920,8 @@
                             ticks: {
                                 color: 'rgb(156, 156, 156)',
                                 stepSize: 1
-                            }
+                            },
+                            suggestedMax: Math.max(...Object.values(userData.submissions.months)) * 1.05
                         }
                     }
                 }
