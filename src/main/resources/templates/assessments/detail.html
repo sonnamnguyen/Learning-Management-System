@@ -9,7 +9,18 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"/>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!--    <style>-->
+<!--        .light-tooltip .tooltip-inner {-->
+<!--            background-color: #e9ecef; /* Light gray background */-->
+<!--            color: #495057; /* Dark text but not black */-->
+<!--            border: 1px solid #ced4da;-->
+<!--            font-weight: normal;-->
+<!--        }-->
 
+<!--        .light-tooltip .tooltip-arrow::before {-->
+<!--            border-top-color: #e9ecef;-->
+<!--        }-->
+<!--    </style>-->
     <style>
         /* Breadcrumb styling */
         .breadcrumb {
@@ -374,7 +385,7 @@
                     <th>#</th>
                     <!-- Đã xóa cột Candidate -->
                     <th>Email</th>
-                    <th>Assessment Start Time</th>
+                    <th>Last Modified</th>
                     <th>Assessment Score</th>
                     <th>Quiz Score</th>
                     <th>Exercise Score</th>
@@ -386,7 +397,23 @@
                     <td th:text="${iterStat.count}"></td>
                     <!-- Đã xóa cột Candidate -->
                     <td th:text="${attempt.email}"></td>
-                    <td th:text="${#temporals.format(attempt.attemptDate, 'yyyy-MM-dd HH:mm')}"></td>
+
+<!--    <span th:text="${#temporals.format(attempt.last_modified, 'yyyy-MM-dd HH:mm')}"-->
+<!--          data-bs-toggle="tooltip"-->
+<!--          data-bs-placement="top"-->
+<!--          data-bs-custom-class="custom-tooltip"-->
+<!--          th:title="${attempt.latestEditComment != null ? attempt.latestEditComment : 'No edit history'}"-->
+<!--          style="cursor: help;">-->
+<!--    </span>-->
+                    <td>
+            <span th:text="${#temporals.format(attempt.last_modified, 'yyyy-MM-dd HH:mm')}"
+                  data-bs-toggle="tooltip"
+                  data-bs-placement="top"
+                  th:title="${attempt.latestEditComment != null ? attempt.latestEditComment : 'No edit history'}"
+                  style="cursor: help;">
+            </span>
+                    </td>
+
                     <td th:text="${attempt.scoreAss}"></td>
                     <td th:text="${attempt.scoreQuiz}"></td>
                     <td th:text="${attempt.scoreEx}"></td>
@@ -637,25 +664,20 @@
                 <!-- Modal body with scrollable content -->
                 <div class="modal-body">
                     <div class="scrollable-table" style="max-height: 600px; overflow-y: auto;">
-                        <!--
-                            We'll wrap all question blocks in a container
-                            so we can filter them easily via JavaScript.
-                         -->
+                        <!-- Container to wrap all question blocks for easy filtering -->
                         <div id="questionsContainer">
                             <!-- Each question block -->
                             <div th:each="question, iterStat : ${questions}"
                                  class="question-block mb-4 border-bottom pb-3">
                                 <p class="fw-bold">
                                     <strong th:text="${iterStat.count}"></strong>.
-                                    <span th:text="${question.questionText}">
-                                    Question text
-                                </span>
                                 </p>
+                                <pre style="white-space: normal;" class="question-text" th:utext="${question.questionText}"></pre>
                                 <ul class="list-group">
                                     <li class="list-group-item"
                                         th:each="ans : ${questionAnswerOptionsMap[question.id] != null
-                                                  ? questionAnswerOptionsMap[question.id]
-                                                  : T(java.util.Collections).emptyList()}">
+                                              ? questionAnswerOptionsMap[question.id]
+                                              : T(java.util.Collections).emptyList()}">
                                     <span th:text="${ans.optionText}">
                                         Answer Option Text
                                     </span>
@@ -670,13 +692,13 @@
                                     </li>
                                 </ul>
                             </div>
-                            <!-- Fallback if no questions at all -->
+                            <!-- Fallback content if there are no questions -->
                             <div th:if="${#lists.isEmpty(questions)}">
                                 <p class="text-muted">
                                     No questions assigned.
                                 </p>
                             </div>
-                        </div> <!-- #questionsContainer -->
+                        </div> <!-- End of questionsContainer -->
                     </div>
                 </div>
 
@@ -691,6 +713,8 @@
             </div>
         </div>
     </div>
+
+
 
     <!-- Script to filter questions in real-time -->
     <script th:inline="javascript">
@@ -772,7 +796,7 @@
                             <tr th:each="attempt, iterStat : ${registeredAttemptsAll}">
                                 <td th:text="${iterStat.count}"></td>
                                 <td th:text="${attempt.email}"></td>
-                                <td th:text="${#temporals.format(attempt.attemptDate, 'yyyy-MM-dd HH:mm')}"></td>
+                                <td th:text="${#temporals.format(attempt.last_modified, 'yyyy-MM-dd HH:mm')}"></td>
                                 <td th:text="${attempt.scoreQuiz}"></td>
                                 <td th:text="${attempt.scoreEx}"></td>
                                 <td>
@@ -1018,7 +1042,14 @@
     });
     /*]]>*/
 </script>
-
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
 
 </body>
 </html>

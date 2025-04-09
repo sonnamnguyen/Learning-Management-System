@@ -3,6 +3,7 @@ package com.example.assessment.controller;
 import com.example.assessment.model.*;
 import com.example.assessment.repository.AssessmentRepository;
 import com.example.assessment.repository.InvitedCandidateRepository;
+import com.example.assessment.repository.ScoreEditHistoryRepository;
 import com.example.assessment.service.*;
 import com.example.config.AppConfig;
 import com.example.course.CourseService;
@@ -94,6 +95,8 @@ public class AssessmentController {
     private String inviteUrlHeader;
     @Autowired
     private StudentExerciseAttemptService studentExerciseAttemptService;
+    @Autowired
+    private ScoreEditHistoryRepository scoreEditHistoryRepository;
 
     @ModelAttribute("exerciseSession")
     public ExerciseSession createExerciseSession() {
@@ -479,14 +482,30 @@ public class AssessmentController {
         // 2a. Convert the paged content -> List<Map<...>> for the main table
         List<Map<String, Object>> attemptViewList = new ArrayList<>();
         try {
+            List<Long> attemptIds = registeredAttemptsPage.getContent().stream()
+                    .map(StudentAssessmentAttempt::getId)
+                    .collect(Collectors.toList());
+
+            // Fetch all latest comments in one query
+            Map<Long, String> latestCommentsByAttemptId = new HashMap<>();
+            if (!attemptIds.isEmpty()) {
+                List<Object[]> commentsData = scoreEditHistoryRepository.findLatestCommentsForAttempts(attemptIds);
+                for (Object[] data : commentsData) {
+                    Long attemptId = (Long) data[0];
+                    String comment = (String) data[1];
+                    latestCommentsByAttemptId.put(attemptId, comment);
+                }
+            }
             for (StudentAssessmentAttempt attempt : registeredAttemptsPage.getContent()) {
                 Map<String, Object> map = new HashMap<>();
                 map.put("id", attempt.getId());
                 map.put("email", attempt.getEmail());
-                map.put("attemptDate", attempt.getAttemptDate());
+                map.put("last_modified", attempt.getLastModified());
+
                 map.put("scoreAss", attempt.getScoreAss());
                 map.put("scoreQuiz", attempt.getScoreQuiz());
                 map.put("scoreEx", attempt.getScoreEx());
+                map.put("latestEditComment", latestCommentsByAttemptId.get(attempt.getId()));
 
                 attemptViewList.add(map);
             }
@@ -512,13 +531,28 @@ public class AssessmentController {
         // 2c. Convert allAttempts -> List<Map<...>> for the modal
         List<Map<String, Object>> allAttemptsView = new ArrayList<>();
         try {
+            List<Long> attemptIds = registeredAttemptsPage.getContent().stream()
+                    .map(StudentAssessmentAttempt::getId)
+                    .collect(Collectors.toList());
+
+            // Fetch all latest comments in one query
+            Map<Long, String> latestCommentsByAttemptId = new HashMap<>();
+            if (!attemptIds.isEmpty()) {
+                List<Object[]> commentsData = scoreEditHistoryRepository.findLatestCommentsForAttempts(attemptIds);
+                for (Object[] data : commentsData) {
+                    Long attemptId = (Long) data[0];
+                    String comment = (String) data[1];
+                    latestCommentsByAttemptId.put(attemptId, comment);
+                }
+            }
             for (StudentAssessmentAttempt attempt : allAttempts) {
                 Map<String, Object> map = new HashMap<>();
                 map.put("id", attempt.getId());
                 map.put("email", attempt.getEmail());
-                map.put("attemptDate", attempt.getAttemptDate());
+                map.put("last_modified", attempt.getLastModified());
                 map.put("scoreQuiz", attempt.getScoreQuiz());
                 map.put("scoreEx", attempt.getScoreEx());
+                map.put("latestEditComment", latestCommentsByAttemptId.get(attempt.getId()));
 
                 allAttemptsView.add(map);
             }

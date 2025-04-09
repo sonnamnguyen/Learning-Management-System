@@ -20,6 +20,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -79,16 +80,39 @@ public class ExerciseController {
             @RequestParam(value = "level", required = false) String level,
             @RequestParam(value = "tags", required = false) List<Long> tagIds,
             @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "5") int size,
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "categoryId", required = false) Long categoryId,
             Model model, Authentication authentication) {
 
         Pageable pageable = PageRequest.of(page, 12);
         Page<Exercise> exercisesPage = filterExercises(title, languageId, level, tagIds, pageable);
 
+        // Nếu số trang yêu cầu vượt quá tổng số trang hiện có, redirect về trang đầu và giữ các filter
+        if (page >= exercisesPage.getTotalPages() && exercisesPage.getTotalPages() > 0) {
+            StringBuilder redirectUrl = new StringBuilder("redirect:/exercise/list?page=0&size=" + size);
+
+            if (title != null) redirectUrl.append("&title=").append(title);
+            if (languageId != null) redirectUrl.append("&language=").append(languageId);
+            if (level != null) redirectUrl.append("&level=").append(level);
+            if (tagIds != null) {
+                for (Long tagId : tagIds) {
+                    redirectUrl.append("&tags=").append(tagId);
+                }
+            }
+            if (keyword != null) redirectUrl.append("&keyword=").append(keyword);
+            if (categoryId != null) redirectUrl.append("&categoryId=").append(categoryId);
+
+            return redirectUrl.toString();
+        }
+
         populateModel(model, exercisesPage, title, languageId, level, tagIds, page);
         addCommonWordsIfApplicable(model, languageId, level);
+        model.addAttribute("exercisesPage", exercisesPage);
 
         return isAdmin(authentication) ? "exercises/list" : "exercises/student-list";
     }
+
 
     private Page<Exercise> filterExercises(String title, Long languageId, String level, List<Long> tagIds, Pageable pageable) {
         // Gọi phương thức tổng hợp áp dụng tất cả các bộ lọc
@@ -403,7 +427,7 @@ public class ExerciseController {
 
     @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('SUPERADMIN')")
     @GetMapping("/new-dashboard")
-    public String showDashboard(@RequestParam(value = "languageId", required = false) Long languageId,Model model, Authentication authentication, RedirectAttributes redirectAttributes) {
+    public String showDashboard(@RequestParam(value = "languageId", required = false) Long languageId, Model model, Authentication authentication, RedirectAttributes redirectAttributes) {
         // Lấy dữ liệu thống kê từ ExerciseService
         int newExercises = exerciseService.countNewExercises(languageId);
         double completionRate = exerciseService.getCompletionRate(languageId);
@@ -460,7 +484,8 @@ public class ExerciseController {
 //        response.put("totalLanguages", programmingLanguageService.countTotalLanguages());
 //
 //        // Lấy dữ liệu biểu đồ
-    ////        Map<String, Integer> topicChartData = exerciseService.getExercisesByLanguage();
+
+    /// /        Map<String, Integer> topicChartData = exerciseService.getExercisesByLanguage();
 //        // Xử lý dữ liệu cho biểu đồ
 //        Map<String, Integer> topicChartData = (languageId == null)
 //                ? exerciseService.getExercisesByLanguage()  // Lấy dữ liệu của tất cả ngôn ngữ
@@ -558,7 +583,6 @@ public class ExerciseController {
     }
 
 
-
     @PostMapping("/create")
     @ResponseBody
     public ResponseEntity<?> createExercise(
@@ -578,7 +602,7 @@ public class ExerciseController {
         if (result.hasErrors()) {
             return ResponseEntity.badRequest().body("Validation error: " + result.getAllErrors());
         }
-        if(exerciseService.existsByTitleAndLanguage(name, languageId)){
+        if (exerciseService.existsByTitleAndLanguage(name, languageId)) {
             return ResponseEntity.badRequest().body("Exercise already exists");
         }
         Optional<ProgrammingLanguage> languageOpt = programmingLanguageService.getProgrammingLanguageById(languageId);
@@ -923,22 +947,73 @@ public class ExerciseController {
                 redirectAttributes.addFlashAttribute("successMessage", "Delete successful!");
             }
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Delete failed: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "Failed to delete exercise. Please try again");
         }
+
         return "redirect:/exercises";
     }
 
-    @PostMapping("/delete-batch")
-    public ResponseEntity<?> deleteExercises(@RequestBody Map<String, List<Long>> request) {
-        List<Long> ids = request.get("ids");
+//    @PostMapping("/delete-batch")
+//    public ResponseEntity<?> deleteExercises(@RequestBody Map<String, List<Long>> request) {
+//        List<Long> ids = request.get("ids");
+//
+//        if (ids == null || ids.isEmpty()) {
+//            return ResponseEntity.badRequest().body("No IDs provided for deletion.");
+//        }
+//
+//        exerciseService.deleteExercisesByIds(ids);
+//        return ResponseEntity.ok().body("Deleted successfully.");
+//    }
 
-        if (ids == null || ids.isEmpty()) {
-            return ResponseEntity.badRequest().body("No IDs provided for deletion.");
+    @PostMapping("/delete/{id}")
+    @ResponseBody
+    public ResponseEntity<?> deleteExercise(@PathVariable Long id) {
+        try {
+            Optional<Exercise> optionalExercise = exerciseService.getExerciseById(id);
+            if (optionalExercise.isPresent()) {
+                Exercise exercise = optionalExercise.get();
+                if (!exercise.getAssessments().isEmpty()) {
+                    Map<String, Object> error = new HashMap<>();
+                    error.put("error", "This exercise is in assessments.");
+                    error.put("title", exercise.getName()); // hoặc getName(), tùy class bạn
+                    return ResponseEntity.badRequest().body(error);
+                } else {
+                    exerciseService.deleteExercise(id);
+                    return ResponseEntity.ok().build();
+                }
+            }
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Failed to delete exercise. Please try again.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+    @PostMapping("/delete-batch")
+    public ResponseEntity<?> deleteBatch(@RequestBody Map<String, List<Long>> request) {
+        List<Long> ids = request.get("ids");
+        List<String> undeletableTitles = new ArrayList<>();
+
+        for (Long id : ids) {
+            Exercise exercise = exerciseService.getExerciseById(id).orElse(null);
+            if (exercise != null && !exercise.getAssessments().isEmpty()) {
+                undeletableTitles.add(exercise.getName());
+            } else {
+                exerciseService.deleteExercise(id);
+            }
         }
 
-        exerciseService.deleteExercisesByIds(ids);
-        return ResponseEntity.ok().body("Deleted successfully.");
+        if (!undeletableTitles.isEmpty()) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "Some exercises could not be deleted.");
+            error.put("undeletables", undeletableTitles);
+            return ResponseEntity.badRequest().body(error);
+        }
+
+        return ResponseEntity.ok().build();
     }
+
 
     @PostMapping("/import")
     public String uploadExercisesData(@RequestParam("file") MultipartFile file, RedirectAttributes redirectAttributes) {
@@ -1068,7 +1143,7 @@ public class ExerciseController {
             year = Year.now().getValue();
         }
 
-        if(language == null){
+        if (language == null) {
             language = "";
         }
         Integer easyExercisesNoLanguage = exerciseService.countEasyExercises("");
@@ -1095,19 +1170,19 @@ public class ExerciseController {
         Integer totalCSharpExercises = exerciseService.countTotalExercisesByLanguage("C#");
         Integer totalSQLExercises = exerciseService.countTotalExercisesByLanguage("SQL");
         Integer totalCppExercises = exerciseService.countTotalExercisesByLanguage("C++");
-        Integer userJava = exerciseService.countUserExercisesByLanguage(id,"Java");
-        Integer userC = exerciseService.countUserExercisesByLanguage(id,"C");
-        Integer userCSharp = exerciseService.countUserExercisesByLanguage(id,"C#");
-        Integer userCpp = exerciseService.countUserExercisesByLanguage(id,"C++");
-        Integer userSQL = exerciseService.countUserExercisesByLanguage(id,"SQL");
+        Integer userJava = exerciseService.countUserExercisesByLanguage(id, "Java");
+        Integer userC = exerciseService.countUserExercisesByLanguage(id, "C");
+        Integer userCSharp = exerciseService.countUserExercisesByLanguage(id, "C#");
+        Integer userCpp = exerciseService.countUserExercisesByLanguage(id, "C++");
+        Integer userSQL = exerciseService.countUserExercisesByLanguage(id, "SQL");
         List<StudentExerciseAttemptResponse> studentAttempts = studentExerciseAttemptService.getStudentAttemptsByUser(id);
 
         StudentExerciseResponse chartResponse = new StudentExerciseResponse(
-                easyExercises, hardExercises, mediumExercises, userExercises,userPassExercises,
+                easyExercises, hardExercises, mediumExercises, userExercises, userPassExercises,
                 perfectScoreUserExercises, userEasyExercises, userHardExercises,
                 userMediumExercises, passedTestsPerMonth, exercisesWithMoreThanFiveAttempts,
-                exercisesSubmittedMidnight, exercisesSubmittedEarly,easyExercisesNoLanguage,hardExercisesNoLanguage,
-                mediumExercisesNoLanguage,userEasyExercisesNoLanguage,userHardExercisesNoLanguage,userMediumExercisesNoLanguage,
+                exercisesSubmittedMidnight, exercisesSubmittedEarly, easyExercisesNoLanguage, hardExercisesNoLanguage,
+                mediumExercisesNoLanguage, userEasyExercisesNoLanguage, userHardExercisesNoLanguage, userMediumExercisesNoLanguage,
                 totalJavaExercises, totalCExercises, totalCSharpExercises, totalCppExercises, totalSQLExercises,
                 userJava, userC, userCSharp, userCpp, userSQL
         );
@@ -1125,8 +1200,6 @@ public class ExerciseController {
     public String accessDenied() {
         return "exercises/access-denied";
     }
-
-
 
 
     // Export exercises to an Excel file

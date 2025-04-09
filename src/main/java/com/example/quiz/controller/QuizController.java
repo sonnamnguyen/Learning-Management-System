@@ -224,6 +224,8 @@ public class QuizController {
 
 
 
+
+
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable("id") Long id, Model model, Principal principal) {
         Quiz quiz = quizService.getQuizWithTags(id);
@@ -581,17 +583,14 @@ public class QuizController {
         }
 
 
-        // ✅ Lấy danh sách câu hỏi trước khi dùng
         List<Question> questions1 = questionRepository.findAllById(
                 questionIds.stream().map(Long::parseLong).collect(Collectors.toList())
         );
 
-// ✅ Lọc số câu hỏi không phải dạng TEXT
         long nonTextQuestionCount = questions1.stream()
                 .filter(q -> q.getQuestionType() != Question.QuestionType.TEXT)
                 .count();
 
-// ✅ Chia đều 100 điểm cho các câu hỏi không phải TEXT
         double scorePerQuestion = nonTextQuestionCount > 0 ? 100.0 / nonTextQuestionCount : 0.0;
 
 
@@ -599,7 +598,6 @@ public class QuizController {
         int totalTime = quiz.getDuration();
         int remainingTime = (totalTime * 60) - elapsedTime;
 
-        // ✅ Tính điểm sử dụng MultiValueMap
         double score = quizService.calculateScore(questionIds, assessmentId, responses, user,studentAssessmentAttemptId);
 
         List<Question> questions = questionRepository.findAllById(
@@ -609,50 +607,40 @@ public class QuizController {
         int correctCount = 0;
         Map<Long, List<Long>> selectedAnswers = new HashMap<>();
         Map<Long, String> textAnswers = new HashMap<>();
-        Map<Long, Map<Long, Double>> selectedAnswerScores = new HashMap<>(); // ✅ QuizID -> (OptionID -> Score)
-        Map<Long, Double> questionScores = new HashMap<>(); // ✅ Lưu điểm tổng của từng câu hỏi
+        Map<Long, Map<Long, Double>> selectedAnswerScores = new HashMap<>();
+        Map<Long, Double> questionScores = new HashMap<>();
 
         int totalCorrectAnswers = 0;
         int userCorrectAnswers = 0;
 
-
-
-        System.out.println("📌 Dữ liệu nhận được từ form: " + responses);
-
         for (Question question : questions) {
 
-            double questionScore = 0.0; // ✅ Điểm của câu hỏi hiện tại
+            double questionScore = 0.0;
             List<String> selectedOptionIds = responses.get("answers[" + question.getId() + "]");
 
             if (selectedOptionIds != null && !selectedOptionIds.isEmpty()) {
                 if (question.getQuestionType().toString().equals("TEXT")) {
-                    // ✅ Lưu câu trả lời dạng TEXT
                     String textAnswer = selectedOptionIds.get(0);
                     textAnswers.put(question.getId(), textAnswer);
                 } else {
-                    // ✅ Xử lý câu hỏi trắc nghiệm (MCQ & SCQ)
                     List<Long> selectedOptionLongs = selectedOptionIds.stream()
-                            .filter(id -> id.matches("\\d+")) // Chỉ giữ lại số hợp lệ
+                            .filter(id -> id.matches("\\d+"))
                             .map(Long::parseLong)
                             .collect(Collectors.toList());
 
                     selectedAnswers.put(question.getId(), selectedOptionLongs);
 
-                    // ✅ Lấy danh sách đáp án đúng
                     List<AnswerOption> correctOptions = answerOptionRepository.findCorrectAnswersByQuestionId(question.getId());
                     List<Long> correctOptionIds = correctOptions.stream().map(AnswerOption::getId).toList();
 
-                    // ✅ Đếm tổng số đáp án đúng trong bài quiz
                     totalCorrectAnswers += correctOptionIds.size();
 
-                    // ✅ Kiểm tra số đáp án đúng mà user đã chọn
                     for (Long selectedOptionId : selectedOptionLongs) {
                         if (correctOptionIds.contains(selectedOptionId)) {
-                            userCorrectAnswers++; // ✅ Nếu user chọn đáp án đúng, tăng biến đếm
+                            userCorrectAnswers++;
                         }
                     }
 
-                    // ✅ Lưu điểm từng đáp án
                     for (Long selectedOptionId : selectedOptionLongs) {
                         AnswerOption selectedOption = answerOptionRepository.findById(selectedOptionId).orElse(null);
                         if (selectedOption != null) {
@@ -662,7 +650,6 @@ public class QuizController {
                                 continue;
                             }
 
-                            // ✅ Map lưu điểm của tất cả đáp án đúng trong câu hỏi này
                             Map<Long, Double> optionScores = selectedAnswerScores.getOrDefault(question.getId(), new HashMap<>());
 
                             for (Answer answer : answers) {
@@ -683,7 +670,7 @@ public class QuizController {
             throw new NotFoundException("TestSession not found");
         }
 
-        System.out.println("📌 selectedAnswers lưu lại:");
+        System.out.println(" selectedAnswers lưu lại:");
         selectedAnswers.forEach((key, value) -> System.out.println("Câu " + key + ": " + value));
 
         testSession.setEndTime(LocalDateTime.now());
@@ -700,15 +687,15 @@ public class QuizController {
         participant.setTimeEnd(testSession.getEndTime());
         quizParticipantRepository.save(participant);
 
-        System.out.println("📌 Selected Answers: " + selectedAnswers);
+        System.out.println(" Selected Answers: " + selectedAnswers);
 
         model.addAttribute("correctAnswers", correctCount);
         model.addAttribute("selectedAnswers", selectedAnswers);
         model.addAttribute("textAnswers", textAnswers);
-        model.addAttribute("selectedAnswerScores", selectedAnswerScores); // ✅ Thêm dữ liệu điểm số
-        model.addAttribute("correctAnswers", userCorrectAnswers); // ✅ Số đáp án đúng của user
-        model.addAttribute("totalCorrectAnswers", totalCorrectAnswers); // ✅ Tổng số đáp án đúng của quiz
-        model.addAttribute("scorePerQuestion", scorePerQuestion); // ✅ Truyền điểm mỗi câu hỏi vào model
+        model.addAttribute("selectedAnswerScores", selectedAnswerScores);
+        model.addAttribute("correctAnswers", userCorrectAnswers);
+        model.addAttribute("totalCorrectAnswers", totalCorrectAnswers);
+        model.addAttribute("scorePerQuestion", scorePerQuestion);
 
         model.addAttribute("questions", questions);
         model.addAttribute("quizId", quizId);

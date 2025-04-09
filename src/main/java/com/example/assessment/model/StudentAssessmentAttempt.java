@@ -59,8 +59,9 @@ public class StudentAssessmentAttempt {
     @Column(nullable = false, updatable = false)
     private LocalDateTime attemptDate = LocalDateTime.now();
 
-    @Column(name = "last_modified")
-    private LocalDateTime lastModified ;
+    @Column(name = "last_modified", nullable = false)
+    private LocalDateTime lastModified = LocalDateTime.now();
+
 
     @PrePersist
     public void onPrePersist() {
@@ -72,7 +73,9 @@ public class StudentAssessmentAttempt {
     private TestSession testSession;
 
 
-
+    @PreUpdate
+    public void onPreUpdate() {
+    }
     // Getters and Setters
     // Omitted for brevity
 }

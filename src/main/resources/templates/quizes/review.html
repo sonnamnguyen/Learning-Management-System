@@ -271,6 +271,29 @@
         </nav>
     </div>
 </div>
+<script>
+        function scrollToQuestion(button) {
+            var questionId = button.getAttribute("data-id");
+            var questionElement = document.getElementById(questionId);
+            if (questionElement) {
+                questionElement.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+    </script>
+<script>
+        function deleteQuestionInReview(index) {
+            if (confirm("Bạn có chắc chắn muốn xóa?")) {
+                window.location.href = "/quizes/review/delete/" + index;
+            }
+        }
+    </script>
+<script th:inline="javascript">
+        /*<![CDATA[*/
+        var questions = /*[[${session.Questions}]]*/ [];
+        document.getElementById("questionsJson").value = JSON.stringify(questions);
+        console.log("JSON Data:", document.getElementById("questionsJson").value);
+        /*]]>*/
+    </script>
 
 
 

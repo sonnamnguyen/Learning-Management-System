@@ -140,7 +140,7 @@
         </div>
         <div id="cardView" class="row">
             <div th:each="quize : ${quizes}" class="col-md-4 mb-4">
-                <div class="card h-100 shadow-sm">
+                <div class="card h-100 shadow-sm" th:data-quiz-id="${quize.getId()}">
                     <div class="card-body">
                         <h5 class="card-title" th:text="${quize.getName()}"></h5>
                         <p class="card-text text-muted" th:text="${quize.getDescription()}"></p>
@@ -172,8 +172,8 @@
                                 <a th:href="@{'/quizes/detail/' + ${quize.getId()}}" class="btn btn-outline-primary btn-sm" title="Detail">
                                     <i class="bi bi-info-circle"></i>
                                 </a>
-                                <a th:href="@{'/quizes/delete/' + ${quize.getId()}}" class="btn btn-outline-danger btn-sm"
-                                   onclick="return confirm('Are you sure?')" title="Delete">
+                                <a href="#" class="btn btn-outline-danger btn-sm"
+                                   th:onclick="'deleteQuiz(' + ${quize.getId()} + '); return false;'" title="Delete">
                                     <i class="bi bi-trash"></i>
                                 </a>
                             </th:block>
@@ -215,7 +215,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:each="quize, iterStat : ${quizes}">
+                <tr th:data-quiz-id="${quize.getId()}" th:each="quize, iterStat : ${quizes}">
                     <td class="text-center" th:text="${iterStat.index + 1}"></td>
                     <td th:text="${quize.getName()}"></td>
                     <td th:text="${quize.getDescription()}"></td>
@@ -246,8 +246,8 @@
                             <a th:href="@{'/quizes/detail/' + ${quize.getId()}}" class="btn btn-outline-secondary btn-sm" title="Detail">
                                 <i class="bi bi-info-circle"></i>
                             </a>
-                            <a th:href="@{'/quizes/delete/' + ${quize.getId()}}" class="btn btn-outline-danger btn-sm"
-                               onclick="return confirm('Are you sure?')" title="Delete">
+                            <a href="#" class="btn btn-outline-danger btn-sm"
+                               th:onclick="'deleteQuiz(' + ${quize.getId()} + '); return false;'" title="Delete">
                                 <i class="bi bi-trash"></i>
                             </a>
                         </th:block>
@@ -320,7 +320,7 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="importModalLabel">Import</h5>
+                    <h5 class="modal-title" id="importModalLabel">Import Roles from Excel</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -354,7 +354,7 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="file" class="form-label">Choose Excel File</label>
+                            <label for="file" class="form-label">Choose File</label>
                             <input type="file" name="file" id="file" class="form-control" required>
                             <p class="mt-2 text-success" th:if="${chosenFile}">
                                 Chosen file: <span th:text="${chosenFile}"></span>
@@ -489,6 +489,9 @@ document.addEventListener("DOMContentLoaded", function () {
             window.location.href = `/quizes/dashboard/${currentUserId.value}`;
         });
     }
+
+    // Khởi tạo chức năng tìm kiếm tag
+    initializeTagSearch();
 });
 
 // Lấy tất cả tag từ server và lưu trữ
@@ -523,7 +526,7 @@ function fetchAllTags() {
 }
 
 // Helper function to render tags in the container
-function renderTagsInContainer(tags) {
+function renderTagsInContainer(tags, selectedTagIds = []) {
     const tagsContainer = document.getElementById('tagsContainer');
     if (!tagsContainer) return;
 
@@ -532,14 +535,16 @@ function renderTagsInContainer(tags) {
     if (!tags || tags.length === 0) {
         tagsContainer.innerHTML = `
             <div class="alert alert-info">
-                <i class="bi bi-info-circle"></i> No tags available
+                <i class="bi bi-info-circle"></i> No tags found
             </div>`;
         return;
     }
 
-    // Get the URL parameters to check for selected tags
-    const urlParams = new URLSearchParams(window.location.search);
-    const selectedTagIds = urlParams.getAll('tags');
+    // Lấy các tag đã chọn từ URL nếu không có selectedTagIds
+    if (!selectedTagIds.length) {
+        const urlParams = new URLSearchParams(window.location.search);
+        selectedTagIds = urlParams.getAll('tags');
+    }
 
     tags.forEach(tag => {
         if (tag && tag.id) {
@@ -558,7 +563,7 @@ function renderTagsInContainer(tags) {
         }
     });
 
-    // Update the button text after rendering tags
+    // Cập nhật text hiển thị số lượng tag đã chọn
     updateSelectedTagsText();
 }
 
@@ -658,49 +663,67 @@ function updateView(mode) {
 }
 
 function clearAllFilters() {
-    // Xóa các giá trị trong form
+    // Xóa giá trị course
     document.getElementById('course').value = '';
-    document.getElementById('searchTags').value = '';
-    document.getElementById('selectedTags').value = '';
 
-    // Bỏ chọn tất cả các checkbox tag
+    // Xóa giá trị search tags và bỏ chọn tất cả các checkbox
+    document.getElementById('searchTags').value = '';
     document.querySelectorAll('.tag-checkbox').forEach(checkbox => {
         checkbox.checked = false;
     });
 
-    // Cập nhật hiển thị text của button tag filter
+    // Cập nhật text của tag filter button
     updateSelectedTagsText();
 
-    // Xóa giá trị trong ô search
+    // Xóa giá trị trong ô search quiz
     const searchInput = document.querySelector('input[name="searchQuery"]');
     if (searchInput) {
         searchInput.value = '';
     }
 
+    // Xóa tất cả các input hidden của tags
+    document.querySelectorAll('input[name="tags"]').forEach(input => {
+        input.remove();
+    });
+
     // Submit form để reset lại trang với các giá trị đã xóa
     document.getElementById('searchForm').submit();
 }
 
-function searchTags() {
-    const query = document.getElementById('searchTags').value.trim();
+function initializeTagSearch() {
+    const searchInput = document.getElementById('searchTags');
+    if (searchInput) {
+        // Thêm debounce để tránh gọi API quá nhiều lần
+        let debounceTimer;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                searchTags(this.value);
+            }, 300); // Đợi 300ms sau khi người dùng ngừng gõ
+        });
+    }
+}
+
+// Cập nhật hàm searchTags để nhận giá trị tìm kiếm
+function searchTags(query) {
     const tagsContainer = document.getElementById('tagsContainer');
     if (!tagsContainer) return;
 
-    // Show loading state
+    // Hiển thị trạng thái loading
     tagsContainer.innerHTML = '<div class="text-center"><i class="bi bi-hourglass-split me-2"></i> Loading...</div>';
 
-    // If query is empty, fetch all tags instead
-    if (query === '') {
+    // Nếu không có query, lấy tất cả tags
+    if (!query || query.trim() === '') {
         fetchAllTags();
         return;
     }
 
-    // Fetch tags based on search query
-    fetch(`/quizes/tags/search?name=${encodeURIComponent(query)}`, {
+    // Tìm kiếm tags dựa trên query
+    fetch(`/quizes/tags/search?name=${encodeURIComponent(query.trim())}`, {
         headers: {
             'Accept': 'application/json'
         },
-        credentials: 'same-origin' // Add credentials for authentication
+        credentials: 'same-origin'
     })
     .then(response => {
         if (!response.ok) {
@@ -709,7 +732,11 @@ function searchTags() {
         return response.json();
     })
     .then(tags => {
-        renderTagsInContainer(tags);
+        // Lưu lại các tag đã chọn trước đó
+        const selectedTags = Array.from(document.querySelectorAll('.tag-checkbox:checked')).map(cb => cb.value);
+
+        // Render kết quả tìm kiếm
+        renderTagsInContainer(tags, selectedTags);
     })
     .catch(error => {
         console.error('Error searching tags:', error);
@@ -719,6 +746,136 @@ function searchTags() {
             Error searching tags. Please try again.
         </div>`;
     });
+}
+
+function deleteQuiz(quizId) {
+    if (confirm('Are you sure?')) {
+        fetch(`/quizes/delete/${quizId}`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            // Kiểm tra nếu response là redirect (thành công) hoặc JSON (lỗi)
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
+                return response.json().then(data => ({ isJson: true, data }));
+            } else {
+                return { isJson: false, status: response.status };
+            }
+        })
+        .then(result => {
+            if (!result.isJson || (result.isJson && result.data.success)) {
+                // Xóa thành công (redirect hoặc JSON success)
+                // Remove quiz from DOM
+                const quizElements = document.querySelectorAll(`[data-quiz-id="${quizId}"]`);
+                quizElements.forEach(element => element.remove());
+
+                // Show success toast
+                const toastHtml = `
+                    <div class="toast-container position-fixed top-0 start-0 p-3" style="z-index: 9999">
+                        <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                            <div class="toast-header bg-success text-white">
+                                <i class="bi bi-check-circle-fill me-2"></i>
+                                <strong class="me-auto">Success</strong>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                            </div>
+                            <div class="toast-body">
+                                Quiz has been successfully deleted
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Remove any existing toast
+                const existingToast = document.querySelector('.toast-container');
+                if (existingToast) {
+                    existingToast.remove();
+                }
+
+                document.body.insertAdjacentHTML('beforeend', toastHtml);
+
+                // Auto-hide after 3 seconds
+                setTimeout(() => {
+                    const toast = document.querySelector('.toast-container .toast');
+                    if (toast) {
+                        const bsToast = new bootstrap.Toast(toast);
+                        bsToast.hide();
+                    }
+                }, 3000);
+            } else {
+                // Error case (JSON error response)
+                const toastHtml = `
+                    <div class="toast-container position-fixed top-0 start-0 p-3" style="z-index: 9999">
+                        <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                            <div class="toast-header bg-danger text-white">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                <strong class="me-auto">Error</strong>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                            </div>
+                            <div class="toast-body">
+                                ${result.data.message || 'Unable to delete a quiz that already has assignment data.'}
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Remove any existing toast
+                const existingToast = document.querySelector('.toast-container');
+                if (existingToast) {
+                    existingToast.remove();
+                }
+
+                document.body.insertAdjacentHTML('beforeend', toastHtml);
+
+                // Auto-hide after 5 seconds
+                setTimeout(() => {
+                    const toast = document.querySelector('.toast-container .toast');
+                    if (toast) {
+                        const bsToast = new bootstrap.Toast(toast);
+                        bsToast.hide();
+                    }
+                }, 5000);
+            }
+        })
+        .catch(error => {
+            console.error('Error deleting quiz:', error);
+            // Show error toast instead of alert
+            const toastHtml = `
+                <div class="toast-container position-fixed top-0 start-0 p-3" style="z-index: 9999">
+                    <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="toast-header bg-danger text-white">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            <strong class="me-auto">Error</strong>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                        <div class="toast-body">
+                            Error occurred while deleting quiz. Please try again later.
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Remove any existing toast
+            const existingToast = document.querySelector('.toast-container');
+            if (existingToast) {
+                existingToast.remove();
+            }
+
+            document.body.insertAdjacentHTML('beforeend', toastHtml);
+
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                const toast = document.querySelector('.toast-container .toast');
+                if (toast) {
+                    const bsToast = new bootstrap.Toast(toast);
+                    bsToast.hide();
+                }
+            }, 5000);
+        });
+    }
 }
 </script>
 
@@ -906,3 +1063,18 @@ thead.table-light {
 
 <!-- Add back the hidden input for currentUserId -->
 <input type="hidden" id="currentUserId" th:value="${currentUserId}">
+
+<script>
+        document.addEventListener("DOMContentLoaded", function () {
+            let urlParams = new URLSearchParams(window.location.search);
+            let openModal = urlParams.get("openModal");
+
+            if (openModal) {
+                let modalElement = document.getElementById(openModal);
+                if (modalElement) {
+                    let modal = new bootstrap.Modal(modalElement);
+                    modal.show();
+                }
+            }
+        });
+    </script>

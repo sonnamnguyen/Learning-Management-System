@@ -158,6 +158,15 @@
     </nav>
   </div>
 </div>
+<script>
+        function scrollToQuestion(button) {
+            var questionId = button.getAttribute("data-id");
+            var questionElement = document.getElementById(questionId);
+            if (questionElement) {
+                questionElement.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+    </script>
 
 
 

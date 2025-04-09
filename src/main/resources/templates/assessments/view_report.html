@@ -288,24 +288,23 @@
                             <div th:each="question, iterStat : ${questions}" class="mb-4 border-bottom pb-3">
                                 <p class="fw-bold">
                                     <span th:text="${iterStat.count}"></span>.
-                                    <span th:text="${question?.questionText ?: 'Question text not available'}">Question
-                                        text</span>
+                                <pre style="white-space: normal; display: inline; margin: 0;" class="question-text" th:utext="${question.questionText}"></pre>
                                 </p>
                                 <ul class="list-group">
                                     <li class="list-group-item"
                                         th:each="ans : ${questionAnswerOptionsMap[question.id] != null ? questionAnswerOptionsMap[question.id] : T(java.util.Collections).emptyList()}">
                                         <span th:text="${ans.optionText}"></span>
                                         <span th:if="${userAnswersMap != null
-                                                  and userAnswersMap[question.id] != null
-                                                  and #lists.contains(userAnswersMap[question.id], ans.id)}"
+                                              and userAnswersMap[question.id] != null
+                                              and #lists.contains(userAnswersMap[question.id], ans.id)}"
                                               class="badge ms-2" style="background-color: #85C8FF;">
-                                            Your Answer
-                                        </span>
+                                        Your Answer
+                                    </span>
                                         <span th:if="${ans.isCorrect}" class="badge bg-success ms-2">
-                                            Correct
-                                        </span>
+                                        Correct
+                                    </span>
                                     </li>
-                                    <!-- Nếu không có answer options -->
+                                    <!-- If there are no answer options -->
                                     <li class="list-group-item text-muted"
                                         th:if="${#lists.isEmpty(questionAnswerOptionsMap[question.id])}">
                                         This is an essay question.

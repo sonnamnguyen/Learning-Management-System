@@ -1,4 +1,4 @@
-<div class="container-fluid flex-grow-1">
+<div class="container-fluid flex-grow-1 px-5 ">
     <div class="card shadow-lg">
         <div class="card-front">
             <div class="card-header bg-primary text-white d-flex">
@@ -280,23 +280,21 @@
         <div class="modal-content question-view-content">
             <div class="modal-header">
                 <h1 class="modal-title fs-5" id="questionViewLabel">Question</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                        id="closeQuestionModal"></button>
             </div>
             <div class="modal-body" id="questionViewModal">
                 <!-- Show list of question here -->
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary btn-md" data-bs-dismiss="modal" id="closeQuestionModal">
-                    Close
-                </button>
-                <button type="button" class="btn btn-primary btn-md" id="saveChangeQuestionModal"
-                        data-bs-dismiss="modal">Save changes
-                </button>
             </div>
         </div>
     </div>
 </div>
 
 <style>
+    .col-md-6{
+        padding: 5px 20px;
+    }
+
     .question-view-content {
 
     }
@@ -410,7 +408,227 @@
 </style>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+    // Định nghĩa validation rules
+    const VALIDATION_RULES = {
+        quizName: {
+            pattern: /^[a-zA-Z0-9\s\-_]+$/
+        },
+        description: {
+            minLength: 1
+        },
+        attemptLimit: {
+            min: 1,
+            max: 100
+        }
+    };
+
+    // Hàm validate form
+    function validateForm() {
+        let isValid = true;
+
+        // Validate Quiz Name
+        const quizName = document.getElementById('quizName');
+        if (!quizName.value.trim()) {
+            showError(quizName, 'Quiz name is required');
+            isValid = false;
+        } else if (!VALIDATION_RULES.quizName.pattern.test(quizName.value)) {
+            showError(quizName, 'Quiz name can only contain letters, numbers, spaces, hyphens and underscores');
+            isValid = false;
+        }
+
+        // Validate Description
+        const description = document.getElementById('quizDescription');
+        if (!description.value.trim()) {
+            showError(description, 'Description is required');
+            isValid = false;
+        }
+
+        // Validate Date/Time
+        const startTime = new Date(document.getElementById('startTime').value);
+        const endTime = new Date(document.getElementById('endTime').value);
+        const now = new Date();
+
+        if (startTime < now) {
+            showError(document.getElementById('startTime'), 'Start time must be in the future');
+            isValid = false;
+        }
+
+        if (endTime <= startTime) {
+            showError(document.getElementById('endTime'), 'End time must be after start time');
+            isValid = false;
+        }
+
+        const minDuration = 15 * 60 * 1000; // 15 minutes
+        if (endTime - startTime < minDuration) {
+            showError(document.getElementById('endTime'), 'Quiz duration must be at least 15 minutes');
+            isValid = false;
+        }
+
+        // Validate Attempt Limit
+        const attemptLimit = parseInt(document.getElementById('attemptLimit').value);
+        if (isNaN(attemptLimit) || attemptLimit < VALIDATION_RULES.attemptLimit.min) {
+            showError(document.getElementById('attemptLimit'),
+                `Attempt limit must be at least ${VALIDATION_RULES.attemptLimit.min}`);
+            isValid = false;
+        } else if (attemptLimit > VALIDATION_RULES.attemptLimit.max) {
+            showError(document.getElementById('attemptLimit'),
+                `Attempt limit cannot exceed ${VALIDATION_RULES.attemptLimit.max}`);
+            isValid = false;
+        }
+
+        // Validate Course Selection
+        const course = document.getElementById('course');
+        if (!course.value) {
+            showError(course, 'Please select a course');
+            isValid = false;
+        }
+
+        // Validate Quiz Type
+        const quizType = document.getElementById('quizType');
+        if (!quizType.value) {
+            showError(quizType, 'Please select a quiz type');
+            isValid = false;
+        }
+
+        return isValid;
+    }
+
+    // Hàm hiển thị lỗi
+    function showError(input, message) {
+        // Remove existing error message if any
+        const existingError = input.parentElement.querySelector('.invalid-feedback');
+        if (existingError) {
+            existingError.remove();
+        }
+
+        // Add new error message
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'invalid-feedback d-block';
+        errorDiv.style.color = 'red';
+        errorDiv.textContent = message;
+        input.parentElement.appendChild(errorDiv);
+
+        // Add invalid class to input
+        input.classList.add('is-invalid');
+    }
+
+    // Hàm xóa thông báo lỗi
+    function clearError(input) {
+        const errorDiv = input.parentElement.querySelector('.invalid-feedback');
+        if (errorDiv) {
+            errorDiv.remove();
+        }
+        input.classList.remove('is-invalid');
+    }
+
+    // Thêm event listeners khi document ready
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form.needs-validation');
+
+        // Add submit event listener
+        form.addEventListener('submit', function(event) {
+            if (!validateForm()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+        });
+
+        // Add input event listeners for real-time validation
+        const inputs = form.querySelectorAll('input, select');
+        inputs.forEach(input => {
+            input.addEventListener('input', function() {
+                clearError(this);
+            });
+
+            input.addEventListener('blur', function() {
+                validateForm();
+            });
+        });
+
+        // Special handling for datetime inputs
+        const startTimeInput = document.getElementById('startTime');
+        const endTimeInput = document.getElementById('endTime');
+
+        [startTimeInput, endTimeInput].forEach(input => {
+            input.addEventListener('change', function() {
+                validateForm();
+            });
+        });
+
+        // Hàm để thiết lập giá trị minimum cho trường startTime
+        function setMinDateTime() {
+            const now = new Date();
+
+            // Format datetime-local value (YYYY-MM-DDThh:mm)
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+
+            const minDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+            // Set min attribute cho input startTime
+            document.getElementById('startTime').min = minDateTime;
+        }
+
+        // Gọi hàm khi trang web được tải
+        setMinDateTime();
+
+        // Cập nhật min value mỗi phút
+        setInterval(setMinDateTime, 60000);
+
+        // Cập nhật min datetime cho endTime dựa trên startTime
+        startTimeInput.addEventListener('change', function() {
+            // Nếu startTime có giá trị, đặt min của endTime
+            if (startTimeInput.value) {
+                // Tính toán thời gian tối thiểu cho endTime (startTime + 15 phút)
+                const startDateTime = new Date(startTimeInput.value);
+                startDateTime.setMinutes(startDateTime.getMinutes() + 15);
+
+                const year = startDateTime.getFullYear();
+                const month = String(startDateTime.getMonth() + 1).padStart(2, '0');
+                const day = String(startDateTime.getDate()).padStart(2, '0');
+                const hours = String(startDateTime.getHours()).padStart(2, '0');
+                const minutes = String(startDateTime.getMinutes()).padStart(2, '0');
+
+                const minEndDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+                endTimeInput.min = minEndDateTime;
+
+                // Kiểm tra xem endTime hiện tại có hợp lệ không
+                const currentEndTime = new Date(endTimeInput.value);
+                if (currentEndTime < startDateTime) {
+                    // Nếu endTime hiện tại nhỏ hơn startTime + 15 phút, tự động cập nhật endTime
+                    endTimeInput.value = minEndDateTime;
+                }
+            }
+        });
+
+        // Kiểm tra lúc trang tải xong để đảm bảo endTime hợp lệ
+        if (startTimeInput.value) {
+            const startDateTime = new Date(startTimeInput.value);
+            startDateTime.setMinutes(startDateTime.getMinutes() + 15);
+
+            const year = startDateTime.getFullYear();
+            const month = String(startDateTime.getMonth() + 1).padStart(2, '0');
+            const day = String(startDateTime.getDate()).padStart(2, '0');
+            const hours = String(startDateTime.getHours()).padStart(2, '0');
+            const minutes = String(startDateTime.getMinutes()).padStart(2, '0');
+
+            const minEndDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+            endTimeInput.min = minEndDateTime;
+
+            // Kiểm tra xem endTime hiện tại có hợp lệ không
+            const currentEndTime = new Date(endTimeInput.value);
+            if (currentEndTime < startDateTime) {
+                // Nếu endTime hiện tại nhỏ hơn startTime + 15 phút, tự động cập nhật endTime
+                endTimeInput.value = minEndDateTime;
+            }
+        }
+    });
+
     function searchTags() {
         const query = document.getElementById('searchTags').value.trim();
         const tagsContainer = document.getElementById('tagsContainer');
@@ -802,7 +1020,7 @@
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </div>
-                                        <input type="text" class="dynamicInput p-3 border rounded form-control" name="questionText[${index + addIndex}]"
+                                        <input type="text" class="dynamicInput p-3 border rounded form-control disabled" name="questionText[${index + addIndex}]"
                                         value="${question.questionText}" style="background-color: #F0F0F0"/>
                                         <input type="hidden" name="questionType[${index + addIndex}]" value="${question.questionType}"/>
                                         <ul class="list-group mt-3">
@@ -811,8 +1029,8 @@
                             question.answerOptions.forEach((option, number) => {
                                 containerQuestion += `
                                             <li class="list-group-item input-group-option">
-                                                <input type="text" name="answerOptions[${index + addIndex}].optionText[${number}]" class="dynamicInput form-control optionText-input ${option.isCorrect ? 'correct' : ''}"
-                                                    value="${option.optionText}" id="optionText[${number}]" onwheel="handleWheelInput(event, this)"/>
+                                                <input type="text" name="answerOptions[${index + addIndex}].optionText[${number}]" class="dynamicInput form-control optionText-input disabled ${option.isCorrect ? 'correct' : ''}"
+                                                    value="${option.optionText}" id="optionText[${number}]"/>
                                                 <input type="checkbox" name="answerOptions[${index + addIndex}].isCorrect[${number}]" value="${option.isCorrect ? 'true' : 'false'}" ${option.isCorrect ? 'checked' : ''}
                                                 id="isCorrect[${number}]" class="d-none"/>
                                             </li>
@@ -933,8 +1151,24 @@
 
         console.log(JSON.stringify(quizData)); // Kiểm tra dữ liệu thu thập được
 
+        // Lấy dữ liệu từ form tạo thành đối tượng JSON gửi đi
+        let quizJson = JSON.stringify(quizData);
+
+        // Thêm tham số tagIds vào URL nếu có chọn tag
+        const selectedTagsInput = document.getElementById("selectedTagsInput");
+        let apiUrl = `/quizes/create`;
+        let tagParams = "";
+
+        if (selectedTagsInput && selectedTagsInput.value) {
+            const tagIds = selectedTagsInput.value.split(',');
+            tagParams = tagIds.map(id => `tagIds=${id}`).join('&');
+            if (tagParams) {
+                apiUrl += "?" + tagParams;
+            }
+        }
+
         // Gửi dữ liệu bằng fetch
-        fetch("/quizes/create", {
+        fetch(apiUrl, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -943,93 +1177,57 @@
         })
             .then((response) => {
                 if (response.ok) {
-                    window.location.href = "/quizes";
+                    Swal.fire({
+                        title: 'Success!',
+                        text: 'Quiz created successfully!',
+                        icon: 'success',
+                        showCancelButton: true,
+                        confirmButtonText: 'Stay here',
+                        cancelButtonText: 'Go back',
+                        reverseButtons: true
+                    }).then((result) => {
+                        if (result.isDismissed) {
+                            window.history.back();
+                        }
+                    });
                 } else {
                     console.error(response);
-                    alert("Có lỗi xảy ra!");
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'An error occurred!',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
                 }
             })
-            .catch((error) => console.error("Error:", error));
-    }
-
-    let isThrottled = false;
-
-    function handleWheelInput(event, input) {
-        event.preventDefault();
-
-        if (isThrottled) return; // Nếu đang trong thời gian chờ, bỏ qua sự kiện
-
-        isThrottled = true;
-        setTimeout(() => {
-            isThrottled = false; // Cho phép sự kiện tiếp theo sau khoảng thời gian nhất định
-        }, 800); // Thời gian chờ (200ms), bạn có thể điều chỉnh
-
-        // Lấy ID của input text
-        const name = input.name; //answerOptions[${index}].optionText[${number}]
-        // lấy index của input
-        const match = name.match(/answerOptions\[(\d+)\].optionText\[(\d+)\]/);
-        const questionIndex = match[1];
-        const optionIndex = match[2];
-
-        console.log("====================================");
-        // Lấy checkbox tương ứng
-        const checkbox = document.querySelector(`input[type="checkbox"][name="answerOptions[${questionIndex}].isCorrect[${optionIndex}]"]`);
-        console.log(checkbox.value);
-        console.log(checkbox.checked);
-
-        if (!checkbox.checked) {
-            // Chỉ giữ class `correct` cho input tương ứng với checkbox đang được chọn
-            checkbox.checked = true;
-            input.classList.add('correct');
-            input.classList.remove('flippedX');
-            checkbox.value = "true";
-            // Nếu checkbox này được chọn
-            // Lấy tất cả các checkbox và input khác
-            const allCheckboxes = document.querySelectorAll(`input[type="checkbox"][name*="answerOptions[${questionIndex}]"]`);
-            console.log(allCheckboxes);
-
-            // Đặt tất cả các checkbox khác về false và cập nhật class của input
-            allCheckboxes.forEach((cb, index) => {
-                if (cb !== checkbox) {
-                    cb.checked = false;
-                    cb.value = "false";
-
-                    const relatedInput = document.querySelector(`input[type="text"][name="answerOptions[${questionIndex}].optionText[${index}]"]`);
-                    console.log(relatedInput);
-                    if (relatedInput) {
-                        relatedInput.classList.remove('correct');
-                        relatedInput.classList.add('flippedX');
-                    }
-                }
+            .catch((error) => {
+                console.error("Error:", error);
+                Swal.fire({
+                        title: 'Success!',
+                        text: 'Quiz created successfully!',
+                        icon: 'success',
+                        showCancelButton: true,
+                        confirmButtonText: 'Stay here',
+                        cancelButtonText: 'Go back',
+                        reverseButtons: true
+                    }).then((result) => {
+                        if (result.isDismissed) {
+                            window.history.back();
+                        }
+                    });
             });
-        }
     }
-
-    let AIGenerateOrigin = "";
 
     // nút mở modal view all
     document.getElementById("viewAllButton").addEventListener('click', function () {
-        const sourceElement = document.getElementById('AIGenerateResult'); // lấy nội dung trong AIGenerateResult
-        AIGenerateOrigin = sourceElement.cloneNode(true).innerHTML; // lưu bản sao của AIGenerateResult
-        Array.from(sourceElement.childNodes).forEach((node) => {
-            document.getElementById('questionViewModal').appendChild(node); // gán nội dung đã sao chép vào modal
-        })
-    });
-
-    // nút save change trong modal view all
-    document.getElementById("saveChangeQuestionModal").addEventListener('click', function () {
-        const sourceElement = document.getElementById('questionViewModal'); // lấy nội dung trong questionViewModal
-        Array.from(sourceElement.childNodes).forEach((node) => {
-            document.getElementById('AIGenerateResult').appendChild(node); // gán nội dung vào AIGenerateResult
-        })
-        AIGenerateOrigin = ""; // làm rỗng origin
+        document.getElementById('questionViewModal').innerHTML = document.getElementById('AIGenerateResult').innerHTML
+        document.getElementById('AIGenerateResult').innerHTML = ""; // làm rỗng modal
     });
 
     // nút close trong modal view all
     document.getElementById("closeQuestionModal").addEventListener('click', function () {
-        document.getElementById('AIGenerateResult').innerHTML = AIGenerateOrigin; // gán dữ liệu từ origin vào AIGenerateResult
+        document.getElementById('AIGenerateResult').innerHTML = document.getElementById('questionViewModal').innerHTML
         document.getElementById('questionViewModal').innerHTML = ""; // làm rỗng modal
-        AIGenerateOrigin = ""; // làm rỗng origin
     });
 
     // chức năng delete các câu hỏi do AI generate

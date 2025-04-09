@@ -683,6 +683,7 @@
                             <!-- Search Input -->
                             <div class="col-9">
                                 <form id="filterForm" method="get" action="/exercises" class="row g-3">
+                                    <input type="hidden" id="currentPage" name="page">
                                     <!-- Search Input -->
                                     <div class="col-12">
                                         <label for="searchInput" class="form-label fw-semibold text-muted mb-1">Search
@@ -1088,6 +1089,12 @@
         Deleted Successfully!
     </div>
 </div>
+<!-- Alert hiển thị lỗi -->
+<div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert" id="errorAlert">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <span th:text="${error}"></span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
 <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
     <i class="bi bi-check-circle-fill"></i>
     <span id="successMessage" th:text="${successMessage}"></span>
@@ -1248,13 +1255,27 @@
                             });
                             setTimeout(() => location.reload(), 1500);
                         } else {
-                            Swal.fire({
-                                icon: "error",
-                                title: "Failed!",
-                                text: "Failed to delete exercises. Please try again.",
-                                timerProgressBar: true,
-                                timer: 10000,
-                                showConfirmButton: false
+                            response.json().then(data => {
+                                if (data.undeletables && data.undeletables.length > 0) {
+                                    const failedTitles = data.undeletables.join(", ");
+                                    Swal.fire({
+                                        icon: "warning",
+                                        title: "Some exercises could not be deleted!",
+                                        html: `<p>The following exercises are in assessments:</p><ul style="text-align:left">${data.undeletables.map(title => `<li>${title}</li>`).join("")}</ul>`,
+                                        timer: 15000,
+                                        timerProgressBar: true,
+                                        showConfirmButton: false
+                                    }).then(() => location.reload());
+                                } else {
+                                    Swal.fire({
+                                        icon: "error",
+                                        title: "Failed!",
+                                        text: "Failed to delete exercises.",
+                                        timerProgressBar: true,
+                                        timer: 10000,
+                                        showConfirmButton: false
+                                    });
+                                }
                             });
                         }
                     }).catch(() => {
@@ -1425,38 +1446,42 @@
                     cancelButtonText: "Cancel"
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        fetch('/exercises/delete-batch', {
+                        fetch(`/exercises/delete/${exerciseId}`, {
                             method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({ids: selectedIds})
+                            headers: {'Content-Type': 'application/json'}
                         }).then(response => {
                             if (response.ok) {
                                 Swal.fire({
                                     icon: "success",
                                     title: "Deleted!",
-                                    text: "The exercise has been deleted.",
+                                    text: "Exercise has been deleted successfully.",
                                     timerProgressBar: true,
                                     timer: 2000,
                                     showConfirmButton: false
-                                });
-                                setTimeout(() => location.reload(), 1500);
+                                }).then(() => location.reload());
                             } else {
-                                Swal.fire({
-                                    icon: "error",
-                                    title: "Failed!",
-                                    text: "Failed to delete exercise. Please try again.",
-                                    timerProgressBar: true,
-                                    timer: 10000,
-                                    showConfirmButton: false
+                                response.json().then(data => {
+                                    if (data.title) {
+                                        Swal.fire({
+                                            icon: "warning",
+                                            title: "Cannot delete!",
+                                            html: `The exercise <strong>${data.title}</strong> is currently used in assessments.`,
+                                            timer: 10000,
+                                            timerProgressBar: true,
+                                            showConfirmButton: false
+                                        });
+                                    } else {
+                                        Swal.fire({
+                                            icon: "error",
+                                            title: "Failed!",
+                                            text: "Failed to delete exercise. Please try again.",
+                                            timer: 10000,
+                                            timerProgressBar: true,
+                                            showConfirmButton: false
+                                        });
+                                    }
                                 });
                             }
-                        }).catch(() => {
-                            Swal.fire({
-                                icon: "error",
-                                title: "Error!",
-                                text: "Something went wrong. Please try again later.",
-                                confirmButtonText: "OK"
-                            });
                         });
                     }
                 });
@@ -1546,20 +1571,30 @@
         const languageFilter = document.getElementById("languageFilter");
         const levelFilter = document.getElementById("levelFilter");
         const filterForm = document.getElementById("filterForm");
-        const params = new URLSearchParams(new URL(window.location.href).search);
-        const page = params.get('page') || 0;
-        console.log("page" + page);
+        const searchTitle = document.getElementById("searchInput");
+        const params = new URLSearchParams(window.location.search);
+        let page = params.get('page') || sessionStorage.getItem("currentPage") || 0;
         sessionStorage.setItem("currentPage", page);
+        console.log(searchTitle.value);
 
         function saveFilters() {
             sessionStorage.setItem("selectedLanguage", languageFilter.value);
             sessionStorage.setItem("selectedLevel", levelFilter.value);
             const selectedTags = [...document.querySelectorAll('input[name="tags"]:checked')].map(cb => cb.value);
             sessionStorage.setItem("selectedTags", JSON.stringify(selectedTags));
-
+            sessionStorage.setItem("searchTitle", searchTitle.value);
             // Đánh dấu cần áp dụng lại bộ lọc sau khi reload
             sessionStorage.setItem("shouldFilterOnce", "true");
         }
+
+        filterForm.addEventListener("submit", function (event) {
+            event.preventDefault(); // 🛑 Ngăn form submit ngay
+
+            saveFilters(); // 💾 Lưu các filter vào sessionStorage
+
+            filterForm.submit(); // ✅ Gửi form lại sau khi đã lưu xong
+        });
+
 
         function submitFormWithSave() {
             saveFilters();
@@ -1571,9 +1606,10 @@
         levelFilter.addEventListener("change", submitFormWithSave);
 
         function restoreFilters() {
-            const selectedLanguage = sessionStorage.getItem("selectedLanguage");
-            const selectedLevel = sessionStorage.getItem("selectedLevel");
-            const selectedTags = JSON.parse(sessionStorage.getItem("selectedTags")) || [];
+            const selectedLanguage = sessionStorage.getItem("selectedLanguage") || "";
+            const selectedLevel = sessionStorage.getItem("selectedLevel") || "";
+            const searchInput = sessionStorage.getItem("searchTitle") || "";
+            const selectedTags = JSON.parse(sessionStorage.getItem("selectedTags") || "[]");
 
             if (selectedLanguage) {
                 languageFilter.value = selectedLanguage;
@@ -1583,17 +1619,21 @@
                 levelFilter.value = selectedLevel;
             }
 
-            document.querySelectorAll('input[name="tags"]').forEach(checkbox => {
+            if(searchInput){
+                searchTitle.value = searchInput;
+            }
+
+            document.getElementById("currentPage").value = sessionStorage.getItem("currentPage") || 0;
+
+            document.querySelectorAll("input[name='tags']").forEach(checkbox => {
                 checkbox.checked = selectedTags.includes(checkbox.value);
             });
-
         }
 
         restoreFilters(); // Khôi phục bộ lọc khi tải trang
         // 🟢 Khi quay lại từ trang Edit, tự động submit lại 1 lần với bộ lọc đã chọn
         if (sessionStorage.getItem("shouldFilterOnce") === "true") {
             const successMessage = document.getElementById("successMessage")?.textContent.trim();
-
             // 🟢 Hiển thị thông báo trước
             if (successMessage) {
                 Swal.fire({
@@ -1604,7 +1644,7 @@
                     showConfirmButton: false
                 }).then(() => {
                     // 🟢 Sau khi thông báo đóng, mới submit form
-                    filterForm.submit();
+                    submitFormWithSave();
 
                     // 🟢 Xóa shouldFilterOnce sau khi submit xong
                     sessionStorage.removeItem("shouldFilterOnce");
@@ -1617,9 +1657,133 @@
         sessionStorage.removeItem("selectedLanguage");
         sessionStorage.removeItem("selectedLevel");
         sessionStorage.removeItem("selectedTags");
+        sessionStorage.removeItem("currentPage");
+        sessionStorage.removeItem("searchTitle");
         sessionStorage.removeItem("shouldFilterOnce"); // Ngăn form tự động submit lại
         window.location.href = "/exercises";
     }
+</script>
+<!--<script>-->
+<!--    document.addEventListener("DOMContentLoaded", function () {-->
+<!--        const languageFilter = document.getElementById("languageFilter");-->
+<!--        const levelFilter = document.getElementById("levelFilter");-->
+<!--        const filterForm = document.getElementById("filterForm");-->
+<!--        const params = new URLSearchParams(window.location.search);-->
+<!--        let page = params.get('page') || sessionStorage.getItem("currentPage") || 0;-->
+<!--        sessionStorage.setItem("currentPage", page);-->
+<!--        console.log("📌 Page từ URL hoặc sessionStorage:", sessionStorage.getItem("currentPage")); // Debugging-->
+
+<!--        function saveFilters() {-->
+<!--            sessionStorage.setItem("selectedLanguage", languageFilter.value);-->
+<!--            sessionStorage.setItem("selectedLevel", levelFilter.value);-->
+<!--            const selectedTags = [...document.querySelectorAll('input[name="tags"]:checked')].map(cb => cb.value);-->
+<!--            sessionStorage.setItem("selectedTags", JSON.stringify(selectedTags));-->
+
+<!--            // Đánh dấu cần áp dụng lại bộ lọc sau khi reload-->
+<!--            sessionStorage.setItem("shouldFilterOnce", "true");-->
+<!--        }-->
+
+
+<!--        function submitFormWithSave() {-->
+<!--            saveFilters();-->
+<!--            filterForm.submit();-->
+<!--        }-->
+
+<!--        // Sự kiện thay đổi bộ lọc -> Lưu & Submit-->
+<!--        languageFilter.addEventListener("change", submitFormWithSave);-->
+<!--        levelFilter.addEventListener("change", submitFormWithSave);-->
+
+<!--        function restoreFilters() {-->
+<!--            const selectedLanguage = sessionStorage.getItem("selectedLanguage") || "";-->
+<!--            const selectedLevel = sessionStorage.getItem("selectedLevel") || "";-->
+<!--            const selectedTags = [...document.querySelectorAll('input[name="tags"]:checked')].map(cb => cb.value);-->
+
+<!--            if (selectedLanguage) {-->
+<!--                languageFilter.value = selectedLanguage;-->
+<!--            }-->
+
+<!--            if (selectedLevel) {-->
+<!--                levelFilter.value = selectedLevel;-->
+<!--            }-->
+
+<!--            document.getElementById("currentPage").value = sessionStorage.getItem("currentPage") || 0;-->
+
+<!--            document.querySelectorAll("input[name='tags']").forEach(checkbox => {-->
+<!--                checkbox.checked = selectedTags.includes(checkbox.value);-->
+<!--            });-->
+<!--        }-->
+
+<!--        restoreFilters(); // Khôi phục bộ lọc khi tải trang-->
+<!--        // 🟢 Khi quay lại từ trang Edit, tự động submit lại 1 lần với bộ lọc đã chọn-->
+<!--        if (sessionStorage.getItem("shouldFilterOnce") === "true") {-->
+<!--            const successMessage = document.getElementById("successMessage")?.textContent.trim();-->
+<!--            // 🟢 Hiển thị thông báo trước-->
+<!--            if (successMessage) {-->
+<!--                Swal.fire({-->
+<!--                    icon: 'success',-->
+<!--                    title: successMessage,-->
+<!--                    timer: 2000,-->
+<!--                    timerProgressBar: true,-->
+<!--                    showConfirmButton: false-->
+<!--                }).then(() => {-->
+<!--// 🟢 Sau khi thông báo đóng, mới submit form-->
+<!--                    submitFormWithSave();-->
+
+<!--                    // 🟢 Xóa shouldFilterOnce sau khi submit xong-->
+<!--                    sessionStorage.removeItem("shouldFilterOnce");-->
+<!--                });-->
+<!--            }-->
+<!--        }-->
+<!--    });-->
+<!--    // Hàm xóa bộ lọc và reset về giá trị mặc định-->
+<!--    function clearFilters() {-->
+<!--        sessionStorage.removeItem("selectedLanguage");-->
+<!--        sessionStorage.removeItem("selectedLevel");-->
+<!--        sessionStorage.removeItem("selectedTags");-->
+<!--        sessionStorage.removeItem("shouldFilterOnce"); // Ngăn form tự động submit lại-->
+<!--        window.location.href = "/exercises";-->
+<!--    }-->
+<!--</script>-->
+<!--<script>-->
+<!--    const filterForm = document.getElementById('filterForm');-->
+<!--    const filterInputs = filterForm.querySelectorAll('select, input');-->
+
+<!--    filterInputs.forEach(input => {-->
+<!--        input.addEventListener('change', () => {-->
+<!--            // Reset về trang đầu-->
+<!--            const pageInput = filterForm.querySelector('input[name="page"]');-->
+<!--            if (pageInput) {-->
+<!--                pageInput.value = 0;-->
+<!--            } else {-->
+<!--                const hiddenPage = document.createElement('input');-->
+<!--                hiddenPage.type = 'hidden';-->
+<!--                hiddenPage.name = 'page';-->
+<!--                hiddenPage.value = 0;-->
+<!--                filterForm.appendChild(hiddenPage);-->
+<!--            }-->
+<!--            filterForm.submit();-->
+<!--        });-->
+<!--    });-->
+<!--</script>-->
+<script>
+    const filterForm = document.getElementById('filterForm');
+    const filterInputs = filterForm.querySelectorAll('select, input:not([type="checkbox"])');
+
+    filterInputs.forEach(input => {
+        input.addEventListener('change', () => {
+            const pageInput = filterForm.querySelector('input[name="page"]');
+            if (pageInput) {
+                pageInput.value = 0;
+            } else {
+                const hiddenPage = document.createElement('input');
+                hiddenPage.type = 'hidden';
+                hiddenPage.name = 'page';
+                hiddenPage.value = 0;
+                filterForm.appendChild(hiddenPage);
+            }
+            filterForm.submit();
+        });
+    });
 </script>
 </body>
 </html>

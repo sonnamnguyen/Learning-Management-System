@@ -596,6 +596,7 @@ public class QuizService {
                     textResponse.setAnswerText(textAnswer);
                     textResponse.setIsCorrect(null);
                     textResponse.setSelectedOption(null);
+                    textResponse.setTestSession(session);
                     answerRepository.save(textResponse);
                 }
                 continue;
@@ -632,6 +633,7 @@ public class QuizService {
                         answer.setAnswerText(selectedOption.getOptionText());
                         answer.setIsCorrect(correctAnswerIds.contains(selectedOptionId));
                         answer.setScore((excessSelections > 0) ? 0.0 : (correctAnswerIds.contains(selectedOptionId) ? (pointsPerQuestion / correctAnswerIds.size()) : 0.0));
+                        answer.setTestSession(session);
                         answerRepository.save(answer);
                     }
                 }

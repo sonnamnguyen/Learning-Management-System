@@ -1097,8 +1097,10 @@
         const level = sessionStorage.getItem("selectedLevel") || "";
         const selectedTags = JSON.parse(sessionStorage.getItem("selectedTags")) || [];
         const currentPage = sessionStorage.getItem("currentPage") || 0;
+        const searchTitle = sessionStorage.getItem("searchTitle") || "";
 
         let queryParams = new URLSearchParams();
+        if (searchTitle) queryParams.append("title", searchTitle);
         if (currentPage) queryParams.append("page", currentPage);
         if (language) queryParams.append("language", language);
         if (level) queryParams.append("level", level);

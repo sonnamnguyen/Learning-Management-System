@@ -84,7 +84,7 @@ public class AssessmentScoreService {
         );
 
         attempt.setScoreAss(newScoreAss);
-
+        attempt.setLastModified(LocalDateTime.now());
         // Lưu lịch sử chỉnh sửa điểm
         ScoreEditHistory history = new ScoreEditHistory();
         history.setAttemptId(attemptId);
@@ -111,6 +111,7 @@ public class AssessmentScoreService {
         response.put("newScoreAss", savedHistory.getNewScoreAss());
         response.put("comment", savedHistory.getComment());
         response.put("editedAt", savedHistory.getEditedAt());
+        response.put("lastModified", attempt.getLastModified());
 
         return response;
     }
@@ -141,4 +142,5 @@ public class AssessmentScoreService {
 
         return response;
     }
+
 }

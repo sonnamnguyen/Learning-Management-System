@@ -529,6 +529,11 @@
                     >
 [{"input":" ","expectedOutput":" ","hidden":false},{"input":" ","expectedOutput":" ","hidden":true}]</textarea
                     >
+                    <div class="mt-2 d-flex gap-2 align-items-center">
+                        <input type="file" id="jsonFileUpload" accept=".json" class="form-control" style="width: auto;" />
+                        <button type="button" class="btn btn-primary btn-sm" onclick="uploadJsonFile()">Upload JSON</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="downloadJsonTemplate()">Download Template</button>
+                    </div>
                 </div>
 
                 <!-- Manual UI Input Method with Tabs -->
@@ -728,7 +733,108 @@
         tempDiv.innerHTML = editorData;
         return tempDiv.textContent || tempDiv.innerText || "";
     }
+    // Hàm xử lý upload file JSON
+    function uploadJsonFile() {
+        const fileInput = document.getElementById("jsonFileUpload");
+        const testCasesTextarea = document.getElementById("testCases");
+        const file = fileInput.files[0];
 
+        if (!file) {
+            Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: "Please select a JSON file to upload!",
+                timer: 10000,
+                timerProgressBar: true,
+                showConfirmButton: false,
+            });
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            try {
+                const jsonContent = JSON.parse(e.target.result);
+                if (!Array.isArray(jsonContent)) {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Error",
+                        text: "Uploaded file must contain a JSON array!",
+                        timer: 10000,
+                        timerProgressBar: true,
+                        showConfirmButton: false,
+                    });
+                    return;
+                }
+
+                // Format JSON để hiển thị đẹp hơn trong preview
+                const formattedJson = JSON.stringify(jsonContent, null, 2);
+
+                // Hiển thị preview với SweetAlert2
+                Swal.fire({
+                    title: "Preview JSON Content",
+                    html: `<pre style="text-align: left; max-height: 300px; overflow-y: auto;">${formattedJson}</pre>`,
+                    showCancelButton: true,
+                    confirmButtonText: "Apply",
+                    cancelButtonText: "Cancel",
+                    width: "600px",
+                    customClass: {
+                        confirmButton: "btn btn-primary",
+                        cancelButton: "btn btn-secondary",
+                    },
+                    buttonsStyling: false,
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Nếu người dùng nhấn "Apply", cập nhật textarea
+                        testCasesTextarea.value = formattedJson;
+                    }
+                    // Nếu nhấn "Cancel", không làm gì cả
+                });
+            } catch (error) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: "Invalid JSON file: " + error.message,
+                    timer: 10000,
+                    timerProgressBar: true,
+                    showConfirmButton: false,
+                });
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    // Hàm tải template JSON
+    function downloadJsonTemplate() {
+        const languageSelect = document.getElementById("language");
+        const selectedLang = languageSelect.options[languageSelect.selectedIndex]?.text;
+        const isSQL = selectedLang === "SQL";
+
+        let template;
+        if (isSQL) {
+            template = [
+                {"input": " ", "expectedOutput": " ", "sqlTagNumber": " ", "hidden": false},
+                {"input": " ", "expectedOutput": " ", "sqlTagNumber": " ", "hidden": true}
+            ];
+        } else {
+            template = [
+                {"input": " ", "expectedOutput": " ", "hidden": false},
+                {"input": " ", "expectedOutput": " ", "hidden": true}
+            ];
+        }
+
+        const jsonString = JSON.stringify(template, null, 2);
+        const blob = new Blob([jsonString], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+
+        const tempLink = document.createElement("a");
+        tempLink.href = url;
+        tempLink.download = "test_cases_template.json";
+        document.body.appendChild(tempLink);
+        tempLink.click();
+        document.body.removeChild(tempLink);
+        URL.revokeObjectURL(url);
+    }
     $(document).ready(function () {
         let isSubmitting = false;
 
@@ -755,8 +861,8 @@
             // Validation cho các trường bắt buộc
             if (!title) {
                 Swal.fire({
-                    icon: "error",
-                    title: "Error",
+                    icon: "warning",
+                    title: "Warning",
                     text: "Title is required!",
                     timer: 10000,
                     timerProgressBar: true,
@@ -769,8 +875,8 @@
 
             if (!language) {
                 Swal.fire({
-                    icon: "error",
-                    title: "Error",
+                    icon: "warning",
+                    title: "Warning",
                     text: "Programming Language is required!",
                     timer: 10000,
                     timerProgressBar: true,
@@ -783,8 +889,8 @@
 
             if (!level) {
                 Swal.fire({
-                    icon: "error",
-                    title: "Error",
+                    icon: "warning",
+                    title: "Warning",
                     text: "Difficulty Level is required!",
                     timer: 10000,
                     timerProgressBar: true,
